@@ -1161,6 +1161,17 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
 .ccn{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--lav);color:#151515;font-weight:600;font-size:14px;box-shadow:inset 0 0 0 1.5px #151515}
 .cccalc{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:16px;align-items:end}
 .cc-out{margin:0 0 10px;font-size:16px}
+.gugrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+.gucard{display:flex;flex-direction:column;gap:12px}
+.guhead{display:flex;gap:14px;align-items:flex-start}.guhead h2{font-size:21px;margin:0}.guhead p{margin:4px 0 0;color:var(--ink-2)}
+.gushield{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--green-tint);color:var(--on-pastel)}
+.guchecks{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:8px}.guchecks li{display:flex;gap:10px;align-items:flex-start}.guchecks li b{display:block;font-weight:600;font-size:14.5px}.guchecks li small{color:var(--muted);font-size:13.5px}
+.gubars{display:grid;gap:10px}.gubar-t{display:flex;justify-content:space-between;font-size:14px}.gubar-track{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:5px}.gubar-track i{display:block;height:100%;background:var(--ink);border-radius:inherit}
+.gustate{display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.gurules{margin:10px 0 0;padding-left:20px;display:grid;gap:8px;font-size:14.5px}
+.gudetails summary{cursor:pointer;font-weight:600;font-size:14.5px}
+.gu-claim{margin-top:4px}
+@media (max-width:860px){.gugrid{grid-template-columns:1fr}}
 .cccheck{display:flex;gap:10px;align-items:flex-start;font-size:14.5px;color:var(--ink-2)}.cccheck input{margin-top:4px}
 .ccstatus{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}
 .ccplace{display:grid;gap:8px;margin-bottom:12px}
@@ -1197,6 +1208,7 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
     <button class="tab" role="tab" id="t-contacts" aria-controls="p-contacts" aria-selected="false" data-act="tab" data-tab="contacts"><svg class="i" viewBox="0 0 24 24"><circle cx="9" cy="9" r="3.2"/><path d="M3.5 19c.9-3 3-4.5 5.5-4.5s4.6 1.5 5.5 4.5"/><path d="M15.5 6.5a3 3 0 010 5.5M17.5 14.8c1.5.6 2.5 2 3 4.2"/></svg>Contacts</button>
     <button class="tab" role="tab" id="t-ask" aria-controls="p-ask" aria-selected="false" data-act="tab" data-tab="ask"><svg class="i" viewBox="0 0 24 24"><path d="M4.5 6h15v10h-8l-4 3.5V16h-3z"/><path d="M12 9.2v.1M12 11.5v2"/></svg>Ask Propelo</button>
     <button class="tab" role="tab" id="t-concierge" aria-controls="p-concierge" aria-selected="false" data-act="tab" data-tab="concierge"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c1.2-3.6 3.9-5.4 7-5.4s5.8 1.8 7 5.4"/><path d="M17.5 4.5l1.3 1.3 2.4-2.4"/></svg>Concierge</button>
+    <button class="tab" role="tab" id="t-guarantee" aria-controls="p-guarantee" aria-selected="false" data-act="tab" data-tab="guarantee"><svg class="i" viewBox="0 0 24 24"><path d="M12 3.5l7 2.6v5.4c0 4.4-3 7.9-7 9-4-1.1-7-4.6-7-9V6.1z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg>Guarantees</button>
     <button class="tab" role="tab" id="t-inbox" aria-controls="p-inbox" aria-selected="false" data-act="tab" data-tab="inbox"><svg class="i" viewBox="0 0 24 24"><path d="M3.5 13.5l2.6-7.2A2 2 0 018 5h8a2 2 0 011.9 1.3l2.6 7.2V18a2 2 0 01-2 2h-13a2 2 0 01-2-2z"/><path d="M3.5 13.5H8l1.5 2.5h5l1.5-2.5h4.5"/></svg>Inbox <span class="ct hot" id="c-inbox" hidden></span></button>
     <button class="tab" role="tab" id="t-calendar" aria-controls="p-calendar" aria-selected="false" data-act="tab" data-tab="calendar"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M8 3.5v4M16 3.5v4M4 10h16"/></svg>Calendar</button>
     <button class="tab" role="tab" id="t-tools" aria-controls="p-tools" aria-selected="false" data-act="tab" data-tab="tools"><svg class="i" viewBox="0 0 24 24"><path d="M5 19l9.5-9.5M14 4.5l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5L10.5 8 13 7z"/><path d="M18.5 13l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></svg>Writing &amp; interviews</button>
@@ -1237,6 +1249,7 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
   <section role="tabpanel" id="p-contacts" aria-labelledby="t-contacts" hidden></section>
   <section role="tabpanel" id="p-ask" aria-labelledby="t-ask" hidden></section>
   <section role="tabpanel" id="p-concierge" aria-labelledby="t-concierge" hidden></section>
+  <section role="tabpanel" id="p-guarantee" aria-labelledby="t-guarantee" hidden></section>
   <section role="tabpanel" id="p-skipped" aria-labelledby="t-skipped" hidden></section>
   <section role="tabpanel" id="p-setup" aria-labelledby="t-setup" hidden></section>
   <section role="tabpanel" id="p-auto" aria-labelledby="t-auto" hidden></section>
@@ -1277,6 +1290,7 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
   <button type="button" data-act="tab" data-tab="contacts"><span class="ci" style="background:var(--pink)"><svg class="i" viewBox="0 0 24 24"><circle cx="9" cy="9" r="3.2"/><path d="M3.5 19c.9-3 3-4.5 5.5-4.5s4.6 1.5 5.5 4.5"/></svg></span><span>Contacts</span></button>
   <button type="button" data-act="tab" data-tab="ask"><span class="ci" style="background:var(--yellow)"><svg class="i" viewBox="0 0 24 24"><path d="M4.5 6h15v10h-8l-4 3.5V16h-3z"/></svg></span><span>Ask Propelo</span></button>
   <button type="button" data-act="tab" data-tab="concierge"><span class="ci" style="background:var(--lav)"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c1.2-3.6 3.9-5.4 7-5.4s5.8 1.8 7 5.4"/></svg></span><span>Concierge</span></button>
+  <button type="button" data-act="tab" data-tab="guarantee"><span class="ci" style="background:var(--bgreen)"><svg class="i" viewBox="0 0 24 24"><path d="M12 3.5l7 2.6v5.4c0 4.4-3 7.9-7 9-4-1.1-7-4.6-7-9V6.1z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg></span><span>Guarantees</span></button>
   <button type="button" data-act="tab" data-tab="inbox"><span class="ci" style="background:var(--bblue)"><svg class="i" viewBox="0 0 24 24"><path d="M3.5 13.5l2.6-7.2A2 2 0 018 5h8a2 2 0 011.9 1.3l2.6 7.2V18a2 2 0 01-2 2h-13a2 2 0 01-2-2z"/><path d="M3.5 13.5H8l1.5 2.5h5l1.5-2.5h4.5"/></svg></span><span>Inbox</span></button>
   <button type="button" data-act="tab" data-tab="outreach"><span class="ci" style="background:var(--yellow)"><svg class="i" viewBox="0 0 24 24"><path d="M4.5 6h15v10h-8l-4 3.5V16h-3z"/></svg></span><span>Outreach</span></button>
   <button type="button" data-act="tab" data-tab="calendar"><span class="ci" style="background:var(--pink)"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M8 3.5v4M16 3.5v4M4 10h16"/></svg></span><span>Calendar</span></button>
@@ -1324,6 +1338,7 @@ function median(xs){ if (!xs.length) return null; const s = xs.slice().sort((a,b
 
 /* ---------- icons ---------- */
 const I = {
+  shield:'<svg class="i" viewBox="0 0 24 24"><path d="M12 3.5l7 2.6v5.4c0 4.4-3 7.9-7 9-4-1.1-7-4.6-7-9V6.1z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg>',
   search:'<svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>',
   ready:'<svg class="i" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8.5 12.2l2.4 2.4 4.8-5"/></svg>',
   send:'<svg class="i" viewBox="0 0 24 24"><path d="M20.5 3.5L10 14"/><path d="M20.5 3.5l-6.5 17-4-6.5-6.5-4z"/></svg>',
@@ -1391,7 +1406,7 @@ const state = {
 };
 const cloud = () => state.status === 'cloud';
 const FRESH_PAGE = 24;
-const TABS = ['home','today','pipeline','auto','outreach','contacts','ask','concierge','skipped','setup','profile','resume','calendar','new','app','inbox','tools'];
+const TABS = ['home','today','pipeline','auto','outreach','contacts','ask','concierge','guarantee','skipped','setup','profile','resume','calendar','new','app','inbox','tools'];
 
 /* ---------- derived ---------- */
 const jobsArr = () => Array.from(state.jobs.values());
@@ -2227,6 +2242,59 @@ function renderConcierge(){
         <p class="small full">The fee applies only if this company is one you approved through Concierge in the last ${esc(Math.round(f.attributionDays / 30))} months. Your partner checks the offer letter before anything is due.</p>
         <div class="full"><button class="btn solid" type="submit"${ro}>Report the offer</button></div></form></details></div>` : ''}
     <div class="section" style="padding-top:18px"><p class="small">${esc(feeLine)} <a href="/terms#concierge" target="_blank" rel="noopener">Concierge terms</a></p></div>`;
+}
+/* ---------- Guarantees: money back on rules the person can check before relying on them ---------- */
+function loadGuarantee(){ if (!cloud()) return Promise.resolve(); return api('api/guarantee').then(r => r.ok ? r.json() : null).then(v => { if (v){ state.guarantee = v; render(); } }).catch(() => {}); }
+const GU_STATUS = {active: 'In progress', met: 'Done: you got there', claimable: 'Refund can be claimed', claimed: 'Claim being checked', approved: 'Refund approved', refunded: 'Refunded', rejected: 'Claim not approved', ended: 'Ended', void: 'Stopped'};
+function money(minor, cur){ return cur === 'USD' ? '$' + (Number(minor || 0) / 100).toFixed(2) : inr(Math.round(Number(minor || 0) / 100)); }
+function guBar(label, n, need){ const pct = need ? Math.min(100, Math.round(n / need * 100)) : 0; return `<div class="gubar"><div class="gubar-t"><span>${esc(label)}</span><b>${esc(n)}${need ? ' / ' + esc(need) : ''}</b></div>${need ? `<div class="gubar-track"><i style="width:${pct}%"></i></div>` : ''}</div>`; }
+function guCard(v, kind){
+  const R = obj(v.rules), k = obj(v[kind]), cur = k.current, ro = wr();
+  const say = state.acctMsg && state.acctMsgWhere === 'gu-' + kind ? `<p class="acctmsg${state.acctMsgErr ? ' err' : ''}" role="status">${esc(state.acctMsg)}</p>` : '';
+  const title = kind === 'interview' ? 'Interview Guarantee' : 'Job Guarantee';
+  const promise = kind === 'interview' ? `An interview within ${R.days} days, or the plan fees you paid in that time come back.` : `An accepted offer through Concierge within ${Math.round(R.jobDays / 30)} months, or the plan fees you paid in that time come back. No Concierge fee is ever owed for that case.`;
+  const rules = kind === 'interview' ? [
+      `Keep Pro or Ultra active for the ${R.days} days.`,
+      `Send at least ${R.minApplications} applications, in at least ${R.minWeeks} different weeks. Auto-apply counts; postings the scam check marks unsafe don't.`,
+      'An interview is a live conversation (phone, video or in person) with the employer or its recruiter about a role, recruiter screens included. Online tests and recorded one-way videos don\'t count. Interviews from anywhere count, and so does an invitation you decline.',
+      `No interview by day ${R.days}: claim here within ${R.claimDays} days. A person checks it within 5 working days, and the refund goes to your original payment method.`]
+    : [`Keep Pro or Ultra and your Concierge case open for ${Math.round(R.jobDays / 30)} months.`,
+      'Answer your partner\'s proposals within 7 days, go to the interviews you agree to, and don\'t turn down an offer that meets the pay and locations in your intake.',
+      `No accepted offer by the end: claim here within ${R.claimDays} days. Your partner checks the case, and the plan fees paid in those months come back.`];
+  const rulesHtml = `<ul class="gurules">${rules.map(r => `<li>${esc(r)}</li>`).join('')}</ul>`;
+  let body = '';
+  if (kind === 'job' && !v.conciergeEnabled) body = '<p class="small">The Job Guarantee comes with Concierge, which isn\'t available yet.</p>';
+  else if (cur && !['ended', 'void', 'rejected'].includes(cur.status)){
+    const pr = obj(cur.progress);
+    const bars = kind === 'interview' ? guBar('Applications', pr.applications || 0, R.minApplications) + guBar('Different weeks', pr.weeks || 0, R.minWeeks) + guBar('Interviews', pr.interviews || 0, 0)
+      : guBar('Concierge case', CC_STATUS[pr.caseStatus] || pr.caseStatus || 'open', 0);
+    const days = cur.status === 'active' ? `<p class="small">${esc(pr.daysLeft)} days left · ends ${esc(new Date(cur.endsAt).toLocaleDateString('en-IN', {day: 'numeric', month: 'short', year: 'numeric'}))}</p>` : '';
+    const claim = cur.status === 'claimable' ? `<form id="gu-claim-${kind}" class="formgrid gu-claim" novalidate data-kind="${kind}">
+        <p class="full">You did your part and the window ended without ${kind === 'interview' ? 'an interview' : 'an accepted offer'}. Claim up to <b>${esc(money(cur.estimate, cur.currency))}</b> by ${esc(new Date(cur.claimBy).toLocaleDateString('en-IN', {day: 'numeric', month: 'short'}))}.</p>
+        <label class="f full" for="gu-note-${kind}">Anything we should know (optional)<textarea id="gu-note-${kind}" name="note" rows="2"${ro}></textarea></label>
+        <label class="full cccheck"><input type="checkbox" name="attest"${ro}> I confirm I had no ${kind === 'interview' ? 'interview or interview invitation' : 'accepted offer'} in this window, from Propelo or anywhere else.</label>
+        <div class="full"><button class="btn solid" type="submit"${ro}>Claim my refund</button></div></form>` : '';
+    const refund = cur.refund ? `<p>Refund: <b>${esc(money(cur.refund, cur.currency))}</b></p>` : '';
+    body = `<div class="gustate"><span class="pill ${['met', 'refunded', 'approved'].includes(cur.status) ? 'strong' : ''}">${esc(GU_STATUS[cur.status] || cur.status)}</span>${cur.reason ? `<p class="small">${esc(cur.reason)}</p>` : ''}${refund}</div>
+      ${cur.status === 'active' || cur.status === 'met' ? `<div class="gubars">${bars}</div>${days}` : ''}${claim}${arr(pr.interviewRoles).length ? `<p class="small">Interviews: ${arr(pr.interviewRoles).map(r => esc(r.company)).join(', ')}</p>` : ''}`;
+  } else {
+    const el = obj(k.eligibility), checks = arr(el.checks);
+    const last = cur && ['ended', 'void', 'rejected'].includes(cur.status) ? `<p class="small">Last time: ${esc(GU_STATUS[cur.status])}. ${esc(cur.reason || '')}</p>` : '';
+    body = `${last}<p class="groupl" style="margin-top:4px">Before you start</p><ul class="guchecks">${checks.map(c => `<li class="${c.ok ? 'ok' : 'no'}"><span class="ck${c.ok ? '' : ' no'}">${c.ok ? I.check : I.cross}</span><div><b>${esc(c.label)}</b><small>${esc(c.detail)}</small></div></li>`).join('')}</ul>
+      <label class="cccheck" style="margin-top:12px"><input type="checkbox" id="gu-agree-${kind}"${ro}${el.ok ? '' : ' disabled'}> I've read the <a href="/terms#guarantees" target="_blank" rel="noopener">guarantee terms</a>.</label>
+      <div class="ract" style="justify-content:flex-start;margin-top:12px">${checks.some(c => c.id === 'plan' && !c.ok) ? `<button class="btn solid buy" data-act="tab" data-tab="setup">See Pro and Ultra</button>` : `<button class="btn solid" data-act="gu-enroll" data-kind="${kind}"${ro}${el.ok ? '' : ' disabled'}>Start the ${esc(title)}</button>`}<span class="small">Refund up to ${esc(money(k.estimate, k.currency))}</span></div>`;
+  }
+  return `<section class="panel gucard"><div class="guhead"><span class="gushield">${I.shield}</span><div><h2>${esc(title)}</h2><p>${esc(promise)}</p></div></div>${say}${body}
+    <details class="gudetails"><summary>The rules</summary>${rulesHtml}</details></section>`;
+}
+function renderGuarantee(){
+  const head = `<div class="hero" style="padding-bottom:6px"><div><h1>Guarantees</h1><p class="sub">Money back if Propelo doesn't get you there. These aren't promises of a job: they're promises of a refund, on rules you can check here before you start.</p></div></div>`;
+  if (!cloud()) return head + `<div class="panel"><p class="small">Guarantees are part of Pro and Ultra on Propelo Cloud.</p></div>`;
+  const v = state.guarantee;
+  if (!v){ if (!state.guLoading){ state.guLoading = true; loadGuarantee(); } return head + '<div class="panel"><p class="small">Loading…</p></div>'; }
+  if (!v.enabled) return head + `<div class="panel"><p class="small">Guarantees aren't offered on this server.</p></div>`;
+  return head + `<div class="gugrid">${guCard(v, 'interview')}${guCard(v, 'job')}</div>
+    <p class="small" style="margin-top:18px">One refund of each guarantee per account. <a href="/terms#guarantees" target="_blank" rel="noopener">Guarantee terms</a></p>`;
 }
 function ccOut(f, ctc){ const r = ccFee(f, ctc); return Number(ctc) > 0 ? `Fee <b>${esc(inr(r.fee))}</b>${r.tax ? ` + ${esc(inr(r.tax))} GST` : ''}, about ${r.rate.toFixed(1)}% of ${esc(lakh(ctc))}, in three monthly instalments after you join.` : 'Type a yearly fixed pay to see the fee.'; }
 
@@ -4002,6 +4070,7 @@ function renderNow(){
     if (k === 'contacts') p.innerHTML = renderContacts();
     if (k === 'ask') p.innerHTML = renderAsk();
     if (k === 'concierge') p.innerHTML = renderConcierge();
+    if (k === 'guarantee') p.innerHTML = renderGuarantee();
     if (k === 'skipped') p.innerHTML = renderSkipped();
     if (k === 'setup' && !state.formDirty && !state.apDirty && !state.acctDirty) p.innerHTML = renderSetup();
     if (k === 'home'){
@@ -4192,6 +4261,9 @@ document.addEventListener('click', e => {
   else if (act === 'ct-import'){ const add = contactsFromRoles(); saveContacts(contacts().concat(add), add.length + (add.length === 1 ? ' contact' : ' contacts') + ' added from your roles.'); }
   else if (act === 'ct-delete'){ if (confirm('Delete this contact?')){ state.ctEdit = null; saveContacts(contacts().filter(c => c.id !== el.dataset.id), 'Deleted.'); } }
   else if (act === 'cc-role'){ cloudPost('api/concierge/roles/' + encodeURIComponent(el.dataset.sid) + '/' + el.dataset.d).then(v => { state.concierge = v; toast(el.dataset.d === 'approve' ? 'Approved. Your partner can apply now.' : 'Declined.'); render(); }).catch(d => acctSay(d.error || 'Could not save.', true, 'concierge')); }
+  else if (act === 'gu-enroll'){ const kind = el.dataset.kind, box = $('#gu-agree-' + kind);
+    if (!box || !box.checked) return acctSay('Read and accept the guarantee terms first.', true, 'gu-' + kind);
+    cloudPost('api/guarantee/' + kind + '/enroll', {agree: true, termsVersion: obj(state.guarantee).termsVersion}).then(v => { state.guarantee = v; acctSay('You\'re enrolled. Your progress shows here.', false, 'gu-' + kind); }).catch(d => acctSay(d.error || 'Could not start it.', true, 'gu-' + kind)); }
   else if (act === 'cc-pause'){ cloudPost('api/concierge/pause', {pause: el.dataset.p === '1'}).then(v => { state.concierge = v; render(); }).catch(d => acctSay(d.error || 'Could not change it.', true, 'concierge')); }
   else if (act === 'cc-close'){ if (!confirm('Close your Concierge case? Fees still apply to offers from companies you already approved, within the time in the terms.')) return; cloudPost('api/concierge/close').then(v => { state.concierge = v; render(); }).catch(d => acctSay(d.error || 'Could not close it.', true, 'concierge')); }
   else if (act === 'cc-pay'){ el.disabled = true; cloudPost('api/concierge/instalments/' + encodeURIComponent(el.dataset.id) + '/pay').then(d => { location.href = d.url; }).catch(d => { el.disabled = false; acctSay(d.error || 'Could not open the payment.', true, 'concierge'); }); }
@@ -4262,6 +4334,9 @@ document.addEventListener('submit', e => {
       .catch(d => acctSay(d.error || 'Could not send it.', true, 'concierge'));
     return;
   }
+  if (/^gu-claim-/.test(e.target.id)){ e.preventDefault(); const f = e.target, kind = f.dataset.kind;
+    if (!f.attest.checked) return acctSay('Confirm the statement first.', true, 'gu-' + kind);
+    cloudPost('api/guarantee/' + kind + '/claim', {attest: true, note: f.note.value}).then(v => { state.guarantee = v; acctSay('Claim sent. A person checks it within 5 working days.', false, 'gu-' + kind); }).catch(d => acctSay(d.error || 'Could not send the claim.', true, 'gu-' + kind)); return; }
   if (e.target.id === 'cc-msg'){ e.preventDefault(); const b = e.target.body.value.trim(); if (!b) return; cloudPost('api/concierge/message', {body: b}).then(v => { state.concierge = v; render(); }).catch(d => toast(d.error || 'Could not send it.')); return; }
   if (e.target.id === 'cc-offer'){
     e.preventDefault(); const f = e.target;

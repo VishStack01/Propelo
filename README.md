@@ -133,6 +133,8 @@ Propelo Cloud is the hosted version people sign up for, on the web, as an instal
 | Recruiter emails from your Gmail | Drafts | Up to 10 a day | Up to 25 a day, with follow-ups |
 | LinkedIn profile review | | | Yes |
 | Concierge (India): a talent partner runs your search | | 8% of fixed pay (6% above ₹20 lakh), only after you join | Same, with priority |
+| Interview Guarantee: an interview in 60 days or the plan fees back | | Yes | Yes |
+| Job Guarantee with Concierge: an offer in 6 months or the plan fees back | | Yes | Yes |
 
 Matching works for every field and every level (software and business roles, engineering trades, healthcare, education, legal, retail and hospitality, media), and wherever you live: in India with city and remote rules, and elsewhere with remote roles open to your country and on-site roles in places you choose. Every plan has Contacts, interview prep sheets, application receipts, the scam check and the autofill extension. [How it compares with Simplify, Teal, Jobright and Salvo](docs/competitors.md).
 

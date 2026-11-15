@@ -2,6 +2,17 @@
 
 All notable changes to CareerOS. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [semantic versioning](https://semver.org/).
 
+## [2.3.0] - 2026-11-16
+
+### Added
+- **Interview Guarantee** on Pro and Ultra: an interview within 60 days, or the plan fees paid in that time come back. Before starting, the app checks and records eligibility (a paid plan, a profile with experience, and at least 40 roles matched in the last 30 days, so the promise is only made where Propelo finds roles). The person's part is 30 applications in at least 4 different weeks; applications to postings the scam check marks unsafe don't count. Interviews are detected from the pipeline (screen, interview or offer), recruiter screens included.
+- **Job Guarantee** with Concierge: an accepted offer within 6 months, or the plan fees back, and no Concierge fee for that case.
+- A Guarantees screen in the app (eligibility checklist, progress bars, claim form with a signed statement), claim review for the team in `/staff` (approve up to the plan fees, reject with a reason, mark refunded), emails at each step, the worker moving guarantees on (met, stopped when the plan ends, claimable, claim period over), guarantee terms at `/terms#guarantees`, and a Guarantees section on the website. Settings: `GUARANTEE`, `GUARANTEE_DAYS`, `GUARANTEE_MIN_APPLICATIONS`, `GUARANTEE_MIN_WEEKS`, `GUARANTEE_MIN_MATCHES`, `GUARANTEE_CLAIM_DAYS`, `JOB_GUARANTEE_DAYS`.
+
+### Changed
+- Plan prices are unchanged (Pro ₹499 or $22.50, Ultra ₹1,199 or $48.50 a month). The plan cards list the guarantees when they're on, and the website's cards follow the hosted service's settings.
+- The Concierge terms no longer say "No job guarantee"; they say hiring decisions are the employer's and point to the Job Guarantee.
+
 ## [2.2.0] - 2026-11-16
 
 ### Added

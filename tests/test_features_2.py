@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from careeros import evaluation, scamcheck
+from careeros.cloud import plans as plans_mod
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -150,7 +151,7 @@ def test_website_plan_cards_match_the_catalog():
     page = (ROOT / "website" / "index.html").read_text(encoding="utf-8")
     for cls, plan in (("", "free"), (" pro", "pro"), (" ultra", "ultra")):
         block = re.search(r'<article class="price%s reveal">.*?<ul>(.*?)</ul>' % cls, page, re.S).group(1)
-        assert [h.unescape(x) for x in re.findall(r"<li>(.*?)</li>", block)] == catalog(Config())[["free", "pro", "ultra"].index(plan)]["features"]
+        assert [h.unescape(x) for x in re.findall(r"<li>(.*?)</li>", block)] == catalog(plans_mod.public_config())[["free", "pro", "ultra"].index(plan)]["features"]
     for price in ("₹499", "₹1,199", "$22.50", "$48.50"):
         assert price in page
 

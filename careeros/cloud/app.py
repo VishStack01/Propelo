@@ -41,7 +41,7 @@ from ..dedupe import canonical_url, company_key
 from ..scamcheck import check as scam_check
 from . import mailer as mail
 from . import linkedin as li_auth
-from . import autosend, concierge, mailbox, plans, repo, security
+from . import autosend, concierge, guarantee, mailbox, plans, repo, security
 from .config import Config
 from .db import Database, now_iso
 from .ingest import feed_state
@@ -1489,6 +1489,65 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
         return {"url": link["url"]}
 
     # The team's workspace
+    # ------------------------------------------------------------ Guarantees (money back, never a promised job)
+    def gerr(e: guarantee.GuaranteeError):
+        return err(404 if str(e) == "Not found." else 400, str(e), "guarantee")
+
+    @app.get("/api/guarantee")
+    def guarantee_view(p: Principal = Depends(session_only)):
+        with db.tx() as c:
+            return guarantee.view(c, cfg, p.user)
+
+    @app.post("/api/guarantee/{kind}/enroll")
+    def guarantee_enroll(kind: str, request: Request, body: dict = Body(default={}), p: Principal = Depends(session_only)):
+        if body.get("agree") is not True or body.get("termsVersion") != guarantee.TERMS_VERSION:
+            raise err(400, "Read and accept the guarantee terms first.", "guarantee")
+        try:
+            with db.tx() as c:
+                limited(c, f"guarantee:{p.uid}", 10, 86400)
+                guarantee.enroll(c, cfg, p.user, kind, client_ip(request))
+                send(c, p.user["email"], mail.guarantee(cfg.public_url, kind, "enrolled"))
+                return guarantee.view(c, cfg, p.user)
+        except guarantee.GuaranteeError as e:
+            raise gerr(e) from None
+
+    @app.post("/api/guarantee/{kind}/claim")
+    def guarantee_claim(kind: str, request: Request, body: dict = Body(default={}), p: Principal = Depends(session_only)):
+        if kind not in guarantee.KINDS:
+            raise err(404, "Not found.")
+        try:
+            with db.tx() as c:
+                limited(c, f"guarantee-claim:{p.uid}", 5, 86400)
+                guarantee.claim(c, cfg, p.uid, kind, body.get("attest") is True, str(body.get("note") or ""), client_ip(request))
+                for to in staff_emails(c):
+                    send(c, to, mail.guarantee(cfg.public_url, kind, "staff-claim"))
+                return guarantee.view(c, cfg, p.user)
+        except guarantee.GuaranteeError as e:
+            raise gerr(e) from None
+
+    @app.get("/api/staff/guarantees")
+    def staff_guarantees(p: Principal = Depends(staff_only)):
+        with db.tx() as c:
+            repo.audit(c, p.uid, "guarantee-claims-viewed", "")
+            return {"claims": guarantee.staff_list(c)}
+
+    @app.post("/api/staff/guarantees/{gid}/{decision}")
+    def staff_guarantee_decide(gid: str, decision: str, body: dict = Body(default={}), p: Principal = Depends(staff_only)):
+        amount = body.get("amount")
+        try:
+            amount = None if amount in (None, "") else int(amount)
+        except (TypeError, ValueError):
+            raise err(400, "The amount must be a whole number in paise or cents.", "guarantee") from None
+        try:
+            with db.tx() as c:
+                g = guarantee.decide(c, cfg, p.uid, gid, decision, str(body.get("note") or ""), amount)
+                u = c.one("SELECT email FROM users WHERE id = ?", (g["user_id"],))
+                if u and decision in ("approve", "reject"):
+                    send(c, u["email"], mail.guarantee(cfg.public_url, g["kind"], "approved" if decision == "approve" else "rejected"))
+                return {"claims": guarantee.staff_list(c)}
+        except guarantee.GuaranteeError as e:
+            raise gerr(e) from None
+
     @app.get("/staff", include_in_schema=False)
     def staff_page(request: Request, p: Principal = Depends(staff_only)):
         return html("staff.html", request.state.nonce)
@@ -1686,7 +1745,8 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
         limit = max(1, min(int(limit), 500))
         with db.tx() as c:
             rows = c.all("SELECT a.at, a.kind, a.detail, u.email FROM audit_events a LEFT JOIN users u ON u.id = a.user_id "
-                         + ("WHERE a.kind = ? " if kind else "") + "ORDER BY a.at DESC LIMIT ?", ((kind, limit) if kind else (limit,)))
+                         + ("WHERE (a.kind = ? OR a.kind LIKE ?) " if kind else "") + "ORDER BY a.at DESC LIMIT ?",
+                         ((kind, kind.replace("%", "").replace("_", "") + "-%", limit) if kind else (limit,)))  # "guarantee" also matches "guarantee-…"
             repo.audit(c, p.uid, "admin-audit-read", "", {"kind": kind[:40]})
         return {"events": [dict(r, detail=json.loads(r["detail"] or "{}")) for r in rows]}
 

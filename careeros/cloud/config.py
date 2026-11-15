@@ -57,6 +57,15 @@ class Config:
     concierge_tax_rate: float = 0.0
     concierge_instalments: int = 3
     concierge_attribution_days: int = 180
+    # Money-back guarantees (see guarantee.py): an interview within GUARANTEE_DAYS on Pro or Ultra, and a job
+    # within JOB_GUARANTEE_DAYS with Concierge, or the plan fees paid in that time are refunded.
+    guarantee_enabled: bool = False
+    guarantee_days: int = 60
+    guarantee_min_apps: int = 30
+    guarantee_min_weeks: int = 4
+    guarantee_min_matches: int = 40
+    guarantee_claim_days: int = 30
+    job_guarantee_days: int = 180
     security_email: str = ""  # shown in /.well-known/security.txt; falls back to SUPPORT_EMAIL
     google_client_id: str = ""
     google_client_secret: str = ""
@@ -120,6 +129,13 @@ class Config:
             concierge_tax_rate=float(e("CONCIERGE_TAX_RATE", "0") or 0),
             concierge_instalments=_int("CONCIERGE_INSTALMENTS", 3),
             concierge_attribution_days=_int("CONCIERGE_ATTRIBUTION_DAYS", 180),
+            guarantee_enabled=e("GUARANTEE", "off").strip().lower() in ("on", "1", "true", "yes"),
+            guarantee_days=_int("GUARANTEE_DAYS", 60),
+            guarantee_min_apps=_int("GUARANTEE_MIN_APPLICATIONS", 30),
+            guarantee_min_weeks=_int("GUARANTEE_MIN_WEEKS", 4),
+            guarantee_min_matches=_int("GUARANTEE_MIN_MATCHES", 40),
+            guarantee_claim_days=_int("GUARANTEE_CLAIM_DAYS", 30),
+            job_guarantee_days=_int("JOB_GUARANTEE_DAYS", 180),
             security_email=e("SECURITY_EMAIL", "").strip(),
             google_client_id=e("GOOGLE_CLIENT_ID", "").strip(),
             google_client_secret=e("GOOGLE_CLIENT_SECRET", "").strip(),
@@ -203,6 +219,9 @@ class Config:
                 problems.append("Dodo Payments is half set up: set all of DODO_API_KEY, DODO_WEBHOOK_SECRET and DODO_PRODUCT_PRO, or none.")
         if self.concierge_enabled and not (0 < self.concierge_rate_high <= self.concierge_rate_low <= 8):
             problems.append("CONCIERGE_RATE_LOW and CONCIERGE_RATE_HIGH must be between 0 and 8, with the rate above the band no higher than below it.")
+        if self.guarantee_enabled and not (30 <= self.guarantee_days <= 180 and 1 <= self.guarantee_min_weeks <= self.guarantee_days // 7
+                                           and self.guarantee_min_apps >= 1 and 90 <= self.job_guarantee_days <= 365):
+            problems.append("Guarantee settings look wrong: GUARANTEE_DAYS 30 to 180, GUARANTEE_MIN_WEEKS within it, JOB_GUARANTEE_DAYS 90 to 365.")
         if self.concierge_enabled and any(cc in ("GB", "UK") for cc in self.concierge_countries):
             problems.append("Concierge can't run in the UK: charging job seekers a fee for finding work is prohibited there.")
         if (self.google_client_id or self.google_client_secret) and not (self.google_client_id and self.google_client_secret):

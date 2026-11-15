@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Propelo Autofill",
   "short_name": "Propelo",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Save roles to Propelo from any careers page and fill application forms from your profile. You review every answer and press Submit yourself.",
   "action": {
     "default_title": "Propelo Autofill",

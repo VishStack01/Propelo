@@ -81,6 +81,8 @@ services:
         value: test
       - key: CONCIERGE
         value: "off"
+      - key: GUARANTEE
+        value: "on"
       - key: CONCIERGE_TAX_RATE
         value: "0"
       - key: GOOGLE_CLIENT_ID
@@ -137,6 +139,17 @@ services:
           type: web
           name: careeros-web
           envVarKey: SENTRY_DSN
+      # The worker moves guarantees on (interview found, window ended, claim due) and emails people.
+      - key: GUARANTEE
+        fromService:
+          type: web
+          name: careeros-web
+          envVarKey: GUARANTEE
+      - key: CONCIERGE
+        fromService:
+          type: web
+          name: careeros-web
+          envVarKey: CONCIERGE
       # The worker cancels a replaced subscription after a plan change, so it needs the payment keys too.
       - key: RAZORPAY_KEY_ID
         fromService:

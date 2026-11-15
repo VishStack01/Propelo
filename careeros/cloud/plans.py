@@ -65,6 +65,18 @@ def usd(cents: int) -> str:
     return f"{cents / 100:.2f}"
 
 
+def _guarantee_lines(cfg: Config) -> list[str]:
+    if not cfg.guarantee_enabled:
+        return []
+    return [f"Interview Guarantee: an interview in {cfg.guarantee_days} days, or the plan fees you paid in that time back (rules apply)",
+            f"Optional Concierge in India with the Job Guarantee: an offer in {round(cfg.job_guarantee_days / 30)} months, or your plan fees back"]
+
+
+# The hosted service's settings, used for the website's plan cards (render.yaml turns these on).
+def public_config() -> Config:
+    return Config(guarantee_enabled=True, concierge_enabled=True)
+
+
 def catalog(cfg: Config) -> list[dict]:
     return [
         {"id": "free", "name": "Free", "priceInr": 0, "priceUsd": "0", "aiCredits": cfg.free_ai_credits,
@@ -84,6 +96,7 @@ def catalog(cfg: Config) -> list[dict]:
                       "Auto-apply up to 500 a month (25 a day), with a receipt for each",
                       "Ask Propelo, the copilot, 60 questions a day, and 20 mock interviews a month",
                       "Recruiter emails sent from your Gmail, up to 10 a day, when you turn it on",
+                      *_guarantee_lines(cfg),
                       "Priority support"]},
         {"id": "ultra", "name": "Ultra", "priceInr": cfg.ultra_price_inr, "priceUsd": usd(cfg.ultra_price_usd_cents), "aiCredits": cfg.ultra_ai_credits,
          "matchEveryMinutes": 15, "matchEveryHours": 0.25, "autoApplyPerDay": 60, "autoApplyPerMonth": 1000, "storageMb": max(cfg.user_storage_mb, 100),
@@ -95,7 +108,8 @@ def catalog(cfg: Config) -> list[dict]:
                       "Unlimited copilot questions and mock interviews",
                       "LinkedIn profile review",
                       "Recruiter emails from your Gmail, up to 25 a day, with day 7 and 14 follow-ups",
-                      "Optional Concierge in India, with priority for a talent partner",
+                      *(["Optional Concierge in India with the Job Guarantee, and priority for a talent partner"] if cfg.guarantee_enabled
+                        else ["Optional Concierge in India, with priority for a talent partner"]),
                       "Fastest support"]},
     ]
 

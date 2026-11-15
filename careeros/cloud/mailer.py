@@ -92,3 +92,21 @@ def concierge(public_url: str, what: str) -> tuple[str, str]:
     }
     subject, body = texts[what]
     return subject, body.replace("{u}", public_url)
+
+
+def guarantee(public_url: str, kind: str, what: str) -> tuple[str, str]:
+    """Guarantee notices. The details stay in the app."""
+    name = "Interview Guarantee" if kind == "interview" else "Job Guarantee"
+    texts = {
+        "enrolled": (f"You're enrolled in the {name}", f"Your {name} has started. Your progress and the rules are in the app:\n\n{{u}}/app#guarantee\n"),
+        "met": ("Congratulations", f"You got " + ("an interview" if kind == "interview" else "an offer") + f", so your {name} is complete. Good luck!\n\nPrepare with Propelo: {{u}}/app#guarantee\n"),
+        "claimable": (f"Your {name} refund can be claimed", f"Your {name} window ended without " + ("an interview" if kind == "interview" else "an accepted offer") +
+                      f", and you did your part. Claim your refund in the app within the claim period:\n\n{{u}}/app#guarantee\n"),
+        "void": (f"Your {name} has ended", f"Your {name} stopped because your plan or Concierge case ended before the window did. Details: {{u}}/app#guarantee\n"),
+        "approved": ("Your refund is approved", f"We approved your {name} claim. The refund goes to your original payment method, usually within 5 to 7 working days.\n\n{{u}}/app#guarantee\n"),
+        "rejected": ("About your guarantee claim", f"We couldn't approve your {name} claim. The reason is in the app, and you can reply to this email if you think we got it wrong.\n\n{{u}}/app#guarantee\n"),
+        "staff-claim": ("New guarantee claim", f"Someone claimed a {name} refund. Check it in the workspace: {{u}}/staff#guarantees\n"),
+    }
+    subject, body = texts[what]
+    return subject, body.replace("{u}", public_url)
+

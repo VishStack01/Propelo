@@ -8,12 +8,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from careeros.cloud.config import Config  # noqa: E402
-from careeros.cloud.plans import catalog  # noqa: E402
+from careeros.cloud.plans import catalog, public_config  # noqa: E402
 
 page = ROOT / "website" / "index.html"
 text = page.read_text(encoding="utf-8")
-cat = {p["id"]: p for p in catalog(Config())}
+cat = {p["id"]: p for p in catalog(public_config())}
 for cls, plan in (("", "free"), (" pro", "pro"), (" ultra", "ultra")):
     m = re.search(r'(<article class="price%s reveal">.*?<ul>)(.*?)(</ul>)' % cls, text, re.S)
     items = "".join(f"<li>{html.escape(f, quote=False)}</li>" for f in cat[plan]["features"])

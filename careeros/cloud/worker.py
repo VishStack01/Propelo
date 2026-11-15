@@ -25,7 +25,8 @@ import threading
 import time
 from datetime import timedelta
 
-from . import autosend, concierge, plans, repo
+from . import autosend, concierge, guarantee, plans, repo
+from . import mailer as mail
 from .config import Config
 from .db import Database, now_iso
 from .ingest import IngestError, ingest
@@ -109,6 +110,9 @@ class Worker:
             elif task["kind"] == "alerts":
                 with self.db.tx() as c:
                     paused = concierge.pause_lapsed(c)
+                    moved = guarantee.refresh(c, self.cfg) if self.cfg.guarantee_enabled else []
+                    for to, kind, event in moved:
+                        repo.enqueue(c, "send_email", dict(zip(("subject", "text"), mail.guarantee(self.cfg.public_url, kind, event)), to=to), max_attempts=6)
                 if paused:
                     log.info("concierge: paused %d cases whose plan ended", paused)
                 alerts.send_due(self.db, self.cfg.public_url, log=log.info)

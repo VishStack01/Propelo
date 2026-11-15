@@ -17,6 +17,7 @@ The code is ready. What's left needs accounts, money or a signature that only yo
 | 9 | [Store listings](#9-phone-apps) | 1 to 2 weeks with review | Play and Apple fees | The phone apps |
 | 10 | [Repository settings and launch](#10-repository-and-launch) | 30 min | Free | Discovery |
 | 11 | [Concierge](#11-concierge) | 1 to 2 weeks | Staff time, lawyer | The human-run service |
+| 12 | [Guarantees](#12-guarantees) | 1 day, plus a lawyer's review | Refunds you budget for | The Interview and Job Guarantees |
 
 ## 1. Deploy on Render
 
@@ -113,3 +114,12 @@ Concierge is a person on your team running a candidate's search, paid by a share
 5. **Collecting fees:** instalments use Razorpay payment links. In the Razorpay dashboard, add the `payment_link.paid` event to the same webhook. Keep each offer letter you verify.
 6. **Other countries:** `CONCIERGE_COUNTRIES` widens it, but only after legal advice for each country. The UK prohibits charging work-seekers and is always refused; most EU countries restrict it; many US states license and cap fees.
 7. **Train partners on the rules** shown at the bottom of the workspace: never sign in as the candidate, never automate LinkedIn, send nothing the candidate hasn't approved, write only what's true.
+
+## 12. Guarantees
+
+The Interview Guarantee (Pro and Ultra) and the Job Guarantee (with Concierge) promise a refund of the plan fees, never a job. The blueprint turns them on with `GUARANTEE=on`; set `GUARANTEE=off` on both services to hide them.
+
+1. **Have the lawyer read `/terms#guarantees`** with the Concierge terms. India's consumer authority (CCPA) acts against "100% placement" and "guaranteed job" claims, so every page words these as money-back promises with the conditions next to them. Keep it that way in ads and posts: say "an interview in 60 days or your money back", never "guaranteed job".
+2. **Budget for refunds.** A refund is at most two months of Pro (₹998) or Ultra (₹2,398) for the Interview Guarantee, and six months for the Job Guarantee. Eligibility needs 40 matched roles in the last 30 days, and the activity rule needs 30 applications over 4 weeks, so claims should be rare; watch the claim rate in the first two months and tune `GUARANTEE_MIN_APPLICATIONS`, `GUARANTEE_MIN_WEEKS` and `GUARANTEE_MIN_MATCHES` (existing enrolments keep the rules they started with only in spirit: the app checks the current values, so raise them only with notice).
+3. **Deciding claims.** Claims email every partner and show in `/staff` under Guarantee claims. Before approving, look at the person's pipeline and inbox for an interview, invitation or offer in the window. Approve (the amount defaults to the plan fees for the window and can't exceed it), issue the refund in the Razorpay or Dodo dashboard to the original payment method, then mark it refunded. Answer within 5 working days, as the terms promise.
+4. **Track the promise.** `/api/admin/audit?kind=guarantee` lists enrolments, claims and decisions.
