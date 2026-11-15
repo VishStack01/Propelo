@@ -33,10 +33,29 @@ _FAMILY_RULES = [
     ("AI & Data", r"\b(machine learning|ml|ai|a\.i\.|genai|gen ai|llms?|llmops|mlops|nlp|computer vision|deep learning|"
                   r"data (scientists?|engineers?|analysts?|architects?|platform)|applied scientists?|analytics engineers?)\b"),
     ("Finance & Strategy", r"\b(business analysts?|founder'?s office|chief of staff)\b"),
+    # Fields outside tech and business, matched by their own role nouns before the generic "engineer" rule,
+    # so a civil engineer, a staff nurse or a school teacher lands in their own family.
+    ("Healthcare", r"\b(nurses?|nursing|staff nurse|physicians?|doctors?|medical officers?|surgeons?|pharmacists?|pharmacy (assistants?|technicians?|managers?)|dentists?|dental|"
+                   r"physiotherapists?|therapists?|paramedics?|radiographers?|radiolog(y|ists?)|sonographers?|lab(oratory)? technicians?|phlebotomists?|"
+                   r"midwi(fe|ves)|optometrists?|dietitians?|nutritionists?|caregivers?|care assistants?|patient care|clinical research (associates?|coordinators?)|"
+                   r"medical (coders?|coding|scribes?|transcriptionists?|representatives?)|healthcare assistants?|ward (boys?|assistants?)|icu nurses?)\b"),
+    ("Education", r"\b(teachers?|teaching|tutors?|lecturers?|professors?|faculty|instructors?|educators?|trainers?|school principal|headmaster|"
+                  r"curriculum (developers?|designers?)|academic (counsell?ors?|coordinators?)|school (teachers?|counsell?ors?|coordinators?|administrators?)|librarians?|counsell?ors?|pgt|tgt|prt)\b"),
+    ("Legal", r"\b(lawyers?|(?<!developer )advocates?|attorneys?|paralegals?|legal|counsel|company secretary|cs executive|litigation|contracts? manager)\b"),
+    ("Engineering & Trades", r"\b((mechanical|civil|electrical|electronics|chemical|structural|production|manufacturing|process|maintenance|plant|site|"
+                             r"mining|petroleum|automobile|automotive|hvac|mep|instrumentation|piping|metallurg(y|ical)|aerospace|marine|safety|ehs|hse|"
+                             r"quality control|qc|qa/qc) (engineers?|engineering|technicians?|supervisors?|inspectors?|managers?)|(design|r&d|tooling) engineers?|"
+                             r"draughts(man|person)|drafts(man|person)|foreman|quantity surveyors?|site supervisors?|electricians?|plumbers?|welders?|fitters?|"
+                             r"machinists?|mechanics?|carpenters?|machine operators?|cnc|autocad|solidworks|field service technicians?)\b"),
+    ("Retail & Hospitality", r"\b(retail|store (managers?|associates?|executives?)|cashiers?|showroom|baristas?|chefs?|cooks?|commis|kitchen|(cabin|hotel|f&b) stewards?|"
+                             r"waiters?|waitstaff|housekeeping|front office|front desk|hotel|restaurant|hospitality|guest relations|f&b|food and beverage|"
+                             r"beauticians?|stylists?|salon|spa|cabin crew|flight attendants?|travel (consultants?|agents?))\b"),
+    ("Media & Writing", r"\b(journalists?|reporters?|newsroom|editors?|editorial|video editors?|videographers?|photographers?|animators?|motion graphics|"
+                        r"illustrators?|translators?|interpreters?|voice[- ]over|technical writers?|(?<!content )writers?|anchors?|producers?)\b"),
     ("Software Engineering", r"\b(engineers?|engineering|developers?|programmers?|sde|swe|devops|sre|architects?|qa|sdet|testers?|"
                              r"full[- ]?stack|backend|frontend|front[- ]end|back[- ]end|mobile|android|ios|firmware|embedded|robotics|cyber(security)?|"
                              r"tests? analysts?|qa analysts?|testing|test automation)\b"),
-    ("Finance & Strategy", r"\b(finance|financial|accountants?|accounting|accounts (payable|receivable)|audit(or)?s?|tax|treasury|fp&a|controllers?|payroll|"
+    ("Finance & Strategy", r"\b(finance|financial|accountants?|accounting|accounts (payable|receivable|executives?|officers?|assistants?|clerks?)|audit(or)?s?|tax|treasury|fp&a|controllers?|payroll|"
                            r"banking|loans?|credit|underwriters?|fraud|kyc|aml|pricing|strategy|strategists?|investment|investor relations|"
                            r"equity|trading|quant(itative)?|risk|compliance|legal|counsel|real estate)\b"),
     ("Marketing & Growth", r"\b(marketing|marketers?|growth|seo|sem|content|copywriters?|brand|social media|community (manager|lead)s?|"
@@ -46,7 +65,9 @@ _FAMILY_RULES = [
     ("Product & Design", r"\b(program managers?|pmo|creative|design)\b"),
     ("Operations & People", r"\b(operations|operational|supply chain|logistics|procurement|customer support|customer service|support|helpdesk|help desk|"
                             r"service desk|people (partner|operations)|hr|human resources|recruiters?|recruiting|talent acquisition|office managers?|"
-                            r"admin(istrator)?|executive assistants?|process associates?)\b"),
+                            r"admin(istrator)?|executive assistants?|process associates?|receptionists?|front office executives?|back office|data entry|"
+                            r"office (assistants?|executives?|boys?)|warehouse|pickers?|packers?|forklift|drivers?|delivery (executives?|associates?|partners?|boys?)|"
+                            r"riders?|couriers?|dispatch|security guards?|facility|facilities|field (executives?|officers?)|telecallers?|tele[- ]?callers?|call cent(er|re)|bpo|voice process)\b"),
     ("AI & Data", r"\b(data|analytics|analysts?|scientists?|research(ers?)?|intelligence|bi)\b"),
     ("Software Engineering", r"\b(automation|security|quality|tests?|testing|sap|erp|salesforce|servicenow|systems?|infrastructure|it|technical|platform)\b"),
 ]
@@ -102,10 +123,21 @@ def categories(title: str) -> list[str]:
     return [name for name, rx in CATEGORIES if re.search(rx, title or "", re.I)][:2]
 
 
+# Families for fields outside tech. A title that also names software, data or chip work stays in the tech
+# families ("Senior Software Engineer, Retail", "ASIC Design Engineer", "Developer Advocate").
+NON_TECH = {"Healthcare", "Education", "Legal", "Engineering & Trades", "Retail & Hospitality", "Media & Writing"}
+_TECH_GUARD = re.compile(r"\b(software|developer|devops|sre|data|backend|back[- ]end|frontend|front[- ]end|full[- ]?stack|cloud|platform|"
+                         r"machine learning|ml|ai|security|firmware|embedded|asic|fpga|rtl|vlsi|soc|silicon|chip|cpu|gpu|analog|logic|"
+                         r"physical design|design verification|verification|layout|sde|swe|qa|test)\b", re.I)
+
+
 def family(title: str) -> str:
     """The job family for a title (Simplify-style top-level categories), or "Other"."""
     t = title or ""
+    tech = bool(_TECH_GUARD.search(t))
     for name, rx in _FAMILY_RULES:
+        if tech and name in NON_TECH:
+            continue
         if re.search(rx, t, re.I):
             return name
     if _DATA_ENGINEERING.search(t):

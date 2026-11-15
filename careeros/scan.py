@@ -4,7 +4,7 @@ Sources: every mapped company board (feed/boards.json) plus the remote job
 boards with public feeds (sources/aggregators.py).
 
 Output (in `out_dir`):
-  india.jsonl.gz   one line per open tech role in India or remote, with
+  india.jsonl.gz   one line per open role in India or remote (every job family), with
                    pre-extracted facts (experience, remote scope, pay, closed)
   full.jsonl.gz    id + the full posting text, for the job board
   summary.json     counts by hiring system and region, errors
@@ -53,7 +53,10 @@ BUSINESS = re.compile(
 
 
 def wanted_title(title: str) -> bool:
-    return bool(TECH.search(title or "") or BUSINESS.search(title or ""))
+    """Every role we can name a family for: tech, business, and fields like healthcare, education,
+    law, engineering trades, retail and hospitality, media. Titles no rule recognises are left out."""
+    t = title or ""
+    return bool(TECH.search(t) or BUSINESS.search(t)) or tags.family(t) != "Other"
 
 
 def _ts(s: str | None) -> float:

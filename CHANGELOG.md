@@ -2,6 +2,19 @@
 
 All notable changes to CareerOS. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [semantic versioning](https://semver.org/).
 
+## [2.2.0] - 2026-11-16
+
+### Added
+- **Every field, not only tech.** New job families: Engineering & Trades (civil, mechanical, electrical, plant and site roles, electricians, technicians), Healthcare, Education, Legal, Retail & Hospitality, and Media & Writing; Operations & People now covers front office, telecalling, BPO, warehouse and delivery roles. The hourly scan keeps every role it can name a family for, and company discovery keeps boards that list any of them, not only developer roles. Titles that name software, data or chip work stay in the tech families.
+- **Every level.** Settings take your years of experience (0 for freshers) instead of checkboxes that stopped at "3+ years". Roles may ask for a year more early on and two more later; from 3 years on, internships and entry-level titles are hidden.
+- **"Is this job real?"** A free scam check at `check.html` on the website: paste a post, WhatsApp message or email and see the warning signs with the words that triggered them. No sign-up, and nothing leaves the browser. The same check runs on every job added with New application, and on the home screen a card invites people to add jobs they found anywhere.
+- Scam rules for task scams (paid likes and reviews), "refundable" deposits, buying equipment before starting, and home-based data entry. `scripts/sync_scam_rules.py` copies the rules into the dashboard and the website; tests keep all three identical.
+
+### Fixed
+- Typed target roles were added to the built-in tech keywords, so someone who typed "nurse" was shown hundreds of software roles. Typed roles now decide on their own.
+- "Staff Nurse" and "Staff Accountant" were read as senior titles, like "Staff Engineer".
+- New accounts started with fresher settings and south India locations. Experience now starts open until you enter your years.
+
 ## [2.1.0] - 2026-11-15
 
 ### Added

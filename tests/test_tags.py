@@ -36,16 +36,18 @@ from careeros.scan import wanted_title
     ("Market Research Associate", "Marketing & Growth"),
     ("Scientist III, Protein Biology", "AI & Data"),
     ("Solutions Engineer", "Sales & Accounts"),
-    ("Chef de Partie", "Other"),
+    ("Chef de Partie", "Retail & Hospitality"),
+    ("Volunteer, Weekend Events", "Other"),
 ])
 def test_job_family(title, family):
     assert _tags.family(title) == family
 
 
-def test_scan_keeps_business_roles_but_not_unrelated_ones():
-    for t in ["Growth Marketing Manager", "Account Executive", "Business Analyst", "Recruiter", "Backend Engineer", "Product Designer"]:
+def test_scan_keeps_every_named_role_but_not_unknown_ones():
+    for t in ["Growth Marketing Manager", "Account Executive", "Business Analyst", "Recruiter", "Backend Engineer", "Product Designer",
+              "Chef de Partie", "Delivery Driver", "Warehouse Associate", "Staff Nurse"]:
         assert wanted_title(t), t
-    for t in ["Chef de Partie", "Delivery Driver", "Warehouse Associate"]:
+    for t in ["Volunteer, Weekend Events", "Open application"]:
         assert not wanted_title(t), t
 
 

@@ -138,21 +138,27 @@ def _india_or_remote(loc: str) -> bool:
 
 
 # Deep sweep: boards from the open ATS company inventories are kept only when they
-# list a developer-side role in India or open to it. A bare "Remote" usually means
+# list a role in one of our job families (every field, not only developers) in India or open to it. A bare "Remote" usually means
 # remote in the company's own country, so it doesn't count on its own.
 DEV_TITLE = re.compile(r"engineer|developer|\bsde\b|\bswe\b|machine learning|\bml\b|\bai\b|data scientist|devops|\bsre\b|"
                        r"full[ -]?stack|back[ -]?end|front[ -]?end|mobile|android|\bios\b|forward deployed|programmer", re.I)
 _OPEN_TO_INDIA = re.compile(r"\b(india|anywhere|worldwide|global|apac|asia)\b", re.I)
 
 
+def _wanted(title: str) -> bool:
+    """A role in any job family we match (see scan.wanted_title), not only developer roles."""
+    from .scan import wanted_title
+    return wanted_title(title)
+
+
 def deep_fit(found: dict) -> int:
-    """How many developer-side roles on this board are in India or open to it."""
+    """How many roles in a job family we match are on this board, in India or open to it."""
     locs, titles = found.get("locations", []), found.get("titles", [])
     extra = found.get("extra") or [""] * len(locs)
     n = 0
     for i, title in enumerate(titles):
         loc = (locs[i] if i < len(locs) else "") + " " + (extra[i] if i < len(extra) else "")
-        if DEV_TITLE.search(title or "") and (geo.classify(loc)["india"] or _OPEN_TO_INDIA.search(loc)):
+        if _wanted(title or "") and (geo.classify(loc)["india"] or _OPEN_TO_INDIA.search(loc)):
             n += 1
     return n
 

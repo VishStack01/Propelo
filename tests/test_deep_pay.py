@@ -96,7 +96,7 @@ def test_deep_list_skips_known_boards_and_keeps_its_own(tmp_path):
     assert deep.stats(cache) == {"checked": 0, "mapped": 1}
 
 
-def test_deep_boards_need_developer_roles_open_to_india():
+def test_deep_boards_need_named_roles_open_to_india():
     co = {"name": "Zeta Labs", "category": "deep"}
     india = {"board_name": "Something Else", "locations": ["Bengaluru, Karnataka, India", "New York"], "titles": ["Backend Engineer", "Account Executive"]}
     assert discover.accept(co, india) == (True, "deep:1")  # brand-name mismatch doesn't matter: the inventory named the board
@@ -107,7 +107,9 @@ def test_deep_boards_need_developer_roles_open_to_india():
     ashby_secondary = {"locations": ["London"], "titles": ["ML Engineer"], "extra": ["Bengaluru, India"]}
     assert discover.accept(co, ashby_secondary)[0]
     sales = {"locations": ["Bengaluru, India"], "titles": ["Sales Manager"]}
-    assert discover.accept(co, sales) == (False, "no-india-dev-roles")
+    assert discover.accept(co, sales) == (True, "deep:1")  # every job family counts now, not only developer roles
+    unknown = {"locations": ["Bengaluru, India"], "titles": ["Open application"]}
+    assert discover.accept(co, unknown) == (False, "no-india-dev-roles")
     assert discover.accept(co, {"locations": [], "titles": []}) == (False, "empty")
 
 

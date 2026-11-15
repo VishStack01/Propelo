@@ -46,6 +46,17 @@ def settings_from_dashboard(doc: dict) -> Settings:
     s = Settings()
     if doc.get("maxRequiredYears") is not None:
         s.max_required_years = float(doc["maxRequiredYears"])
+    years = doc.get("yearsExperience")
+    if years not in (None, ""):
+        try:
+            y = max(0.0, min(50.0, float(years)))
+        except (TypeError, ValueError):
+            y = None
+        if y is not None:
+            # Roles may ask for a little more than you have: a year of stretch early on, two later.
+            s.experience_years = y
+            s.max_required_years = y + (1 if y < 3 else 2)
+            s.allow_internships = y < 2
     if doc.get("maxPostingAgeDays"):
         s.max_posting_age_days = int(doc["maxPostingAgeDays"])
     floor = doc.get("salaryFloorLpa")
@@ -57,7 +68,9 @@ def settings_from_dashboard(doc: dict) -> Settings:
         s.families = fams
         s.role_keywords = [r.lower() for r in doc.get("targetRoles") or []]
     elif doc.get("targetRoles"):
-        s.role_keywords = [r.lower() for r in doc["targetRoles"]] + s.role_keywords
+        # The roles typed in decide on their own. (Adding the built-in tech keywords here showed a nurse
+        # who typed "nurse" hundreds of software roles.)
+        s.role_keywords = [r.lower() for r in doc["targetRoles"] if str(r).strip()] or s.role_keywords
     if doc.get("titleExclude"):
         s.title_exclude = [t.strip().lower() for t in doc["titleExclude"] if str(t).strip()]
     if doc.get("dealbreakers"):
@@ -230,6 +243,9 @@ def match(records: list[dict], settings: Settings, known: list[tuple[str, dict]]
                 "Experience": "Raising your experience limit.", "Posted": "A wider posting window.",
                 "Location": "Allowing this location or work mode.", "Pay": "A lower pay floor.", "Seniority": "Allowing senior titles.",
             }.get(failed[0], "")
+            if failed[0] == "Seniority" and settings.experience_years is not None and any(
+                    c.gate == "Seniority" and c.value.startswith("An entry-level") for c in d.checks):
+                continue  # too junior for them: not worth showing as a near miss
             if failed[0] == "Pay" and settings.require_stated_pay and not (r.get("facts") or {}).get("salaryHigh"):
                 doc["skip"]["wouldChange"] = "Allowing roles that don't state pay."
             skipped.append((r["id"], doc))

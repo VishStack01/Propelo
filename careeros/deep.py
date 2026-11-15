@@ -10,8 +10,8 @@ such boards. This command downloads that inventory, drops the boards Propelo
 already knows, and writes the rest as a company list for `careeros discover`.
 
 `discover` then checks each board once (about 400 an hour, so the first pass
-takes about two days) and keeps it only when it lists a developer-side role in
-India or open to people in India. The others are looked at again after three
+takes about two days) and keeps it only when it lists a role in one of our job
+families (every field, not only developers) in India or open to people in India. The others are looked at again after three
 weeks. Kept boards join the hourly scan like any other company board, so their
 roles go through the same checks, and Ashby, Lever and Greenhouse boards bring
 their published pay ranges with them.

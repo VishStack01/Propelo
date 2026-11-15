@@ -2297,10 +2297,17 @@ const regionRank = j => (REGION[j.region] || [3])[0];
 const byPriority = (a, b) => regionRank(a) - regionRank(b) || byFresh(a, b);
 const autoMode = () => settings().approvalMode === 'auto-when-clear';
 const EXPERIENCE = [['Fresher',0],['1+ years',1],['2+ years',2],['3+ years',3]];
+/* Years of experience: saved as a number; older settings only had the experience checkboxes. */
+function yearsOf(s){
+  if (s.yearsExperience !== undefined && s.yearsExperience !== '' && s.yearsExperience !== null) return Number(s.yearsExperience);
+  const m = Number(s.maxRequiredYears);
+  return arr(s.experienceLevels).length && m < 99 ? Math.max(0, m - 1) : '';
+}
+const stretchOf = y => y + (y < 3 ? 1 : 2);
 const AGES = [[1,'24 hours'],[3,'3 days'],[7,'7 days'],[14,'14 days'],[25,'25 days, if still open'],[30,'30 days, if still open']];
 /* Job families, the same list the public board and the scan use (careeros/tags.py). */
-const FAMILIES = ['Software Engineering','AI & Data','Product & Design','Marketing & Growth','Sales & Accounts','Finance & Strategy','Operations & People'];
-const DEFAULTS = {homeCountry: HOME_GUESS, places: '', remoteOk: true, targetRoles: [], families: [], locations: ['South India (any work mode)','Rest of India (remote only)','Remote worldwide (first priority)'], dailyCap: 8, minFit: 'good', salaryFloorLpa: '', noticeDays: '', dealbreakers: '', approvalMode: 'auto-when-clear', schedule: '', experienceLevels: ['Fresher','1+ years'], maxRequiredYears: 1, maxPostingAgeDays: 25};
+const FAMILIES = ['Software Engineering','AI & Data','Product & Design','Marketing & Growth','Sales & Accounts','Finance & Strategy','Operations & People','Engineering & Trades','Healthcare','Education','Legal','Retail & Hospitality','Media & Writing'];
+const DEFAULTS = {homeCountry: HOME_GUESS, places: '', remoteOk: true, targetRoles: [], families: [], locations: ['South India (any work mode)','Rest of India (remote only)','Remote worldwide (first priority)'], dailyCap: 8, minFit: 'good', salaryFloorLpa: '', noticeDays: '', dealbreakers: '', approvalMode: 'auto-when-clear', schedule: '', yearsExperience: '', experienceLevels: [], maxRequiredYears: 99, maxPostingAgeDays: 25};
 
 /* ---------- state ---------- */
 const state = {
@@ -2338,7 +2345,8 @@ const enterCls = i => state.filterAnim && state.loaded.jobs ? ` enter" style="--
 function listJoin(xs){ xs = xs.filter(Boolean); if (xs.length < 2) return xs.join(''); return xs.slice(0, -1).join(', ') + ' and ' + xs[xs.length - 1]; }
 function filterSummary(){
   const s = settings();
-  const exp = arr(s.experienceLevels).length ? listJoin(arr(s.experienceLevels).map(x => x === 'Fresher' ? 'fresher' : x)) : 'any experience';
+  const y = yearsOf(s);
+  const exp = y === '' ? 'any experience' : y === 0 ? 'fresher roles and roles asking up to 1 year' : `roles asking up to ${stretchOf(y)} years (you have ${y})`;
   const home = String(s.homeCountry || 'IN');
   const homeName = (HOMES.find(h => h[0] === home) || [home, home])[1];
   const locs = home === 'IN' ? arr(s.locations).map(l => LOC_SHORT[l] || l)
@@ -2731,7 +2739,7 @@ function renderFresh(){
       ${j.applyTo ? `<p class="muted applyto">Apply: ${esc(j.applyTo)}</p>` : ''}
       <div class="jact">${state.canWrite && state.db ? `<button class="btn sm ghost" data-act="save-job" data-id="${esc(j.id)}">${j.saved ? 'Unsave' : 'Save'}</button><button class="btn sm ghost" data-act="dismiss" data-id="${esc(j.id)}">Dismiss</button><button class="btn sm" data-act="start-app" data-id="${esc(j.id)}">Start application</button>` : ''}</div>
     </div>`).join('');
-  const none = state.loaded.jobs ? empty(state.win === 'day' ? 'Nothing new in the last 24 hours' : 'No fresh roles yet', state.win === 'day' ? 'Switch to Last 7 days to see the rest of the week.' : `The next run looks again. Roles that fail a filter go to Skipped with the reason.`) : empty('Loading roles', 'Reading your pipeline.');
+  const none = state.loaded.jobs ? empty(state.win === 'day' ? 'Nothing new in the last 24 hours' : 'No fresh roles yet', state.win === 'day' ? 'Switch to Last 7 days to see the rest of the week.' : `The next run looks again. Roles that fail a filter go to Skipped with the reason. Our feed comes from company career pages and is strongest for tech and business roles; for other fields, add jobs you find anywhere with New application.`) : empty('Loading roles', 'Reading your pipeline.');
   return `<div class="sh"><h2>${esc(title)}</h2><p>Remote worldwide roles first, then remote in India, then south India. ${brainReady() ? 'Scored on the next run.' : 'Fit ratings appear once your Career Brain is built.'}</p></div>${chips}<div class="panel">${cards ? `<div class="cards">${cards}</div>${more}` : none}</div>`;
 }
 
@@ -3345,7 +3353,7 @@ function renderSetup(){
     ${missing.length ? `<p class="plus">Still needed</p><ul class="dots">${missing.map(m => `<li><span style="white-space:normal">${esc(m)}</span></li>`).join('')}</ul>` : ''}
     ${b.updatedAt ? `<p class="small">Updated ${esc(when(b.updatedAt))}</p>` : ''}</div></article>`;
   const form = `<form id="settings-form" class="formgrid" novalidate>
-    <div class="full" role="group" aria-labelledby="s-exp-l"><span id="s-exp-l" class="groupl">Experience the role may ask for</span><div class="checks">${EXPERIENCE.map(([l], i) => `<label for="s-exp-${i}"><input type="checkbox" id="s-exp-${i}" value="${esc(l)}" ${arr(s.experienceLevels).includes(l) ? 'checked' : ''}${ro}>${esc(l)}</label>`).join('')}</div></div>
+    <label class="f" for="s-years">Your years of experience <small>0 if you're a fresher. Roles may ask for a year or two more; internships and junior titles are hidden from 3 years on.</small><input type="number" id="s-years" min="0" max="50" step="0.5" inputmode="decimal" value="${esc(yearsOf(s))}" placeholder="Any"${ro}></label>
     <label class="f" for="s-age">Posted within<select id="s-age"${ro}>${AGES.map(([d, l]) => `<option value="${d}"${Number(s.maxPostingAgeDays) === d ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
     <label class="f" for="s-cap">Applications prepared per day<input type="number" id="s-cap" min="1" max="${capMax()}" value="${esc(s.dailyCap)}"${ro}></label>
     ${cloud() ? `<label class="f" for="s-alerts">Job alerts by email <small>New roles that pass your filters</small><select id="s-alerts"${ro}>${[['off','Off'],['daily','Daily'],['weekly','Weekly']].map(([v, l]) => `<option value="${v}"${(s.alerts || 'off') === v ? ' selected' : ''}>${l}</option>`).join('')}</select></label>` : ''}
@@ -3396,7 +3404,7 @@ function renderFoot(){
 
 /* ---------- Drawer ---------- */
 /* ---------- Scam check: the same rules as careeros/data/scam_rules.json (a test keeps them identical) ---------- */
-const SCAM_RULES = [{"id": "fee", "level": "high", "pattern": "\\b(registration|training|security|processing|joining|onboarding|kit|verification|interview)\\s+(fee|fees|deposit|charges?|amount)\\b", "why": "Asks you to pay a fee or deposit. Real employers never charge to hire you."}, {"id": "pay-to-start", "level": "high", "pattern": "\\b(pay|deposit|transfer)\\s+(?:rs\\.?|inr|₹|\\$)?\\s?\\d[\\d,]*\\s*(?:/-)?\\s*(?:to|for|as|before)\\b", "why": "Asks for money before you start."}, {"id": "ids-upfront", "level": "high", "pattern": "\\b(send|share|submit|upload)\\b[^.\\n]{0,60}\\b(aadhaa?r|pan card|bank (account|details|statement)|otp|cvv|atm pin|upi pin)\\b", "why": "Wants ID numbers, bank details or codes before any interview."}, {"id": "chat-only", "level": "caution", "pattern": "\\b(whats\\s?app|telegram)\\b[^.\\n]{0,40}\\b(only|to apply|for (the )?interview|hr|recruiter)\\b|\\b(apply|contact|message|ping)\\b[^.\\n]{0,30}\\b(on|via|at)\\s+(whats\\s?app|telegram)\\b", "why": "Recruiting happens only over WhatsApp or Telegram."}, {"id": "free-mail", "level": "caution", "pattern": "\\b[a-z0-9._%+-]+@(gmail|yahoo|outlook|hotmail|rediffmail|ymail|proton(mail)?)\\.(com|in|me)\\b", "why": "The contact address is a free personal email, not the company's."}, {"id": "no-interview", "level": "caution", "pattern": "\\b(no interview|without (any )?interview|direct (joining|selection)|instant (joining|selection)|spot (offer|selection)|100% (job|placement) guarantee(d)?|guaranteed (job|placement))\\b", "why": "Promises a job without an interview or with a guarantee."}, {"id": "easy-money", "level": "caution", "pattern": "\\b(earn|make|income of)\\b[^.\\n]{0,25}(₹|rs\\.?|inr|\\$)\\s?\\d[\\d,]*\\s*(per|a|/)\\s*(day|hour|week)\\b|\\b(part[- ]time|home[- ]based)\\b[^.\\n]{0,40}\\b(typing|data entry|like|review|liking)\\b[^.\\n]{0,40}\\b(earn|income|payment)\\b", "why": "Pay quoted per day for simple tasks, a common pattern in task scams."}, {"id": "shortener", "level": "caution", "pattern": "https?://(bit\\.ly|tinyurl\\.com|t\\.ly|cutt\\.ly|rb\\.gy|shorturl\\.at|is\\.gd|ow\\.ly)/", "why": "The apply link is hidden behind a link shortener."}, {"id": "form-site", "level": "caution", "pattern": "https?://(forms\\.gle|docs\\.google\\.com/forms|[a-z0-9-]+\\.wixsite\\.com|sites\\.google\\.com|[a-z0-9-]+\\.blogspot\\.com|[a-z0-9-]+\\.weebly\\.com|form\\.jotform\\.com)", "why": "Applications go to a free form or site builder instead of a careers page."}, {"id": "urgency", "level": "caution", "pattern": "\\b(urgent(ly)? hiring|limited (seats|slots)|only \\d+ (seats|slots) left|apply (within|in) \\d+ (hours|hrs|minutes))\\b", "why": "Pushes you to act within hours."}, {"id": "crypto-pay", "level": "caution", "pattern": "\\b(paid|salary|payment)\\b[^.\\n]{0,30}\\b(in )?(usdt|bitcoin|btc|crypto|gift cards?)\\b", "why": "Offers pay in crypto or gift cards."}];
+const SCAM_RULES = [{"id": "fee", "level": "high", "pattern": "\\b(registration|training|security|processing|joining|onboarding|kit|verification|interview)\\s+(fee|fees|deposit|charges?|amount)\\b", "why": "Asks you to pay a fee or deposit. Real employers never charge to hire you."}, {"id": "pay-to-start", "level": "high", "pattern": "\\b(pay|deposit|transfer)\\s+(?:rs\\.?|inr|₹|\\$)?\\s?\\d[\\d,]*\\s*(?:/-)?\\s*(?:to|for|as|before)\\b", "why": "Asks for money before you start."}, {"id": "ids-upfront", "level": "high", "pattern": "\\b(send|share|submit|upload)\\b[^.\\n]{0,60}\\b(aadhaa?r|pan card|bank (account|details|statement)|otp|cvv|atm pin|upi pin)\\b", "why": "Wants ID numbers, bank details or codes before any interview."}, {"id": "chat-only", "level": "caution", "pattern": "\\b(whats\\s?app|telegram)\\b[^.\\n]{0,40}\\b(only|to apply|for (the )?interview|hr|recruiter)\\b|\\b(apply|contact|message|ping)\\b[^.\\n]{0,30}\\b(on|via|at)\\s+(whats\\s?app|telegram)\\b", "why": "Recruiting happens only over WhatsApp or Telegram."}, {"id": "free-mail", "level": "caution", "pattern": "\\b[a-z0-9._%+-]+@(gmail|yahoo|outlook|hotmail|rediffmail|ymail|proton(mail)?)\\.(com|in|me)\\b", "why": "The contact address is a free personal email, not the company's."}, {"id": "no-interview", "level": "caution", "pattern": "\\b(no interview|without (any )?interview|direct (joining|selection)|instant (joining|selection)|spot (offer|selection)|100% (job|placement) guarantee(d)?|guaranteed (job|placement))\\b", "why": "Promises a job without an interview or with a guarantee."}, {"id": "easy-money", "level": "caution", "pattern": "\\b(earn|make|income of)\\b[^.\\n]{0,25}(₹|rs\\.?|inr|\\$)\\s?\\d[\\d,]*\\s*(per|a|/)\\s*(day|hour|week)\\b|\\b(part[- ]time|home[- ]based)\\b[^.\\n]{0,40}\\b(typing|data entry|like|review|liking)\\b[^.\\n]{0,40}\\b(earn|income|payment)\\b", "why": "Pay quoted per day for simple tasks, a common pattern in task scams."}, {"id": "shortener", "level": "caution", "pattern": "https?://(bit\\.ly|tinyurl\\.com|t\\.ly|cutt\\.ly|rb\\.gy|shorturl\\.at|is\\.gd|ow\\.ly)/", "why": "The apply link is hidden behind a link shortener."}, {"id": "form-site", "level": "caution", "pattern": "https?://(forms\\.gle|docs\\.google\\.com/forms|[a-z0-9-]+\\.wixsite\\.com|sites\\.google\\.com|[a-z0-9-]+\\.blogspot\\.com|[a-z0-9-]+\\.weebly\\.com|form\\.jotform\\.com)", "why": "Applications go to a free form or site builder instead of a careers page."}, {"id": "urgency", "level": "caution", "pattern": "\\b(urgent(ly)? hiring|limited (seats|slots)|only \\d+ (seats|slots) left|apply (within|in) \\d+ (hours|hrs|minutes))\\b", "why": "Pushes you to act within hours."}, {"id": "crypto-pay", "level": "caution", "pattern": "\\b(paid|salary|payment)\\b[^.\\n]{0,30}\\b(in )?(usdt|bitcoin|btc|crypto|gift cards?)\\b", "why": "Offers pay in crypto or gift cards."}, {"id": "task-scam", "level": "high", "pattern": "\\b(like|rate|review|subscribe to|follow)\\b[^.\\n]{0,30}\\b(youtube|videos?|hotels?|products?|google maps|restaurants?|instagram)\\b[^.\\n]{0,60}\\b(earn|paid|commission|income|per task)\\b|\\b(prepaid|merchant|vip|premium) tasks?\\b", "why": "Pays you to like videos, rate hotels or do \"tasks\". This is a known scam: small payouts first, then you're asked to deposit money."}, {"id": "refundable", "level": "high", "pattern": "\\brefundable\\b[^.\\n]{0,30}\\b(deposit|amount|fee|charges?|payment)\\b", "why": "Mentions a \"refundable\" deposit or fee. Employers don't take deposits, refundable or not."}, {"id": "buy-kit", "level": "high", "pattern": "\\b(buy|purchase|pay for)\\b[^.\\n]{0,30}\\b(laptop|equipment|starter kit|software licen[cs]e|training (material|course)|uniform)\\b[^.\\n]{0,40}\\b(before|to (start|join|begin))\\b", "why": "Asks you to buy equipment or training before you start. Employers provide what the job needs."}, {"id": "data-entry", "level": "caution", "pattern": "\\b(data entry|typing|form filling|copy[- ]paste|captcha)\\b[^.\\n]{0,40}\\b(work from home|wfh|home[- ]based|part[- ]time|daily payment)\\b", "why": "Home-based data entry or typing work with quick pay is a common scam format. Check the company before sharing anything."}];
 const SCAM_RX = SCAM_RULES.map(r => Object.assign({rx: new RegExp(r.pattern, 'i')}, r));
 function scamCheck(j){
   if (j && j.risk && j.risk.level) return j.risk;
@@ -3406,6 +3414,13 @@ function scamCheck(j){
   let level = reasons.some(r => r.level === 'high') ? 'high' : reasons.length ? 'caution' : 'ok';
   if (level === 'caution' && reasons.length >= 3) level = 'high';
   return {level, reasons};
+}
+/* "Is this job real?": the scam check on anything pasted in, with a plain answer when nothing was found. */
+function realCheck(text, url){
+  if (!String(text || '').trim()) return '';
+  const r = scamCheck({jd: text, url: url || ''});
+  if (r.level === 'ok') return `<section class="card realok"><h2>Is this job real?</h2><p class="muted" style="margin-top:6px">No warning signs found: no fee or deposit, no chat-only hiring, no payment in crypto, no requests for your ID or bank details. That doesn't prove the job is real, so apply on the company's own website, and never pay anyone to get a job.</p></section>`;
+  return `<section class="card"><h2>Is this job real?</h2><div style="margin-top:12px">${riskHtml({risk: r})}</div></section>`;
 }
 function riskHtml(j){
   const r = scamCheck(j);
@@ -4155,6 +4170,7 @@ function renderHome(){
   return `<div class="phead"><h1><span>${esc(greet)}</span></h1><button class="btn solid" data-act="tab" data-tab="new">${NI.plus}New application</button></div>
   <p class="lede">${esc(say)}</p>${nudges.length ? `<p class="nudges">${nudges.join('<span aria-hidden="true">·</span>')}</p>` : ''}
   ${todayBlock(all, f, weeks)}
+  <section class="card anyjob"><div class="chead"><div><h2>Found a job somewhere else?</h2><p class="muted">Any role, from any site, a WhatsApp forward or an email. Paste it and Propelo checks whether it looks real, shows how you fit, and writes a truthful resume and cover letter for it.</p></div><button class="btn sm" data-act="tab" data-tab="new">Check a job</button></div></section>
   ${autoStatus().key !== 'ready' && autoStatus().key !== 'off' ? `<div style="margin-top:18px">${renderAutoMini()}</div>` : ''}
   <div class="showing"><span class="muted">Showing</span><div class="pseg" role="group" aria-label="Period">${rng}</div></div>
   <section class="card"><div class="chead"><div><h2>Your funnel</h2><p class="muted">How far each application has got, and where the ones that stopped are now.</p></div>
@@ -4537,7 +4553,7 @@ function renderTools(){
 /* ---------- New application ---------- */
 function renderNew(){
   const n = state.na, parsed = n.parsed, busy = n.busy, tone = n.tone || 'warm';
-  const step1 = `<section class="card"><h2>The job posting</h2><p class="muted" style="margin:6px 0 14px">Paste the whole posting. ${aiReady() ? 'Claude reads the details and checks each requirement against your profile.' : 'The details and requirements are read from the text.'}</p>
+  const step1 = `<section class="card"><h2>The job posting</h2><p class="muted" style="margin:6px 0 14px">Paste the whole posting, from any job site, a WhatsApp or Telegram message, or an email. It works for any role. ${aiReady() ? 'Claude reads the details and checks each requirement against your profile.' : 'The details and requirements are read from the text.'}</p>
     <label class="f" for="na-url">Link to the posting <small>Optional</small><input id="na-url" type="url" data-na="url" value="${esc(n.url || '')}" placeholder="https://"></label>
     <label class="f" for="na-text" style="margin-top:14px">Posting text<textarea id="na-text" data-na="text" rows="10" placeholder="Paste the job description here">${esc(n.text || '')}</textarea></label>
     <div class="ract" style="justify-content:flex-start;margin-top:14px"><button class="btn solid" data-act="na-read"${busy ? ' disabled' : ''}>${busy === 'read' ? '<span class="spin" aria-hidden="true"></span>Reading…' : (parsed ? 'Read it again' : 'Read posting')}</button>${parsed ? '<button class="btn ghost" data-act="na-reset">Start over</button>' : ''}</div></section>`;
@@ -4545,6 +4561,7 @@ function renderNew(){
   const f = (k, l, type) => `<label class="f" for="na-${k}">${l}<input id="na-${k}" type="${type || 'text'}" data-na="parsed.${k}" value="${esc(parsed[k] || '')}"></label>`;
   return `<div class="phead"><h1>${NI.case}<span>New application</span></h1></div><p class="lede">Check the details, see how you match, then create it.</p><div class="narrow">${step1}
     <section class="card"><h2>The role</h2><div class="formgrid" style="margin-top:14px">${f('company', 'Company')}${f('title', 'Role')}${f('location', 'Location')}${f('workMode', 'Work mode')}${f('salary', 'Pay')}${f('applyBy', 'Apply by', 'date')}${f('experience', 'Experience asked')}</div>${parsed.summary ? `<p class="muted" style="margin-top:14px">${esc(parsed.summary)}</p>` : ''}</section>
+    ${realCheck(n.text, n.url)}
     ${hasProfile() && n.text ? scoreCard({jd: n.text}, prof(), {match: arr(n.match)}) : ''}
     ${matchList(arr(n.match))}
     <section class="card"><h2>Tailoring</h2><span class="groupl" style="margin-top:14px;display:block">Cover letter tone</span><div class="toneRow"><div class="pseg" role="group" aria-label="Tone">${TONES.map(([v, l]) => `<button type="button" data-act="na-tone" data-v="${v}" aria-pressed="${tone === v}">${l}</button>`).join('')}</div><span class="muted">${esc((TONES.find(t => t[0] === tone) || TONES[0])[2])}</span></div>
@@ -5252,7 +5269,7 @@ document.addEventListener('submit', e => {
   }
   if (e.target.id !== 'settings-form') return;
   e.preventDefault(); if (!state.db) return;
-  const exp = EXPERIENCE.filter((x, i) => $('#s-exp-' + i).checked);
+  const yRaw = $('#s-years').value.trim(), yNum = yRaw === '' ? '' : Math.max(0, Math.min(50, Number(yRaw) || 0));
   const roles = $('#s-roles').value.split(',').map(s => s.trim()).filter(Boolean);
   const locs = LOCATIONS.filter((l, i) => $('#s-loc-' + i).checked);
   const home = $('#s-home') ? $('#s-home').value : 'IN';
@@ -5261,7 +5278,7 @@ document.addEventListener('submit', e => {
   const usdFloor = $('#s-sal-usd') ? $('#s-sal-usd').value.trim() : null;
   const sal = usdFloor !== null ? (usdFloor === '' ? '' : String(Math.round(Number(usdFloor) * USD_INR / 1000) / 100)) : $('#s-sal').value.trim();
   const next = Object.assign({}, settings(), {
-    experienceLevels: exp.map(x => x[0]), maxRequiredYears: exp.length ? Math.max.apply(null, exp.map(x => x[1])) : 99,
+    yearsExperience: yNum, experienceLevels: [], maxRequiredYears: yNum === '' ? 99 : stretchOf(yNum),
     maxPostingAgeDays: Number($('#s-age').value) || 25, approvalMode: $('#s-mode').value, targetRoles: roles, families: fams, locations: locs, dailyCap: cap, minFit: $('#s-fit').value,
     salaryFloorLpa: sal === '' ? '' : Number(sal), requireStatedPay: !!($('#s-stated') && $('#s-stated').checked), dealbreakers: $('#s-deal').value.trim(), updatedAt: nowIso(),
     ...(usdFloor !== null ? {salaryFloorUsd: usdFloor === '' ? '' : Number(usdFloor)} : {}),

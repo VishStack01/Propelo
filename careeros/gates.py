@@ -66,10 +66,15 @@ def gate_role(job: Job, s: Settings) -> Check:
     return Check("Role", True, "Target role", title)
 
 
+_ENTRY_TITLE = re.compile(r"\b(intern(ship)?|trainee|fresher|graduate (trainee|engineer|program(me)?)|apprentice|entry[- ]level)\b", re.I)
+
+
 def gate_seniority(job: Job, s: Settings) -> Check:
     level = extract.title_seniority(job.title)
     if level == "senior" and s.max_required_years < 3:
         return Check("Seniority", False, "The title is a senior-level role.", job.title)
+    if s.experience_years is not None and s.experience_years >= 3 and (level == "junior" or _ENTRY_TITLE.search(job.title or "")):
+        return Check("Seniority", False, f"An entry-level title, below your {s.experience_years:g} years.", job.title)
     return Check("Seniority", True, level or "Not stated in title", job.title)
 
 

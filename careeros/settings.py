@@ -44,6 +44,9 @@ class Settings:
     dealbreakers: list[str] = field(default_factory=list)
     company_blocklist: list[str] = field(default_factory=list)
     allow_internships: bool = True
+    # The person's own years of experience, when they gave it. Experienced people don't see internships
+    # or titles marked junior, fresher or trainee; None leaves those decisions to max_required_years alone.
+    experience_years: float | None = None
     location: LocationPolicy = field(default_factory=LocationPolicy)
     daily_cap: int = 8
     reapply_cooldown_days: int = 180
@@ -59,6 +62,7 @@ class Settings:
             "max_required_years", "max_posting_age_days", "ghost_after_days", "priority_within_hours",
             "salary_floor_lpa", "usd_inr", "role_keywords", "title_exclude", "dealbreakers",
             "company_blocklist", "allow_internships", "daily_cap", "reapply_cooldown_days", "require_stated_pay", "families",
+            "experience_years",
         ):
             if key in search:
                 setattr(s, key, search[key])

@@ -151,7 +151,9 @@ def extract_experience(text: str, header: str = "") -> ExperienceReq:
 # ---------------------------------------------------------------- seniority
 
 _SENIOR_TITLE = re.compile(
-    r"\b(senior|sr\.?|staff|principal|lead|leader|head|director|vp|vice president|chief|distinguished|architect)\b", re.I
+    # "Staff" means senior in "Staff Engineer", but "Staff Nurse" and "Staff Accountant" are entry titles.
+    r"\b(senior|sr\.?|staff(?! (nurses?|accountants?|writers?|pharmacists?|members?|assistants?|nursing))|principal|lead|leader|head|"
+    r"director|vp|vice president|chief|distinguished|architect)\b", re.I
 )
 # "4-8 Yrs", "5 years to 13Years", "2 to 4 years", "8+ years" in a title (common on Workday boards).
 _TITLE_YEARS = re.compile(r"(?<![\d.])(\d{1,2})\s*(?:\+|(?:-|–|to)\s*\d{1,2})?\s*(?:years?|yrs?)\b", re.I)

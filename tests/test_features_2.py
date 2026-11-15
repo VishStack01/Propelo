@@ -20,7 +20,7 @@ def test_dashboard_uses_the_same_scam_rules():
 
 @pytest.mark.parametrize("text,level,ids", [
     ("We build payment rails. 3+ years of Go. Apply through our careers page.", "ok", []),
-    ("Selected candidates must pay a refundable security deposit before joining.", "high", ["fee"]),
+    ("Selected candidates must pay a refundable security deposit before joining.", "high", ["fee", "refundable"]),
     ("Please send your Aadhaar and bank account details to confirm your seat.", "high", ["ids-upfront"]),
     ("Contact our HR on WhatsApp only for the interview.", "caution", ["chat-only"]),
     ("Send your CV to hiring.team2026@gmail.com", "caution", ["free-mail"]),

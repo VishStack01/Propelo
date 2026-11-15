@@ -337,7 +337,7 @@ def test_filter_feed_keeps_skips_and_dedupes(boards, tmp_path):
     known.mkdir()
     (known / "x.json").write_text(json.dumps([{"id": "old", "data": {"company": "Sample Corp", "title": "Junior AI Automation Engineer", "url": "https://elsewhere.example/1"}}]))
     s = feed.settings_from_dashboard({
-        "maxRequiredYears": 1, "maxPostingAgeDays": 25, "salaryFloorLpa": 7, "targetRoles": ["Backend", "Software Engineer"],
+        "maxRequiredYears": 1, "maxPostingAgeDays": 25, "salaryFloorLpa": 7, "targetRoles": ["Backend", "Software Engineer", "AI Engineer"],
         "locations": ["South India (any work mode)", "Rest of India (remote only)", "Remote worldwide (first priority)"],
     })
     assert (s.location.south_india, s.location.rest_of_india, s.location.abroad) == ("any", "remote", "remote")

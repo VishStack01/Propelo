@@ -444,3 +444,7 @@ footer{margin-top:128px;border-top:1px solid var(--line)}
 }
 .steps.cc{margin-top:48px}
 #concierge .fine{margin-top:32px;max-width:760px}
+
+/* "Is this job real?" link under the hero buttons */
+.checkline{margin-top:18px;font-size:16px;color:var(--text)}
+.checkline a{color:var(--ink);font-weight:600;background:linear-gradient(transparent 62%,var(--mark) 62%,var(--mark) 92%,transparent 92%)}
