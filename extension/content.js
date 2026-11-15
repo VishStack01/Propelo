@@ -40,7 +40,7 @@
   var root = host.attachShadow({ mode: "closed" });
   root.innerHTML = '<style>' +
     ':host{all:initial}*{box-sizing:border-box}' +
-    '.w{font:14px/1.45 Figtree,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#151515;background:#FAF3E6;border:1px solid rgba(21,21,21,.14);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.18);width:320px;max-width:calc(100vw - 32px);overflow:hidden}' +
+    '.w{max-height:calc(100vh - 32px);overflow:auto;font:14px/1.45 Figtree,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#151515;background:#FAF3E6;border:1px solid rgba(21,21,21,.14);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.18);width:320px;max-width:calc(100vw - 32px);overflow:hidden}' +
     '@media (prefers-color-scheme:dark){.w{color:#F4EEE3;background:#1c1a17;border-color:rgba(244,238,227,.16)}.b{border-color:#F4EEE3!important;color:#F4EEE3!important}.b.s{background:#F4EEE3!important;color:#151413!important}.chip{background:rgba(244,238,227,.1)!important}.muted{color:#a39d92!important}.risk{background:#3a2f1c!important}.ok{background:#1f3324!important}}' +
     '.top{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;background:none;border:0;width:100%;font:inherit;color:inherit;text-align:left}' +
     '.logo{font-weight:700;letter-spacing:-.04em}.logo i{display:inline-block;width:6px;height:6px;border-radius:50%;background:#FF85BA;margin-left:1px}' +
@@ -51,16 +51,17 @@
     '.b.s{background:#151515;color:#FAF3E6}.b:disabled{opacity:.5;cursor:default}.x{margin-left:4px;background:none;border:0;color:inherit;opacity:.6;cursor:pointer;font-size:16px;line-height:1}' +
     '.risk{background:#FBEFD5;border-radius:10px;padding:8px 10px;font-size:12.5px}.ok{background:#D6EDD9;border-radius:10px;padding:8px 10px;font-size:12.5px}' +
     'b{font-weight:600}ul{margin:4px 0 0;padding-left:16px}li{font-size:12.5px}' +
+    (window.PropeloGauge ? window.PropeloGauge.css : '') + '.w .pg{margin-top:2px}' +
     '</style><div class="w" role="complementary" aria-label="Propelo"><div id="c"></div></div>';
   var box = root.getElementById("c");
   var S = { open: false, match: null, matchErr: "", q: null, report: null, busy: "", msg: "", sent: false, page: null };
 
-  function color(n) { return n >= 80 ? "#1f9d55" : n >= 65 ? "#3859F9" : n >= 50 ? "#e0a100" : "#c0392b"; }
+  function color(n) { return window.PropeloGauge ? window.PropeloGauge.tone(n) : "#3859F9"; }
   function render() {
     var m = S.match, q = S.q, parts = [];
     var head = '<button class="top" data-a="toggle" aria-expanded="' + S.open + '"><span class="logo">propelo<i></i></span>' +
       (q ? '<span class="muted">Role ' + q.position + ' of ' + q.total + '</span>' : '') +
-      '<span class="sc">' + (m ? '<span class="dot" style="background:' + color(m.score) + '"></span>' + m.score + ' · ' + esc(m.label) : S.matchErr ? '' : '<span class="muted">Checking fit…</span>') + '</span>' +
+      '<span class="sc">' + (m && m.score != null ? '<span class="dot" style="background:' + color(m.score) + '"></span>' + m.score + ' · ' + esc(m.label) : m ? '' : S.matchErr ? '' : '<span class="muted">Checking fit…</span>') + '</span>' +
       '<span class="x" data-a="hide" title="Hide on this site" aria-label="Hide Propelo on this site">×</span></button>';
     parts.push(head);
     if (S.open || q) {
@@ -68,12 +69,7 @@
       if (q && q.item) parts.push('<div><b>' + esc(q.item.company) + '</b> · ' + esc(q.item.title) + '</div>');
       if (m) {
         if (m.needsResume) parts.push('<p class="risk">Add your resume in Propelo to see how you match.</p>');
-        else {
-          var sk = m.skills || {};
-          if ((sk.present || []).length || (sk.thin || []).length) parts.push('<div class="muted">You have</div><div class="chips">' + (sk.present || []).concat(sk.thin || []).slice(0, 12).map(function (t) { return '<span class="chip">' + esc(t) + '</span>'; }).join("") + '</div>');
-          if ((sk.missing || []).length) parts.push('<div class="muted">Not in your resume (add only if true)</div><div class="chips">' + sk.missing.slice(0, 10).map(function (t) { return '<span class="chip miss">' + esc(t) + '</span>'; }).join("") + '</div>');
-          if (m.experience && m.experience.note) parts.push('<div class="muted">' + esc(m.experience.note) + (m.lowConfidence ? ' · few terms to compare, so treat the score as rough' : '') + '</div>');
-        }
+        else if (window.PropeloGauge) parts.push('<div id="pgwrap">' + window.PropeloGauge.html(m, { size: 112, chips: 10 }) + '</div>');
         if (m.risk && m.risk.level !== "ok") parts.push('<div class="risk"><b>' + (m.risk.level === "high" ? "This posting looks unsafe. Don't pay or share documents." : "Check this posting before you apply.") + '</b><ul>' +
           (m.risk.reasons || []).slice(0, 3).map(function (r) { return '<li>' + esc(r.why) + '</li>'; }).join("") + '</ul></div>');
       }
@@ -89,6 +85,8 @@
       parts.push('</div>');
     }
     box.innerHTML = parts.join("");
+    var g = root.getElementById("pgwrap");
+    if (g && m && !m.__shown && window.PropeloGauge) { m.__shown = true; window.PropeloGauge.animate(g); }
   }
 
   function fill() {

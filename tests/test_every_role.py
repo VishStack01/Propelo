@@ -105,12 +105,30 @@ def test_match_score_from_a_real_resume_for_any_field():
     jd = ("Staff Nurse, ICU. Requirements: GNM or B.Sc Nursing, BLS and ACLS certification, 2+ years of ICU experience, "
           "patient care, good communication skills. Hindi preferred.")
     r = matchscore.score("Staff Nurse - ICU", jd, nurse, years=3)
-    assert r["score"] >= 70 and r["label"] in ("Good match", "Strong match") and "BLS" in r["skills"]["present"] and "Nursing" in r["skills"]["thin"]
-    assert r["experience"]["fit"] == 1.0
+    terms = {t["term"]: t for t in r["terms"]}
+    assert terms["Patient care"]["status"] == "proven" and terms["BLS"]["status"] == "mentioned" and terms["Nursing"]["status"] == "listed"
+    assert terms["Hindi"]["required"] is False and terms["Hindi"]["weight"] == 0.5  # "preferred" weighs half
+    parts = {p["id"]: p for p in r["parts"]}
+    assert parts["experience"]["points"] == 25 and parts["role"]["points"] == 7.5  # "staff" is skipped; "nurse" matches, "icu" not
+    # the total is exactly the parts added up
+    assert r["score"] == round(sum(p["points"] for p in r["parts"]))
+    assert 60 <= r["score"] <= 90 and r["label"] in ("Good match", "Strong match")
     short = matchscore.score("Staff Nurse - ICU", jd, nurse, years=0)
-    assert short["score"] < r["score"] and short["experience"]["note"] == "Asks for 2+ years; you have 0"
+    assert {p["id"]: p for p in short["parts"]}["experience"]["points"] == 0 and short["score"] == r["score"] - 25
     dev = matchscore.score("Backend Engineer", "We need Go, Kubernetes, PostgreSQL and Kafka experience to build payment APIs at scale.", nurse, years=3)
-    assert dev["score"] < 50 and set(dev["skills"]["missing"]) >= {"Kubernetes", "Kafka"}
+    assert dev["score"] < 45 and dev["label"] == "Low match" and set(dev["skills"]["missing"]) >= {"Kubernetes", "Kafka"}
+
+
+def test_unmeasured_parts_are_left_out_not_guessed():
+    from careeros import matchscore
+    res = matchscore.resume_from_profile({"summary": "Accountant using Tally, GST and TDS.", "experience": [{"bullets": ["Reconciled 40 vendor accounts monthly"]}]})
+    jd = "Accounts Executive. Tally, GST and TDS filing, bank reconciliation."
+    r = matchscore.score("Accounts Executive", jd, res, years=None)  # no years stated, no titles to compare
+    parts = {p["id"]: p for p in r["parts"]}
+    assert parts["experience"]["points"] is None and parts["role"]["points"] is None and r["scaled"]
+    assert r["score"] == round(100 * parts["skills"]["points"] / 60)  # skills alone, scaled to 100
+    assert r["margin"] >= 10  # fewer things measured, wider margin
+    assert matchscore.score("Clerk", "Some text without skills or years at all, just a long description of the office.", "", None)["score"] is None
 
 
 def test_match_endpoint(cloud):
@@ -123,4 +141,5 @@ def test_match_endpoint(cloud):
                                          "experience": [{"title": "Accounts Assistant", "bullets": ["Cleared accounts payable for 40 vendors in Excel"]}]})
     c.put("/api/d/settings/profile", json={"yearsExperience": 2})
     r = c.post("/api/agent/match", json={"title": "Accounts Executive", "jd": jd}).json()
-    assert r["source"] == "your Propelo resume" and r["score"] >= 80 and r["risk"]["level"] == "ok"
+    assert r["source"] == "your Propelo resume" and r["score"] >= 70 and r["risk"]["level"] == "ok"
+    assert [p["id"] for p in r["parts"]] == ["skills", "experience", "role"] and r["margin"] > 0

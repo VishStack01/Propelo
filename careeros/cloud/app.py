@@ -317,7 +317,15 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
             cls = "btn" if pl["id"] != "free" else "btn light"
             cards.append(f'<article class="plan {pl["id"]}"><h2>{html_escape(pl["name"])}</h2>'
                          f'<div class="price">{price}</div><ul>{items}</ul><a class="{cls}" href="/signup">Start free</a></article>')
-        text = (STATIC / "pricing.html").read_text(encoding="utf-8").replace("<!--PLANS-->", "".join(cards)) \
+        extras = ""
+        for ad in plans.addons(cfg):
+            usd_part = f'<span class="usd">${ad["priceUsd"]}</span>' if ad["priceUsd"] else f'<span class="usd">₹{ad["priceInr"]:,} (rupees only)</span>'
+            extras += (f'<article class="addon"><div><h3>{html_escape(ad["name"])}</h3><p>{html_escape(ad["line"])}</p></div>'
+                       f'<p class="aprice"><span class="inr">₹{ad["priceInr"]:,}</span>{usd_part}<small>one time</small></p></article>')
+        if extras:
+            extras = ('<section class="addons"><h2>Add-ons for Pro and Ultra members</h2><p class="note">Not part of any plan. Buy one in the app once '
+                      'you\'re on Pro or Ultra and eligible. <a href="/terms#guarantees">Guarantee terms</a></p>' + extras + '</section>')
+        text = (STATIC / "pricing.html").read_text(encoding="utf-8").replace("<!--PLANS-->", "".join(cards)).replace("<!--ADDONS-->", extras) \
             .replace('<body data-cur="INR">', f'<body data-cur="{cur}">', 1).replace("<script>", f'<script nonce="{request.state.nonce}">')
         return HTMLResponse(text)
 
@@ -1153,7 +1161,7 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
 
     @app.get("/api/plans")
     def plan_catalog(request: Request):
-        return {"plans": plans.catalog(cfg), "checkoutEnabled": cfg.billing_enabled, "currency": guess_currency(request),
+        return {"plans": plans.catalog(cfg), "addons": plans.addons(cfg), "checkoutEnabled": cfg.billing_enabled, "currency": guess_currency(request),
                 "currencies": {"INR": cfg.razorpay_enabled, "USD": cfg.dodo_enabled}}
 
     @app.get("/api/billing")
@@ -1266,7 +1274,13 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
                     return {"ok": True, "result": "duplicate"}
                 c.execute("INSERT INTO billing_events(id, provider, kind, provider_sub_id, received_at, payload) VALUES (?, 'razorpay', ?, ?, ?, ?)",
                           (eid, "payment_link.paid", str(link.get("id") or "")[:100], now_iso(), json.dumps(event)[:20000]))
-                result = concierge.mark_paid(c, str(link.get("id") or ""))
+                result, g = guarantee.mark_paid(c, cfg, "razorpay", ref=str(link.get("id") or ""), amount=link.get("amount_paid"))
+                if result == "unknown":
+                    result = concierge.mark_paid(c, str(link.get("id") or ""))
+                elif result == "paid":
+                    u = c.one("SELECT email FROM users WHERE id = ?", (g["user_id"],))
+                    if u:
+                        send(c, u["email"], mail.guarantee(cfg.public_url, g["kind"], "enrolled"))
             log.info(json.dumps({"event": "billing-webhook", "provider": "razorpay", "kind": "payment_link.paid", "result": result}))
             return {"ok": True, "result": result}
         ev = plans.razorpay_event(cfg, event)
@@ -1290,6 +1304,25 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
             raise err(400, "Bad JSON.")
         if not isinstance(event, dict):
             raise err(400, "Bad JSON.")
+        data = event.get("data") if isinstance(event.get("data"), dict) else {}
+        meta = data.get("metadata") if isinstance(data.get("metadata"), dict) else {}
+        if str(event.get("type", "")).startswith("payment.") and meta.get("guarantee_id"):
+            # A guarantee add-on bought in dollars.
+            eid = "dodo:" + headers["webhook-id"][:100]
+            with db.tx() as c:
+                if c.one("SELECT 1 AS x FROM billing_events WHERE id = ?", (eid,)):
+                    return {"ok": True, "result": "duplicate"}
+                c.execute("INSERT INTO billing_events(id, provider, kind, provider_sub_id, received_at, payload) VALUES (?, 'dodo', ?, ?, ?, ?)",
+                          (eid, str(event.get("type"))[:60], str(data.get("payment_id") or "")[:100], now_iso(), json.dumps(event)[:20000]))
+                result = "ignored"
+                if event.get("type") == "payment.succeeded":
+                    result, g = guarantee.mark_paid(c, cfg, "dodo", guarantee_id=str(meta.get("guarantee_id"))[:64], amount=data.get("total_amount"))
+                    if result == "paid":
+                        u = c.one("SELECT email FROM users WHERE id = ?", (g["user_id"],))
+                        if u:
+                            send(c, u["email"], mail.guarantee(cfg.public_url, g["kind"], "enrolled"))
+            log.info(json.dumps({"event": "billing-webhook", "provider": "dodo", "kind": "guarantee-" + str(event.get("type"))[:40], "result": result}))
+            return {"ok": True, "result": result}
         ev = plans.dodo_event(cfg, event)
         with db.tx() as c:
             result = record_billing(c, "dodo:" + headers["webhook-id"][:100], ev, event)
@@ -1535,16 +1568,32 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
         with db.tx() as c:
             return guarantee.view(c, cfg, p.user)
 
-    @app.post("/api/guarantee/{kind}/enroll")
-    def guarantee_enroll(kind: str, request: Request, body: dict = Body(default={}), p: Principal = Depends(session_only)):
+    @app.post("/api/guarantee/{kind}/buy")
+    def guarantee_buy(kind: str, request: Request, body: dict = Body(default={}), p: Principal = Depends(session_only)):
+        """Buy a guarantee add-on (Pro and Ultra only): returns the payment page. It starts when the payment goes through."""
         if body.get("agree") is not True or body.get("termsVersion") != guarantee.TERMS_VERSION:
             raise err(400, "Read and accept the guarantee terms first.", "guarantee")
         try:
             with db.tx() as c:
                 limited(c, f"guarantee:{p.uid}", 10, 86400)
-                guarantee.enroll(c, cfg, p.user, kind, client_ip(request))
-                send(c, p.user["email"], mail.guarantee(cfg.public_url, kind, "enrolled"))
-                return guarantee.view(c, cfg, p.user)
+                g = guarantee.buy(c, cfg, p.user, kind, client_ip(request))
+                return dict(guarantee.view(c, cfg, p.user), payUrl=g.get("pay_url"))
+        except guarantee.GuaranteeError as e:
+            raise gerr(e) from None
+        except plans.BillingError as e:
+            raise err(502, str(e), "billing") from None
+
+    @app.post("/api/admin/guarantee")
+    def admin_guarantee(body: dict = Body(...), p: Principal = Depends(admin_only)):
+        """Start a guarantee for someone without payment (goodwill or testing). They must still be eligible."""
+        try:
+            with db.tx() as c:
+                u = c.one("SELECT id, email FROM users WHERE email = ?", (str(body.get("email") or "").strip().lower(),))
+                if not u:
+                    raise err(404, "No account with that email.")
+                g = guarantee.grant(c, cfg, u["id"], str(body.get("kind") or "interview"), p.uid)
+                send(c, u["email"], mail.guarantee(cfg.public_url, g["kind"], "enrolled"))
+                return {"ok": True, "status": g["status"], "endsAt": g["ends_at"]}
         except guarantee.GuaranteeError as e:
             raise gerr(e) from None
 
@@ -1566,7 +1615,7 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
     def staff_guarantees(p: Principal = Depends(staff_only)):
         with db.tx() as c:
             repo.audit(c, p.uid, "guarantee-claims-viewed", "")
-            return {"claims": guarantee.staff_list(c)}
+            return {"claims": guarantee.staff_list(c, cfg)}
 
     @app.post("/api/staff/guarantees/{gid}/{decision}")
     def staff_guarantee_decide(gid: str, decision: str, body: dict = Body(default={}), p: Principal = Depends(staff_only)):
@@ -1581,7 +1630,7 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
                 u = c.one("SELECT email FROM users WHERE id = ?", (g["user_id"],))
                 if u and decision in ("approve", "reject"):
                     send(c, u["email"], mail.guarantee(cfg.public_url, g["kind"], "approved" if decision == "approve" else "rejected"))
-                return {"claims": guarantee.staff_list(c)}
+                return {"claims": guarantee.staff_list(c, cfg)}
         except guarantee.GuaranteeError as e:
             raise gerr(e) from None
 

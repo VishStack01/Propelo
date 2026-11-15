@@ -83,6 +83,8 @@ services:
         value: "off"
       - key: GUARANTEE
         value: "on"
+      - key: DODO_PRODUCT_GUARANTEE
+        sync: false
       - key: CONCIERGE_TAX_RATE
         value: "0"
       - key: GOOGLE_CLIENT_ID

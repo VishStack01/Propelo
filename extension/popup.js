@@ -5,6 +5,7 @@
   "use strict";
   var BLOCKED = /(^|\.)(linkedin\.com|naukri\.com|indeed\.[a-z.]+|wellfound\.com|angel\.co)$/i;
   var app = document.getElementById("app");
+  (function () { var st = document.createElement("style"); st.textContent = window.PropeloGauge.css; document.head.appendChild(st); })();
   var S = { server: "", key: "", tab: null, page: null, report: null, busy: "", msg: "", err: false, tracked: null,
             match: null, queue: null, qstatus: null, onpage: null };
   function bg(msg) {
@@ -21,12 +22,7 @@
     var m = S.match;
     if (!m) return "";
     if (m.needsResume) return '<div class="note">Add your resume in Propelo to see how you match this role.</div>';
-    var sk = m.skills || {}, have = (sk.present || []).concat(sk.thin || []);
-    return '<div class="card match"><div class="row end"><b>Your match</b><span class="score"><i style="background:' + color(m.score) + '"></i>' + m.score + ' · ' + esc(m.label) + '</span></div>' +
-      (have.length ? '<p class="muted">You have: ' + esc(have.slice(0, 10).join(", ")) + '</p>' : '') +
-      ((sk.missing || []).length ? '<p class="muted">Not in your resume: ' + esc(sk.missing.slice(0, 8).join(", ")) + '. Add one only if it\'s true.</p>' : '') +
-      (m.experience && m.experience.note ? '<p class="muted">' + esc(m.experience.note) + '</p>' : '') +
-      '<p class="muted small">Checked against ' + esc(m.source || "your resume") + '. Not how the employer\'s software ranks you.</p></div>';
+    return '<div class="card match" id="match">' + window.PropeloGauge.html(m, { size: 124, chips: 12 }) + '</div>';
   }
   function queueCard() {
     var st = S.qstatus, q = S.queue;
@@ -92,6 +88,9 @@
     parts.push(onPageCard());
     parts.push('<div class="foot"><a href="' + esc(S.server) + '/app" target="_blank" rel="noopener">Open Propelo</a><button class="btn ghost" data-act="disconnect">Disconnect</button></div>');
     app.innerHTML = parts.join("");
+    // The gauge counts up once per result; later re-renders show it settled.
+    var g = document.getElementById("match");
+    if (g && S.match && !S.match.__shown) { S.match.__shown = true; window.PropeloGauge.animate(g); }
   }
   function trackCard() {
     if (S.tracked) return '<div class="good">Saved to Propelo as <b>' + esc(S.tracked.stage === "applied" ? "Applied" : "To apply") + '</b>.</div>' + riskView(S.tracked.risk);

@@ -1164,6 +1164,7 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
 .gugrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
 .gucard{display:flex;flex-direction:column;gap:12px}
 .guhead{display:flex;gap:14px;align-items:flex-start}.guhead h2{font-size:21px;margin:0}.guhead p{margin:4px 0 0;color:var(--ink-2)}
+.gutitle{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}.guprice{font-weight:600;font-size:20px;letter-spacing:-.02em;white-space:nowrap}.guprice small{font-weight:400;font-size:13px;color:var(--muted)}
 .gushield{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--green-tint);color:var(--on-pastel)}
 .guchecks{list-style:none;margin:6px 0 0;padding:0;display:grid;gap:8px}.guchecks li{display:flex;gap:10px;align-items:flex-start}.guchecks li b{display:block;font-weight:600;font-size:14.5px}.guchecks li small{color:var(--muted);font-size:13.5px}
 .gubars{display:grid;gap:10px}.gubar-t{display:flex;justify-content:space-between;font-size:14px}.gubar-track{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:5px}.gubar-track i{display:block;height:100%;background:var(--ink);border-radius:inherit}
@@ -1427,7 +1428,8 @@ function listJoin(xs){ xs = xs.filter(Boolean); if (xs.length < 2) return xs.joi
 function filterSummary(){
   const s = settings();
   const y = yearsOf(s);
-  const exp = y === '' ? 'any experience' : y === 0 ? 'fresher roles and roles asking up to 1 year' : `roles asking up to ${stretchOf(y)} years (you have ${y})`;
+  // Reads after "roles for": "roles for freshers", "roles for 4 years of experience (asking up to 6)".
+  const exp = y === '' ? 'any experience' : y === 0 ? 'freshers' : `${y} ${y === 1 ? 'year' : 'years'} of experience (asking up to ${stretchOf(y)})`;
   const home = String(s.homeCountry || 'IN');
   const homeName = (HOMES.find(h => h[0] === home) || [home, home])[1];
   const locs = home === 'IN' ? arr(s.locations).map(l => LOC_SHORT[l] || l)
@@ -1640,7 +1642,7 @@ function renderTiers(){
   return [
     tierCard('t-blue', 0, I.search, 'Found', 'Fresh roles that passed your filters, waiting to be scored.', '', found.length, found.length === 1 ? 'role' : 'roles',
       state.win === 'day' ? 'Posted in the last 24 hours' : `${day} posted in the last 24 hours`,
-      [[I.spark, f.exp.charAt(0).toUpperCase() + f.exp.slice(1)], [I.pin, f.locs]], 'Newest first', found.slice(0, 3).map(label),
+      [[I.spark, 'For ' + f.exp], [I.pin, f.locs]], 'Newest first', found.slice(0, 3).map(label),
       `<button class="btn block" data-act="station" data-stage="found">See found roles</button>`),
     tierCard('t-green', 1, I.ready, 'Ready', autoMode() ? 'Tailored packages queued to go out. Skip any you don\'t want.' : 'Tailored packages waiting for your approval.', readyOnly.length ? 'Needs you' : '', readyOnly.length, 'to approve',
       brainReady() ? `${ready.length - readyOnly.length} approved and queued` : 'Starts once your Career Brain exists',
@@ -1870,7 +1872,7 @@ function renderTodayDynamic(){
   const nDay = found.filter(j => inWindow(j, 'day')).length, nWeek = found.filter(j => inWindow(j, 'week')).length;
   const n = state.win === 'day' ? nDay : nWeek;
   $('#hero-h').textContent = state.loaded.jobs ? (n ? `${n} fresh ${n === 1 ? 'role' : 'roles'} that fit your filters` : 'No fresh roles yet') : 'Fresh roles, checked against your filters';
-  $('#hero-sub').textContent = `${f.exp.charAt(0).toUpperCase() + f.exp.slice(1)} tech and AI roles${f.pay} ${f.locs}. Anything posted more than ${f.days} ${f.days === 1 ? 'day' : 'days'} ago, or already closed, is skipped.`;
+  $('#hero-sub').textContent = `Roles for ${f.exp}${f.pay} ${f.locs}. Anything posted more than ${f.days} ${f.days === 1 ? 'day' : 'days'} ago, or already closed, is skipped.`;
   $('#n-day').textContent = nDay ? nDay : ''; $('#n-week').textContent = nWeek ? nWeek : '';
   const wk = document.querySelector('[data-w="week"]'); if (wk) wk.firstChild.textContent = `Last ${f.days} ${f.days === 1 ? 'day' : 'days'} `;
   const src = renderSources(); if (src) $('#sources').innerHTML = src;
@@ -2245,14 +2247,15 @@ function renderConcierge(){
 }
 /* ---------- Guarantees: money back on rules the person can check before relying on them ---------- */
 function loadGuarantee(){ if (!cloud()) return Promise.resolve(); return api('api/guarantee').then(r => r.ok ? r.json() : null).then(v => { if (v){ state.guarantee = v; render(); } }).catch(() => {}); }
-const GU_STATUS = {active: 'In progress', met: 'Done: you got there', claimable: 'Refund can be claimed', claimed: 'Claim being checked', approved: 'Refund approved', refunded: 'Refunded', rejected: 'Claim not approved', ended: 'Ended', void: 'Stopped'};
+const GU_STATUS = {pending: 'Waiting for your payment', active: 'In progress', met: 'Done: you got there', claimable: 'Refund can be claimed', claimed: 'Claim being checked', approved: 'Refund approved', refunded: 'Refunded', rejected: 'Claim not approved', ended: 'Ended', void: 'Stopped'};
 function money(minor, cur){ return cur === 'USD' ? '$' + (Number(minor || 0) / 100).toFixed(2) : inr(Math.round(Number(minor || 0) / 100)); }
 function guBar(label, n, need){ const pct = need ? Math.min(100, Math.round(n / need * 100)) : 0; return `<div class="gubar"><div class="gubar-t"><span>${esc(label)}</span><b>${esc(n)}${need ? ' / ' + esc(need) : ''}</b></div>${need ? `<div class="gubar-track"><i style="width:${pct}%"></i></div>` : ''}</div>`; }
 function guCard(v, kind){
   const R = obj(v.rules), k = obj(v[kind]), cur = k.current, ro = wr();
   const say = state.acctMsg && state.acctMsgWhere === 'gu-' + kind ? `<p class="acctmsg${state.acctMsgErr ? ' err' : ''}" role="status">${esc(state.acctMsg)}</p>` : '';
   const title = kind === 'interview' ? 'Interview Guarantee' : 'Job Guarantee';
-  const promise = kind === 'interview' ? `An interview within ${R.days} days, or the plan fees you paid in that time come back.` : `An accepted offer through Concierge within ${Math.round(R.jobDays / 30)} months, or the plan fees you paid in that time come back. No Concierge fee is ever owed for that case.`;
+  const price = money(k.price, k.currency);
+  const promise = kind === 'interview' ? `An interview within ${R.days} days, or you get back the ${price} and the plan fees you paid in that time.` : `An accepted offer through Concierge within ${Math.round(R.jobDays / 30)} months, or you get back the ${price} and your plan fees, and owe no Concierge fee for that case.`;
   const rules = kind === 'interview' ? [
       `Keep Pro or Ultra active for the ${R.days} days.`,
       `Send at least ${R.minApplications} applications, in at least ${R.minWeeks} different weeks. Auto-apply counts; postings the scam check marks unsafe don't.`,
@@ -2264,7 +2267,11 @@ function guCard(v, kind){
   const rulesHtml = `<ul class="gurules">${rules.map(r => `<li>${esc(r)}</li>`).join('')}</ul>`;
   let body = '';
   if (kind === 'job' && !v.conciergeEnabled) body = '<p class="small">The Job Guarantee comes with Concierge, which isn\'t available yet.</p>';
-  else if (cur && !['ended', 'void', 'rejected'].includes(cur.status)){
+  else if (cur && cur.status === 'pending'){
+    body = `<div class="gustate"><span class="pill">${esc(GU_STATUS.pending)}</span><p class="small">It starts the moment your payment of ${esc(money(cur.price, cur.currency))} goes through. An unpaid checkout lapses after 2 days.</p></div>
+      ${safeUrl(cur.payUrl) ? `<div class="ract" style="justify-content:flex-start"><a class="btn solid buy" href="${esc(safeUrl(cur.payUrl))}" target="_blank" rel="noopener">Pay ${esc(money(cur.price, cur.currency))}</a><button class="btn ghost" data-act="gu-reload">I've paid</button></div>` : ''}`;
+  }
+  else if (cur && !['ended', 'void', 'rejected', 'refunded'].includes(cur.status)){
     const pr = obj(cur.progress);
     const bars = kind === 'interview' ? guBar('Applications', pr.applications || 0, R.minApplications) + guBar('Different weeks', pr.weeks || 0, R.minWeeks) + guBar('Interviews', pr.interviews || 0, 0)
       : guBar('Concierge case', CC_STATUS[pr.caseStatus] || pr.caseStatus || 'open', 0);
@@ -2282,13 +2289,13 @@ function guCard(v, kind){
     const last = cur && ['ended', 'void', 'rejected'].includes(cur.status) ? `<p class="small">Last time: ${esc(GU_STATUS[cur.status])}. ${esc(cur.reason || '')}</p>` : '';
     body = `${last}<p class="groupl" style="margin-top:4px">Before you start</p><ul class="guchecks">${checks.map(c => `<li class="${c.ok ? 'ok' : 'no'}"><span class="ck${c.ok ? '' : ' no'}">${c.ok ? I.check : I.cross}</span><div><b>${esc(c.label)}</b><small>${esc(c.detail)}</small></div></li>`).join('')}</ul>
       <label class="cccheck" style="margin-top:12px"><input type="checkbox" id="gu-agree-${kind}"${ro}${el.ok ? '' : ' disabled'}> I've read the <a href="/terms#guarantees" target="_blank" rel="noopener">guarantee terms</a>.</label>
-      <div class="ract" style="justify-content:flex-start;margin-top:12px">${checks.some(c => c.id === 'plan' && !c.ok) ? `<button class="btn solid buy" data-act="tab" data-tab="setup">See Pro and Ultra</button>` : `<button class="btn solid" data-act="gu-enroll" data-kind="${kind}"${ro}${el.ok ? '' : ' disabled'}>Start the ${esc(title)}</button>`}<span class="small">Refund up to ${esc(money(k.estimate, k.currency))}</span></div>`;
+      <div class="ract" style="justify-content:flex-start;margin-top:12px">${checks.some(c => c.id === 'plan' && !c.ok) ? `<button class="btn solid buy" data-act="tab" data-tab="setup">See Pro and Ultra</button>` : `<button class="btn solid buy" data-act="gu-enroll" data-kind="${kind}"${ro}${el.ok && k.canPay ? '' : ' disabled'}>Buy for ${esc(price)}</button>`}<span class="small app-only">Add-ons are bought on the web, at your Propelo address.</span><span class="small web-only">${k.canPay ? `One time. Refund up to ${esc(money(k.estimate, k.currency))} if it fails.` : 'Payments for add-ons aren\'t set up on this server yet.'}</span></div>`;
   }
-  return `<section class="panel gucard"><div class="guhead"><span class="gushield">${I.shield}</span><div><h2>${esc(title)}</h2><p>${esc(promise)}</p></div></div>${say}${body}
+  return `<section class="panel gucard"><div class="guhead"><span class="gushield">${I.shield}</span><div><div class="gutitle"><h2>${esc(title)}</h2><span class="guprice">${esc(price)}<small> one time</small></span></div><p>${esc(promise)}</p></div></div>${say}${body}
     <details class="gudetails"><summary>The rules</summary>${rulesHtml}</details></section>`;
 }
 function renderGuarantee(){
-  const head = `<div class="hero" style="padding-bottom:6px"><div><h1>Guarantees</h1><p class="sub">Money back if Propelo doesn't get you there. These aren't promises of a job: they're promises of a refund, on rules you can check here before you start.</p></div></div>`;
+  const head = `<div class="hero" style="padding-bottom:6px"><div><h1>Guarantees</h1><p class="sub">Optional add-ons for Pro and Ultra members, not part of any plan. If Propelo doesn't get you there and you did your part, you get your money back. They're promises of a refund, never of a job, on rules you can check here before you pay.</p></div></div>`;
   if (!cloud()) return head + `<div class="panel"><p class="small">Guarantees are part of Pro and Ultra on Propelo Cloud.</p></div>`;
   const v = state.guarantee;
   if (!v){ if (!state.guLoading){ state.guLoading = true; loadGuarantee(); } return head + '<div class="panel"><p class="small">Loading…</p></div>'; }
@@ -2531,7 +2538,7 @@ function renderFoot(){
   const f = filterSummary();
   const cov = obj(settings().coverage), n = x => Number(x).toLocaleString('en-IN');
   return `<div><h4>Where it looks</h4><ul><li>${cov.companies ? n(cov.companies) + ' company career pages' : 'Company career pages'}</li><li>${cov.platforms ? n(cov.platforms) + ' job platforms' : 'Remote and Indian job boards'}</li><li>VC portfolio boards</li><li>Searches for new career pages</li></ul></div>
-    <div><h4>Your filters</h4><ul><li>${esc(f.exp.charAt(0).toUpperCase() + f.exp.slice(1))}</li><li>Posted in the last ${esc(f.days)} days</li><li>${esc(f.locs)}</li><li>${settings().salaryFloorLpa !== '' ? 'Pay floor ' + esc(settings().salaryFloorLpa) + ' LPA' + (settings().requireStatedPay ? ', stated in the posting' : '') : 'No pay floor'}</li><li>Up to ${esc(settings().dailyCap)} prepared a day</li></ul></div>
+    <div><h4>Your filters</h4><ul><li>For ${esc(f.exp)}</li><li>Posted in the last ${esc(f.days)} days</li><li>${esc(f.locs)}</li><li>${settings().salaryFloorLpa !== '' ? 'Pay floor ' + esc(settings().salaryFloorLpa) + ' LPA' + (settings().requireStatedPay ? ', stated in the posting' : '') : 'No pay floor'}</li><li>Up to ${esc(settings().dailyCap)} prepared a day</li></ul></div>
     <div><h4>What it never does</h4><ul><li>Invent experience or numbers</li><li>Send LinkedIn messages</li><li>${autoMode() ? 'Guess an answer your profile can\'t back up' : 'Submit without your approval'}</li><li>Apply twice to one company in 6 months</li></ul></div>
     <div><h4>Privacy</h4><ul><li>Only you can read this pipeline, even if you share the link</li><li>Credentials never stored here</li>${cloud() ? '<li><a href="privacy">Privacy notice</a> · <a href="terms">Terms</a></li>' : ''}</ul></div>`;
 }
@@ -2874,9 +2881,120 @@ function resumeScore(p, posting, match){
   return {pct: Math.round(matched.length / kws.length * 100), matched, missing, total: kws.length};
 }
 function tailoredResumeOf(p, t){ const v = tailoredView(p, t); return {headline: obj(v.basics).headline, summary: v.summary, experience: arr(v.experience).map(e => ({bullets: e.bullets})), projects: arr(v.projects).map(e => ({bullets: e.bullets}))}; }
+/* The match score from the server (careeros/matchscore.py): the same numbers as the browser extension,
+   with every part of the arithmetic shown. The gauge code is a copy of extension/gauge.js (a test keeps them equal). */
+/*GAUGE*/
+/* The match gauge: a big score that counts up while its ring fills, then the arithmetic behind it.
+   Shared by the popup and the on-page panel (the app has its own copy in dashboard/app.html).
+   Respects prefers-reduced-motion. Everything shown comes from the server's match result. */
+(function (root) {
+  "use strict";
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+  function tone(n) { return n == null ? "#8a8378" : n >= 75 ? "#1f9d55" : n >= 60 ? "#3859F9" : n >= 45 ? "#d68a00" : "#d0443a"; }
+  var STATUS = { proven: "Proven with a number", mentioned: "In your experience", listed: "Only in your skills list", found: "In your resume", missing: "Not in your resume" };
+
+  function html(m, opts) {
+    opts = opts || {};
+    var size = opts.size || 132, r = size / 2 - 9, c = 2 * Math.PI * r, s = m.score;
+    var col = tone(s), off = s == null ? c : c * (1 - s / 100);
+    var ring = '<svg class="pg-ring" width="' + size + '" height="' + size + '" viewBox="0 0 ' + size + ' ' + size + '" aria-hidden="true">' +
+      '<circle cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + r + '" fill="none" stroke="currentColor" stroke-opacity=".12" stroke-width="10"/>' +
+      '<circle class="pg-arc" cx="' + size / 2 + '" cy="' + size / 2 + '" r="' + r + '" fill="none" stroke="' + col + '" stroke-width="10" stroke-linecap="round" ' +
+      'stroke-dasharray="' + c.toFixed(1) + '" stroke-dashoffset="' + off.toFixed(1) + '" data-c="' + c.toFixed(1) + '" data-to="' + off.toFixed(1) + '" transform="rotate(-90 ' + size / 2 + ' ' + size / 2 + ')"/></svg>';
+    var num = '<div class="pg-num"><b class="pg-val" data-to="' + (s == null ? "" : s) + '">' + (s == null ? "–" : s) + '</b><span>out of 100</span></div>';
+    var head = '<div class="pg-head"><div class="pg-dial" style="width:' + size + 'px;height:' + size + 'px">' + ring + num + '</div>' +
+      '<div class="pg-sum"><b style="color:' + col + '">' + esc(m.label || "Not enough to score") + '</b>' +
+      (s == null ? '' : '<span>Could be ' + Math.max(0, s - m.margin) + ' to ' + Math.min(100, s + m.margin) + ' (± ' + m.margin + ')</span>') +
+      (m.source ? '<span>Against ' + esc(m.source) + '</span>' : '') + '</div></div>';
+    var rows = (m.parts || []).map(function (p, i) {
+      var measured = p.points != null, w = measured ? Math.round(100 * p.points / p.max) : 0;
+      return '<div class="pg-part' + (measured ? '' : ' off') + '"><div class="pg-pt"><span>' + esc(p.label) + '</span><b>' + (measured ? (Math.round(p.points * 10) / 10) + ' / ' + p.max : 'not measured') + '</b></div>' +
+        '<div class="pg-bar"><i style="width:' + w + '%;background:' + col + ';transition-delay:' + (300 + i * 140) + 'ms" data-w="' + w + '"></i></div><small>' + esc(p.detail) + '</small></div>';
+    }).join("");
+    var math = '<div class="pg-math"><div class="pg-mt">How it\'s worked out</div>' + rows +
+      (m.scaled ? '<small class="pg-note">Parts that couldn\'t be measured are left out, and the rest are scaled to 100.</small>' : '') + '</div>';
+    var chips = (m.terms || []).slice(0, opts.chips || 14).map(function (t) {
+      return '<span class="pg-chip ' + t.status + '" title="' + esc(STATUS[t.status] + (t.required ? "" : " · nice to have")) + '">' + esc(t.term) + (t.required ? '' : '<em>plus</em>') + '</span>';
+    }).join("");
+    var legend = '<div class="pg-legend"><span class="pg-chip proven">proven</span><span class="pg-chip mentioned">in experience</span><span class="pg-chip listed">skills list</span><span class="pg-chip missing">missing</span></div>';
+    return '<div class="pg">' + head + math + (chips ? '<div class="pg-mt">Skills in this posting</div><div class="pg-chips">' + chips + '</div>' + legend : '') +
+      '<small class="pg-note">' + esc(m.note || "") + '</small></div>';
+  }
+
+  // Count up and fill. Call once per new result; pass instant=true to skip the motion.
+  function animate(el, instant) {
+    if (!el) return;
+    var reduce = instant || (root.matchMedia && root.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    var arc = el.querySelector(".pg-arc"), val = el.querySelector(".pg-val"), bars = el.querySelectorAll(".pg-bar i");
+    var to = parseInt(val && val.getAttribute("data-to"), 10);
+    if (reduce || isNaN(to)) return;
+    var c = parseFloat(arc.getAttribute("data-c")), end = parseFloat(arc.getAttribute("data-to"));
+    arc.style.transition = "none"; arc.setAttribute("stroke-dashoffset", String(c));
+    Array.prototype.forEach.call(bars, function (b) { b.style.transition = "none"; b.style.width = "0%"; });
+    val.textContent = "0";
+    var t0 = null, dur = 1100;
+    function frame(t) {
+      if (t0 === null) t0 = t;
+      var k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+      val.textContent = String(Math.round(to * e));
+      arc.setAttribute("stroke-dashoffset", (c - (c - end) * e).toFixed(1));
+      if (k < 1) root.requestAnimationFrame(frame);
+    }
+    root.requestAnimationFrame(function () {
+      root.requestAnimationFrame(frame);
+      Array.prototype.forEach.call(bars, function (b) { b.style.transition = ""; b.style.width = b.getAttribute("data-w") + "%"; });
+    });
+  }
+
+  var CSS = '.pg{display:grid;gap:12px}.pg-head{display:flex;align-items:center;gap:16px}.pg-dial{position:relative;flex:none}' +
+    '.pg-num{position:absolute;inset:0;display:grid;place-content:center;text-align:center}.pg-num b{font-size:44px;line-height:1;font-weight:700;letter-spacing:-.04em;font-variant-numeric:tabular-nums}' +
+    '.pg-num span{font-size:11px;opacity:.65;margin-top:3px}.pg-sum{display:grid;gap:3px}.pg-sum b{font-size:19px;letter-spacing:-.02em}.pg-sum span{font-size:12.5px;opacity:.75}' +
+    '.pg-mt{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;opacity:.7}.pg-math{display:grid;gap:9px}' +
+    '.pg-pt{display:flex;justify-content:space-between;gap:8px;font-size:13px}.pg-pt b{font-variant-numeric:tabular-nums;font-weight:600}' +
+    '.pg-bar{height:7px;border-radius:99px;background:rgba(127,127,127,.18);overflow:hidden;margin:4px 0 2px}.pg-bar i{display:block;height:100%;border-radius:inherit;transition:width .9s cubic-bezier(.2,.8,.2,1)}' +
+    '.pg-part small,.pg-note{font-size:11.5px;opacity:.7;line-height:1.35}.pg-part.off{opacity:.6}' +
+    '.pg-chips,.pg-legend{display:flex;flex-wrap:wrap;gap:5px}.pg-legend{opacity:.75}.pg-legend .pg-chip{font-size:10.5px;padding:1px 7px}' +
+    '.pg-chip{font-size:12px;padding:2px 9px;border-radius:99px;border:1px solid transparent}.pg-chip em{font-style:normal;font-size:10px;opacity:.7;margin-left:4px}' +
+    '.pg-chip.proven{background:rgba(31,157,85,.16)}.pg-chip.mentioned,.pg-chip.found{background:rgba(56,89,249,.13)}.pg-chip.listed{background:rgba(214,138,0,.15)}' +
+    '.pg-chip.missing{border:1px dashed currentColor;opacity:.75}' +
+    '@media (prefers-reduced-motion:reduce){.pg-bar i{transition:none}}';
+
+  root.PropeloGauge = { html: html, animate: animate, css: CSS, tone: tone };
+})(typeof window !== "undefined" ? window : this);
+/*/GAUGE*/
+(function(){ const st = document.createElement('style'); st.textContent = window.PropeloGauge.css + '.pgcard .pgtitle{margin-bottom:14px}.pgcard .pg-num b{font-size:52px}'; document.head.appendChild(st); })();
+function strHash(s){ let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); }
+function serverMatch(j, posting){
+  const key = 'm' + strHash((j.title || '') + '|' + posting.slice(0, 6000) + '|' + JSON.stringify(obj(state.resume)).length + '|' + yearsOf(settings()));
+  state.matchCache = state.matchCache || {};
+  if (!(key in state.matchCache)){
+    state.matchCache[key] = null;
+    // The New application screen redraws only when asked (so typing isn't lost), so ask.
+    cloudPost('api/agent/match', {title: j.title || '', jd: posting.slice(0, 60000)}).then(m => { state.matchCache[key] = m; state.naRender = true; render(); })
+      .catch(() => { state.matchCache[key] = {error: true}; state.naRender = true; render(); });
+  }
+  return {key, m: state.matchCache[key]};
+}
+function animateGauges(){
+  state.gaugeSeen = state.gaugeSeen || new Set();
+  document.querySelectorAll('[data-gauge]').forEach(el => {
+    const k = el.getAttribute('data-gauge');
+    if (state.gaugeSeen.has(k)) return;
+    state.gaugeSeen.add(k); window.PropeloGauge.animate(el);
+  });
+}
 function scoreCard(j, p, t){
   const posting = postingText(j);
   if (!posting || !hasProfile(p)) return '';
+  if (cloud() && posting.length >= 80){
+    const {key, m} = serverMatch(j, posting);
+    if (m === null) return `<section class="card scorecard"><h2>Your match</h2><p class="muted" style="margin-top:6px">Working out your match from your resume…</p></section>`;
+    if (m && !m.error && !m.needsResume){
+      const tl = t.resume ? resumeScore(tailoredView(p, t), posting, t.match || []) : null;
+      return `<section class="card scorecard pgcard" data-gauge="${esc(key)}"><h2 class="pgtitle">Your match</h2>${window.PropeloGauge.html(m, {size: 156, chips: 18})}
+        ${tl ? `<p class="muted" style="margin-top:10px;font-size:13.5px">Your tailored resume for this role uses ${tl.matched.length} of ${tl.total} of the posting's keywords.</p>` : ''}</section>`;
+    }
+  }
   const base = resumeScore(p, posting, t.match || []); if (!base) return '';
   const tl = t.resume ? resumeScore(tailoredView(p, t), posting, t.match || []) : null;
   const pct = tl ? tl.pct : base.pct, show = tl || base;
@@ -3696,7 +3814,7 @@ function renderNew(){
   return `<div class="phead"><h1>${NI.case}<span>New application</span></h1></div><p class="lede">Check the details, see how you match, then create it.</p><div class="narrow">${step1}
     <section class="card"><h2>The role</h2><div class="formgrid" style="margin-top:14px">${f('company', 'Company')}${f('title', 'Role')}${f('location', 'Location')}${f('workMode', 'Work mode')}${f('salary', 'Pay')}${f('applyBy', 'Apply by', 'date')}${f('experience', 'Experience asked')}</div>${parsed.summary ? `<p class="muted" style="margin-top:14px">${esc(parsed.summary)}</p>` : ''}</section>
     ${realCheck(n.text, n.url)}
-    ${hasProfile() && n.text ? scoreCard({jd: n.text}, prof(), {match: arr(n.match)}) : ''}
+    ${hasProfile() && n.text ? scoreCard({jd: n.text, title: obj(parsed).title || ''}, prof(), {match: arr(n.match)}) : ''}
     ${matchList(arr(n.match))}
     <section class="card"><h2>Tailoring</h2><span class="groupl" style="margin-top:14px;display:block">Cover letter tone</span><div class="toneRow"><div class="pseg" role="group" aria-label="Tone">${TONES.map(([v, l]) => `<button type="button" data-act="na-tone" data-v="${v}" aria-pressed="${tone === v}">${l}</button>`).join('')}</div><span class="muted">${esc((TONES.find(t => t[0] === tone) || TONES[0])[2])}</span></div>
       <label class="f" for="na-notes">Anything I should know?<textarea id="na-notes" data-na="notes" rows="3" placeholder="e.g. I'm relocating to Bengaluru in January. Or: lean on my RAG work.">${esc(n.notes || '')}</textarea></label>
@@ -4038,6 +4156,7 @@ function countUp(){
   });
 }
 function renderNow(){
+  requestAnimationFrame(() => { try { animateGauges(); } catch (e) {} });
   const all = jobsArr();
   const ready = all.filter(j => j.stage === 'ready').length;
   const todos = outreachTodos().length;
@@ -4046,7 +4165,7 @@ function renderNow(){
   $('#c-skipped').textContent = all.filter(j => j.stage === 'skipped').length;
   $('#cta-batch').textContent = ready ? `Review batch (${ready})` : 'Review batch';
   const f = filterSummary();
-  $('#notice-text').innerHTML = state.status === 'nodb' ? 'Open this page as its owner, signed in to Claude, to see your pipeline.' : state.status === 'demo' ? 'Demo with fictional companies. Run <b>careeros serve</b> to see your own pipeline.' : cloud() ? `Every hour: <b>${esc(f.exp)}</b> roles<span class="long"> ${esc(f.locs)}</span>, from ${esc(Number(obj(state.me && state.me.feed).companies || 1400).toLocaleString('en-IN'))} company career pages, posted in the last ${esc(f.days)} days.` : `Every 6 hours: <b>${esc(f.exp)}</b> tech and AI roles<span class="long">${esc(f.pay)} ${esc(f.locs)}</span>, posted in the last ${esc(f.days)} ${f.days === 1 ? 'day' : 'days'}.`;
+  $('#notice-text').innerHTML = state.status === 'nodb' ? 'Open this page as its owner, signed in to Claude, to see your pipeline.' : state.status === 'demo' ? 'Demo with fictional companies. Run <b>careeros serve</b> to see your own pipeline.' : cloud() ? `Every hour: roles for <b>${esc(f.exp)}</b><span class="long"> ${esc(f.locs)}</span>, from ${esc(Number(obj(state.me && state.me.feed).companies || 1400).toLocaleString('en-IN'))} company career pages, posted in the last ${esc(f.days)} days.` : `Every 6 hours: roles for <b>${esc(f.exp)}</b><span class="long">${esc(f.pay)} ${esc(f.locs)}</span>, posted in the last ${esc(f.days)} ${f.days === 1 ? 'day' : 'days'}.`;
   const navTab = state.tab === 'app' ? 'pipeline' : state.tab;
   document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.tab === navTab)));
   const dockOn = ['home','today','pipeline'].includes(navTab) ? navTab : 'more';
@@ -4263,7 +4382,12 @@ document.addEventListener('click', e => {
   else if (act === 'cc-role'){ cloudPost('api/concierge/roles/' + encodeURIComponent(el.dataset.sid) + '/' + el.dataset.d).then(v => { state.concierge = v; toast(el.dataset.d === 'approve' ? 'Approved. Your partner can apply now.' : 'Declined.'); render(); }).catch(d => acctSay(d.error || 'Could not save.', true, 'concierge')); }
   else if (act === 'gu-enroll'){ const kind = el.dataset.kind, box = $('#gu-agree-' + kind);
     if (!box || !box.checked) return acctSay('Read and accept the guarantee terms first.', true, 'gu-' + kind);
-    cloudPost('api/guarantee/' + kind + '/enroll', {agree: true, termsVersion: obj(state.guarantee).termsVersion}).then(v => { state.guarantee = v; acctSay('You\'re enrolled. Your progress shows here.', false, 'gu-' + kind); }).catch(d => acctSay(d.error || 'Could not start it.', true, 'gu-' + kind)); }
+    const w = window.open('', '_blank');  // opened inside the click so the payment page isn't blocked as a pop-up
+    cloudPost('api/guarantee/' + kind + '/buy', {agree: true, termsVersion: obj(state.guarantee).termsVersion}).then(v => { state.guarantee = v;
+      if (safeUrl(v.payUrl) && w){ w.location = v.payUrl; acctSay('The payment page opened in a new tab. Your guarantee starts when the payment goes through.', false, 'gu-' + kind); }
+      else { if (w) w.close(); acctSay('Pay from the button below to start it.', false, 'gu-' + kind); } })
+      .catch(d => { if (w) w.close(); acctSay(d.error || 'Could not start the payment.', true, 'gu-' + kind); }); }
+  else if (act === 'gu-reload'){ loadGuarantee(); }
   else if (act === 'cc-pause'){ cloudPost('api/concierge/pause', {pause: el.dataset.p === '1'}).then(v => { state.concierge = v; render(); }).catch(d => acctSay(d.error || 'Could not change it.', true, 'concierge')); }
   else if (act === 'cc-close'){ if (!confirm('Close your Concierge case? Fees still apply to offers from companies you already approved, within the time in the terms.')) return; cloudPost('api/concierge/close').then(v => { state.concierge = v; render(); }).catch(d => acctSay(d.error || 'Could not close it.', true, 'concierge')); }
   else if (act === 'cc-pay'){ el.disabled = true; cloudPost('api/concierge/instalments/' + encodeURIComponent(el.dataset.id) + '/pay').then(d => { location.href = d.url; }).catch(d => { el.disabled = false; acctSay(d.error || 'Could not open the payment.', true, 'concierge'); }); }

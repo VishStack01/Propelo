@@ -66,6 +66,11 @@ class Config:
     guarantee_min_matches: int = 40
     guarantee_claim_days: int = 30
     job_guarantee_days: int = 180
+    # The guarantees are paid add-ons for Pro and Ultra members, bought once per guarantee window.
+    guarantee_interview_inr: int = 999
+    guarantee_interview_usd_cents: int = 1900
+    guarantee_job_inr: int = 2999
+    dodo_product_guarantee: str = ""   # a one-time Dodo product priced at the Interview Guarantee's dollar price
     security_email: str = ""  # shown in /.well-known/security.txt; falls back to SUPPORT_EMAIL
     google_client_id: str = ""
     google_client_secret: str = ""
@@ -136,6 +141,10 @@ class Config:
             guarantee_min_matches=_int("GUARANTEE_MIN_MATCHES", 40),
             guarantee_claim_days=_int("GUARANTEE_CLAIM_DAYS", 30),
             job_guarantee_days=_int("JOB_GUARANTEE_DAYS", 180),
+            guarantee_interview_inr=_int("GUARANTEE_INTERVIEW_PRICE_INR", 999),
+            guarantee_interview_usd_cents=_int("GUARANTEE_INTERVIEW_PRICE_USD_CENTS", 1900),
+            guarantee_job_inr=_int("JOB_GUARANTEE_PRICE_INR", 2999),
+            dodo_product_guarantee=e("DODO_PRODUCT_GUARANTEE", "").strip(),
             security_email=e("SECURITY_EMAIL", "").strip(),
             google_client_id=e("GOOGLE_CLIENT_ID", "").strip(),
             google_client_secret=e("GOOGLE_CLIENT_SECRET", "").strip(),

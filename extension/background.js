@@ -120,7 +120,7 @@ function startQueue(roles) {
   }).then(function () {
     return chrome.permissions.contains({ origins: origins }).then(function (ok) {
       if (!ok) return null;
-      return chrome.scripting.registerContentScripts([{ id: "propelo-queue", matches: origins, js: ["fill.js", "content.js"], runAt: "document_idle", allFrames: false, persistAcrossSessions: false }]);
+      return chrome.scripting.registerContentScripts([{ id: "propelo-queue", matches: origins, js: ["fill.js", "gauge.js", "content.js"], runAt: "document_idle", allFrames: false, persistAcrossSessions: false }]);
     });
   }).catch(function () { return null; });
   return register.then(function () { return chrome.tabs.create({ url: items[0].url, active: true }); }).then(function (tab) {
@@ -150,7 +150,7 @@ function onPageEnabled() { return chrome.scripting.getRegisteredContentScripts({
 function enableOnPage() {
   return onPageEnabled().then(function (on) {
     if (on) return true;
-    return chrome.scripting.registerContentScripts([{ id: SCRIPT_ID, matches: JOB_HOSTS, js: ["fill.js", "content.js"], runAt: "document_idle", allFrames: false, persistAcrossSessions: true }])
+    return chrome.scripting.registerContentScripts([{ id: SCRIPT_ID, matches: JOB_HOSTS, js: ["fill.js", "gauge.js", "content.js"], runAt: "document_idle", allFrames: false, persistAcrossSessions: true }])
       .then(function () { return true; });
   });
 }

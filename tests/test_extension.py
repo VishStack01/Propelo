@@ -130,3 +130,11 @@ def test_company_answers_stay_with_their_company(browser):
     page.evaluate("d => window.__careerosFill(d)", {"applicant": APPLICANT, "resume": None, "answers": ANSWERS, "company": "Initech"})
     assert page.eval_on_selector("#why", "e => e.value") == ""
     page.close()
+
+
+def test_dashboard_gauge_is_the_extension_gauge():
+    html = (ROOT / "dashboard" / "app.html").read_text(encoding="utf-8")
+    copy = html.split("/*GAUGE*/\n", 1)[1].split("\n/*/GAUGE*/", 1)[0]
+    assert copy == (EXT / "gauge.js").read_text(encoding="utf-8").strip()
+    for f in ("gauge.js",):
+        assert ".submit(" not in (EXT / f).read_text() and "eval(" not in (EXT / f).read_text()

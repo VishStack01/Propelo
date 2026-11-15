@@ -2,6 +2,16 @@
 
 All notable changes to CareerOS. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [semantic versioning](https://semver.org/).
 
+## [2.5.0] - 2026-11-16
+
+### Changed
+- **The guarantees are paid add-ons, not part of Pro or Ultra.** Pro and Ultra members can buy the Interview Guarantee (₹999 or $19, once) and, with Concierge, the Job Guarantee (₹2,999, once). Buying checks eligibility first, opens a Razorpay payment link or a Dodo checkout, and the window starts when the payment webhook arrives; an unpaid checkout lapses after 2 days. If a guarantee fails and the person did their part, the refund is the add-on price plus the plan fees paid during the window. The plan cards no longer list the guarantees; `/api/plans` returns them as `addons`, and the pricing page and website show them as add-ons with prices. Operators can start one without payment (`POST /api/admin/guarantee`). Migration `0007_guarantee_addon.sql`.
+- **A match score you can check.** The score is rebuilt so every point comes from something measured: skills up to 60 (required terms weigh more than "nice to have" ones, and a skill proven in a bullet with a number counts more than one only listed), experience up to 25, role up to 15. A part that can't be measured is left out, not guessed, and the score shows a margin (for example "68, could be 55 to 81"). The app and the extension show it as a big gauge that counts up while its ring fills, with the arithmetic underneath and each skill marked proven, in experience, skills list or missing. Motion is off for people who ask their system for less.
+
+### Fixed
+- The experience line read "roles asking up to 6 years (you have 4) roles"; it now says "roles for 4 years of experience (asking up to 6)".
+- The New application screen didn't pass the job title to the score, and the role part compared the company name too.
+
 ## [2.4.0] - 2026-11-16
 
 ### Added

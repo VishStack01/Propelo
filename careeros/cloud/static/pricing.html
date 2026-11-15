@@ -56,6 +56,10 @@ footer a{text-decoration:none}footer a:hover{text-decoration:underline}
 @media (prefers-reduced-motion:reduce){.plan{animation:fade 150ms linear both}}
 @keyframes fade{from{opacity:0}}
 @media (prefers-color-scheme:dark){:root{--cream:#12110F;--sand:#1E1C19;--ink:#F3EDE2;--text:#D6CFC3;--muted:#9C958A;color-scheme:dark}.lede{color:#D6CFC3}.mark svg{fill:#151515}}
+.addons{margin-top:36px;display:grid;gap:12px}.addons h2{font-size:24px;margin:0}
+.addon{display:flex;justify-content:space-between;gap:16px;align-items:center;background:var(--panel, #F2EADC);border-radius:20px;padding:18px 20px}
+.addon h3{margin:0;font-size:18px}.addon p{margin:4px 0 0}.aprice{font-weight:600;font-size:22px;white-space:nowrap;display:flex;gap:6px;align-items:baseline}.aprice small{font-weight:400;font-size:13px;opacity:.7}
+@media (max-width:640px){.addon{flex-direction:column;align-items:flex-start}}
 </style>
 <style>
 /* ===== Propelo layer (see docs/design.md): cream and ink, one pink accent, Figtree at 400 to 600 ===== */
@@ -95,6 +99,7 @@ input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 45%,transparent) 
   <p class="lede">Finding and checking roles is <b>free for everyone</b>. Pro and Ultra are for when you want them <b>first</b>, with AI that writes from your real experience.</p>
   <div class="cur" role="group" aria-label="Currency"><button type="button" data-c="INR" aria-pressed="false">₹ INR</button><button type="button" data-c="USD" aria-pressed="false">$ USD</button></div>
   <div class="grid" id="plans"><!--PLANS--></div>
+  <!--ADDONS-->
   <p class="note">Rupee prices include GST where it applies. Dollar prices are charged by Dodo Payments, our merchant of record outside India, which adds sales tax or VAT where your country requires it.</p>
   <div class="faq">
     <div><h3>Can I use my own AI key?</h3><p>Yes, on any plan. Save an Anthropic, OpenAI-compatible or Gemini key in Settings and AI actions run on it without counting toward your allowance. It's stored encrypted.</p></div>
