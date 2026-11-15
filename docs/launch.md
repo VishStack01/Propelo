@@ -109,7 +109,7 @@ Concierge is a person on your team running a candidate's search, paid by a share
 1. **Have a lawyer review the Concierge terms** at `/terms#concierge` (fee, instalments, the 90-day rule, the 6-month attribution window, and the clause on hidden offers) before the first case. Charging candidates a placement fee is legal in India, but the terms are your contract with them.
 2. **GST:** placement services are usually taxable. Ask your accountant, then set `CONCIERGE_TAX_RATE` (for example 18) once you're registered.
 3. **Partners:** create accounts for your talent partners, then as the operator run `fetch("/api/admin/staff", {method: "POST", headers: {"Content-Type": "application/json", "X-CareerOS-CSRF": "1"}, body: JSON.stringify({email: "partner@yourdomain"})})`. They work at `https://<your-app>/staff`. Unassigned Ultra requests show first.
-4. **Turn it on:** `CONCIERGE=on` (the Render blueprint sets it). Requests email every partner.
+4. **Turn it on** once steps 1 to 3 are done: set `CONCIERGE=on` on both services (the blueprint starts with it off). Requests email every partner.
 5. **Collecting fees:** instalments use Razorpay payment links. In the Razorpay dashboard, add the `payment_link.paid` event to the same webhook. Keep each offer letter you verify.
 6. **Other countries:** `CONCIERGE_COUNTRIES` widens it, but only after legal advice for each country. The UK prohibits charging work-seekers and is always refused; most EU countries restrict it; many US states license and cap fees.
 7. **Train partners on the rules** shown at the bottom of the workspace: never sign in as the candidate, never automate LinkedIn, send nothing the candidate hasn't approved, write only what's true.

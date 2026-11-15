@@ -80,7 +80,7 @@ services:
       - key: DODO_MODE
         value: test
       - key: CONCIERGE
-        value: "on"
+        value: "off"
       - key: CONCIERGE_TAX_RATE
         value: "0"
       - key: GOOGLE_CLIENT_ID
