@@ -18,6 +18,7 @@ The code is ready. What's left needs accounts, money or a signature that only yo
 | 10 | [Repository settings and launch](#10-repository-and-launch) | 30 min | Free | Discovery |
 | 11 | [Concierge](#11-concierge) | 1 to 2 weeks | Staff time, lawyer | The human-run service |
 | 12 | [Guarantees](#12-guarantees) | 1 day, plus a lawyer's review | Refunds you budget for | The Interview and Job Guarantees |
+| 13 | [More job sources and the extension](#13-sources-and-extension) | 1 hour, plus Chrome review | Free keys; $5 Chrome fee | Openings outside company boards; the extension for everyone |
 
 ## 1. Deploy on Render
 
@@ -123,3 +124,10 @@ The Interview Guarantee (Pro and Ultra) and the Job Guarantee (with Concierge) p
 2. **Budget for refunds.** A refund is at most two months of Pro (₹998) or Ultra (₹2,398) for the Interview Guarantee, and six months for the Job Guarantee. Eligibility needs 40 matched roles in the last 30 days, and the activity rule needs 30 applications over 4 weeks, so claims should be rare; watch the claim rate in the first two months and tune `GUARANTEE_MIN_APPLICATIONS`, `GUARANTEE_MIN_WEEKS` and `GUARANTEE_MIN_MATCHES` (existing enrolments keep the rules they started with only in spirit: the app checks the current values, so raise them only with notice).
 3. **Deciding claims.** Claims email every partner and show in `/staff` under Guarantee claims. Before approving, look at the person's pipeline and inbox for an interview, invitation or offer in the window. Approve (the amount defaults to the plan fees for the window and can't exceed it), issue the refund in the Razorpay or Dodo dashboard to the original payment method, then mark it refunded. Answer within 5 working days, as the terms promise.
 4. **Track the promise.** `/api/admin/audit?kind=guarantee` lists enrolments, claims and decisions.
+
+## 13. Sources and extension
+
+1. **Adzuna** (India, US, UK, Canada, Australia, New Zealand, Singapore, western Europe): register at developer.adzuna.com, then add `ADZUNA_APP_ID` and `ADZUNA_APP_KEY` as repository secrets (Settings, Secrets and variables, Actions). The scan reads them once a day. Read Adzuna's terms: listings link to Adzuna's own page, which is how the feed uses them.
+2. **USAJOBS** (US federal roles): request a key at developer.usajobs.gov and add `USAJOBS_KEY` and `USAJOBS_EMAIL` (the email you registered with).
+3. **Watch the feed size** after turning on the hourly scan: `feed/summary.json` shows `openings` and `trimmed`. Raise or lower `CAREEROS_FEED_MAX` in `scan.yml` to keep `full.jsonl.gz` well under 100 MB.
+4. **Chrome Web Store:** zip the `extension` folder (the extension workflow builds it), pay the one-time developer fee, and describe the permissions as the extension's README does: no sites up front, the hiring sites only when the person switches on the panel, and never LinkedIn, Naukri, Indeed or Wellfound. Store review asks why each permission is needed; the README's table is the answer.

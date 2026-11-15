@@ -877,6 +877,41 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
             text = c.scalar("SELECT text FROM assets WHERE id = ? AND user_id = ?", (rid, p.uid)) if rid else None
         return {"applicant": doc["data"] if doc else None, "resumeText": text or "", "brain": brain["data"] if brain else None}
 
+    @app.post("/api/agent/match")
+    def agent_match(body: dict = Body(default={}), p: Principal = Depends(principal)):
+        """Match score for a posting the extension (or the app) is looking at, against the person's real resume:
+        their structured resume, else the text of their uploaded resume, else their Career Brain."""
+        from .. import matchscore, scamcheck
+        title = re.sub(r"\s+", " ", str(body.get("title") or "")).strip()[:200]
+        jd = str(body.get("jd") or "")[:60000]
+        if len(jd.strip()) < 80:
+            raise err(400, "Open the job's page with its full description to see a match score.", "match")
+        with db.tx() as c:
+            limited(c, f"match:{p.uid}", 300, 3600)
+            prof = (repo.get_doc(c, p.uid, "profile", "resume") or {"data": {}})["data"]
+            appl = (repo.get_doc(c, p.uid, "profile", "applicant") or {"data": {}})["data"]
+            settings = (repo.get_doc(c, p.uid, "settings", "profile") or {"data": {}})["data"]
+            brain = (repo.get_doc(c, p.uid, "brain", "brain") or {"data": {}})["data"]
+            rid = (appl.get("resume") or {}).get("id", "")
+            text = c.scalar("SELECT text FROM assets WHERE id = ? AND user_id = ?", (rid, p.uid)) if rid else None
+        resume, source = matchscore.resume_from_profile(prof), "your Propelo resume"
+        if not (resume["bullets"] or resume["skills"] or resume["summary"].strip()):
+            if text:
+                resume, source = text, "your uploaded resume"
+            else:
+                resume, source = matchscore.resume_from_brain(brain), "your Career Brain"
+        years = settings.get("yearsExperience")
+        if years in (None, ""):
+            years = appl.get("experienceYears")
+        try:
+            years = float(years) if years not in (None, "") else None
+        except (TypeError, ValueError):
+            years = None
+        targets = [str(t) for t in (settings.get("targetRoles") or []) if str(t).strip()][:10]
+        out = matchscore.score(title, jd, resume, years, targets)
+        empty = isinstance(resume, dict) and not (resume["bullets"] or resume["skills"] or resume["summary"].strip())
+        return dict(out, source=None if empty else source, needsResume=empty, risk=scamcheck.check({"title": title, "jd": jd}))
+
     _BIG_BOARDS = re.compile(r"(^|\.)(linkedin\.com|naukri\.com|indeed\.[a-z.]+|wellfound\.com|angel\.co)$", re.I)
 
     def _posting_extras(body: dict) -> dict:
@@ -908,7 +943,9 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
         stamp = now_iso()[:19] + "Z"
         with db.tx() as c:
             jobs = repo.list_docs(c, p.uid, "jobs")
-            cur = next((j for j in jobs if _app_key(j["data"]) == key), None)
+            jid_in = str(body.get("jobId") or "")
+            # The apply queue sends the role's own id: its form page (a /apply link) differs from the role's link.
+            cur = next((j for j in jobs if jid_in and j["id"] == jid_in), None) or next((j for j in jobs if _app_key(j["data"]) == key), None)
             if cur:
                 data = cur["data"]
                 if applied and not data.get("appliedAt"):

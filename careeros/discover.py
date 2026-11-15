@@ -25,7 +25,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from . import geo
+from . import countries, geo
 from .models import iso
 from .sources import http
 
@@ -151,14 +151,28 @@ def _wanted(title: str) -> bool:
     return wanted_title(title)
 
 
+# Countries whose on-site roles count when the scan covers on-site roles worldwide
+# (CAREEROS_SCAN_ONSITE=world): India first, then developed economies.
+FOCUS = {"IN", "US", "GB", "CA", "AU", "NZ", "DE", "NL", "FR", "IE", "CH", "AT", "BE", "SE", "DK", "NO", "FI", "ES", "IT", "PT", "PL",
+         "SG", "JP", "KR", "AE", "IL", "HK"}
+
+
+def _in_scope(loc: str) -> bool:
+    from .scan import ONSITE_WORLD
+    if geo.classify(loc)["india"] or _OPEN_TO_INDIA.search(loc):
+        return True
+    return ONSITE_WORLD and bool(countries.named(loc) & FOCUS)
+
+
 def deep_fit(found: dict) -> int:
-    """How many roles in a job family we match are on this board, in India or open to it."""
+    """How many roles in a job family we match are on this board, in India or open to it (or, when the scan
+    covers on-site roles worldwide, in India or a developed country)."""
     locs, titles = found.get("locations", []), found.get("titles", [])
     extra = found.get("extra") or [""] * len(locs)
     n = 0
     for i, title in enumerate(titles):
         loc = (locs[i] if i < len(locs) else "") + " " + (extra[i] if i < len(extra) else "")
-        if _wanted(title or "") and (geo.classify(loc)["india"] or _OPEN_TO_INDIA.search(loc)):
+        if _wanted(title or "") and _in_scope(loc):
             n += 1
     return n
 
@@ -173,7 +187,7 @@ def accept(company: dict, found: dict) -> tuple[bool, str]:
         return False, "empty"
     if found.get("explicit"):
         # Our own list names this exact board (big employers on Workday or their own site).
-        return (True, "listed") if any(_india_or_remote(l) for l in found.get("locations", [])) else (False, "no-india-roles")
+        return (True, "listed") if any(_india_or_remote(l) or _in_scope(l) for l in found.get("locations", [])) else (False, "no-india-roles")
     if company.get("category") == "deep":
         # The inventory gives the exact board, so the board's own name may be a brand name.
         n = deep_fit(found)

@@ -36,7 +36,7 @@ def _wait_turn(host: str, interval: float) -> None:
 
 
 def get_bytes(url: str, timeout: float = 20.0, retries: int = 2, interval: float | None = None,
-              accept: str = "application/json", data: bytes | None = None) -> bytes:
+              accept: str = "application/json", data: bytes | None = None, headers: dict | None = None) -> bytes:
     host = urlparse(url).netloc
     delay = 1.5
     last: Exception | None = None
@@ -44,7 +44,7 @@ def get_bytes(url: str, timeout: float = 20.0, retries: int = 2, interval: float
     for attempt in range(retries + 1):
         _wait_turn(host, MIN_INTERVAL if interval is None else interval)
         req = urllib.request.Request(url, data=data, headers={"User-Agent": USER_AGENT, "Accept": accept,
-                                                               **({"Content-Type": "application/json"} if data else {})})
+                                                               **({"Content-Type": "application/json"} if data else {}), **(headers or {})})
         try:
             with urllib.request.urlopen(req, timeout=timeout) as resp:
                 body = resp.read()
@@ -73,8 +73,8 @@ def get_bytes(url: str, timeout: float = 20.0, retries: int = 2, interval: float
     raise FetchError(f"{url}: {last}", status)
 
 
-def get_json(url: str, timeout: float = 20.0, retries: int = 2, min_interval: float | None = None):
-    raw = get_bytes(url, timeout, retries, min_interval)
+def get_json(url: str, timeout: float = 20.0, retries: int = 2, min_interval: float | None = None, headers: dict | None = None):
+    raw = get_bytes(url, timeout, retries, min_interval, headers=headers)
     try:
         return json.loads(raw.decode("utf-8"))
     except (json.JSONDecodeError, UnicodeDecodeError) as e:

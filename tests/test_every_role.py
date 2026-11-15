@@ -95,3 +95,32 @@ def test_staff_nurse_is_not_a_senior_title():
     from careeros.extract import title_seniority
     assert title_seniority("Staff Nurse") == "" and title_seniority("Staff Accountant") == ""
     assert title_seniority("Staff Software Engineer") == "senior"
+
+
+def test_match_score_from_a_real_resume_for_any_field():
+    from careeros import matchscore
+    nurse = matchscore.resume_from_profile({"basics": {"headline": "Staff Nurse"}, "summary": "ICU nurse with BLS and ACLS.",
+                                            "experience": [{"title": "Staff Nurse", "bullets": ["Patient care for 12 ICU beds", "Trained 6 new nurses"]}],
+                                            "skills": ["Nursing", "Hindi"]})
+    jd = ("Staff Nurse, ICU. Requirements: GNM or B.Sc Nursing, BLS and ACLS certification, 2+ years of ICU experience, "
+          "patient care, good communication skills. Hindi preferred.")
+    r = matchscore.score("Staff Nurse - ICU", jd, nurse, years=3)
+    assert r["score"] >= 70 and r["label"] in ("Good match", "Strong match") and "BLS" in r["skills"]["present"] and "Nursing" in r["skills"]["thin"]
+    assert r["experience"]["fit"] == 1.0
+    short = matchscore.score("Staff Nurse - ICU", jd, nurse, years=0)
+    assert short["score"] < r["score"] and short["experience"]["note"] == "Asks for 2+ years; you have 0"
+    dev = matchscore.score("Backend Engineer", "We need Go, Kubernetes, PostgreSQL and Kafka experience to build payment APIs at scale.", nurse, years=3)
+    assert dev["score"] < 50 and set(dev["skills"]["missing"]) >= {"Kubernetes", "Kafka"}
+
+
+def test_match_endpoint(cloud):
+    c = cloud.user()
+    jd = "Accounts Executive. Tally Prime, GST and TDS filing, bank reconciliation, accounts payable, advanced Excel. 1-3 years of experience."
+    assert c.post("/api/agent/match", json={"title": "Accounts Executive", "jd": "short"}).status_code == 400
+    r = c.post("/api/agent/match", json={"title": "Accounts Executive", "jd": jd}).json()
+    assert r["needsResume"] is True
+    c.put("/api/d/profile/resume", json={"summary": "Accountant handling GST, TDS and reconciliation in Tally.",
+                                         "experience": [{"title": "Accounts Assistant", "bullets": ["Cleared accounts payable for 40 vendors in Excel"]}]})
+    c.put("/api/d/settings/profile", json={"yearsExperience": 2})
+    r = c.post("/api/agent/match", json={"title": "Accounts Executive", "jd": jd}).json()
+    assert r["source"] == "your Propelo resume" and r["score"] >= 80 and r["risk"]["level"] == "ok"

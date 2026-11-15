@@ -25,13 +25,15 @@ def test_manifest_asks_for_little():
     m = json.loads((EXT / "manifest.json").read_text())
     assert m["manifest_version"] == 3
     assert set(m["permissions"]) == {"activeTab", "scripting", "storage"}  # no tabs, no history, no cookies
-    assert "host_permissions" not in m and "content_scripts" not in m  # runs only when you press Fill
-    for f in ("popup.html", "popup.js", "fill.js", "icons/icon-128.png"):
+    # No sites up front: the on-page button and the apply queue ask for their sites when you turn them on.
+    assert "host_permissions" not in m and "content_scripts" not in m
+    assert m["background"] == {"service_worker": "background.js"}
+    for f in ("popup.html", "popup.js", "fill.js", "background.js", "content.js", "icons/icon-128.png"):
         assert (EXT / f).exists(), f
 
 
 def test_scripts_never_submit():
-    for f in ("fill.js", "popup.js"):
+    for f in ("fill.js", "popup.js", "background.js", "content.js"):
         src = (EXT / f).read_text()
         assert ".submit(" not in src and "requestSubmit" not in src
         assert "eval(" not in src and "new Function" not in src

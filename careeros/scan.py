@@ -59,6 +59,22 @@ def wanted_title(title: str) -> bool:
     return bool(TECH.search(t) or BUSINESS.search(t)) or tags.family(t) != "Other"
 
 
+# The published feed is capped so its files stay well under GitHub's 100 MB file limit as sources grow.
+# India and remote roles are kept first; the rest of the world fills what's left, newest first.
+FEED_MAX = int(os.environ.get("CAREEROS_FEED_MAX", "120000") or 120000)
+
+
+def cap_feed(records: list[dict], limit: int | None = None) -> tuple[list[dict], int]:
+    limit = FEED_MAX if limit is None else limit
+    if len(records) <= limit:
+        return records, 0
+    first = [r for r in records if r.get("geo") in ("south", "india") or r.get("workMode") == "remote"]
+    rest = [r for r in records if not (r.get("geo") in ("south", "india") or r.get("workMode") == "remote")]
+    keep = (first + rest)[:limit]
+    keep.sort(key=lambda r: -_ts(r.get("postedAt")))
+    return keep, len(records) - len(keep)
+
+
 def _ts(s: str | None) -> float:
     try:
         dt = datetime.fromisoformat(str(s or "").replace("Z", "+00:00"))
@@ -283,6 +299,7 @@ def run(boards_path: str | Path, out_dir: str | Path, workers: int = 16, detail_
         fps.add(fp)
         unique.append(r)
     unique.sort(key=lambda r: -_ts(r.get("postedAt")))
+    unique, trimmed = cap_feed(unique)
     # Remember every listing so a role that is taken down and listed again is noticed, then rate
     # each posting's legitimacy (age, re-listing, closure banner, vague or contradictory asks).
     history = signals.RepostHistory(out_dir / "history.json.gz")
@@ -314,7 +331,7 @@ def run(boards_path: str | Path, out_dir: str | Path, workers: int = 16, detail_
         "deepSweep": {"checked": sum(1 for e in companies.values() if e.get("category") == "deep" and e.get("checkedAt")),
                       "kept": sum(1 for e in companies.values() if e.get("category") == "deep" and e.get("status") == "mapped")},
         "greenhousePay": {"lookedUp": looked_up, "withPay": stated},
-        "remoteBoards": board_counts, "byAts": {}, "byGeo": {}, "errors": len(errors), "errorSamples": errors[:20],
+        "remoteBoards": board_counts, "trimmed": trimmed, "byAts": {}, "byGeo": {}, "errors": len(errors), "errorSamples": errors[:20],
         "erroredCompanies": sorted(n for n, e in companies.items() if e.get("stale")),
     }
     for r in unique:
@@ -322,7 +339,7 @@ def run(boards_path: str | Path, out_dir: str | Path, workers: int = 16, detail_
         summary["byGeo"][r["geo"] or "remote/unknown"] = summary["byGeo"].get(r["geo"] or "remote/unknown", 0) + 1
     (out_dir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     Path(boards_path).write_text(json.dumps(boards, indent=1, ensure_ascii=False), encoding="utf-8")
-    log(f"Feed: {len(unique)} open tech roles in India or remote from {len(mapped)} company boards "
+    log(f"Feed: {len(unique)} open roles ({trimmed} older ones left out to keep the files small) from {len(mapped)} company boards "
         f"and {len(board_counts)} remote job boards ({len(errors)} errors).")
     for e in errors[:40]:
         log(f"  ! {e}")

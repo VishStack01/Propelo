@@ -2,6 +2,17 @@
 
 All notable changes to CareerOS. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [semantic versioning](https://semver.org/).
 
+## [2.4.0] - 2026-11-16
+
+### Added
+- **Match score from your real resume**, for any role in any field: `POST /api/agent/match` and `careeros/matchscore.py`. 70% skills found in your resume (a bullet or summary counts fully, the skills list half), 20% years against years asked, 10% title against your target roles, with what you have, what's missing (add only if true), the experience note and the scam check. Reads the structured resume, else the uploaded resume's text, else the Career Brain.
+- **Skill terms for every field** in the keyword vocabulary (accounts and GST, sales and CRM, HR, supply chain, engineering trades and CAD, nursing and clinical, teaching, law, retail and hospitality, media), so coverage and scores work beyond tech.
+- **Extension 2.4: match, fill, next.** A match card in the popup; an optional on-page panel on 19 hiring systems (Greenhouse, Lever, Ashby, Workday, SmartRecruiters, Workable, Recruitee, Teamtailor, iCIMS, Jobvite, Breezy, BambooHR, Personio, Zoho Recruit, Darwinbox, Keka, Freshteam, SuccessFactors, Taleo) with the score and a Fill button; and an **apply queue** that opens each role waiting in Propelo, fills it, notices the confirmation after you press Submit, records the application and opens the next. A background worker holds the key; the panel sits in a closed shadow root. Sites are asked for only when you switch these on.
+- **More openings across countries**, India first: Adzuna (India, the US, UK, Canada, Australia, New Zealand, Singapore and western Europe; `ADZUNA_APP_ID`, `ADZUNA_APP_KEY`, `ADZUNA_COUNTRIES`, `ADZUNA_PAGES`) and USAJOBS (US federal roles; `USAJOBS_KEY`, `USAJOBS_EMAIL`), each polled once a day when its key is set. Arbeitnow's on-site roles in Germany are kept when the scan covers on-site roles worldwide, and company discovery keeps boards with roles in India or a developed country. The published feed is capped at `CAREEROS_FEED_MAX` roles (120,000), India and remote first.
+
+### Changed
+- `/api/agent/track` accepts the role's `jobId`, so the apply queue records the right role when it opened the form's own page.
+
 ## [2.3.0] - 2026-11-16
 
 ### Added

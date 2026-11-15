@@ -42,3 +42,6 @@ details:not([open]) > :not(summary){display:none}
 @media (prefers-reduced-motion:reduce){.spin{animation:none}.btn{transition:none}}
 a{color:inherit}
 .foot{display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding-top:8px;margin-top:2px}
+.match .score{display:flex;align-items:center;gap:6px;font-weight:600;font-variant-numeric:tabular-nums}.match .score i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.small{font-size:12px}
+.switch{display:flex;gap:8px;align-items:flex-start;font-weight:500;font-size:13px}.switch input{margin-top:3px}.switch .muted{display:block;font-weight:400}

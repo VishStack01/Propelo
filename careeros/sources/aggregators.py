@@ -225,13 +225,28 @@ def arbeitnow(pages: int = 3) -> list[Job]:
     for page in range(1, pages + 1):
         data = get_json(f"https://www.arbeitnow.com/api/job-board-api?page={page}")
         for it in data.get("data", []):
-            if not it.get("remote"):
-                continue
-            out.append(_remote_job(it.get("company_name"), it.get("title"), it.get("url"), "Arbeitnow", it.get("location") or "",
-                                   html_to_text(it.get("description", "")), _epoch(it.get("created_at")), "", it.get("slug")))
+            text = html_to_text(it.get("description", ""))
+            if it.get("remote"):
+                out.append(_remote_job(it.get("company_name"), it.get("title"), it.get("url"), "Arbeitnow", it.get("location") or "",
+                                       text, _epoch(it.get("created_at")), "", it.get("slug")))
+            else:  # on-site roles in Germany: kept by the scan only when it covers on-site roles worldwide
+                where = (it.get("location") or "").strip()
+                out.append(Job(company=(it.get("company_name") or "").strip(), title=(it.get("title") or "").strip(), url=it.get("url") or "",
+                               source="Arbeitnow", location=f"{where}, Germany" if where and "germany" not in where.lower() else (where or "Germany"),
+                               work_mode="", description=text, posted_at=_epoch(it.get("created_at")), req_id=str(it.get("slug") or "")))
         if not (data.get("links") or {}).get("next"):
             break
     return out
+
+
+def adzuna() -> list[Job]:
+    from . import national
+    return national.adzuna()
+
+
+def usajobs() -> list[Job]:
+    from . import national
+    return national.usajobs()
 
 
 def yc_jobs() -> list[Job]:
@@ -250,6 +265,8 @@ AGGREGATORS = {
     "hn-who-is-hiring": hn_who_is_hiring,
     "arbeitnow": arbeitnow,
     "yc-jobs": yc_jobs,
+    "adzuna": adzuna,      # India and developed countries, when ADZUNA_APP_ID and ADZUNA_APP_KEY are set
+    "usajobs": usajobs,    # US federal roles, when USAJOBS_KEY and USAJOBS_EMAIL are set
 }
 
-MIN_HOURS = {"remotive": 6, "jobicy": 1, "hn-who-is-hiring": 12, "arbeitnow": 6, "yc-jobs": 6}
+MIN_HOURS = {"remotive": 6, "jobicy": 1, "hn-who-is-hiring": 12, "arbeitnow": 6, "yc-jobs": 6, "adzuna": 24, "usajobs": 12}

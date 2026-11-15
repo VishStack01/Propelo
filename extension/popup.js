@@ -5,7 +5,46 @@
   "use strict";
   var BLOCKED = /(^|\.)(linkedin\.com|naukri\.com|indeed\.[a-z.]+|wellfound\.com|angel\.co)$/i;
   var app = document.getElementById("app");
-  var S = { server: "", key: "", tab: null, page: null, report: null, busy: "", msg: "", err: false, tracked: null };
+  var S = { server: "", key: "", tab: null, page: null, report: null, busy: "", msg: "", err: false, tracked: null,
+            match: null, queue: null, qstatus: null, onpage: null };
+  function bg(msg) {
+    return new Promise(function (res, rej) {
+      chrome.runtime.sendMessage(msg, function (r) {
+        if (chrome.runtime.lastError) return rej(new Error(chrome.runtime.lastError.message));
+        if (!r || !r.ok) { var e = new Error((r && r.error) || "Something went wrong."); e.status = r && r.status; return rej(e); }
+        res(r.data);
+      });
+    });
+  }
+  function color(n) { return n >= 80 ? "#1f9d55" : n >= 65 ? "#3859F9" : n >= 50 ? "#e0a100" : "#c0392b"; }
+  function matchCard() {
+    var m = S.match;
+    if (!m) return "";
+    if (m.needsResume) return '<div class="note">Add your resume in Propelo to see how you match this role.</div>';
+    var sk = m.skills || {}, have = (sk.present || []).concat(sk.thin || []);
+    return '<div class="card match"><div class="row end"><b>Your match</b><span class="score"><i style="background:' + color(m.score) + '"></i>' + m.score + ' · ' + esc(m.label) + '</span></div>' +
+      (have.length ? '<p class="muted">You have: ' + esc(have.slice(0, 10).join(", ")) + '</p>' : '') +
+      ((sk.missing || []).length ? '<p class="muted">Not in your resume: ' + esc(sk.missing.slice(0, 8).join(", ")) + '. Add one only if it\'s true.</p>' : '') +
+      (m.experience && m.experience.note ? '<p class="muted">' + esc(m.experience.note) + '</p>' : '') +
+      '<p class="muted small">Checked against ' + esc(m.source || "your resume") + '. Not how the employer\'s software ranks you.</p></div>';
+  }
+  function queueCard() {
+    var st = S.qstatus, q = S.queue;
+    if (st && st.active) return '<div class="card"><div class="row end"><b>Apply queue</b><span class="count">' + st.position + ' of ' + st.total + '</span></div>' +
+      '<p class="muted">Each role opens and fills in its own tab. Check it, press Submit, then press "I submitted it, next" on the page.</p>' +
+      '<div class="row"><button class="btn" data-act="q-show">Go to the tab</button><button class="btn ghost" data-act="q-stop">Stop</button></div></div>';
+    if (!q) return "";
+    var roles = q.roles || [];
+    if (!roles.length) return '<div class="card"><b>Apply queue</b><p class="muted">' + (q.left === 0 ? "You've reached today's limit (" + q.dailyCap + "). More tomorrow." : "Nothing waiting. Approve roles in Propelo, or let auto-apply pick roles above your apply line.") + '</p></div>';
+    return '<div class="card"><div class="row end"><b>Apply queue</b><span class="count">' + roles.length + '</span></div>' +
+      '<ul>' + roles.slice(0, 4).map(function (r) { return '<li><b>' + esc(r.company) + '</b><span>' + esc(r.title) + (r.score ? ' · fit ' + esc(Number(r.score).toFixed(1)) : '') + '</span></li>'; }).join("") + '</ul>' +
+      (roles.length > 4 ? '<p class="muted">And ' + (roles.length - 4) + ' more.</p>' : '') +
+      '<button class="btn solid block" data-act="q-start">Start applying</button><p class="muted">Propelo opens each role and fills it. You check every answer and press Submit yourself. ' + q.left + ' left today on your plan.</p></div>';
+  }
+  function onPageCard() {
+    if (S.onpage === null) return "";
+    return '<label class="switch"><input type="checkbox" id="onpage"' + (S.onpage ? " checked" : "") + '> Show Propelo on job pages <span class="muted">(Greenhouse, Lever, Ashby, Workday and 20 more)</span></label>';
+  }
 
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function originOf(u) { try { var x = new URL(u); return x.protocol + "//" + x.host; } catch (e) { return ""; } }
@@ -44,10 +83,13 @@
       parts.push('<h1>' + esc(S.page && S.page.title || host) + '</h1><p class="muted">' + esc(S.page && S.page.company ? S.page.company + " · " + host : host) + '</p>');
       parts.push('<button class="btn solid block" data-act="fill"' + (S.busy ? " disabled" : "") + '>' + (S.busy === "fill" ? '<span class="spin" aria-hidden="true"></span>Filling…' : S.report ? "Fill again" : "Fill this form") + '</button>');
       if (S.report) parts.push(reportView(S.report));
+      parts.push(matchCard());
       if (S.page && S.page.frames && S.page.frames.length && !S.framesOk) parts.push('<div class="note">This form sits inside a frame from <b>' + esc(S.page.frames.map(hostOf).join(", ")) + '</b>. <button class="btn ghost" data-act="frames">Allow Propelo there</button></div>');
       parts.push(trackCard());
     }
     if (S.msg) parts.push('<p class="' + (S.err ? "note" : "good") + '" role="status">' + esc(S.msg) + '</p>');
+    parts.push(queueCard());
+    parts.push(onPageCard());
     parts.push('<div class="foot"><a href="' + esc(S.server) + '/app" target="_blank" rel="noopener">Open Propelo</a><button class="btn ghost" data-act="disconnect">Disconnect</button></div>');
     app.innerHTML = parts.join("");
   }
@@ -124,6 +166,7 @@
         return r;
       }).then(function (res) {
         S.page = res && res[0] && res[0].result;
+        if (S.page && String(S.page.jd || "").length >= 200) bg({ type: "match", page: { url: S.page.url, title: S.page.title, jd: S.page.jd } }).then(function (m) { S.match = m; render(); }, function () {});
         var origins = (S.page && S.page.frames || []).map(function (f) { return originOf(f) + "/*"; });
         if (!origins.length) { S.framesOk = true; return render(); }
         chrome.permissions.contains({ origins: origins }, function (ok) { S.framesOk = ok; render(); });
@@ -173,6 +216,15 @@
   }
 
   app.addEventListener("submit", function (e) { if (e.target.id === "connect") connect(e); });
+  app.addEventListener("change", function (e) {
+    if (e.target.id !== "onpage") return;
+    if (e.target.checked) {
+      chrome.permissions.request({ origins: S.hosts || [] }, function (ok) {
+        if (!ok) { S.onpage = false; return say("Without access to those sites Propelo can't show up on them.", true); }
+        bg({ type: "onpage:enable" }).then(function () { S.onpage = true; say("Propelo now shows your match and a Fill button on job pages on those sites."); }, function (err) { say(err.message, true); });
+      });
+    } else bg({ type: "onpage:disable" }).then(function () { S.onpage = false; render(); });
+  });
   app.addEventListener("click", function (e) {
     var b = e.target.closest("[data-act]"); if (!b) return;
     var act = b.dataset.act;
@@ -182,11 +234,27 @@
       var origins = S.page.frames.map(function (f) { return originOf(f) + "/*"; });
       chrome.permissions.request({ origins: origins }, function (ok) { S.framesOk = ok; if (ok) fill(); else say("Without that, Propelo can't reach the form inside the frame.", true); });
     }
+    else if (act === "q-start") {
+      var roles = (S.queue && S.queue.roles) || [];
+      var origins = roles.map(function (r) { return originOf(r.url) + "/*"; }).filter(function (o, i, a) { return o.length > 3 && a.indexOf(o) === i && !BLOCKED.test(hostOf(o.replace(/\/\*$/, ""))); });
+      // Asked inside the click: the queue's sites, so each role can be filled when it opens.
+      chrome.permissions.request({ origins: origins.concat(S.hosts || []) }, function (ok) {
+        if (!ok) return say("Propelo needs to reach those sites to fill each form.", true);
+        bg({ type: "onpage:enable" }).then(function () { return bg({ type: "queue:start", roles: roles }); })
+          .then(function () { window.close(); }, function (e) { say(e.message, true); });
+      });
+    }
+    else if (act === "q-stop") bg({ type: "queue:stop" }).then(function () { S.qstatus = null; loadExtras(); });
+    else if (act === "q-show") { if (S.qstatus && S.qstatus.tabId) chrome.tabs.update(S.qstatus.tabId, { active: true }); window.close(); }
     else if (act === "disconnect") { chrome.storage.local.remove(["server", "key"]); S.key = ""; S.report = null; S.msg = ""; render(); }
   });
 
+  function loadExtras() {
+    bg({ type: "queue:status" }).then(function (st) { S.qstatus = st; if (!st.active) return bg({ type: "queue:list" }).then(function (q) { S.queue = q; }); }).then(render, function () {});
+    bg({ type: "onpage:get" }).then(function (o) { S.onpage = o.on; S.hosts = o.hosts; render(); }, function () {});
+  }
   chrome.storage.local.get(["server", "key"], function (v) {
     S.server = v.server || ""; S.key = v.key || "";
-    if (S.server && S.key) loadPage(); else render();
+    if (S.server && S.key) { loadPage(); loadExtras(); } else render();
   });
 })();

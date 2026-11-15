@@ -17,6 +17,8 @@ jobs:
           python3 -c "import json; m = json.load(open('extension/manifest.json')); assert m['manifest_version'] == 3; print(m['name'], m['version'])"
           node --check extension/fill.js
           node --check extension/popup.js
+          node --check extension/background.js
+          node --check extension/content.js
       - name: Zip
         run: |
           v=$(python3 -c "import json; print(json.load(open('extension/manifest.json'))['version'])")

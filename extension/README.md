@@ -1,6 +1,6 @@
-# Propelo Autofill (Chrome extension)
+# Propelo for Chrome: match score, autofill and apply queue
 
-Fills job application forms from your Propelo profile. You review every answer and press Submit yourself.
+Shows how well a role matches your real resume, fills application forms from your Propelo profile, and walks your apply queue one role at a time. You review every answer and press Submit yourself.
 
 ## Install
 
@@ -11,7 +11,13 @@ Fills job application forms from your Propelo profile. You review every answer a
 
 ## Use
 
-Open an application form and press **Fill this form**.
+**Match score.** On a job page, the popup (or the on-page panel) scores the role against your real resume: the resume in Propelo, else the text of the resume you uploaded, else your Career Brain. 70% is the posting's skills found in your resume (in a bullet or summary counts fully, only in your skills list counts half), 20% your years against the years asked, 10% the title against your target roles. It lists what you have and what the posting asks that your resume doesn't, to add only if true. It's a keyword and experience check, not how the employer's screening software ranks you. Scam warnings show on the same card.
+
+**On job pages.** Switch on **Show Propelo on job pages** in the popup and allow the sites it lists (Greenhouse, Lever, Ashby, Workday, SmartRecruiters, Workable, Recruitee, Teamtailor, iCIMS, Jobvite, Breezy, BambooHR, Personio, Zoho Recruit, Darwinbox, Keka, Freshteam, SuccessFactors, Taleo). A small panel then shows your match and a **Fill this form** button. **×** hides it on that site.
+
+**Apply queue.** The popup lists the roles waiting in your Propelo queue (ones you approved, and, with auto-apply on, roles above your apply line that pass the scam check), within your plan's daily limit. **Start applying** opens the first in a tab, waits for the form and fills it. Check it and press Submit: when the page confirms the application, Propelo records it as applied and opens the next role. **I submitted it, next**, **Skip** and **Stop** are on the panel. On Greenhouse, Lever and Ashby, Propelo Cloud's auto-apply can also send applications for you without a browser; the queue is for every other site, and for when you'd rather check each one.
+
+**Fill a form.** Open an application form and press **Fill this form**.
 
 - Filled fields get a pink outline. Fields that need you get an orange dashed outline and are listed in the popup.
 - Your resume PDF is attached to the resume upload when the form has one.
@@ -25,7 +31,8 @@ Open an application form and press **Fill this form**.
 - Fill passwords, one-time codes, Aadhaar, PAN, bank details, passport numbers or dates of birth.
 - Answer voluntary questions (gender, disability and the like) or fill in someone else's details (a referrer, a reference).
 - Run on LinkedIn, Naukri, Indeed or Wellfound. Those sites don't allow automated filling and it can get your account restricted, so the popup only offers to track the role.
-- Run in the background. It reads a page only when you press a button in the popup, and only the tab you're on (`activeTab`).
+- Read pages you didn't allow. Without the on-page switch it reads a page only when you press a button in the popup, and only the tab you're on (`activeTab`). With it, it runs only on the hiring sites listed above, and only after you allow them.
+- Show your key to a page. The server address and computer key stay in the extension's background; the on-page panel lives in a closed shadow root and asks the background for everything.
 
 ## Permissions
 
@@ -35,6 +42,8 @@ Open an application form and press **Fill this form**.
 | `storage` | Keep your Propelo address and computer key in this browser |
 | Your Propelo address (asked when you connect) | Read your application details and resume, and track roles |
 | A form's frame host (asked only if a form is embedded from another site) | Fill forms embedded from Greenhouse, Lever and similar |
+| The hiring sites listed above (asked when you switch on the on-page panel or start the apply queue) | Show your match and fill forms on those sites |
+| The sites of the roles in your queue (asked when you press Start applying) | Fill each role's form when it opens |
 
 The computer key can only read your application details and report applications. Remove it any time in Propelo (Settings, Your computer) or press **Disconnect**.
 

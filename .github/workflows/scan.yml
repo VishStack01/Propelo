@@ -84,7 +84,10 @@ jobs:
         # New companies, boards that errored last scan, and unmapped companies
         # every 14 days (swept boards every 21). At most 800 per run and 18 minutes,
         # curated and radar companies first, so the first deep pass takes a day or
-        # two and stays gentle on each hiring system.
+        # two and stays gentle on each hiring system. Boards with roles in India or a
+        # developed country are kept (discover.FOCUS), not only India.
+        env:
+          CAREEROS_SCAN_ONSITE: world
         run: |
           set -o pipefail
           careeros discover --companies config/companies/companies.csv --extra feed/radar-companies.csv --extra feed/yc-companies.csv --extra feed/deep-companies.csv --cache feed/boards.json --refresh-days 14 --limit 800 --max-minutes 18 2>&1 | tee feed/discover.log
@@ -93,6 +96,11 @@ jobs:
         # On-site and hybrid roles in every country, for people searching outside India.
         env:
           CAREEROS_SCAN_ONSITE: world
+          # Country-wide job APIs (see careeros/sources/national.py). Each stays off until its secret is added.
+          ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}
+          ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}
+          USAJOBS_KEY: ${{ secrets.USAJOBS_KEY }}
+          USAJOBS_EMAIL: ${{ secrets.USAJOBS_EMAIL }}
         run: |
           set -o pipefail
           careeros scan --boards feed/boards.json --out feed 2>&1 | tee feed/scan.log
