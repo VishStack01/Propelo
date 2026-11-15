@@ -2,6 +2,16 @@
 
 All notable changes to CareerOS. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [semantic versioning](https://semver.org/).
 
+## [2.1.0] - 2026-11-15
+
+### Added
+- **Concierge**, part of Pro and Ultra, for jobs in India: a talent partner on the Propelo team runs the search. The candidate approves every company before anything is sent; partners never sign in as the candidate or automate LinkedIn. The fee is 8% of yearly fixed pay, 6% on any part above ₹20 lakh (no cliff), plus GST where it applies, only for an offer from a company the candidate approved through Concierge within 6 months, and only after joining: three monthly instalments from 30 days after the joining date, through Razorpay payment links. If the employer ends the job within 90 days, what's unpaid is cancelled. Cases pause when the plan ends. Includes the candidate's Concierge page with a fee calculator, a workspace for partners at `/staff` (queue with Ultra first, proposals, messages and private notes, offer checks, instalments), versioned terms, and an audit trail of every staff action and case view. The UK is always refused, because charging work-seekers is prohibited there.
+- **Matching for everyone, wherever they live.** Outside India, roles fit when they're remote and open to the person's country or region (countries named in the location, regions, or a UTC-offset range), or on-site or hybrid in places they list. Work-authorization rules are judged against their own country. Settings ask where you live (guessed from the browser), take a salary floor in US dollars outside India, and use the browser's time zone. The hourly scan keeps on-site roles in every country (`CAREEROS_SCAN_ONSITE=world`). Matching in India is unchanged.
+
+### Changed
+- The website, job board and pricing page describe Propelo for everyone ("Built in India, works everywhere"), with a Concierge section. "Fresh roles before the big boards" became "straight from company career pages", because we haven't measured the first claim.
+- `scripts/sync_plan_cards.py` writes the website's plan cards from the plan catalog.
+
 ## [2.0.0] - 2026-11-14
 
 ### Added

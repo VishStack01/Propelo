@@ -25,7 +25,7 @@ import threading
 import time
 from datetime import timedelta
 
-from . import autosend, plans, repo
+from . import autosend, concierge, plans, repo
 from .config import Config
 from .db import Database, now_iso
 from .ingest import IngestError, ingest
@@ -107,6 +107,10 @@ class Worker:
             elif task["kind"] == "billing_cancel":
                 cancel_superseded(self.cfg, payload)
             elif task["kind"] == "alerts":
+                with self.db.tx() as c:
+                    paused = concierge.pause_lapsed(c)
+                if paused:
+                    log.info("concierge: paused %d cases whose plan ended", paused)
                 alerts.send_due(self.db, self.cfg.public_url, log=log.info)
             else:
                 raise ValueError(f"unknown task kind {task['kind']}")

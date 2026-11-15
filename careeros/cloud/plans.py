@@ -95,6 +95,7 @@ def catalog(cfg: Config) -> list[dict]:
                       "Unlimited copilot questions and mock interviews",
                       "LinkedIn profile review",
                       "Recruiter emails from your Gmail, up to 25 a day, with day 7 and 14 follow-ups",
+                      "Optional Concierge in India, with priority for a talent partner",
                       "Fastest support"]},
     ]
 

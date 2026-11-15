@@ -442,3 +442,5 @@ footer{margin-top:128px;border-top:1px solid var(--line)}
   .fgrid{grid-template-columns:1fr 1fr}
   footer{margin-top:96px}
 }
+.steps.cc{margin-top:48px}
+#concierge .fine{margin-top:32px;max-width:760px}

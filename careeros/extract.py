@@ -256,6 +256,15 @@ class RemoteScope:
     quote: str = ""
 
 
+def tz_range(blob: str) -> tuple[float, float, str] | None:
+    """A UTC-offset range a remote posting asks for ("UTC-3 to UTC+2"), as (low, high, quote)."""
+    m = _TZ_RANGE.search(blob or "")
+    if not m:
+        return None
+    a, b = sorted((_tz(m.group(1)), _tz(m.group(2))))
+    return a, b, quote_around(blob, *m.span())
+
+
 def remote_scope(location: str, text: str) -> RemoteScope:
     """Can someone living in India take this remote role?"""
     text = _no_temp_remote(text)

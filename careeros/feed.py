@@ -64,6 +64,13 @@ def settings_from_dashboard(doc: dict) -> Settings:
         s.dealbreakers = [d.strip() for d in re.split(r"[,\n]", str(doc["dealbreakers"])) if d.strip()]
     if doc.get("companyBlocklist"):
         s.company_blocklist = list(doc["companyBlocklist"])
+    home = str(doc.get("homeCountry") or "IN").upper()[:2]
+    if home != "IN":
+        raw = doc.get("places") or []
+        places = [x.strip() for x in (raw if isinstance(raw, list) else re.split(r"[,;\n]", str(raw))) if str(x).strip()][:20]
+        s.location = LocationPolicy(home=home, places=places, remote_ok=doc.get("remoteOk", True) is not False,
+                                    keep_unclear_remote=True, south_india="never", rest_of_india="never", abroad="remote")
+        return s
     locs = " ".join(doc.get("locations") or []).lower()
     if locs:
         s.location = LocationPolicy(
@@ -226,7 +233,7 @@ def match(records: list[dict], settings: Settings, known: list[tuple[str, dict]]
             if failed[0] == "Pay" and settings.require_stated_pay and not (r.get("facts") or {}).get("salaryHigh"):
                 doc["skip"]["wouldChange"] = "Allowing roles that don't state pay."
             skipped.append((r["id"], doc))
-    order = {"remote-global": 0, "remote-india": 1, "south-india": 2}
+    order = {"remote-global": 0, "remote-india": 1, "remote-local": 1, "south-india": 2, "local": 2}
 
     def posted_ts(doc):
         try:

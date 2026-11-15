@@ -11,7 +11,7 @@ import re
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
 
-from . import extract, geo, signals, tags
+from . import countries, extract, geo, signals, tags
 from .models import Check, Job, iso
 from .settings import Settings
 
@@ -121,8 +121,50 @@ def gate_open(job: Job, today: date) -> Check:
     return Check("Open", True, f"Open{', apply by ' + job.apply_by if job.apply_by else ''}")
 
 
+def _gate_location_elsewhere(job: Job, s: Settings) -> tuple[Check, str]:
+    """For someone living outside India: remote roles open to their country or region, and on-site or
+    hybrid roles in the places they listed."""
+    p = s.location
+    home, name = p.home, countries.name_of(p.home)
+    if job.work_mode == "remote":
+        if not p.remote_ok:
+            return Check("Location", False, "Remote roles are switched off."), ""
+        said = countries.named(f"{job.title or ''} | {job.location or ''}")
+        if said:
+            if home in said:
+                return Check("Location", True, f"Remote, {name}", job.location or job.title), "remote-local"
+            return Check("Location", False, f"Remote, but only for people in {', '.join(sorted(countries.name_of(c) for c in said))}.", job.location or job.title), ""
+        m = extract.tz_range(f"{job.location}\n{job.description or ''}")
+        if m:
+            a, b, quote = m
+            ok = a <= countries.OFFSETS.get(home, 0) <= b
+            return Check("Location", ok, "Remote, in your time zone range" if ok else "Remote, but the time-zone range excludes you.", quote), "remote-global" if ok else ""
+        scope = extract.remote_scope(job.location, job.description)
+        fits = countries.in_region(home, scope.scope) if scope.scope else None
+        if fits is True:
+            return Check("Location", True, "Remote worldwide" if scope.scope == "worldwide" else f"Remote ({scope.scope}), open to {name}", scope.quote or job.location),\
+                "remote-global" if scope.scope == "worldwide" else "remote-local"
+        if fits is False:
+            return Check("Location", False, f"Remote, but only for people in another region ({scope.scope}).", scope.quote or job.location), ""
+        if p.keep_unclear_remote:
+            return Check("Location", True, "Remote; the posting doesn't say who can apply. Check before applying.", job.location), "remote-global"
+        return Check("Location", False, f"Remote, but the posting doesn't say people in {name} can apply.", job.location), ""
+    mode_txt = {"hybrid": "Hybrid", "onsite": "On-site"}.get(job.work_mode, "Work mode not stated")
+    loc = job.location or ""
+    hit = next((pl for pl in p.places if re.search(r"(?<![A-Za-z])" + re.escape(pl) + r"(?![A-Za-z])", loc, re.I)), None)
+    if hit is None:
+        hit = next((pl for pl in p.places if countries.named(pl) & countries.named(loc)), None)
+    if hit:
+        return Check("Location", True, f"{mode_txt}, {loc}", loc), "local"
+    if not loc.strip():
+        return Check("Location", True, "Location not stated. Check before applying.", loc), "local"
+    return Check("Location", False, f"{mode_txt} in {loc}, outside the places you chose.", loc), ""
+
+
 def gate_location(job: Job, s: Settings) -> tuple[Check, str]:
     p = s.location
+    if (p.home or "IN") != "IN":
+        return _gate_location_elsewhere(job, s)
     mode = job.work_mode
     where = geo.classify(job.location)
     if mode == "remote":
@@ -198,11 +240,22 @@ def gate_pay(job: Job, s: Settings) -> tuple[Check, extract.Salary | None]:
 _REGION_LOC = {"remote-global": "remote-open", "remote-india": "remote-india", "south-india": "india"}
 
 
-def gate_work_auth(job: Job, region: str) -> Check:
-    """Citizenship, security clearance or local work authorization for a country other than India
-    rules a role out for someone applying from India, however well it fits."""
+def gate_work_auth(job: Job, region: str, home: str = "IN") -> Check:
+    """Citizenship, security clearance or local work authorization for a country other than where the
+    person lives rules a role out, however well it fits."""
     f = _facts(job)
     wa = (f.get("workAuth") or {}) if f is not None and "loc" in f else signals.work_authorization(job.description)
+    if (home or "IN") != "IN":
+        if not wa:
+            return Check("Work authorization", True, "No restriction stated")
+        needs = countries.named(wa.get("country") or "")
+        if wa["kind"] in ("citizenship", "local") and needs and home not in needs:
+            return Check("Work authorization", False, f"Requires {'citizenship of' if wa['kind'] == 'citizenship' else 'authorization to work in'} {wa.get('country')}.", wa.get("quote", ""))
+        if wa["kind"] == "clearance" and home != "US":
+            return Check("Work authorization", False, "Requires a security clearance.", wa.get("quote", ""))
+        if wa["kind"] == "no-sponsorship" and region == "local":
+            return Check("Work authorization", True, "No visa sponsorship; check you can already work there.", wa.get("quote", ""))
+        return Check("Work authorization", True, f"Needs authorization to work in {wa.get('country') or 'the country'}." if wa.get("country") else "Check the work authorization the posting asks for.", wa.get("quote", ""))
     loc = (f or {}).get("loc") or _REGION_LOC.get(region, "abroad")
     if signals.work_auth_blocks(wa, loc):
         what = {"citizenship": f"{wa.get('country') or 'local'} citizenship", "clearance": "a security clearance",
@@ -232,7 +285,7 @@ def evaluate(job: Job, s: Settings, now: datetime | None = None) -> Decision:
     checks += [fresh, gate_open(job, now.date())]
     loc, region = gate_location(job, s)
     pay, sal = gate_pay(job, s)
-    checks += [loc, gate_work_auth(job, region), pay, gate_dealbreakers(job, s)]
+    checks += [loc, gate_work_auth(job, region, s.location.home), pay, gate_dealbreakers(job, s)]
     if sal and not job.salary_text:
         job.salary_text = sal.describe()
     kept = all(c.passed for c in checks)

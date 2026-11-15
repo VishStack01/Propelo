@@ -132,8 +132,9 @@ Propelo Cloud is the hosted version people sign up for, on the web, as an instal
 | Mock interviews | 2 a month | 20 a month | Unlimited |
 | Recruiter emails from your Gmail | Drafts | Up to 10 a day | Up to 25 a day, with follow-ups |
 | LinkedIn profile review | | | Yes |
+| Concierge (India): a talent partner runs your search | | 8% of fixed pay (6% above ₹20 lakh), only after you join | Same, with priority |
 
-Every plan has Contacts, interview prep sheets, application receipts, the scam check and the autofill extension. [How it compares with Simplify, Teal, Jobright and Salvo](docs/competitors.md).
+Matching works wherever you live: in India with city and remote rules, and elsewhere with remote roles open to your country and on-site roles in places you choose. Every plan has Contacts, interview prep sheets, application receipts, the scam check and the autofill extension. [How it compares with Simplify, Teal, Jobright and Salvo](docs/competitors.md).
 
 ## Propelo Cloud: for many job seekers
 

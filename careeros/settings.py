@@ -21,6 +21,11 @@ class LocationPolicy:
     # When a remote role abroad doesn't say who can apply: keep it for a
     # human check (True) or skip it (False).
     keep_unclear_remote: bool = True
+    # Where the person lives (ISO code). India uses the rules above; anywhere else, roles fit when
+    # they're remote and open to that country or region, or on-site/hybrid in one of `places`.
+    home: str = "IN"
+    places: list = field(default_factory=list)
+    remote_ok: bool = True
 
 
 @dataclass

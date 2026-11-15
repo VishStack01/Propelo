@@ -79,6 +79,10 @@ services:
         sync: false
       - key: DODO_MODE
         value: test
+      - key: CONCIERGE
+        value: "on"
+      - key: CONCIERGE_TAX_RATE
+        value: "0"
       - key: GOOGLE_CLIENT_ID
         sync: false
       - key: GOOGLE_CLIENT_SECRET

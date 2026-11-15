@@ -78,3 +78,17 @@ def pro_welcome(public_url: str, plan: str = "pro") -> tuple[str, str]:
             f"Thanks for upgrading. Your account now matches new roles {pace} and has a larger monthly AI allowance.\n\n"
             f"Open your dashboard: {public_url}/\n\n"
             f"You can cancel any time under Settings, Plan. You keep {name} until the end of the month you paid for.\n")
+
+
+def concierge(public_url: str, what: str) -> tuple[str, str]:
+    """Short Concierge notices. The details stay in the app."""
+    texts = {
+        "requested": ("Your Concierge request is in", "Thanks for asking for Propelo Concierge. A talent partner will look at your profile and reply within two working days.\n\nYour case: {u}/app#concierge\n\nYou pay nothing unless you join a company we put you forward to, with your approval."),
+        "proposed": ("New roles to approve", "Your talent partner proposed new roles. Nothing is sent until you approve each one.\n\nReview them: {u}/app#concierge\n"),
+        "message": ("New message from your talent partner", "You have a new message in Propelo Concierge.\n\nRead it: {u}/app#concierge\n"),
+        "staff-new": ("New Concierge request", "Someone asked for Concierge. Open the workspace to take the case: {u}/staff\n"),
+        "staff-message": ("A candidate replied", "A Concierge candidate sent a message or answered roles: {u}/staff\n"),
+        "fee-due": ("Your first Concierge instalment", "Congratulations on the new job. Your first instalment is now payable from Propelo; the amount and due dates are in your case.\n\n{u}/app#concierge\n"),
+    }
+    subject, body = texts[what]
+    return subject, body.replace("{u}", public_url)

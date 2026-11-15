@@ -11,7 +11,7 @@ CLOSED = ("rejected", "withdrawn", "archived")
 STAGES = FUNNEL + CLOSED + ("skipped",)
 
 # Where a kept role sits in the priority order (lower is better).
-REGIONS = {"remote-global": 0, "remote-india": 1, "south-india": 2}
+REGIONS = {"remote-global": 0, "remote-india": 1, "remote-local": 1, "south-india": 2, "local": 2}
 
 
 def utcnow() -> datetime:

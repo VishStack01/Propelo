@@ -21,6 +21,7 @@ import csv
 import gzip
 import hashlib
 import json
+import os
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
@@ -63,8 +64,15 @@ def _ts(s: str | None) -> float:
         return 0.0
 
 
+# CAREEROS_SCAN_ONSITE=world keeps on-site and hybrid roles in every country, for people searching
+# outside India. Without it the feed keeps India plus remote roles, as it always has.
+ONSITE_WORLD = os.environ.get("CAREEROS_SCAN_ONSITE", "").strip().lower() == "world"
+
+
 def relevant_location(job: Job) -> bool:
     where = geo.classify(job.location)
+    if ONSITE_WORLD and (job.location or "").strip():
+        return True
     return where["india"] or job.work_mode == "remote" or bool(re.search(r"remote|anywhere|worldwide|apac|asia", job.location or "", re.I))
 
 

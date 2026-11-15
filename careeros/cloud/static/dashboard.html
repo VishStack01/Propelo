@@ -895,10 +895,10 @@ input:focus,select:focus,textarea:focus{border-color:var(--ink);box-shadow:0 0 0
 .plans{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:12px}
 .askthread{display:grid;gap:12px;margin:18px 0;max-width:760px}
 .askmsg{display:grid;gap:8px}.askmsg.me{justify-items:end}
-.askmsg .bubble{max-width:620px;padding:12px 16px;border-radius:20px;background:var(--card,#FFFCF7);border:1px solid var(--line);font-size:15px;line-height:1.55}
+.askmsg .bubble{max-width:620px;padding:12px 16px;border-radius:20px;background:var(--panel);border:1px solid var(--line);font-size:15px;line-height:1.55}
 .askmsg.me .bubble{background:var(--ink);color:var(--page);border-color:transparent}
 .askstart{display:flex;flex-wrap:wrap;gap:8px}
-.chip{border:1px solid var(--line);background:var(--card,#FFFCF7);border-radius:999px;padding:9px 14px;font:inherit;font-size:14px;color:var(--ink);cursor:pointer}
+.chip{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:9px 14px;font:inherit;font-size:14px;color:var(--ink);cursor:pointer}
 .chip:hover{background:var(--panel)}
 .askbar{display:flex;gap:10px;align-items:flex-end;max-width:760px;position:sticky;bottom:12px;background:var(--page);padding:8px 0}
 .askbar textarea{flex:1;resize:vertical;min-height:52px}
@@ -1167,6 +1167,19 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
 /* Role page title: the company never starts a line with a dot; on phones it gets its own line */
 .appco{white-space:nowrap}
 @media (max-width:640px){.apptitle .appco{display:block;white-space:normal;font-size:.62em;font-weight:500;color:var(--ink-2);margin-top:6px;letter-spacing:-.01em}.apptitle .appco .muted{display:none}}
+/* Concierge */
+.ccsteps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:18px}
+.ccstep{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:16px;display:grid;gap:6px;align-content:start}
+.ccstep p{margin:0;color:var(--ink-2);font-size:14.5px}
+.ccn{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--lav);color:#151515;font-weight:600;font-size:14px;box-shadow:inset 0 0 0 1.5px #151515}
+.cccalc{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:16px;align-items:end}
+.cc-out{margin:0 0 10px;font-size:16px}
+.cccheck{display:flex;gap:10px;align-items:flex-start;font-size:14.5px;color:var(--ink-2)}.cccheck input{margin-top:4px}
+.ccstatus{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.ccplace{display:grid;gap:8px;margin-bottom:12px}
+.askbar.ccbar{position:static;background:none;padding:0;margin-top:4px}
+@media (max-width:900px){.ccsteps{grid-template-columns:repeat(2,minmax(0,1fr))}.cccalc{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:520px){.ccsteps{grid-template-columns:minmax(0,1fr)}}
 </style>
 </head>
 <body>
@@ -1197,6 +1210,7 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
     <button class="tab" role="tab" id="t-outreach" aria-controls="p-outreach" aria-selected="false" data-act="tab" data-tab="outreach"><svg class="i" viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"/><path d="M4.5 7l7.5 6 7.5-6"/></svg>Outreach <span class="ct" id="c-outreach">0</span></button>
     <button class="tab" role="tab" id="t-contacts" aria-controls="p-contacts" aria-selected="false" data-act="tab" data-tab="contacts"><svg class="i" viewBox="0 0 24 24"><circle cx="9" cy="9" r="3.2"/><path d="M3.5 19c.9-3 3-4.5 5.5-4.5s4.6 1.5 5.5 4.5"/><path d="M15.5 6.5a3 3 0 010 5.5M17.5 14.8c1.5.6 2.5 2 3 4.2"/></svg>Contacts</button>
     <button class="tab" role="tab" id="t-ask" aria-controls="p-ask" aria-selected="false" data-act="tab" data-tab="ask"><svg class="i" viewBox="0 0 24 24"><path d="M4.5 6h15v10h-8l-4 3.5V16h-3z"/><path d="M12 9.2v.1M12 11.5v2"/></svg>Ask Propelo</button>
+    <button class="tab" role="tab" id="t-concierge" aria-controls="p-concierge" aria-selected="false" data-act="tab" data-tab="concierge"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c1.2-3.6 3.9-5.4 7-5.4s5.8 1.8 7 5.4"/><path d="M17.5 4.5l1.3 1.3 2.4-2.4"/></svg>Concierge</button>
     <button class="tab" role="tab" id="t-inbox" aria-controls="p-inbox" aria-selected="false" data-act="tab" data-tab="inbox"><svg class="i" viewBox="0 0 24 24"><path d="M3.5 13.5l2.6-7.2A2 2 0 018 5h8a2 2 0 011.9 1.3l2.6 7.2V18a2 2 0 01-2 2h-13a2 2 0 01-2-2z"/><path d="M3.5 13.5H8l1.5 2.5h5l1.5-2.5h4.5"/></svg>Inbox <span class="ct hot" id="c-inbox" hidden></span></button>
     <button class="tab" role="tab" id="t-calendar" aria-controls="p-calendar" aria-selected="false" data-act="tab" data-tab="calendar"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M8 3.5v4M16 3.5v4M4 10h16"/></svg>Calendar</button>
     <button class="tab" role="tab" id="t-tools" aria-controls="p-tools" aria-selected="false" data-act="tab" data-tab="tools"><svg class="i" viewBox="0 0 24 24"><path d="M5 19l9.5-9.5M14 4.5l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5L10.5 8 13 7z"/><path d="M18.5 13l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></svg>Writing &amp; interviews</button>
@@ -1236,6 +1250,7 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
   <section role="tabpanel" id="p-outreach" aria-labelledby="t-outreach" hidden></section>
   <section role="tabpanel" id="p-contacts" aria-labelledby="t-contacts" hidden></section>
   <section role="tabpanel" id="p-ask" aria-labelledby="t-ask" hidden></section>
+  <section role="tabpanel" id="p-concierge" aria-labelledby="t-concierge" hidden></section>
   <section role="tabpanel" id="p-skipped" aria-labelledby="t-skipped" hidden></section>
   <section role="tabpanel" id="p-setup" aria-labelledby="t-setup" hidden></section>
   <section role="tabpanel" id="p-auto" aria-labelledby="t-auto" hidden></section>
@@ -1275,6 +1290,7 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
   <button type="button" data-act="tab" data-tab="auto"><span class="ci" style="background:var(--bgreen)"><svg class="i" viewBox="0 0 24 24"><path d="M13 3L5 13.5h6L10 21l8-10.5h-6z"/></svg></span><span>Auto-apply</span></button>
   <button type="button" data-act="tab" data-tab="contacts"><span class="ci" style="background:var(--pink)"><svg class="i" viewBox="0 0 24 24"><circle cx="9" cy="9" r="3.2"/><path d="M3.5 19c.9-3 3-4.5 5.5-4.5s4.6 1.5 5.5 4.5"/></svg></span><span>Contacts</span></button>
   <button type="button" data-act="tab" data-tab="ask"><span class="ci" style="background:var(--yellow)"><svg class="i" viewBox="0 0 24 24"><path d="M4.5 6h15v10h-8l-4 3.5V16h-3z"/></svg></span><span>Ask Propelo</span></button>
+  <button type="button" data-act="tab" data-tab="concierge"><span class="ci" style="background:var(--lav)"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c1.2-3.6 3.9-5.4 7-5.4s5.8 1.8 7 5.4"/></svg></span><span>Concierge</span></button>
   <button type="button" data-act="tab" data-tab="inbox"><span class="ci" style="background:var(--bblue)"><svg class="i" viewBox="0 0 24 24"><path d="M3.5 13.5l2.6-7.2A2 2 0 018 5h8a2 2 0 011.9 1.3l2.6 7.2V18a2 2 0 01-2 2h-13a2 2 0 01-2-2z"/><path d="M3.5 13.5H8l1.5 2.5h5l1.5-2.5h4.5"/></svg></span><span>Inbox</span></button>
   <button type="button" data-act="tab" data-tab="outreach"><span class="ci" style="background:var(--yellow)"><svg class="i" viewBox="0 0 24 24"><path d="M4.5 6h15v10h-8l-4 3.5V16h-3z"/></svg></span><span>Outreach</span></button>
   <button type="button" data-act="tab" data-tab="calendar"><span class="ci" style="background:var(--pink)"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M8 3.5v4M16 3.5v4M4 10h16"/></svg></span><span>Calendar</span></button>
@@ -1300,7 +1316,11 @@ const safeUrl = u => (typeof u === 'string' && /^https?:\/\//i.test(u.trim())) ?
 const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch(e){ return 'link'; } };
 const arr = v => Array.isArray(v) ? v : [];
 const obj = v => (v && typeof v === 'object' && !Array.isArray(v)) ? v : {};
-const TZ = 'Asia/Kolkata';
+const TZ = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Kolkata'; } catch (e) { return 'Asia/Kolkata'; } })();
+const USD_INR = 88;
+const IN_TZ = /^Asia\/(Kolkata|Calcutta)$/.test(TZ);
+const HOME_GUESS = IN_TZ ? 'IN' : ({'America/New_York':'US','America/Chicago':'US','America/Denver':'US','America/Los_Angeles':'US','America/Phoenix':'US','America/Toronto':'CA','America/Vancouver':'CA','Europe/London':'GB','Europe/Dublin':'IE','Europe/Berlin':'DE','Europe/Paris':'FR','Europe/Madrid':'ES','Europe/Amsterdam':'NL','Europe/Warsaw':'PL','Europe/Lisbon':'PT','Europe/Stockholm':'SE','Europe/Zurich':'CH','Asia/Singapore':'SG','Asia/Dubai':'AE','Australia/Sydney':'AU','Australia/Melbourne':'AU','Asia/Tokyo':'JP','Asia/Manila':'PH','America/Sao_Paulo':'BR','America/Mexico_City':'MX','Africa/Lagos':'NG','Africa/Nairobi':'KE','Asia/Karachi':'PK','Asia/Dhaka':'BD','Asia/Colombo':'LK','Asia/Kathmandu':'NP'}[TZ] || 'US');
+const HOMES = [['IN','India'],['US','United States'],['CA','Canada'],['GB','United Kingdom'],['IE','Ireland'],['DE','Germany'],['FR','France'],['ES','Spain'],['NL','Netherlands'],['PL','Poland'],['PT','Portugal'],['SE','Sweden'],['CH','Switzerland'],['AE','United Arab Emirates'],['SG','Singapore'],['AU','Australia'],['NZ','New Zealand'],['JP','Japan'],['PH','Philippines'],['MY','Malaysia'],['PK','Pakistan'],['BD','Bangladesh'],['LK','Sri Lanka'],['NP','Nepal'],['NG','Nigeria'],['KE','Kenya'],['ZA','South Africa'],['BR','Brazil'],['MX','Mexico']];
 const fTime = new Intl.DateTimeFormat('en-IN', {timeZone: TZ, hour: '2-digit', minute: '2-digit', hour12: false});
 const fDate = new Intl.DateTimeFormat('en-IN', {timeZone: TZ, day: 'numeric', month: 'short'});
 const fKey  = new Intl.DateTimeFormat('en-CA', {timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit'});
@@ -1352,7 +1372,7 @@ const APPLY_LINE = 4.0;
 const DIM_LABEL = {cvMatch:'Match with your experience', northStar:'Fits the roles you want', comp:'Pay', culture:'Company and culture', redFlags:'Red flags (5 = none)'};
 const LOCATIONS = ['South India (any work mode)','Rest of India (remote only)','Rest of India (any work mode)','Remote worldwide (first priority)'];
 const LOC_SHORT = {'South India (any work mode)':'anywhere in south India','Rest of India (remote only)':'remote across India','Rest of India (any work mode)':'anywhere in India','Remote worldwide (first priority)':'remote worldwide','Bengaluru (onsite/hybrid)':'Bengaluru','Remote (India)':'remote in India','Remote (global)':'remote worldwide'};
-const REGION = {'remote-global':[0,'Remote worldwide','pill world'],'remote-india':[1,'Remote, India','pill india'],'south-india':[2,'','']};
+const REGION = {'remote-global':[0,'Remote worldwide','pill world'],'remote-india':[1,'Remote, India','pill india'],'south-india':[2,'',''],'remote-local':[1,'Remote, your country','pill india'],'local':[2,'','']};
 const regionRank = j => (REGION[j.region] || [3])[0];
 const byPriority = (a, b) => regionRank(a) - regionRank(b) || byFresh(a, b);
 const autoMode = () => settings().approvalMode === 'auto-when-clear';
@@ -1360,7 +1380,7 @@ const EXPERIENCE = [['Fresher',0],['1+ years',1],['2+ years',2],['3+ years',3]];
 const AGES = [[1,'24 hours'],[3,'3 days'],[7,'7 days'],[14,'14 days'],[25,'25 days, if still open'],[30,'30 days, if still open']];
 /* Job families, the same list the public board and the scan use (careeros/tags.py). */
 const FAMILIES = ['Software Engineering','AI & Data','Product & Design','Marketing & Growth','Sales & Accounts','Finance & Strategy','Operations & People'];
-const DEFAULTS = {targetRoles: [], families: [], locations: ['South India (any work mode)','Rest of India (remote only)','Remote worldwide (first priority)'], dailyCap: 8, minFit: 'good', salaryFloorLpa: '', noticeDays: '', dealbreakers: '', approvalMode: 'auto-when-clear', schedule: '', experienceLevels: ['Fresher','1+ years'], maxRequiredYears: 1, maxPostingAgeDays: 25};
+const DEFAULTS = {homeCountry: HOME_GUESS, places: '', remoteOk: true, targetRoles: [], families: [], locations: ['South India (any work mode)','Rest of India (remote only)','Remote worldwide (first priority)'], dailyCap: 8, minFit: 'good', salaryFloorLpa: '', noticeDays: '', dealbreakers: '', approvalMode: 'auto-when-clear', schedule: '', experienceLevels: ['Fresher','1+ years'], maxRequiredYears: 1, maxPostingAgeDays: 25};
 
 /* ---------- state ---------- */
 const state = {
@@ -1378,7 +1398,7 @@ const state = {
 };
 const cloud = () => state.status === 'cloud';
 const FRESH_PAGE = 24;
-const TABS = ['home','today','pipeline','auto','outreach','contacts','ask','skipped','setup','profile','resume','calendar','new','app','inbox','tools'];
+const TABS = ['home','today','pipeline','auto','outreach','contacts','ask','concierge','skipped','setup','profile','resume','calendar','new','app','inbox','tools'];
 
 /* ---------- derived ---------- */
 const jobsArr = () => Array.from(state.jobs.values());
@@ -1399,9 +1419,12 @@ function listJoin(xs){ xs = xs.filter(Boolean); if (xs.length < 2) return xs.joi
 function filterSummary(){
   const s = settings();
   const exp = arr(s.experienceLevels).length ? listJoin(arr(s.experienceLevels).map(x => x === 'Fresher' ? 'fresher' : x)) : 'any experience';
-  const locs = arr(s.locations).map(l => LOC_SHORT[l] || l);
+  const home = String(s.homeCountry || 'IN');
+  const homeName = (HOMES.find(h => h[0] === home) || [home, home])[1];
+  const locs = home === 'IN' ? arr(s.locations).map(l => LOC_SHORT[l] || l)
+    : [s.remoteOk !== false ? `remote roles open to ${homeName}` : '', String(s.places || '').trim() ? 'on-site or hybrid in ' + String(s.places).trim() : ''];
   const floor = Number(s.salaryFloorLpa) || 0;
-  const pay = floor ? ` paying ${floor} LPA or more${s.requireStatedPay ? ' (stated on the posting)' : ''}` : '';
+  const pay = floor ? ` paying ${String(s.homeCountry || 'IN') !== 'IN' && s.salaryFloorUsd ? '$' + Number(s.salaryFloorUsd).toLocaleString('en-US') + ' a year' : floor + ' LPA'} or more${s.requireStatedPay ? ' (stated on the posting)' : ''}` : '';
   return {exp, locs: listJoin(locs) || 'any location', days: s.maxPostingAgeDays, pay};
 }
 
@@ -2153,6 +2176,66 @@ function printPrep(j){
   w.document.close(); w.focus(); setTimeout(() => w.print(), 300);
 }
 
+/* ---------- Concierge: a talent partner runs the search (Pro and Ultra, India). Fee only after joining ---------- */
+const CC_STATUS = {requested: 'Requested: a talent partner replies within two working days', active: 'Active', paused: 'Paused', offer: 'Offer reported', placed: 'Placed', closed: 'Closed'};
+const CS_STATUS = {proposed: 'Waiting for you', approved: 'Approved', declined: 'Declined', submitted: 'Applied', interviewing: 'Interviewing', offer: 'Offer', rejected: 'Not selected', withdrawn: 'Withdrawn'};
+function ccFee(f, ctc){ const c = Math.max(0, Number(ctc) || 0), low = Math.min(c, f.band) * f.rateLow / 100, high = Math.max(0, c - f.band) * f.rateHigh / 100; const fee = Math.round(low + high); return {fee, tax: Math.round(fee * f.taxRate / 100), rate: c ? (100 * fee / c) : 0}; }
+function lakh(n){ return '₹' + (Number(n || 0) / 100000).toLocaleString('en-IN', {maximumFractionDigits: 2}) + ' lakh'; }
+function loadConcierge(){ if (!cloud()) return Promise.resolve(); return api('api/concierge').then(r => r.ok ? r.json() : null).then(v => { if (v){ state.concierge = v; render(); } }).catch(() => {}); }
+function renderConcierge(){
+  const head = `<div class="hero" style="padding-bottom:6px"><div><h1>Concierge</h1><p class="sub">A person on the Propelo team runs your job search with you: finding roles, applying with your approval, preparing you for interviews and helping you negotiate. You pay a share of the fixed pay only after you join.</p></div></div>`;
+  const how = `<div class="ccsteps">${[['Tell us what you want', 'Roles, cities, pay and notice period. A talent partner reads your profile.'], ['Approve every company', 'Your partner proposes roles. Nothing is sent until you approve each one here.'], ['Get ready, get offers', 'They apply, follow up, prepare you for each round and help you compare offers.'], ['Pay after you join', 'Only for a company you approved through Concierge, in three monthly instalments starting 30 days after you join.']].map((s, i) => `<div class="ccstep"><span class="ccn">${i + 1}</span><b>${s[0]}</b><p>${s[1]}</p></div>`).join('')}</div>`;
+  if (!cloud()) return head + how + `<div class="panel" style="margin-top:20px"><p class="small">Concierge is part of Pro and Ultra on Propelo Cloud.</p></div>`;
+  const v = state.concierge;
+  if (!v){ if (!state.ccLoading){ state.ccLoading = true; loadConcierge(); } return head + '<div class="panel"><p class="small">Loading…</p></div>'; }
+  if (!v.enabled) return head + how + `<div class="panel" style="margin-top:20px"><p class="small">Concierge isn't offered on this server.</p></div>`;
+  const f = obj(v.fee), ro = wr();
+  const say = state.acctMsg && state.acctMsgWhere === 'concierge' ? `<p class="acctmsg${state.acctMsgErr ? ' err' : ''}" role="status">${esc(state.acctMsg)}</p>` : '';
+  const feeLine = `${f.rateLow}% of your yearly fixed pay, and ${f.rateHigh}% on any part above ${lakh(f.band)}${f.taxRate ? `, plus ${f.taxRate}% GST` : ''}. Bonuses, stock and joining bonuses aren't counted.`;
+  const calc = `<div class="cccalc"><label class="f" for="cc-calc">If your new yearly fixed pay is<input id="cc-calc" type="number" min="0" step="50000" inputmode="numeric" value="${esc(state.ccCalc || 2500000)}"></label><p class="cc-out" id="cc-out">${ccOut(f, state.ccCalc || 2500000)}</p></div>`;
+  const c = v.case;
+  if (!c || c.status === 'closed'){
+    const intake = obj(c && c.intake);
+    const form = !v.planAllows ? `<div class="panel"><p><b>Concierge is part of Pro and Ultra.</b></p><p class="small">Choose a plan in Settings, then come back here to ask for a talent partner.</p><div class="buy"><button class="btn solid" data-act="tab" data-tab="setup">See plans</button></div></div>`
+      : `<form id="cc-form" class="panel formgrid" novalidate>${say}
+          <label class="f full" for="cc-roles">Roles you want<input id="cc-roles" name="roles" required value="${esc(intake.roles || settings().targetRoles || '')}" placeholder="Backend engineer, platform engineer"${ro}></label>
+          <label class="f" for="cc-loc">Cities or remote<input id="cc-loc" name="locations" value="${esc(intake.locations || '')}" placeholder="Bengaluru, Pune, remote"${ro}></label>
+          <label class="f" for="cc-country">Country of the job<select id="cc-country" name="country"${ro}>${arr(v.countries).map(x => `<option value="${esc(x)}">${x === 'IN' ? 'India' : esc(x)}</option>`).join('')}</select></label>
+          <label class="f" for="cc-cur">Current yearly fixed pay (₹)<input id="cc-cur" name="currentCtc" type="number" min="0" inputmode="numeric" value="${esc(intake.currentCtc || '')}"${ro}></label>
+          <label class="f" for="cc-exp">Expected yearly fixed pay (₹)<input id="cc-exp" name="expectedCtc" type="number" min="0" inputmode="numeric" value="${esc(intake.expectedCtc || '')}"${ro}></label>
+          <label class="f" for="cc-notice">Notice period (days)<input id="cc-notice" name="noticeDays" type="number" min="0" max="180" value="${esc(intake.noticeDays || 30)}"${ro}></label>
+          <label class="f" for="cc-phone">Phone for calls (optional)<input id="cc-phone" name="phone" type="tel" value="${esc(intake.phone || '')}" placeholder="+91 98xxx xxxxx"${ro}></label>
+          <label class="f full" for="cc-notes">Anything your partner should know<textarea id="cc-notes" name="notes" rows="3"${ro}>${esc(intake.notes || '')}</textarea></label>
+          <label class="full cccheck"><input type="checkbox" name="agree"${ro}> I've read the <a href="/terms#concierge" target="_blank" rel="noopener">Concierge terms</a>. I'll pay ${esc(feeLine.replace(/\.$/, ''))}, only if I join a company I approved through Concierge within ${esc(Math.round(f.attributionDays / 30))} months of approving it.</label>
+          <div class="full"><button class="btn solid" type="submit"${ro}>Ask for a talent partner</button></div></form>`;
+    return head + how + `<div class="section" style="padding-top:28px"><div class="sh"><h2 style="font-size:24px">What it costs</h2><p>Your Pro or Ultra plan covers the work. ${esc(feeLine)} Nothing is charged before you join.</p></div>${calc}</div>
+      <div class="section" style="padding-top:20px"><div class="sh"><h2 style="font-size:24px">Ask for a talent partner</h2><p>Available for jobs in ${arr(v.countries).map(x => x === 'IN' ? 'India' : x).join(', ')}.</p></div>${form}</div>`;
+  }
+  const subs = arr(c.submissions), waiting = subs.filter(s => s.status === 'proposed'), rest = subs.filter(s => s.status !== 'proposed');
+  const subRow = (s, ask) => `<div class="todo"><span class="ic ${s.status === 'offer' ? 'ok' : 'fu'}">${ask ? I.loop : I.check}</span><div class="tx"><b>${esc(s.company)} · ${esc(s.title)}</b><small>${s.why ? esc(s.why) + ' · ' : ''}${esc(CS_STATUS[s.status] || s.status)}${s.approvedAt ? ' · approved ' + esc(when(s.approvedAt)) : ''}${safeUrl(s.url) ? ` · <a href="${esc(safeUrl(s.url))}" target="_blank" rel="noopener">the posting</a>` : ''}</small></div>${ask ? `<div class="ract"><button class="btn sm solid" data-act="cc-role" data-sid="${esc(s.id)}" data-d="approve"${ro}>Approve</button><button class="btn sm ghost" data-act="cc-role" data-sid="${esc(s.id)}" data-d="decline"${ro}>Decline</button></div>` : ''}</div>`;
+  const msgs = arr(c.messages).map(m => `<div class="askmsg ${m.from === 'you' ? 'me' : 'bot'}"><div class="bubble">${m.from === 'you' ? '' : `<b>${esc(m.from)}</b><br>`}${esc(m.body).replace(/\n/g, '<br>')}</div><small class="muted">${esc(when(m.at))}</small></div>`).join('');
+  const approved = subs.filter(s => s.approvedAt);
+  const places = arr(c.placements).map(p => `<div class="panel ccplace"><b>${esc(p.company)}</b><p class="small">Fixed pay ${esc(lakh(p.fixedCtc))} · joining ${esc(p.joiningDate)} · ${p.status === 'waived' ? 'no fee' : 'fee ' + esc(inr(p.fee)) + (p.taxRate ? ` + ${p.taxRate}% GST` : '')} · ${esc({reported: 'waiting for your partner to check the offer', verified: 'confirmed', invoicing: 'being paid', paid: 'paid in full', waived: 'no fee', disputed: 'under review'}[p.status] || p.status)}</p>
+      ${arr(p.instalments).length ? `<div class="rows">${arr(p.instalments).map(i => `<div class="todo"><div class="tx"><b>Instalment ${esc(i.n)}: ${esc(inr(i.amount / 100))}</b><small>Due ${esc(i.dueOn)} · ${esc({due: 'due', link_sent: 'payment link sent', paid: 'paid ' + when(i.paidAt), waived: 'cancelled'}[i.status] || i.status)}</small></div>${i.payable ? `<div class="ract"><button class="btn sm solid" data-act="cc-pay" data-id="${esc(i.id)}"${ro}>Pay</button></div>` : ''}</div>`).join('')}</div>` : ''}</div>`).join('');
+  const open = ['requested', 'active', 'paused', 'offer'].includes(c.status);
+  return head + `<div class="panel ccstatus"><div><span class="pill ${c.status === 'placed' ? 'strong' : ''}">${esc(CC_STATUS[c.status] || c.status)}</span>${c.partner ? `<p style="margin:10px 0 0">Your talent partner: <b>${esc(c.partner.name)}</b></p>` : ''}${c.closedReason ? `<p class="small">${esc(c.closedReason)}</p>` : ''}</div>
+      ${open ? `<div class="ract">${c.status === 'paused' ? `<button class="btn sm" data-act="cc-pause" data-p="0"${ro}>Resume</button>` : `<button class="btn sm ghost" data-act="cc-pause" data-p="1"${ro}>Pause</button>`}<button class="btn sm ghost" data-act="cc-close"${ro}>Close case</button></div>` : ''}</div>${say}
+    ${waiting.length ? `<div class="section" style="padding-top:24px"><div class="sh"><h2 style="font-size:22px">Roles to approve</h2><p>Nothing is sent until you approve. Declining is free and final for that role.</p></div><div class="panel"><div class="rows">${waiting.map(s => subRow(s, true)).join('')}</div></div></div>` : ''}
+    <div class="section" style="padding-top:24px"><div class="sh"><h2 style="font-size:22px">Your roles</h2></div>${rest.length ? `<div class="panel"><div class="rows">${rest.map(s => subRow(s, false)).join('')}</div></div>` : '<p class="small">Roles your partner proposes show up here.</p>'}</div>
+    <div class="section" style="padding-top:24px"><div class="sh"><h2 style="font-size:22px">Messages</h2></div><div class="askthread">${msgs || '<p class="small">Your partner will introduce themselves here.</p>'}</div>
+      ${open ? `<form id="cc-msg" class="askbar ccbar" novalidate><textarea name="body" rows="2" placeholder="Write to your partner" aria-label="Message"${ro}></textarea><button class="btn solid" type="submit"${ro}>Send</button></form>` : ''}</div>
+    ${places ? `<div class="section" style="padding-top:24px"><div class="sh"><h2 style="font-size:22px">Offers and payments</h2></div>${places}</div>` : ''}
+    ${open ? `<div class="section" style="padding-top:24px"><details class="panel"><summary><b>Got an offer? Report it</b></summary>
+      <form id="cc-offer" class="formgrid" novalidate style="margin-top:12px">
+        <label class="f" for="cco-co">Company<input id="cco-co" name="company" list="cco-list" required${ro}></label><datalist id="cco-list">${approved.map(s => `<option value="${esc(s.company)}">`).join('')}</datalist>
+        <label class="f" for="cco-ctc">Yearly fixed pay (₹)<input id="cco-ctc" name="fixedCtc" type="number" min="0" inputmode="numeric" required${ro}></label>
+        <label class="f" for="cco-join">Joining date<input id="cco-join" name="joiningDate" type="date" required${ro}></label>
+        <p class="small full">The fee applies only if this company is one you approved through Concierge in the last ${esc(Math.round(f.attributionDays / 30))} months. Your partner checks the offer letter before anything is due.</p>
+        <div class="full"><button class="btn solid" type="submit"${ro}>Report the offer</button></div></form></details></div>` : ''}
+    <div class="section" style="padding-top:18px"><p class="small">${esc(feeLine)} <a href="/terms#concierge" target="_blank" rel="noopener">Concierge terms</a></p></div>`;
+}
+function ccOut(f, ctc){ const r = ccFee(f, ctc); return Number(ctc) > 0 ? `Fee <b>${esc(inr(r.fee))}</b>${r.tax ? ` + ${esc(inr(r.tax))} GST` : ''}, about ${r.rate.toFixed(1)}% of ${esc(lakh(ctc))}, in three monthly instalments after you join.` : 'Type a yearly fixed pay to see the fee.'; }
+
 /* ---------- Automatic recruiter emails (cloud): from the person's own Gmail, off until they turn it on ---------- */
 const AS_STATUS = {queued: 'Waiting to send', sending: 'Sending', sent: 'Sent', failed: 'Not sent', unknown: 'Check your Gmail', cancelled: 'Cancelled'};
 const AS_KIND = {first: 'First email', follow1: 'Day 7 follow-up', follow2: 'Day 14 follow-up'};
@@ -2347,11 +2430,14 @@ function renderSetup(){
     <label class="f" for="s-cap">Applications prepared per day<input type="number" id="s-cap" min="1" max="${capMax()}" value="${esc(s.dailyCap)}"${ro}></label>
     ${cloud() ? `<label class="f" for="s-alerts">Job alerts by email <small>New roles that pass your filters</small><select id="s-alerts"${ro}>${[['off','Off'],['daily','Daily'],['weekly','Weekly']].map(([v, l]) => `<option value="${v}"${(s.alerts || 'off') === v ? ' selected' : ''}>${l}</option>`).join('')}</select></label>` : ''}
     <label class="f full" for="s-mode">How applications go out<select id="s-mode"${ro}><option value="auto-when-clear"${s.approvalMode === 'auto-when-clear' ? ' selected' : ''}>Auto-apply when every answer comes from my profile</option><option value="daily-batch"${s.approvalMode !== 'auto-when-clear' ? ' selected' : ''}>Daily batch: I approve each one</option></select></label>
-    <div class="full" role="group" aria-labelledby="s-loc-l"><span id="s-loc-l" class="groupl">Locations</span><div class="checks">${LOCATIONS.map((l, i) => `<label for="s-loc-${i}"><input type="checkbox" id="s-loc-${i}" value="${esc(l)}" ${arr(s.locations).includes(l) ? 'checked' : ''}${ro}>${esc(l)}</label>`).join('')}</div></div>
+    <label class="f" for="s-home">Where you live<select id="s-home"${ro}>${HOMES.map(([c, n]) => `<option value="${c}"${(s.homeCountry || 'IN') === c ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
+    <div class="full" role="group" aria-labelledby="s-loc-l" id="s-loc-in"${(s.homeCountry || 'IN') === 'IN' ? '' : ' hidden'}><span id="s-loc-l" class="groupl">Locations</span><div class="checks">${LOCATIONS.map((l, i) => `<label for="s-loc-${i}"><input type="checkbox" id="s-loc-${i}" value="${esc(l)}" ${arr(s.locations).includes(l) ? 'checked' : ''}${ro}>${esc(l)}</label>`).join('')}</div></div>
+    <div class="full formgrid" id="s-loc-world"${(s.homeCountry || 'IN') === 'IN' ? ' hidden' : ''} style="gap:12px"><label class="f" for="s-places">On-site or hybrid in <small>cities or countries, comma separated</small><input type="text" id="s-places" value="${esc(s.places || '')}" placeholder="London, Manchester"${ro}></label>
+      <label class="cccheck" for="s-remote" style="align-self:end"><input type="checkbox" id="s-remote"${s.remoteOk !== false ? ' checked' : ''}${ro}> Remote roles open to people where you live</label></div>
     <div class="full" role="group" aria-labelledby="s-fam-l"><span id="s-fam-l" class="groupl">Job families <small>Pick any to get roles in those families, not just engineering. Leave all off to go by target roles.</small></span><div class="checks">${FAMILIES.map((f, i) => `<label for="s-fam-${i}"><input type="checkbox" id="s-fam-${i}" value="${esc(f)}" ${arr(s.families).includes(f) ? 'checked' : ''}${ro}>${esc(f)}</label>`).join('')}</div></div>
     <label class="f full" for="s-roles">Target roles <small>Comma-separated. Leave empty to target every role your verified skills support.</small><input type="text" id="s-roles" value="${esc(arr(s.targetRoles).join(', '))}" placeholder="Filled in from your resume"${ro}></label>
     <label class="f" for="s-fit">Lowest fit to prepare<select id="s-fit"${ro}><option value="strong"${s.minFit === 'strong' ? ' selected' : ''}>Strong fit only</option><option value="good"${s.minFit === 'good' ? ' selected' : ''}>Good fit and above</option><option value="stretch"${s.minFit === 'stretch' ? ' selected' : ''}>Include stretch roles</option></select></label>
-    <label class="f" for="s-sal">Salary floor <small>LPA, fixed CTC</small><input type="number" id="s-sal" min="0" step="0.5" value="${esc(s.salaryFloorLpa)}" placeholder="e.g. 4"${ro}></label>
+    ${(s.homeCountry || 'IN') === 'IN' ? `<label class="f" for="s-sal">Salary floor <small>LPA, fixed CTC</small><input type="number" id="s-sal" min="0" step="0.5" value="${esc(s.salaryFloorLpa)}" placeholder="e.g. 4"${ro}></label>` : `<label class="f" for="s-sal-usd">Salary floor <small>US$ a year, fixed pay</small><input type="number" id="s-sal-usd" min="0" step="5000" value="${esc(s.salaryFloorUsd || '')}" placeholder="e.g. 90000"${ro}></label>`}
     <label class="f" for="s-stated" style="display:flex;gap:10px;align-items:flex-start"><input type="checkbox" id="s-stated" style="width:auto;margin-top:4px"${s.requireStatedPay ? ' checked' : ''}${ro}><span>Only roles with pay evidence <small>Keep a role only when its posting states pay at or above your floor, or public pay data for freshers at that company does (marked as an estimate). Other roles stay in the skip log.</small></span></label>
     <label class="f full" for="s-deal">Dealbreakers <small>Anything that should make the search skip a role</small><textarea id="s-deal" rows="3" placeholder="e.g. bond clauses, unpaid probation, night shifts"${ro}>${esc(s.dealbreakers)}</textarea></label>
     <div class="full"><button class="btn solid" type="submit"${ro}>Save preferences</button></div>
@@ -3912,6 +3998,7 @@ function renderNow(){
     if (k === 'outreach') p.innerHTML = renderOutreach();
     if (k === 'contacts') p.innerHTML = renderContacts();
     if (k === 'ask') p.innerHTML = renderAsk();
+    if (k === 'concierge') p.innerHTML = renderConcierge();
     if (k === 'skipped') p.innerHTML = renderSkipped();
     if (k === 'setup' && !state.formDirty && !state.apDirty && !state.acctDirty) p.innerHTML = renderSetup();
     if (k === 'home'){
@@ -4101,6 +4188,10 @@ document.addEventListener('click', e => {
   else if (act === 'ct-touch'){ const today = new Date().toISOString().slice(0, 10); saveContacts(contacts().map(c => c.id === el.dataset.id ? Object.assign({}, c, {lastContact: today, nextFollowUp: c.nextFollowUp && c.nextFollowUp <= today ? '' : c.nextFollowUp}) : c), 'Noted.'); }
   else if (act === 'ct-import'){ const add = contactsFromRoles(); saveContacts(contacts().concat(add), add.length + (add.length === 1 ? ' contact' : ' contacts') + ' added from your roles.'); }
   else if (act === 'ct-delete'){ if (confirm('Delete this contact?')){ state.ctEdit = null; saveContacts(contacts().filter(c => c.id !== el.dataset.id), 'Deleted.'); } }
+  else if (act === 'cc-role'){ cloudPost('api/concierge/roles/' + encodeURIComponent(el.dataset.sid) + '/' + el.dataset.d).then(v => { state.concierge = v; toast(el.dataset.d === 'approve' ? 'Approved. Your partner can apply now.' : 'Declined.'); render(); }).catch(d => acctSay(d.error || 'Could not save.', true, 'concierge')); }
+  else if (act === 'cc-pause'){ cloudPost('api/concierge/pause', {pause: el.dataset.p === '1'}).then(v => { state.concierge = v; render(); }).catch(d => acctSay(d.error || 'Could not change it.', true, 'concierge')); }
+  else if (act === 'cc-close'){ if (!confirm('Close your Concierge case? Fees still apply to offers from companies you already approved, within the time in the terms.')) return; cloudPost('api/concierge/close').then(v => { state.concierge = v; render(); }).catch(d => acctSay(d.error || 'Could not close it.', true, 'concierge')); }
+  else if (act === 'cc-pay'){ el.disabled = true; cloudPost('api/concierge/instalments/' + encodeURIComponent(el.dataset.id) + '/pay').then(d => { location.href = d.url; }).catch(d => { el.disabled = false; acctSay(d.error || 'Could not open the payment.', true, 'concierge'); }); }
   else if (act === 'ask-q'){ askRun(el.dataset.q); }
   else if (act === 'ask-clear'){ state.ask = {msgs: [], busy: false}; render(); }
   else if (act === 'li-run'){ state.tl.typing = false; linkedinReview(); }
@@ -4157,6 +4248,23 @@ document.addEventListener('submit', e => {
     e.preventDefault(); const name = e.target.name.value.trim() || 'My computer';
     cloudPost('api/tokens', {name}).then(k => { state.newKey = k.key; state.keys = (state.keys || []).concat([{id: k.id, name: k.name, prefix: k.prefix, createdAt: k.createdAt}]); acctSay('', false, 'key'); })
       .catch(d => acctSay(d.error || 'Could not create a key.', true, 'key'));
+    return;
+  }
+  if (e.target.id === 'cc-form'){
+    e.preventDefault(); const f = e.target;
+    if (!f.agree.checked) return acctSay('Read and accept the Concierge terms first.', true, 'concierge');
+    if (!f.roles.value.trim()) return acctSay('Tell us which roles you want.', true, 'concierge');
+    const intake = {roles: f.roles.value, locations: f.locations.value, currentCtc: f.currentCtc.value, expectedCtc: f.expectedCtc.value, noticeDays: f.noticeDays.value, phone: f.phone.value, notes: f.notes.value};
+    cloudPost('api/concierge/request', {agree: true, termsVersion: obj(state.concierge).termsVersion, country: f.country.value, intake}).then(v => { state.concierge = v; acctSay('Sent. A talent partner will reply within two working days.', false, 'concierge'); render(); window.scrollTo({top: 0, behavior: 'smooth'}); })
+      .catch(d => acctSay(d.error || 'Could not send it.', true, 'concierge'));
+    return;
+  }
+  if (e.target.id === 'cc-msg'){ e.preventDefault(); const b = e.target.body.value.trim(); if (!b) return; cloudPost('api/concierge/message', {body: b}).then(v => { state.concierge = v; render(); }).catch(d => toast(d.error || 'Could not send it.')); return; }
+  if (e.target.id === 'cc-offer'){
+    e.preventDefault(); const f = e.target;
+    cloudPost('api/concierge/offer', {company: f.company.value, fixedCtc: f.fixedCtc.value, joiningDate: f.joiningDate.value}).then(v => { state.concierge = v; const r = obj(v.reported);
+      acctSay(r.feeable ? 'Congratulations! Your partner will check the offer letter; the fee and dates appear here once confirmed.' : "Congratulations! This company wasn't one you approved through Concierge, so there's no fee for it.", false, 'concierge'); render(); })
+      .catch(d => acctSay(d.error || 'Could not report it.', true, 'concierge'));
     return;
   }
   if (e.target.id === 'ct-form'){
@@ -4227,13 +4335,17 @@ document.addEventListener('submit', e => {
   const exp = EXPERIENCE.filter((x, i) => $('#s-exp-' + i).checked);
   const roles = $('#s-roles').value.split(',').map(s => s.trim()).filter(Boolean);
   const locs = LOCATIONS.filter((l, i) => $('#s-loc-' + i).checked);
+  const home = $('#s-home') ? $('#s-home').value : 'IN';
   const fams = FAMILIES.filter((f, i) => $('#s-fam-' + i) && $('#s-fam-' + i).checked);
   const cap = Math.max(1, Math.min(capMax(), parseInt($('#s-cap').value, 10) || DEFAULTS.dailyCap));
-  const sal = $('#s-sal').value.trim();
+  const usdFloor = $('#s-sal-usd') ? $('#s-sal-usd').value.trim() : null;
+  const sal = usdFloor !== null ? (usdFloor === '' ? '' : String(Math.round(Number(usdFloor) * USD_INR / 1000) / 100)) : $('#s-sal').value.trim();
   const next = Object.assign({}, settings(), {
     experienceLevels: exp.map(x => x[0]), maxRequiredYears: exp.length ? Math.max.apply(null, exp.map(x => x[1])) : 99,
     maxPostingAgeDays: Number($('#s-age').value) || 25, approvalMode: $('#s-mode').value, targetRoles: roles, families: fams, locations: locs, dailyCap: cap, minFit: $('#s-fit').value,
     salaryFloorLpa: sal === '' ? '' : Number(sal), requireStatedPay: !!($('#s-stated') && $('#s-stated').checked), dealbreakers: $('#s-deal').value.trim(), updatedAt: nowIso(),
+    ...(usdFloor !== null ? {salaryFloorUsd: usdFloor === '' ? '' : Number(usdFloor)} : {}),
+    homeCountry: home, places: $('#s-places') ? $('#s-places').value.trim().slice(0, 300) : '', remoteOk: $('#s-remote') ? $('#s-remote').checked : true, timezone: TZ,
     ...($('#s-alerts') ? {alerts: $('#s-alerts').value} : {})
   });
   if (document.activeElement) document.activeElement.blur();
@@ -4307,6 +4419,8 @@ document.addEventListener('click', e => {
 document.addEventListener('input', e => {
   const el = e.target;
   if (el.dataset && el.dataset.pf){ const kind = el.dataset.kind, v = el.value; const val = kind === 'bool' ? el.checked : kind === 'lines' ? v.split(/\n/).map(x => x.trim()).filter(Boolean) : kind === 'csv' ? v.split(',').map(x => x.trim()).filter(Boolean) : v; setPath(draft(), el.dataset.pf, val); if (!state.profDirty){ state.profDirty = true; const sb = $('[data-act="pf-save"]'); if (sb) sb.disabled = !state.canWrite; } }
+  else if (el.id === 's-home'){ const india = el.value === 'IN'; const a = $('#s-loc-in'), b = $('#s-loc-world'); if (a) a.hidden = !india; if (b) b.hidden = india; }
+  else if (el.id === 'cc-calc'){ state.ccCalc = el.value; const o = $('#cc-out'); if (o) o.innerHTML = ccOut(obj(obj(state.concierge).fee), el.value); return; }
   else if (el.dataset && el.dataset.tl === 'prepId'){ state.tl.prepId = el.value; state.tl.typing = false; state.tl.render = true; render(); return; }
   else if (el.id === 'ct-q'){ state.ctQ = el.value; clearTimeout(state.ctT); state.ctT = setTimeout(() => { const pos = el.selectionStart; render(); requestAnimationFrame(() => { const q = $('#ct-q'); if (q){ q.focus(); try { q.setSelectionRange(pos, pos); } catch(e){} } }); }, 200); return; }
   else if (el.dataset && el.dataset.tl){ state.tl[el.dataset.tl] = el.type === 'checkbox' ? el.checked : el.value; state.tl.typing = true; return; }

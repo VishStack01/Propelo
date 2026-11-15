@@ -16,6 +16,7 @@ The code is ready. What's left needs accounts, money or a signature that only yo
 | 8 | [Backups, monitoring and a security test](#8-backups-monitoring-security) | Half a day | Small | Inviting people |
 | 9 | [Store listings](#9-phone-apps) | 1 to 2 weeks with review | Play and Apple fees | The phone apps |
 | 10 | [Repository settings and launch](#10-repository-and-launch) | 30 min | Free | Discovery |
+| 11 | [Concierge](#11-concierge) | 1 to 2 weeks | Staff time, lawyer | The human-run service |
 
 ## 1. Deploy on Render
 
@@ -100,3 +101,15 @@ To give someone a plan without payment, sign in as the operator and run in the b
 fetch("/api/admin/grant", {method: "POST", headers: {"Content-Type": "application/json", "X-CareerOS-CSRF": "1"},
   body: JSON.stringify({email: "friend@example.com", plan: "ultra", until: "2026-12-31"})}).then(r => r.json())
 ```
+
+## 11. Concierge
+
+Concierge is a person on your team running a candidate's search, paid by a share of the fixed pay after they join. The software is ready; the service needs people and paperwork.
+
+1. **Have a lawyer review the Concierge terms** at `/terms#concierge` (fee, instalments, the 90-day rule, the 6-month attribution window, and the clause on hidden offers) before the first case. Charging candidates a placement fee is legal in India, but the terms are your contract with them.
+2. **GST:** placement services are usually taxable. Ask your accountant, then set `CONCIERGE_TAX_RATE` (for example 18) once you're registered.
+3. **Partners:** create accounts for your talent partners, then as the operator run `fetch("/api/admin/staff", {method: "POST", headers: {"Content-Type": "application/json", "X-CareerOS-CSRF": "1"}, body: JSON.stringify({email: "partner@yourdomain"})})`. They work at `https://<your-app>/staff`. Unassigned Ultra requests show first.
+4. **Turn it on:** `CONCIERGE=on` (the Render blueprint sets it). Requests email every partner.
+5. **Collecting fees:** instalments use Razorpay payment links. In the Razorpay dashboard, add the `payment_link.paid` event to the same webhook. Keep each offer letter you verify.
+6. **Other countries:** `CONCIERGE_COUNTRIES` widens it, but only after legal advice for each country. The UK prohibits charging work-seekers and is always refused; most EU countries restrict it; many US states license and cap fees.
+7. **Train partners on the rules** shown at the bottom of the workspace: never sign in as the candidate, never automate LinkedIn, send nothing the candidate hasn't approved, write only what's true.

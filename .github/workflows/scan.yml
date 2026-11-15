@@ -90,6 +90,9 @@ jobs:
           careeros discover --companies config/companies/companies.csv --extra feed/radar-companies.csv --extra feed/yc-companies.csv --extra feed/deep-companies.csv --cache feed/boards.json --refresh-days 14 --limit 800 --max-minutes 18 2>&1 | tee feed/discover.log
 
       - name: Scan boards
+        # On-site and hybrid roles in every country, for people searching outside India.
+        env:
+          CAREEROS_SCAN_ONSITE: world
         run: |
           set -o pipefail
           careeros scan --boards feed/boards.json --out feed 2>&1 | tee feed/scan.log

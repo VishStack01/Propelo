@@ -41,7 +41,7 @@ from ..dedupe import canonical_url, company_key
 from ..scamcheck import check as scam_check
 from . import mailer as mail
 from . import linkedin as li_auth
-from . import autosend, mailbox, plans, repo, security
+from . import autosend, concierge, mailbox, plans, repo, security
 from .config import Config
 from .db import Database, now_iso
 from .ingest import feed_state
@@ -211,6 +211,11 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
 
     def admin_only(p: Principal = Depends(session_only)) -> Principal:
         if not p.user["is_admin"]:
+            raise err(404, "Not found.")
+        return p
+
+    def staff_only(p: Principal = Depends(session_only)) -> Principal:
+        if not (p.user["is_admin"] or p.user.get("is_staff")):
             raise err(404, "Not found.")
         return p
 
@@ -824,7 +829,7 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
         recent |= {company_key(j["data"].get("company", "")) for j in jobs if j["data"].get("appliedAt")}
         left = max(0, min(cap - done_today, month_cap - done_month))
         auto = settings.get("approvalMode") == "auto-when-clear"
-        order = {"remote-global": 0, "remote-india": 1, "south-india": 2}
+        order = {"remote-global": 0, "remote-india": 1, "remote-local": 1, "south-india": 2, "local": 2}
         groups = {"queued": [], "approved": [], "auto": []}
         for j in jobs:
             d = j["data"]
@@ -1217,6 +1222,16 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
         if not isinstance(event, dict):
             raise err(400, "Bad JSON.")
         eid = "rzp:" + (request.headers.get("x-razorpay-event-id") or hashlib.sha256(body).hexdigest())[:100]
+        if str(event.get("event", "")) == "payment_link.paid":
+            link = (((event.get("payload") or {}).get("payment_link") or {}).get("entity")) or {}
+            with db.tx() as c:
+                if c.one("SELECT 1 AS x FROM billing_events WHERE id = ?", (eid,)):
+                    return {"ok": True, "result": "duplicate"}
+                c.execute("INSERT INTO billing_events(id, provider, kind, provider_sub_id, received_at, payload) VALUES (?, 'razorpay', ?, ?, ?, ?)",
+                          (eid, "payment_link.paid", str(link.get("id") or "")[:100], now_iso(), json.dumps(event)[:20000]))
+                result = concierge.mark_paid(c, str(link.get("id") or ""))
+            log.info(json.dumps({"event": "billing-webhook", "provider": "razorpay", "kind": "payment_link.paid", "result": result}))
+            return {"ok": True, "result": result}
         ev = plans.razorpay_event(cfg, event)
         with db.tx() as c:
             result = record_billing(c, eid, ev, event)
@@ -1352,6 +1367,207 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
                                 '<title>Done</title><body style="font:17px/1.6 system-ui,sans-serif;background:#FAF3E6;max-width:560px;margin:12vh auto;padding:0 20px">'
                                 '<h1 style="font-weight:500">Done</h1><p>You won\'t get emails sent with Propelo at this address again.</p></body>')
         return {"ok": True}
+
+    # ------------------------------------------------------------ Concierge (human-run search, fee only after joining)
+    def cerr(e: concierge.ConciergeError):
+        return err(404 if str(e) == "Not found." else 400, str(e), "concierge")
+
+    def staff_emails(c) -> list[str]:
+        return [r["email"] for r in c.all("SELECT email FROM users WHERE (is_staff = 1 OR is_admin = 1) AND disabled_at IS NULL LIMIT 20")]
+
+    @app.get("/api/concierge")
+    def concierge_view(request: Request, p: Principal = Depends(session_only)):
+        with db.tx() as c:
+            return concierge.view(c, cfg, p.user, request.headers.get("cf-ipcountry", ""))
+
+    @app.get("/api/concierge/fee")
+    def concierge_fee(ctc: int = 0):
+        if not cfg.concierge_enabled:
+            raise err(404, "Not found.")
+        return concierge.fee_for(cfg, max(0, min(int(ctc), 1_000_000_000)))
+
+    @app.post("/api/concierge/request")
+    def concierge_request(request: Request, body: dict = Body(...), p: Principal = Depends(session_only)):
+        if body.get("agree") is not True or body.get("termsVersion") != concierge.TERMS_VERSION:
+            raise err(400, "Read and accept the Concierge terms first.", "terms")
+        try:
+            intake = concierge.clean_intake(body.get("intake") or {})
+            with db.tx() as c:
+                limited(c, f"concierge:{p.uid}", 5, 86400)
+                concierge.request(c, cfg, p.uid, str(body.get("country") or ""), intake, client_ip(request), p.user)
+                send(c, p.user["email"], mail.concierge(cfg.public_url, "requested"))
+                for to in staff_emails(c):
+                    send(c, to, mail.concierge(cfg.public_url, "staff-new"))
+                return concierge.view(c, cfg, p.user)
+        except concierge.ConciergeError as e:
+            raise cerr(e)
+
+    @app.post("/api/concierge/roles/{sid}/{decision}")
+    def concierge_decide(sid: str, decision: str, p: Principal = Depends(session_only)):
+        if decision not in ("approve", "decline"):
+            raise err(404, "Not found.")
+        try:
+            with db.tx() as c:
+                concierge.decide(c, p.uid, sid, decision == "approve")
+                return concierge.view(c, cfg, p.user)
+        except concierge.ConciergeError as e:
+            raise cerr(e)
+
+    @app.post("/api/concierge/message")
+    def concierge_message(body: dict = Body(...), p: Principal = Depends(session_only)):
+        try:
+            with db.tx() as c:
+                limited(c, f"cmsg:{p.uid}", 60, 3600)
+                case = concierge.case_of(c, p.uid)
+                if not case or case["status"] not in concierge.OPEN_CASE:
+                    raise concierge.ConciergeError("You don't have an open Concierge case.")
+                concierge.add_note(c, case["id"], p.uid, str(body.get("body") or ""))
+                partner = c.one("SELECT email FROM users WHERE id = ?", (case["partner_id"],)) if case["partner_id"] else None
+                for to in ([partner["email"]] if partner else staff_emails(c)):
+                    send(c, to, mail.concierge(cfg.public_url, "staff-message"))
+                return concierge.view(c, cfg, p.user)
+        except concierge.ConciergeError as e:
+            raise cerr(e)
+
+    @app.post("/api/concierge/offer")
+    def concierge_offer(body: dict = Body(...), p: Principal = Depends(session_only)):
+        try:
+            ctc = int(float(str(body.get("fixedCtc") or 0).replace(",", "")))
+        except ValueError:
+            raise err(400, "The fixed pay must be a number.")
+        try:
+            with db.tx() as c:
+                r = concierge.report_offer(c, cfg, p.uid, str(body.get("company") or ""), ctc, str(body.get("joiningDate") or ""),
+                                           str(body.get("offerDoc") or ""))
+                for to in staff_emails(c):
+                    send(c, to, mail.concierge(cfg.public_url, "staff-message"))
+                return dict(concierge.view(c, cfg, p.user), reported=r)
+        except concierge.ConciergeError as e:
+            raise cerr(e)
+
+    @app.post("/api/concierge/pause")
+    def concierge_pause(body: dict = Body(default={}), p: Principal = Depends(session_only)):
+        with db.tx() as c:
+            case = concierge.case_of(c, p.uid)
+            if not case or case["status"] not in ("active", "paused", "requested"):
+                raise err(400, "There's no case to pause or resume.")
+            new = "paused" if body.get("pause", True) else ("active" if case["partner_id"] else "requested")
+            if new != "paused" and not concierge.plan_allows(c, p.user):
+                raise err(402, "Concierge is part of Pro and Ultra. Upgrade in Settings to resume.", "plan_required")
+            concierge.set_status(c, case["id"], new)
+            repo.audit(c, p.uid, f"concierge-{new}", "")
+            return concierge.view(c, cfg, p.user)
+
+    @app.post("/api/concierge/close")
+    def concierge_close(p: Principal = Depends(session_only)):
+        """Stop Concierge. Fees still apply to offers from roles approved before closing, within the attribution window."""
+        with db.tx() as c:
+            case = concierge.case_of(c, p.uid)
+            if not case or case["status"] not in concierge.OPEN_CASE:
+                raise err(400, "There's no open case.")
+            concierge.set_status(c, case["id"], "closed", "Closed by the candidate.")
+            c.execute("UPDATE concierge_submissions SET status = 'withdrawn', updated_at = ? WHERE case_id = ? AND status = 'proposed'", (now_iso(), case["id"]))
+            repo.audit(c, p.uid, "concierge-closed", "")
+            return concierge.view(c, cfg, p.user)
+
+    @app.post("/api/concierge/instalments/{iid}/pay")
+    async def concierge_pay(iid: str, p: Principal = Depends(session_only)):
+        with db.tx() as c:
+            inst = c.one("SELECT i.*, pl.company FROM concierge_instalments i JOIN concierge_placements pl ON pl.id = i.placement_id "
+                         "JOIN concierge_cases k ON k.id = pl.case_id WHERE i.id = ? AND k.user_id = ?", (iid, p.uid))
+        if not inst or inst["status"] not in ("due", "link_sent"):
+            raise err(404, "Nothing to pay here.")
+        if inst["link_url"]:
+            return {"url": inst["link_url"]}
+        try:
+            link = await run_in_threadpool(concierge.payment_link, cfg, inst, p.user, inst["company"])
+        except (concierge.ConciergeError, plans.BillingError) as e:
+            raise err(502, str(e), "billing")
+        with db.tx() as c:
+            c.execute("UPDATE concierge_instalments SET status = 'link_sent', provider_link_id = ?, link_url = ? WHERE id = ?", (link["id"], link["url"], iid))
+            repo.audit(c, p.uid, "concierge-payment-link", "", {"instalment": iid})
+        return {"url": link["url"]}
+
+    # The team's workspace
+    @app.get("/staff", include_in_schema=False)
+    def staff_page(request: Request, p: Principal = Depends(staff_only)):
+        return html("staff.html", request.state.nonce)
+
+    @app.get("/api/staff/cases")
+    def staff_list(status: str = "", p: Principal = Depends(staff_only)):
+        with db.tx() as c:
+            return {"cases": concierge.staff_cases(c, p.user, status if status in concierge.CASE_STATUSES else ""), "me": {"id": p.uid, "name": p.user["name"]}}
+
+    @app.get("/api/staff/cases/{cid}")
+    def staff_open(cid: str, request: Request, p: Principal = Depends(staff_only)):
+        try:
+            with db.tx() as c:
+                out = concierge.staff_case(c, cfg, cid, p.user)
+                repo.audit(c, p.uid, "concierge-case-viewed", client_ip(request), {"case": cid})
+                return out
+        except concierge.ConciergeError as e:
+            raise cerr(e)
+
+    def _staff_case(c, cid: str, p: Principal) -> dict:
+        case = c.one("SELECT * FROM concierge_cases WHERE id = ?", (cid,))
+        if not case or not concierge.can_open(case, p.user):
+            raise concierge.ConciergeError("Not found.")
+        return case
+
+    @app.post("/api/staff/cases/{cid}/{action}")
+    def staff_act(cid: str, action: str, request: Request, body: dict = Body(default={}), p: Principal = Depends(staff_only)):
+        try:
+            with db.tx() as c:
+                case = _staff_case(c, cid, p)
+                owner = c.one("SELECT id, email FROM users WHERE id = ?", (case["user_id"],))
+                if action == "take":
+                    if case["partner_id"] and case["partner_id"] != p.uid and not p.user["is_admin"]:
+                        raise concierge.ConciergeError("Another partner has this case.")
+                    c.execute("UPDATE concierge_cases SET partner_id = ?, status = CASE WHEN status = 'requested' THEN 'active' ELSE status END, updated_at = ? WHERE id = ?",
+                              (str(body.get("partnerId") or p.uid) if p.user["is_admin"] else p.uid, now_iso(), cid))
+                elif action == "status":
+                    concierge.set_status(c, cid, str(body.get("status") or ""), str(body.get("reason") or ""))
+                elif action == "note":
+                    shared = bool(body.get("shared", True))
+                    concierge.add_note(c, cid, p.uid, str(body.get("body") or ""), shared)
+                    if shared:
+                        send(c, owner["email"], mail.concierge(cfg.public_url, "message"))
+                elif action == "propose":
+                    concierge.propose(c, cid, p.uid, str(body.get("company") or ""), str(body.get("title") or ""), str(body.get("url") or ""), str(body.get("why") or ""))
+                    send(c, owner["email"], mail.concierge(cfg.public_url, "proposed"))
+                elif action == "move":
+                    concierge.move(c, cid, str(body.get("submissionId") or ""), str(body.get("status") or ""))
+                elif action == "verify":
+                    pl = c.one("SELECT * FROM concierge_placements WHERE id = ? AND case_id = ?", (str(body.get("placementId") or ""), cid))
+                    if not pl:
+                        raise concierge.ConciergeError("Not found.")
+                    concierge.verify_placement(c, cfg, pl["id"], p.uid, body.get("fixedCtc"), body.get("joiningDate"))
+                    send(c, owner["email"], mail.concierge(cfg.public_url, "fee-due"))
+                elif action == "end-early":
+                    pl = c.one("SELECT * FROM concierge_placements WHERE id = ? AND case_id = ?", (str(body.get("placementId") or ""), cid))
+                    if not pl:
+                        raise concierge.ConciergeError("Not found.")
+                    concierge.end_early(c, pl["id"], bool(body.get("byEmployer")))
+                else:
+                    raise concierge.ConciergeError("Not found.")
+                repo.audit(c, p.uid, f"concierge-staff-{action}", client_ip(request), {"case": cid})
+                return concierge.staff_case(c, cfg, cid, p.user)
+        except concierge.ConciergeError as e:
+            raise cerr(e)
+
+    @app.post("/api/admin/staff")
+    def admin_staff(request: Request, body: dict = Body(...), p: Principal = Depends(admin_only)):
+        """Make someone a talent partner (or remove them)."""
+        with db.tx() as c:
+            u = c.one("SELECT id FROM users WHERE email = ?", (str(body.get("email") or "").strip().lower(),))
+            if not u:
+                raise err(404, "No account with that email.")
+            on = bool(body.get("staff", True))
+            c.execute("UPDATE users SET is_staff = ? WHERE id = ?", (1 if on else 0, u["id"]))
+            if not on:
+                c.execute("UPDATE concierge_cases SET partner_id = NULL, status = CASE WHEN status = 'active' THEN 'requested' ELSE status END WHERE partner_id = ?", (u["id"],))
+            repo.audit(c, u["id"], "staff-granted" if on else "staff-removed", client_ip(request), {"by": p.uid})
+        return {"ok": True, "staff": on}
 
     # ------------------------------------------------------------ AI actions
     @app.put("/api/me/ai-key")

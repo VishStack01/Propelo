@@ -24,7 +24,8 @@ _ID = re.compile(r"^[A-Za-z0-9_.:@+~-]{1,200}$")
 
 
 def settings_hash(doc: dict) -> str:
-    keys = ("targetRoles", "families", "titleExclude", "locations", "maxRequiredYears", "maxPostingAgeDays", "salaryFloorLpa", "dealbreakers", "companyBlocklist")
+    keys = ("targetRoles", "families", "titleExclude", "locations", "maxRequiredYears", "maxPostingAgeDays", "salaryFloorLpa", "dealbreakers", "companyBlocklist",
+            "homeCountry", "places", "remoteOk")
     return hashlib.sha256(json.dumps({k: doc.get(k) for k in keys}, sort_keys=True, default=str).encode()).hexdigest()[:16]
 
 

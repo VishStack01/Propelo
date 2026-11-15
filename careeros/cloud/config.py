@@ -48,6 +48,15 @@ class Config:
     linkedin_client_id: str = ""  # "Sign in with LinkedIn using OpenID Connect": name, email, photo only
     linkedin_client_secret: str = ""
     # Google OAuth for sending recruiter emails from the person's own Gmail (scope gmail.send only).
+    # Propelo Concierge (human-run search, fee only after joining). Off unless CONCIERGE=on.
+    concierge_enabled: bool = False
+    concierge_countries: tuple = ("IN",)
+    concierge_rate_low: float = 8.0
+    concierge_rate_high: float = 6.0
+    concierge_band: int = 2_000_000
+    concierge_tax_rate: float = 0.0
+    concierge_instalments: int = 3
+    concierge_attribution_days: int = 180
     security_email: str = ""  # shown in /.well-known/security.txt; falls back to SUPPORT_EMAIL
     google_client_id: str = ""
     google_client_secret: str = ""
@@ -103,6 +112,14 @@ class Config:
             max_doc_kb=_int("MAX_DOC_KB", 512),
             linkedin_client_id=e("LINKEDIN_CLIENT_ID", "").strip(),
             linkedin_client_secret=e("LINKEDIN_CLIENT_SECRET", "").strip(),
+            concierge_enabled=e("CONCIERGE", "off").strip().lower() in ("on", "1", "true", "yes"),
+            concierge_countries=tuple(x.strip().upper() for x in e("CONCIERGE_COUNTRIES", "IN").split(",") if x.strip()),
+            concierge_rate_low=float(e("CONCIERGE_RATE_LOW", "8") or 8),
+            concierge_rate_high=float(e("CONCIERGE_RATE_HIGH", "6") or 6),
+            concierge_band=_int("CONCIERGE_BAND", 2_000_000),
+            concierge_tax_rate=float(e("CONCIERGE_TAX_RATE", "0") or 0),
+            concierge_instalments=_int("CONCIERGE_INSTALMENTS", 3),
+            concierge_attribution_days=_int("CONCIERGE_ATTRIBUTION_DAYS", 180),
             security_email=e("SECURITY_EMAIL", "").strip(),
             google_client_id=e("GOOGLE_CLIENT_ID", "").strip(),
             google_client_secret=e("GOOGLE_CLIENT_SECRET", "").strip(),
@@ -184,6 +201,10 @@ class Config:
         if any((self.dodo_api_key, self.dodo_webhook_secret, self.dodo_product_pro, self.dodo_product_ultra)) and not self.dodo_enabled:
             if "Dodo Payments is half set up" not in " ".join(problems):
                 problems.append("Dodo Payments is half set up: set all of DODO_API_KEY, DODO_WEBHOOK_SECRET and DODO_PRODUCT_PRO, or none.")
+        if self.concierge_enabled and not (0 < self.concierge_rate_high <= self.concierge_rate_low <= 8):
+            problems.append("CONCIERGE_RATE_LOW and CONCIERGE_RATE_HIGH must be between 0 and 8, with the rate above the band no higher than below it.")
+        if self.concierge_enabled and any(cc in ("GB", "UK") for cc in self.concierge_countries):
+            problems.append("Concierge can't run in the UK: charging job seekers a fee for finding work is prohibited there.")
         if (self.google_client_id or self.google_client_secret) and not (self.google_client_id and self.google_client_secret):
             problems.append("Gmail sending is half set up: set both GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET, or neither.")
         if self.billing_enabled and not self.support_email:
