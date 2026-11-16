@@ -185,6 +185,11 @@ def gate_location(job: Job, s: Settings) -> tuple[Check, str]:
             scope = extract.RemoteScope(f.get("scopeEligible"), f.get("scope") or "", f.get("scopeQuote") or "")
         else:
             scope = extract.remote_scope(job.location, job.description)
+        # "Remote - Berlin", "Kyiv, Ukraine", "Poland": a remote role placed in one country is almost always
+        # hired in that country (payroll and employment law), unless the posting says otherwise.
+        named = countries.named(job.location or "")
+        if named and "IN" not in named and not where["india"] and scope.scope != "worldwide" and not (scope.india_eligible and scope.scope != "india"):
+            return Check("Location", False, f"Remote, but placed in {job.location.strip()}; the posting doesn't say people in India can apply.", job.location), ""
         if scope.scope == "worldwide":
             if p.abroad == "never":
                 return Check("Location", False, "Remote roles at companies abroad are switched off.", scope.quote), ""

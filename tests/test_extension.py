@@ -184,3 +184,15 @@ def test_extension_lists_indian_portals_but_never_the_blocked_boards():
     hosts = bg[bg.index("var JOB_HOSTS"):bg.index("];", bg.index("var JOB_HOSTS"))]
     for host in ("linkedin", "naukri", "indeed", "wellfound"):
         assert host not in hosts
+
+
+def test_long_indian_names_and_questions_that_mention_a_field(browser):
+    page = _open(browser, "greenhouse.html", "https://job-boards.greenhouse.io/acme/jobs/9")
+    page.evaluate("d => window.__careerosFill(d)", {"applicant": {**APPLICANT, "fullName": "Venkata Vishnu Vardhan Raju Chakravarthula"}, "resume": None, "watch": False})
+    assert page.eval_on_selector("input[name=first_name], #first_name", "e => e.value") == "Venkata Vishnu Vardhan Raju"
+    assert page.eval_on_selector("input[name=last_name], #last_name", "e => e.value") == "Chakravarthula"
+    page.close()
+    page = _open(browser, "campus.html", "https://internshala.com/application/form/2")
+    page.evaluate("d => window.__careerosFill(d)", {"applicant": {**APPLICANT, "currentTitle": "AI Product Designer"}, "resume": None, "watch": False})
+    assert page.eval_on_selector("#leave", "e => e.value") == ""  # a question about your role, not your role
+    page.close()

@@ -28,6 +28,15 @@ _WORDNUM = {
 _NUM = r"(\d{1,2}(?:\.\d)?|" + "|".join(_WORDNUM) + r")"
 _YRS = r"(?:years?|yrs?|year\(s\))"
 _NOT_EXPERIENCE_AFTER = re.compile(r"^\W{0,3}(?:ago|old|of age|in business|of history|warranty|anniversary)", re.I)
+# "PayPal has been revolutionizing commerce for more than 25 years", "investments over 25 years in India":
+# the company's age, not an ask of the candidate.
+_COMPANY_AGE = re.compile(
+    r"\b(?:has|have|we've|we have|it has)\s+been\b|\bfounded\b|\bsince\s+(?:19|20)\d\d\b|\bhistory\b|\blegacy\b|\bheritage\b|"
+    r"\binvestments?\b|\bemployees\b|\bcustomers\b|\bglobally\b|\bin business\b|\bpresence\b|\bsuccess story\b|"
+    r"\byears? (?:in|of) (?:india|operation|operations|innovation|excellence|trust|leadership|growth)\b",
+    re.I,
+)
+_PERSONAL = re.compile(r"\byou\b|\byour\b|\bcandidates?\b|\bapplicants?\b|\bexperience\b|\bexp\b|\brelevant\b|\bproven\b|\bhands[- ]on\b", re.I)
 _EXPERIENCE_CONTEXT = re.compile(
     r"experience|\bexp\b|working|work\b|industry|professional|hands[- ]on|building|developing|shipping|"
     r"writing|designing|in (?:a |an )?(?:software|engineering|product|design|ml|ai|data|backend|frontend)",
@@ -120,6 +129,8 @@ def extract_experience(text: str, header: str = "") -> ExperienceReq:
             if years > 30:
                 continue
             quote = quote_around(full, s, e)
+            if _COMPANY_AGE.search(quote) and not _PERSONAL.search(quote):
+                continue
             heading_pref = False
             for off, pref in sections:
                 if off <= s:
@@ -153,7 +164,10 @@ def extract_experience(text: str, header: str = "") -> ExperienceReq:
 _SENIOR_TITLE = re.compile(
     # "Staff" means senior in "Staff Engineer", but "Staff Nurse" and "Staff Accountant" are entry titles.
     r"\b(senior|sr\.?|staff(?! (nurses?|accountants?|writers?|pharmacists?|members?|assistants?|nursing))|principal|lead|leader|head|"
-    r"director|vp|vice president|chief|distinguished|architect)\b", re.I
+    r"director|vp|vice president|chief|distinguished|architect|"
+    # People managers of engineers. "Product Manager", "Account Manager" and "Relationship Manager" are not here:
+    # many of those are entry roles.
+    r"(?:engineering|software|development|technical|qa|test) manager|manager,?\s+(?:of\s+)?(?:software|engineering|development))\b", re.I
 )
 # "4-8 Yrs", "5 years to 13Years", "2 to 4 years", "8+ years" in a title (common on Workday boards).
 _TITLE_YEARS = re.compile(r"(?<![\d.])(\d{1,2})\s*(?:\+|(?:-|–|to)\s*\d{1,2})?\s*(?:years?|yrs?)\b", re.I)
@@ -267,6 +281,13 @@ def tz_range(blob: str) -> tuple[float, float, str] | None:
     return a, b, quote_around(blob, *m.span())
 
 
+_WHO_CAN_WORK = re.compile(
+    r"\bremote(?:ly)?\b|\bwork(?:ing)? from\b|\bbased (?:in|out of|anywhere)\b|\blocated\b|\bhir(?:e|es|ing)\b|\bcandidates?\b|"
+    r"\bapplicants?\b|\bapply\b|\beligible\b|\btime ?zones?\b|\bwfh\b|\bdistributed\b|\bfrom anywhere\b|\blive\b|\breside\b",
+    re.I,
+)
+
+
 def remote_scope(location: str, text: str) -> RemoteScope:
     """Can someone living in India take this remote role?"""
     text = _no_temp_remote(text)
@@ -286,10 +307,13 @@ def remote_scope(location: str, text: str) -> RemoteScope:
             return RemoteScope(False, scope, location)
     if _US_CS.search(location or ""):
         return RemoteScope(False, "us", location)
+    # In the description a place counts only when the sentence is about where people work or can be hired from:
+    # "benefits to billions globally" or "our team in India" says nothing about who can apply.
     for rx, scope in ((_INDIA, "india"), (_WORLD, "worldwide"), (_APAC, "apac")):
-        m = rx.search(text or "")
-        if m:
-            return RemoteScope(True, scope, quote_around(text, *m.span()))
+        for m in rx.finditer(text or ""):
+            q = quote_around(text, *m.span())
+            if _WHO_CAN_WORK.search(q):
+                return RemoteScope(True, scope, q)
     for rx, scope in ((_US, "us"), (_EU, "europe")):
         m = rx.search(text or "")
         if m and re.search(r"only|must|reside|based in|located in|authori[sz]ed", quote_around(text, *m.span()), re.I):

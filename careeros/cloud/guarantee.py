@@ -96,7 +96,12 @@ def _jobs(c: Conn, uid: str) -> list[dict]:
 def _has_profile(c: Conn, uid: str) -> bool:
     d = repo.get_doc(c, uid, "profile", "resume")
     p = (d or {}).get("data") or {}
-    return bool(p.get("experience") or p.get("skills") or str(p.get("summary") or "").strip())
+    if p.get("experience") or p.get("skills") or str(p.get("summary") or "").strip():
+        return True
+    # An uploaded resume we could read counts too.
+    rid = ((((repo.get_doc(c, uid, "profile", "applicant") or {}).get("data") or {}).get("resume") or {}).get("id") or "")
+    text = c.scalar("SELECT text FROM assets WHERE id = ? AND user_id = ?", (rid, uid)) if rid else None
+    return len(str(text or "").strip()) >= 200
 
 
 def eligibility(c: Conn, cfg: Config, user: dict, kind: str = "interview", now: datetime | None = None) -> dict:

@@ -27,7 +27,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 
-from . import extract, geo, paydata, signals, tags
+from . import company_names, extract, geo, paydata, signals, tags
 from .dedupe import canonical_url, fingerprint, job_id
 from .models import Job, iso
 from .sources import SCOUTS, greenhouse, smartrecruiters
@@ -142,7 +142,7 @@ def to_feed(job: Job, company: dict, via: str = "careers") -> dict:
     where = geo.classify(job.location)
     return {
         "id": job_id(job.company, job.title)[:70] + "-" + hashlib.sha1(url.encode()).hexdigest()[:6],
-        "company": job.company, "title": job.title, "url": url, "source": job.source,
+        "company": company_names.display(job.company), "title": job.title, "url": url, "source": job.source,
         "location": job.location, "workMode": job.work_mode, "postedAt": job.posted_at,
         "salary": job.salary_text, "experienceHeader": str(job.raw.get("experience_header", "")),
         "category": company.get("category", ""), "hq": company.get("city", ""),

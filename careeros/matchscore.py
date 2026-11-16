@@ -124,8 +124,22 @@ def _evidence(term: str, resume: dict | str) -> str:
     return best
 
 
+# Equal-opportunity statements, recruitment-fraud warnings, privacy and accommodation notices: the same on every
+# posting from a company, and never a skill the role needs ("recruitment" in "we never ask for money in a
+# recruitment process").
+_BOILERPLATE = re.compile(
+    r"equal (?:employment )?opportunity|\beeo\b|affirmative action|without regard to|protected (?:veteran|characteristic)|"
+    r"recruit(?:ment|ing)? (?:process|fraud|scams?|agenc(?:y|ies))|monetary|never ask (?:you )?for|fraudulent|"
+    r"reasonable accommodation|privacy (?:notice|policy|statement)|background (?:check|verification)|e-verify|unsolicited|"
+    r"applicant tracking|data protection|gdpr", re.I)
+
+
+def strip_boilerplate(jd: str) -> str:
+    return "\n".join(x for x in re.split(r"(?<=[.!?])\s+|\n+", jd or "") if x.strip() and not _BOILERPLATE.search(x))
+
+
 def score(title: str, jd: str, resume: dict | str, years: float | None = None, targets: list[str] | None = None) -> dict:
-    jd = (jd or "")[:60000]
+    jd = strip_boilerplate((jd or "")[:60000])
     terms = keywords.extract(f"{title}\n{jd}", limit=25)
     weights = _weights(title, jd, terms)
     rows = []

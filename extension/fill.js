@@ -149,8 +149,10 @@
       else if (!/lpa|lakh|\blacs?\b|\blac\b|in l\b/i.test(l) && (/\binr\b|rupees|₹|\brs\.?\b|in numbers|absolute/i.test(l) || /\d{5,}/.test(String(el && el.placeholder || "")) || +(el && el.min) >= 10000)) v = Math.round(parseFloat(v) * 100000);
     }
     if (key === "preferredCities" && v && el && (el.tagName === "SELECT" || el.type === "radio" || el.__combo)) v = String(v).split(/[,;/]/)[0].trim();
-    if (key === "firstName" && !v) v = String(a.fullName || "").split(" ")[0];
-    if (key === "lastName" && !v) v = String(a.fullName || "").split(" ").slice(1).join(" ");
+    // "Venkata Vishnu Vardhan Raju Chakravarthula": the surname is the last word, the given names the rest.
+    var parts = String(a.fullName || "").trim().split(/\s+/).filter(Boolean);
+    if (key === "firstName" && !v) v = parts.length > 1 ? parts.slice(0, -1).join(" ") : (parts[0] || "");
+    if (key === "lastName" && !v) v = parts.length > 1 ? parts[parts.length - 1] : "";
     if (key === "sponsorshipAbroad" && /not applicable/i.test(v || "")) v = "No";
     if ((key === "expectedCtcLpa" || key === "currentCtcLpa") && v !== undefined && v !== null && v !== "") v = String(v);
     if (key === "experienceYears" && v !== undefined && v !== null && v !== "") v = String(v);
@@ -320,6 +322,8 @@
       el.setAttribute("data-careeros-seen", "1");
       if (el.tagName === "INPUT" && isCombo(el) && type !== "radio") { combos.push(el); return; }
       var label = labelOf(el), hint = hints(el), key = matchKey(label, hint);
+      // "Reasons for leaving your current role" asks for an answer, not your current role.
+      if (key && key !== "__sensitive" && key !== "gapReason" && /\b(why|reasons?|explain|describe|tell us)\b/i.test(label)) key = "";
       if (key === "__sensitive") { out.skippedSensitive++; if (required(el, label)) { out.needs.push({ label: label || "A private field", why: "Propelo never fills this. Type it yourself if you choose to share it." }); mark(el, "needs"); } return; }
 
       if (type === "file") {

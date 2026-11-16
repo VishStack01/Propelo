@@ -15,6 +15,7 @@ through /api/agent only.
 from __future__ import annotations
 
 import hashlib
+import html
 from html import escape as html_escape
 import json
 import logging
@@ -67,6 +68,27 @@ class Principal:
         return self.user["id"]
 
 
+
+
+def _docx_text(data: bytes) -> str:
+    """Paragraph text from a .docx (it's a zip of XML); no outside library needed."""
+    import io
+    import zipfile
+    try:
+        with zipfile.ZipFile(io.BytesIO(data)) as z:
+            info = z.getinfo("word/document.xml")
+            if info.file_size > 20 * 1024 * 1024:
+                return ""
+            xml = z.read(info).decode("utf-8", "replace")
+    except (KeyError, zipfile.BadZipFile, OSError):
+        return ""
+    paras = re.findall(r"<w:p[ >].*?</w:p>", xml, re.S)
+    out = []
+    for para in paras:
+        t = "".join(re.findall(r"<w:t(?: [^>]*)?>([^<]*)</w:t>", para))
+        if t.strip():
+            out.append(html.unescape(t))
+    return "\n".join(out)
 
 def _origin(url: str) -> str:
     m = re.match(r"^(https?://[^/]+)", url or "")
@@ -788,6 +810,27 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
                           (aid, p.uid, name, "application/pdf", len(data), hashlib.sha256(data).hexdigest(), key, pdf_text(data), now_iso()))
                 return {"id": aid, "url": f"/_blob/{aid}", "sizeBytes": len(data), "contentType": "application/pdf", "name": name}
         return await run_in_threadpool(save)
+
+    @app.post("/api/read-file")
+    async def read_file(request: Request, p: Principal = Depends(principal)):
+        """The text of a PDF or Word resume, for filling the Profile. Nothing is stored. Done here because the app's
+        security policy doesn't load outside scripts (a PDF reader) in the browser."""
+        cap = cfg.max_upload_mb * 1024 * 1024
+        data = bytearray()
+        async for chunk in request.stream():
+            data.extend(chunk)
+            if len(data) > cap:
+                raise err(413, f"Files can be up to {cfg.max_upload_mb} MB.", "too_large")
+        data = bytes(data)
+        with db.tx() as c:
+            limited(c, f"read-file:{p.uid}", 30, 3600)
+        if data.startswith(b"%PDF-"):
+            text = await run_in_threadpool(pdf_text, data)
+        elif data.startswith(b"PK"):
+            text = await run_in_threadpool(_docx_text, data)
+        else:
+            raise err(415, "Choose a PDF or Word (.docx) file.", "unsupported_type")
+        return {"text": (text or "")[:60000]}
 
     @app.delete("/api/assets/{aid}")
     def delete_asset(aid: str, p: Principal = Depends(session_only)):

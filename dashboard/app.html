@@ -4268,6 +4268,13 @@ const loaded = {};
 function loadScript(src){ if (!loaded[src]) loaded[src] = new Promise((ok, bad) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = () => { delete loaded[src]; bad(new Error('load')); }; document.head.appendChild(s); }); return loaded[src]; }
 async function fileText(file){
   const name = (file.name || '').toLowerCase();
+  // On Propelo Cloud the server reads PDF and Word files: the app's security policy doesn't load outside scripts.
+  if (cloud() && (/\.(pdf|docx)$/.test(name) || /pdf|officedocument/.test(file.type || ''))){
+    const r = await fetch('api/read-file', {method: 'POST', credentials: 'same-origin', headers: {'Content-Type': 'application/octet-stream', 'X-CareerOS-CSRF': '1'}, body: file});
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.error || 'Could not read that file.');
+    return String(d.text || '');
+  }
   if (/\.pdf$/.test(name) || file.type === 'application/pdf'){
     await loadScript(LIBS.pdf); const lib = window.pdfjsLib; lib.GlobalWorkerOptions.workerSrc = LIBS.pdfWorker;
     const doc = await lib.getDocument({data: await file.arrayBuffer()}).promise, pages = [];
@@ -4292,13 +4299,26 @@ async function importResumeFile(file){
   else if (state.importText) toast('Very little text came out of that file. If it is a scanned PDF, paste the text instead.');
 }
 function localImport(text){
-  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean), out = {basics: {links: []}};
-  out.basics.name = (lines.find(l => /^[A-Za-z][A-Za-z .'-]{2,40}$/.test(l) && l.split(' ').length <= 5) || '').trim();
+  // Designed resumes letter-space their headings ("S U M M A R Y", "T E C H N I C A L SKI L L S"): close them up.
+  const closeUp = l => (/^(?:[A-Z&]{1,3}\s+){3,}[A-Z&]*/.test(l) && l.replace(/\s+/g, '').length <= 30 && !/[a-z]/.test(l)) ? l.replace(/\s+/g, '') : l;
+  const lines = text.split(/\r?\n/).map(l => closeUp(l.trim())).filter(Boolean), out = {basics: {links: []}};
+  const ni = lines.findIndex(l => /^[A-Za-z][A-Za-z .'-]{2,60}$/.test(l) && l.split(' ').length <= 7);
+  out.basics.name = ni >= 0 ? lines[ni].trim() : '';
+  const hl = ni >= 0 ? lines[ni + 1] || '' : '';
+  if (hl && hl.length <= 90 && !/@|\d{4}|https?:/.test(hl)) out.basics.headline = hl.replace(/\s*[·|•]\s*/g, ', ');
   const em = text.match(/[\w.+-]+@[\w-]+\.[\w.]+/); if (em) out.basics.email = em[0];
   const ph = text.match(/(?:\+\d{1,3}[\s-]?)?\d[\d\s-]{8,13}\d/); if (ph) out.basics.phone = ph[0].trim();
   out.basics.links = Array.from(new Set((text.match(/(?:https?:\/\/)?(?:www\.)?(?:linkedin\.com\/in|github\.com|behance\.net|dribbble\.com)\/[\w\-./]+/gi) || []).map(u => /^https?:/i.test(u) ? u : 'https://' + u)));
-  const idx = lines.findIndex(l => /^(technical\s+)?skills\b/i.test(l));
-  if (idx >= 0){ const block = []; for (let i = idx + 1; i < lines.length && !/^[A-Z][A-Z &]{3,30}$/.test(lines[i]); i++) block.push(lines[i].replace(/^[A-Za-z ]{2,24}:\s*/, '')); out.skills = Array.from(new Set(block.join(',').split(/[,|•·]/).map(x => x.trim()).filter(x => x && x.length < 40))).slice(0, 40); }
+  const idx = lines.findIndex(l => /^(technical\s*)?skills\b/i.test(l));
+  if (idx >= 0){
+    // "Languages Python, TypeScript" / "AI / LLM LLMs (GPT, Claude), RAG": drop the row label, keep "(…)" with its skill.
+    const LABEL = /^(?:languages?|programming|ai\s*\/\s*llm|ai|ml|full[- ]stack|frontend|backend|data(?:\s*&\s*cloud)?|cloud|devops|databases?|frameworks?|libraries|tools?|platforms?|security(?:\s*&\s*testing)?|testing|ml\s*&\s*automation|automation|product(?:\s*&\s*design)?|design|others?|soft skills|technologies)\s*:?\s+(?=[A-Z0-9])/i;
+    const block = []; for (let i = idx + 1; i < lines.length && !/^[A-Z][A-Z &]{3,30}$/.test(lines[i]); i++) block.push(lines[i].replace(/^[A-Za-z /&-]{2,24}:\s*/, '').replace(LABEL, ''));
+    const items = []; let cur = '', depth = 0;
+    for (const ch of block.join(', ')){ if (ch === '(') depth++; if (ch === ')') depth = Math.max(0, depth - 1); if (depth === 0 && /[,|•·]/.test(ch)){ items.push(cur); cur = ''; } else cur += ch; }
+    items.push(cur);
+    out.skills = Array.from(new Set(items.map(x => x.trim()).filter(x => x && x.length <= 60))).slice(0, 40);
+  }
   const sIdx = lines.findIndex(l => /^(summary|profile|about( me)?|objective)\b/i.test(l));
   if (sIdx >= 0){ const block = []; for (let i = sIdx + 1; i < lines.length && !/^[A-Z][A-Z &]{3,30}$/.test(lines[i]); i++) block.push(lines[i]); out.summary = block.join(' ').slice(0, 900); }
   return out;
