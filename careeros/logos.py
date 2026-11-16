@@ -2,7 +2,8 @@
 
 A company gets its logo only when its own website can be named from evidence:
 
-1. the website on record for the company (boards.json),
+1. the website on record for the company (boards.json), or in data/company_domains.json, a checked list of
+   well-known employers whose feed name doesn't lead to their site (Workday codes like 'Hpe', 'Jci'),
 2. the company's own careers host (careers.airbnb.com, not an ATS or a job board),
 3. a domain written in its postings (a link or an email address) whose name matches the company,
 4. failing those, <name>.com, .in, .ai, .io or .co, used only when that site's own title names the company.
@@ -126,6 +127,25 @@ def _slug(s: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", (s or "").lower()).strip("-")[:80]
 
 
+_KNOWN_FILE = Path(__file__).resolve().parent / "data" / "company_domains.json"
+_known_cache: dict[str, str] | None = None
+
+
+def _key(company: str) -> str:
+    """'Medtronic (Redeploymentmedtroniccareers)' -> 'medtronic'; invisible marks dropped."""
+    s = re.sub(r"[\u200b-\u200f\u2060\ufeff]", "", company or "")
+    return re.sub(r"\s*\([^)]*\)\s*$", "", s).strip().lower()
+
+
+def known_domain(company: str) -> str:
+    """The company's website from the checked list, or ''."""
+    global _known_cache
+    if _known_cache is None:
+        raw = json.loads(_KNOWN_FILE.read_text(encoding="utf-8")).get("domains", {}) if _KNOWN_FILE.exists() else {}
+        _known_cache = {_key(k): v.lower() for k, v in raw.items()}
+    return _known_cache.get(_key(company), "")
+
+
 def discover(records: list[dict], texts: dict[str, str], websites: dict[str, str] | None = None) -> dict[str, str]:
     """Company slug (as the board uses it) -> its own domain, for every company with evidence."""
     websites = websites or {}
@@ -134,7 +154,7 @@ def discover(records: list[dict], texts: dict[str, str], websites: dict[str, str
         by_co[r["company"]].append(r)
     out = {}
     for name, rs in by_co.items():
-        d = domain_for(name, [r.get("url", "") for r in rs], [texts.get(r["id"], "") or r.get("summary", "") for r in rs[:12]], websites.get(name, ""))
+        d = known_domain(name) or domain_for(name, [r.get("url", "") for r in rs], [texts.get(r["id"], "") or r.get("summary", "") for r in rs[:12]], websites.get(name, ""))
         if d:
             out[_slug(name)] = d
         elif guesses(name):

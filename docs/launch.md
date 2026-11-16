@@ -17,7 +17,7 @@ The code is ready. What's left needs accounts, money or a signature that only yo
 | 9 | [Store listings](#9-phone-apps) | 1 to 2 weeks with review | Play and Apple fees | The phone apps |
 | 10 | [Repository settings and launch](#10-repository-and-launch) | 30 min | Free | Discovery |
 | 11 | [Concierge](#11-concierge) | 1 to 2 weeks | Staff time, lawyer | The human-run service |
-| 12 | [Guarantees](#12-guarantees) | 1 day, plus a lawyer's review | Refunds you budget for | The Interview and Job Guarantees |
+| 12 | [Guarantees](#12-guarantees) | 1 day, plus a lawyer's review | Refunds you budget for | The Interview and Job Guarantees, by application |
 | 13 | [More job sources and the extension](#13-sources-and-extension) | 1 hour, plus Chrome review | Free keys; $5 Chrome fee | Openings outside company boards; the extension for everyone |
 
 ## 1. Deploy on Render
@@ -118,14 +118,18 @@ Concierge is a person on your team running a candidate's search, paid by a share
 
 ## 12. Guarantees
 
-The Interview Guarantee and the Job Guarantee are paid add-ons that Pro and Ultra members can buy, not part of any plan: ₹999 (or $19) and ₹2,999, each paid once (`GUARANTEE_INTERVIEW_PRICE_INR`, `GUARANTEE_INTERVIEW_PRICE_USD_CENTS`, `JOB_GUARANTEE_PRICE_INR`). If one fails and the person did their part, the refund is the add-on price plus the plan fees paid during the window. The blueprint turns them on with `GUARANTEE=on`.
+Two guarantees sit outside the plans. Pro and Ultra members apply for them (the app offers both in a one-time pop-up and on Home), and a person on the team reviews every application. Nobody is enrolled directly. The blueprint turns them on with `GUARANTEE=on` and `CONCIERGE=on`.
 
-1. **Have the lawyer read `/terms#guarantees`** with the Concierge terms. India's consumer authority (CCPA) acts against "100% placement" and "guaranteed job" claims, so every page words these as money-back promises with the conditions next to them. Keep it that way in ads and posts: "an interview in 60 days or your money back", never "guaranteed job".
-2. **Payments.** Rupees use Razorpay payment links (the same webhook, with the `payment_link.paid` event). For dollars, create a one-time product in Dodo priced at $19 and set `DODO_PRODUCT_GUARANTEE`; the existing Dodo webhook needs the `payment.succeeded` event. Test both in test mode: buy, pay, and check the guarantee shows "In progress".
-3. **Budget for refunds.** At most, a refund is the add-on price plus two months of Pro or Ultra (₹1,997 or ₹3,397) for the Interview Guarantee, and the add-on price plus six months for the Job Guarantee. Eligibility needs 40 matched roles in the last 30 days and the activity rule 30 applications over 4 weeks, so claims should be rare; watch the claim rate in the first two months and tune `GUARANTEE_MIN_APPLICATIONS`, `GUARANTEE_MIN_WEEKS` and `GUARANTEE_MIN_MATCHES` (raise them only with notice).
-4. **Deciding claims.** Claims email every partner and show in `/staff` under Guarantee claims. Before approving, look at the person's pipeline and inbox for an interview, invitation or offer in the window. Approve (the amount defaults to the add-on price plus the plan fees for the window and can't exceed it), issue the refunds in the Razorpay or Dodo dashboard to the original payments, then mark it refunded. Answer within 5 working days, as the terms promise.
-5. **Goodwill or testing:** `POST /api/admin/guarantee {email, kind}` starts a guarantee without payment for an eligible member.
-6. **Track the promise.** `/api/admin/audit?kind=guarantee` lists checkouts, payments, claims and decisions.
+- **Interview Guarantee:** if accepted, the member pays ₹2,999 (or $34) once (`GUARANTEE_INTERVIEW_PRICE_INR`, `GUARANTEE_INTERVIEW_PRICE_USD_CENTS`) within 7 days, and gets 45 days (`GUARANTEE_DAYS`). Their part: 25 applications (`GUARANTEE_MIN_APPLICATIONS`) in at least 3 different weeks (`GUARANTEE_MIN_WEEKS`). No interview by day 45: the full ₹2,999 comes back. Plan fees are never refunded.
+- **Job Guarantee:** this is Concierge. Nothing upfront; the member applies, the team accepts or declines with a reason, and the fee is 8% of yearly fixed pay (6% on the part above ₹20 lakh) only after they join (`CONCIERGE_RATE_LOW`, `CONCIERGE_RATE_HIGH`, `CONCIERGE_BAND`). Not placed, nothing to pay.
+
+1. **Have the lawyer read `/terms#guarantees`** with the Concierge terms. India's consumer authority (CCPA) acts against "100% placement" and "guaranteed job" claims, so every page words these as money back or a fee after placement, with the conditions next to them. Keep it that way in ads and posts: "an interview in 45 days or your ₹2,999 back", never "guaranteed job".
+2. **Reviewing applications.** Interview Guarantee applications email every partner and show in `/staff` under Interview Guarantee, with the roles they're aiming for, their note and how many roles Propelo matched them in the last 30 days (about 40 is a healthy sign). Accept only where an interview in 45 days is realistic; a decline needs a sentence they'll read. Job Guarantee applications are Concierge cases in `requested`: "Accept and take this case" or "Decline application" with a reason. Answer within 2 working days, as the app promises.
+3. **Payments.** Rupees use Razorpay payment links (the same webhook, with the `payment_link.paid` event). For dollars, create a one-time product in Dodo priced at $34 and set `DODO_PRODUCT_GUARANTEE`; the existing Dodo webhook needs the `payment.succeeded` event. Test both in test mode: apply, accept in `/staff`, pay, and check the guarantee shows "In progress". An acceptance not paid within 7 days lapses.
+4. **Budget for refunds.** A refund is at most the ₹2,999 paid. Watch the claim rate in the first two months and tune who you accept before tuning the rules (change `GUARANTEE_MIN_APPLICATIONS` or `GUARANTEE_MIN_WEEKS` only with notice).
+5. **Deciding claims.** Claims show in `/staff` under Interview Guarantee. Before approving, look at the person's pipeline and inbox for an interview, invitation or offer in the window. Approve (the amount defaults to the price paid and can't exceed it), issue the refund in the Razorpay or Dodo dashboard to the original payment, then mark it refunded. Answer within 5 working days, as the terms promise.
+6. **Goodwill or testing:** `POST /api/admin/guarantee {email, kind: "interview"}` starts one without payment for an eligible member.
+7. **Track the promise.** `/api/admin/audit?kind=guarantee` lists applications, reviews, payments, claims and decisions.
 
 ## 13. Sources and extension
 

@@ -1161,6 +1161,23 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
 .ccn{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--lav);color:#151515;font-weight:600;font-size:14px;box-shadow:inset 0 0 0 1.5px #151515}
 .cccalc{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:16px;align-items:end}
 .cc-out{margin:0 0 10px;font-size:16px}
+.ck.adv{background:var(--warn, #c98a00);font-size:12px;font-weight:700}.ck.no{background:var(--bad)}
+.clogo{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:6px;background:#fff;box-shadow:inset 0 0 0 1px var(--line);overflow:hidden;vertical-align:-5px;margin-right:8px;flex:none}
+.clogo img{width:100%;height:100%;object-fit:contain;padding:2px}.clogo.lg{width:30px;height:30px;border-radius:8px;vertical-align:-7px;margin-left:2px}
+.eyebrow.cow,.bco{display:inline-flex;align-items:center}
+.guhome{margin-top:18px;box-shadow:inset 0 0 0 2px var(--lav)}
+.guoffer{border:0;border-radius:24px;padding:0;max-width:min(680px,calc(100vw - 32px));width:100%;background:var(--panel);color:var(--ink);box-shadow:0 24px 60px rgba(0,0,0,.28)}
+.guoffer::backdrop{background:rgba(21,21,21,.45)}
+.guoffer[open]{animation:guin .32s cubic-bezier(.2,.8,.2,1)}@keyframes guin{from{opacity:0;transform:translateY(14px) scale(.98)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.guoffer[open]{animation:none}}
+.guo{display:grid;gap:12px;padding:26px;position:relative}.guo h2{font-size:24px;margin:4px 0 0;letter-spacing:-.02em}.guo .pill{justify-self:start}.guo p{margin:0}
+.guo-x{position:absolute;right:14px;top:10px;border:0;background:none;font-size:24px;color:var(--muted);cursor:pointer}
+.guo-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:6px}
+.guo-card{display:grid;gap:8px;align-content:start;padding:18px;border-radius:18px;background:var(--page);box-shadow:inset 0 0 0 1px var(--line)}
+.guo-card b{font-size:17px}.guo-card p{font-size:14px;color:var(--ink-2)}.guo-card .btn{justify-self:start;margin-top:4px}
+.guo-price{font-weight:600;font-size:26px;letter-spacing:-.03em}.guo-price small{font-weight:400;font-size:13px;color:var(--muted);letter-spacing:0}
+.guo > .btn.ghost{justify-self:center}
+@media (max-width:600px){.guo-grid{grid-template-columns:1fr}.guo{padding:22px 18px}}
 .gugrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
 .gucard{display:flex;flex-direction:column;gap:12px}
 .guhead{display:flex;gap:14px;align-items:flex-start}.guhead h2{font-size:21px;margin:0}.guhead p{margin:4px 0 0;color:var(--ink-2)}
@@ -1208,7 +1225,7 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
     <button class="tab" role="tab" id="t-outreach" aria-controls="p-outreach" aria-selected="false" data-act="tab" data-tab="outreach"><svg class="i" viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"/><path d="M4.5 7l7.5 6 7.5-6"/></svg>Outreach <span class="ct" id="c-outreach">0</span></button>
     <button class="tab" role="tab" id="t-contacts" aria-controls="p-contacts" aria-selected="false" data-act="tab" data-tab="contacts"><svg class="i" viewBox="0 0 24 24"><circle cx="9" cy="9" r="3.2"/><path d="M3.5 19c.9-3 3-4.5 5.5-4.5s4.6 1.5 5.5 4.5"/><path d="M15.5 6.5a3 3 0 010 5.5M17.5 14.8c1.5.6 2.5 2 3 4.2"/></svg>Contacts</button>
     <button class="tab" role="tab" id="t-ask" aria-controls="p-ask" aria-selected="false" data-act="tab" data-tab="ask"><svg class="i" viewBox="0 0 24 24"><path d="M4.5 6h15v10h-8l-4 3.5V16h-3z"/><path d="M12 9.2v.1M12 11.5v2"/></svg>Ask Propelo</button>
-    <button class="tab" role="tab" id="t-concierge" aria-controls="p-concierge" aria-selected="false" data-act="tab" data-tab="concierge"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c1.2-3.6 3.9-5.4 7-5.4s5.8 1.8 7 5.4"/><path d="M17.5 4.5l1.3 1.3 2.4-2.4"/></svg>Concierge</button>
+    <button class="tab" role="tab" id="t-concierge" aria-controls="p-concierge" aria-selected="false" data-act="tab" data-tab="concierge"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c1.2-3.6 3.9-5.4 7-5.4s5.8 1.8 7 5.4"/><path d="M17.5 4.5l1.3 1.3 2.4-2.4"/></svg>Job Guarantee</button>
     <button class="tab" role="tab" id="t-guarantee" aria-controls="p-guarantee" aria-selected="false" data-act="tab" data-tab="guarantee"><svg class="i" viewBox="0 0 24 24"><path d="M12 3.5l7 2.6v5.4c0 4.4-3 7.9-7 9-4-1.1-7-4.6-7-9V6.1z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg>Guarantees</button>
     <button class="tab" role="tab" id="t-inbox" aria-controls="p-inbox" aria-selected="false" data-act="tab" data-tab="inbox"><svg class="i" viewBox="0 0 24 24"><path d="M3.5 13.5l2.6-7.2A2 2 0 018 5h8a2 2 0 011.9 1.3l2.6 7.2V18a2 2 0 01-2 2h-13a2 2 0 01-2-2z"/><path d="M3.5 13.5H8l1.5 2.5h5l1.5-2.5h4.5"/></svg>Inbox <span class="ct hot" id="c-inbox" hidden></span></button>
     <button class="tab" role="tab" id="t-calendar" aria-controls="p-calendar" aria-selected="false" data-act="tab" data-tab="calendar"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M8 3.5v4M16 3.5v4M4 10h16"/></svg>Calendar</button>
@@ -1290,7 +1307,7 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
   <button type="button" data-act="tab" data-tab="auto"><span class="ci" style="background:var(--bgreen)"><svg class="i" viewBox="0 0 24 24"><path d="M13 3L5 13.5h6L10 21l8-10.5h-6z"/></svg></span><span>Auto-apply</span></button>
   <button type="button" data-act="tab" data-tab="contacts"><span class="ci" style="background:var(--pink)"><svg class="i" viewBox="0 0 24 24"><circle cx="9" cy="9" r="3.2"/><path d="M3.5 19c.9-3 3-4.5 5.5-4.5s4.6 1.5 5.5 4.5"/></svg></span><span>Contacts</span></button>
   <button type="button" data-act="tab" data-tab="ask"><span class="ci" style="background:var(--yellow)"><svg class="i" viewBox="0 0 24 24"><path d="M4.5 6h15v10h-8l-4 3.5V16h-3z"/></svg></span><span>Ask Propelo</span></button>
-  <button type="button" data-act="tab" data-tab="concierge"><span class="ci" style="background:var(--lav)"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c1.2-3.6 3.9-5.4 7-5.4s5.8 1.8 7 5.4"/></svg></span><span>Concierge</span></button>
+  <button type="button" data-act="tab" data-tab="concierge"><span class="ci" style="background:var(--lav)"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c1.2-3.6 3.9-5.4 7-5.4s5.8 1.8 7 5.4"/></svg></span><span>Job Guarantee</span></button>
   <button type="button" data-act="tab" data-tab="guarantee"><span class="ci" style="background:var(--bgreen)"><svg class="i" viewBox="0 0 24 24"><path d="M12 3.5l7 2.6v5.4c0 4.4-3 7.9-7 9-4-1.1-7-4.6-7-9V6.1z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg></span><span>Guarantees</span></button>
   <button type="button" data-act="tab" data-tab="inbox"><span class="ci" style="background:var(--bblue)"><svg class="i" viewBox="0 0 24 24"><path d="M3.5 13.5l2.6-7.2A2 2 0 018 5h8a2 2 0 011.9 1.3l2.6 7.2V18a2 2 0 01-2 2h-13a2 2 0 01-2-2z"/><path d="M3.5 13.5H8l1.5 2.5h5l1.5-2.5h4.5"/></svg></span><span>Inbox</span></button>
   <button type="button" data-act="tab" data-tab="outreach"><span class="ci" style="background:var(--yellow)"><svg class="i" viewBox="0 0 24 24"><path d="M4.5 6h15v10h-8l-4 3.5V16h-3z"/></svg></span><span>Outreach</span></button>
@@ -1779,7 +1796,7 @@ function renderBatch(){
       <div class="row${enterCls(i)}" data-row="${esc(j.id)}">
         <input type="checkbox" id="sel-${esc(j.id)}" data-act="sel" data-id="${esc(j.id)}" ${state.selected.has(j.id) ? 'checked' : ''} aria-label="Include ${esc(j.company)} in today's approval"${wr()}>
         ${decBadge(j)}
-        <div class="rmain"><div class="rtitle">${esc(j.title)} <span class="co">at ${esc(j.company)}</span></div>${metaLine(j)}${j.decisionReason ? `<p class="why">${esc(j.decisionReason)}</p>` : ''}</div>
+        <div class="rmain"><div class="rtitle">${coLogo(j.company)}${esc(j.title)} <span class="co">at ${esc(j.company)}</span></div>${metaLine(j)}${j.decisionReason ? `<p class="why">${esc(j.decisionReason)}</p>` : ''}</div>
         <div class="ract">${regionPill(j)}${payPill(j)}${freshPill(j)}${fitPill(j)}<button class="btn sm" data-act="open" data-id="${esc(j.id)}">Review package</button><button class="btn sm ghost" data-act="skip" data-id="${esc(j.id)}"${wr()}>Skip</button></div>
       </div>`).join('')}</div>`;
   }
@@ -1815,7 +1832,7 @@ function renderFresh(){
   const title = state.win === 'day' ? 'Posted in the last 24 hours' : `Posted in the last ${f.days} days`;
   const cards = shown.map((j, i) => `
     <div class="jcard${enterCls(i)}" role="button" tabindex="0" data-act="open" data-id="${esc(j.id)}" aria-label="Open ${esc(j.title)} at ${esc(j.company)}">
-      <div class="jtop"><span class="eyebrow">${esc(j.company)}</span><span class="sq" aria-hidden="true">${I.arrow}</span></div>
+      <div class="jtop"><span class="eyebrow cow">${coLogo(j.company)}${esc(j.company)}</span><span class="sq" aria-hidden="true">${I.arrow}</span></div>
       <h3>${esc(j.title)}</h3>
       ${metaLine(j)}
       <div class="pills">${j.saved ? '<span class="pill strong">Saved</span>' : ''}${j.needsYou ? '<span class="pill needs">Needs you</span>' : j.autoApply === 'queued' ? '<span class="pill queued">Auto-apply queued</span>' : ''}${regionPill(j)}${payPill(j)}${freshPill(j)}${fitPill(j)}</div>
@@ -1901,7 +1918,7 @@ function renderPipeline(){
   const n20 = list.filter(pay20).length;
   if (state.pay20) list = list.filter(pay20);
   list.sort((a, b) => rankOf(b.stage) - rankOf(a.stage) || byFresh(a, b));
-  const rows = list.map((j, i) => `<tr class="click${enterCls(i)}" data-act="open-app" data-id="${esc(j.id)}" tabindex="0"><td class="role"><b>${esc(j.title)}</b><span>${esc(j.company)}${pay20(j) ? ' · <b style="font-weight:600">20 LPA+</b>' : ''}</span></td><td>${stageTag(j.stage)}</td><td>${esc(j.location || '')}</td><td>${esc(j.experience || '')}</td><td>${esc((postedText(j.postedAt) || '').replace('Posted ', ''))}</td><td>${fitPill(j)}</td></tr>`).join('');
+  const rows = list.map((j, i) => `<tr class="click${enterCls(i)}" data-act="open-app" data-id="${esc(j.id)}" tabindex="0"><td class="role"><b>${esc(j.title)}</b><span>${coLogo(j.company)}${esc(j.company)}${pay20(j) ? ' · <b style="font-weight:600">20 LPA+</b>' : ''}</span></td><td>${stageTag(j.stage)}</td><td>${esc(j.location || '')}</td><td>${esc(j.experience || '')}</td><td>${esc((postedText(j.postedAt) || '').replace('Posted ', ''))}</td><td>${fitPill(j)}</td></tr>`).join('');
   const say = state.loaded.jobs ? `${total} ${total === 1 ? 'application' : 'applications'}: ${todo} to apply, ${waitingN} waiting to hear back, ${talking} in conversation.` : 'Reading your pipeline.';
   const views = `<div class="pseg" role="group" aria-label="View"><button type="button" data-act="view" data-v="board" aria-pressed="${board}">Board</button><button type="button" data-act="view" data-v="table" aria-pressed="${!board}">Table</button></div>`;
   const csvBtns = `<button class="btn sm" data-act="csv-export">Export CSV</button>${state.canWrite ? '<label class="btn sm filebtn">Import CSV<input type="file" class="csv-file" accept=".csv,text/csv" aria-label="Import applications from a CSV file"></label>' : ''}`;
@@ -2188,18 +2205,18 @@ function printPrep(j){
 }
 
 /* ---------- Concierge: a talent partner runs the search (Pro and Ultra, India). Fee only after joining ---------- */
-const CC_STATUS = {requested: 'Requested: a talent partner replies within two working days', active: 'Active', paused: 'Paused', offer: 'Offer reported', placed: 'Placed', closed: 'Closed'};
+const CC_STATUS = {requested: 'Application under review: we reply within two working days', active: 'Active', paused: 'Paused', offer: 'Offer reported', placed: 'Placed', closed: 'Closed'};
 const CS_STATUS = {proposed: 'Waiting for you', approved: 'Approved', declined: 'Declined', submitted: 'Applied', interviewing: 'Interviewing', offer: 'Offer', rejected: 'Not selected', withdrawn: 'Withdrawn'};
 function ccFee(f, ctc){ const c = Math.max(0, Number(ctc) || 0), low = Math.min(c, f.band) * f.rateLow / 100, high = Math.max(0, c - f.band) * f.rateHigh / 100; const fee = Math.round(low + high); return {fee, tax: Math.round(fee * f.taxRate / 100), rate: c ? (100 * fee / c) : 0}; }
 function lakh(n){ return '₹' + (Number(n || 0) / 100000).toLocaleString('en-IN', {maximumFractionDigits: 2}) + ' lakh'; }
 function loadConcierge(){ if (!cloud()) return Promise.resolve(); return api('api/concierge').then(r => r.ok ? r.json() : null).then(v => { if (v){ state.concierge = v; render(); } }).catch(() => {}); }
 function renderConcierge(){
-  const head = `<div class="hero" style="padding-bottom:6px"><div><h1>Concierge</h1><p class="sub">A person on the Propelo team runs your job search with you: finding roles, applying with your approval, preparing you for interviews and helping you negotiate. You pay a share of the fixed pay only after you join.</p></div></div>`;
-  const how = `<div class="ccsteps">${[['Tell us what you want', 'Roles, cities, pay and notice period. A talent partner reads your profile.'], ['Approve every company', 'Your partner proposes roles. Nothing is sent until you approve each one here.'], ['Get ready, get offers', 'They apply, follow up, prepare you for each round and help you compare offers.'], ['Pay after you join', 'Only for a company you approved through Concierge, in three monthly instalments starting 30 days after you join.']].map((s, i) => `<div class="ccstep"><span class="ccn">${i + 1}</span><b>${s[0]}</b><p>${s[1]}</p></div>`).join('')}</div>`;
-  if (!cloud()) return head + how + `<div class="panel" style="margin-top:20px"><p class="small">Concierge is part of Pro and Ultra on Propelo Cloud.</p></div>`;
+  const head = `<div class="hero" style="padding-bottom:6px"><div><h1>Job Guarantee</h1><p class="sub">Apply, and if we accept you, a talent partner on the Propelo team works with you until you're hired: finding roles, applying with your approval, preparing you for interviews and helping you negotiate. Nothing upfront: you pay a share of the fixed pay only after you join.</p></div></div>`;
+  const how = `<div class="ccsteps">${[['Tell us what you want', 'Roles, cities, pay and notice period. A talent partner reads your profile.'], ['Approve every company', 'Your partner proposes roles. Nothing is sent until you approve each one here.'], ['Get ready, get offers', 'They apply, follow up, prepare you for each round and help you compare offers.'], ['Pay after you join', 'Only for a company you approved through your Job Guarantee, in three monthly instalments starting 30 days after you join.']].map((s, i) => `<div class="ccstep"><span class="ccn">${i + 1}</span><b>${s[0]}</b><p>${s[1]}</p></div>`).join('')}</div>`;
+  if (!cloud()) return head + how + `<div class="panel" style="margin-top:20px"><p class="small">The Job Guarantee is for Pro and Ultra members on Propelo Cloud.</p></div>`;
   const v = state.concierge;
   if (!v){ if (!state.ccLoading){ state.ccLoading = true; loadConcierge(); } return head + '<div class="panel"><p class="small">Loading…</p></div>'; }
-  if (!v.enabled) return head + how + `<div class="panel" style="margin-top:20px"><p class="small">Concierge isn't offered on this server.</p></div>`;
+  if (!v.enabled) return head + how + `<div class="panel" style="margin-top:20px"><p class="small">The Job Guarantee isn't offered on this server.</p></div>`;
   const f = obj(v.fee), ro = wr();
   const say = state.acctMsg && state.acctMsgWhere === 'concierge' ? `<p class="acctmsg${state.acctMsgErr ? ' err' : ''}" role="status">${esc(state.acctMsg)}</p>` : '';
   const feeLine = `${f.rateLow}% of your yearly fixed pay, and ${f.rateHigh}% on any part above ${lakh(f.band)}${f.taxRate ? `, plus ${f.taxRate}% GST` : ''}. Bonuses, stock and joining bonuses aren't counted.`;
@@ -2207,7 +2224,7 @@ function renderConcierge(){
   const c = v.case;
   if (!c || c.status === 'closed'){
     const intake = obj(c && c.intake);
-    const form = !v.planAllows ? `<div class="panel"><p><b>Concierge is part of Pro and Ultra.</b></p><p class="small">Choose a plan in Settings, then come back here to ask for a talent partner.</p><div class="buy"><button class="btn solid" data-act="tab" data-tab="setup">See plans</button></div></div>`
+    const form = !v.planAllows ? `<div class="panel"><p><b>The Job Guarantee is for Pro and Ultra members.</b></p><p class="small">Choose a plan in Settings, then come back here to apply.</p><div class="buy"><button class="btn solid" data-act="tab" data-tab="setup">See plans</button></div></div>`
       : `<form id="cc-form" class="panel formgrid" novalidate>${say}
           <label class="f full" for="cc-roles">Roles you want<input id="cc-roles" name="roles" required value="${esc(intake.roles || settings().targetRoles || '')}" placeholder="Backend engineer, platform engineer"${ro}></label>
           <label class="f" for="cc-loc">Cities or remote<input id="cc-loc" name="locations" value="${esc(intake.locations || '')}" placeholder="Bengaluru, Pune, remote"${ro}></label>
@@ -2217,10 +2234,10 @@ function renderConcierge(){
           <label class="f" for="cc-notice">Notice period (days)<input id="cc-notice" name="noticeDays" type="number" min="0" max="180" value="${esc(intake.noticeDays || 30)}"${ro}></label>
           <label class="f" for="cc-phone">Phone for calls (optional)<input id="cc-phone" name="phone" type="tel" value="${esc(intake.phone || '')}" placeholder="+91 98xxx xxxxx"${ro}></label>
           <label class="f full" for="cc-notes">Anything your partner should know<textarea id="cc-notes" name="notes" rows="3"${ro}>${esc(intake.notes || '')}</textarea></label>
-          <label class="full cccheck"><input type="checkbox" name="agree"${ro}> I've read the <a href="/terms#concierge" target="_blank" rel="noopener">Concierge terms</a>. I'll pay ${esc(feeLine.replace(/\.$/, ''))}, only if I join a company I approved through Concierge within ${esc(Math.round(f.attributionDays / 30))} months of approving it.</label>
-          <div class="full"><button class="btn solid" type="submit"${ro}>Ask for a talent partner</button></div></form>`;
-    return head + how + `<div class="section" style="padding-top:28px"><div class="sh"><h2 style="font-size:24px">What it costs</h2><p>Your Pro or Ultra plan covers the work. ${esc(feeLine)} Nothing is charged before you join.</p></div>${calc}</div>
-      <div class="section" style="padding-top:20px"><div class="sh"><h2 style="font-size:24px">Ask for a talent partner</h2><p>Available for jobs in ${arr(v.countries).map(x => x === 'IN' ? 'India' : x).join(', ')}.</p></div>${form}</div>`;
+          <label class="full cccheck"><input type="checkbox" name="agree"${ro}> I've read the <a href="/terms#concierge" target="_blank" rel="noopener">Job Guarantee terms</a>. I'll pay ${esc(feeLine.replace(/\.$/, ''))}, only if I join a company I approved through your Job Guarantee within ${esc(Math.round(f.attributionDays / 30))} months of approving it.</label>
+          <div class="full"><button class="btn solid" type="submit"${ro}>Apply for the Job Guarantee</button></div></form>`;
+    return head + how + `<div class="section" style="padding-top:28px"><div class="sh"><h2 style="font-size:24px">What it costs</h2><p>Nothing upfront. ${esc(feeLine)} Nothing is charged before you join, and nothing at all if you aren't placed.</p></div>${calc}</div>
+      <div class="section" style="padding-top:20px"><div class="sh"><h2 style="font-size:24px">Apply for the Job Guarantee</h2><p>Available for jobs in ${arr(v.countries).map(x => x === 'IN' ? 'India' : x).join(', ')}. Applying is free; we review every application within two working days and take on people we believe we can place.</p>${c && c.closedReason ? `<p class="small"><b>Your last application:</b> ${esc(c.closedReason)}</p>` : ''}</div>${form}</div>`;
   }
   const subs = arr(c.submissions), waiting = subs.filter(s => s.status === 'proposed'), rest = subs.filter(s => s.status !== 'proposed');
   const subRow = (s, ask) => `<div class="todo"><span class="ic ${s.status === 'offer' ? 'ok' : 'fu'}">${ask ? I.loop : I.check}</span><div class="tx"><b>${esc(s.company)} · ${esc(s.title)}</b><small>${s.why ? esc(s.why) + ' · ' : ''}${esc(CS_STATUS[s.status] || s.status)}${s.approvedAt ? ' · approved ' + esc(when(s.approvedAt)) : ''}${safeUrl(s.url) ? ` · <a href="${esc(safeUrl(s.url))}" target="_blank" rel="noopener">the posting</a>` : ''}</small></div>${ask ? `<div class="ract"><button class="btn sm solid" data-act="cc-role" data-sid="${esc(s.id)}" data-d="approve"${ro}>Approve</button><button class="btn sm ghost" data-act="cc-role" data-sid="${esc(s.id)}" data-d="decline"${ro}>Decline</button></div>` : ''}</div>`;
@@ -2241,67 +2258,127 @@ function renderConcierge(){
         <label class="f" for="cco-co">Company<input id="cco-co" name="company" list="cco-list" required${ro}></label><datalist id="cco-list">${approved.map(s => `<option value="${esc(s.company)}">`).join('')}</datalist>
         <label class="f" for="cco-ctc">Yearly fixed pay (₹)<input id="cco-ctc" name="fixedCtc" type="number" min="0" inputmode="numeric" required${ro}></label>
         <label class="f" for="cco-join">Joining date<input id="cco-join" name="joiningDate" type="date" required${ro}></label>
-        <p class="small full">The fee applies only if this company is one you approved through Concierge in the last ${esc(Math.round(f.attributionDays / 30))} months. Your partner checks the offer letter before anything is due.</p>
+        <p class="small full">The fee applies only if this company is one you approved through your Job Guarantee in the last ${esc(Math.round(f.attributionDays / 30))} months. Your partner checks the offer letter before anything is due.</p>
         <div class="full"><button class="btn solid" type="submit"${ro}>Report the offer</button></div></form></details></div>` : ''}
-    <div class="section" style="padding-top:18px"><p class="small">${esc(feeLine)} <a href="/terms#concierge" target="_blank" rel="noopener">Concierge terms</a></p></div>`;
+    <div class="section" style="padding-top:18px"><p class="small">${esc(feeLine)} <a href="/terms#concierge" target="_blank" rel="noopener">Job Guarantee terms</a></p></div>`;
 }
-/* ---------- Guarantees: money back on rules the person can check before relying on them ---------- */
-function loadGuarantee(){ if (!cloud()) return Promise.resolve(); return api('api/guarantee').then(r => r.ok ? r.json() : null).then(v => { if (v){ state.guarantee = v; render(); } }).catch(() => {}); }
-const GU_STATUS = {pending: 'Waiting for your payment', active: 'In progress', met: 'Done: you got there', claimable: 'Refund can be claimed', claimed: 'Claim being checked', approved: 'Refund approved', refunded: 'Refunded', rejected: 'Claim not approved', ended: 'Ended', void: 'Stopped'};
-function money(minor, cur){ return cur === 'USD' ? '$' + (Number(minor || 0) / 100).toFixed(2) : inr(Math.round(Number(minor || 0) / 100)); }
+/* ---------- Guarantees: by application, reviewed by the team. Interview: pay once after acceptance, money back if
+   no interview. Job: Concierge, nothing upfront, a placement fee only after joining. ---------- */
+function loadGuarantee(){ if (!cloud()) return Promise.resolve(); return api('api/guarantee').then(r => r.ok ? r.json() : null).then(v => { if (v){ state.guarantee = v; maybeOfferGuarantee(); render(); } }).catch(() => {}); }
+const GU_STATUS = {applied: 'Application under review', accepted: 'Accepted: pay to start', pending: 'Waiting for your payment', active: 'In progress', met: 'Done: you got an interview', claimable: 'Refund can be claimed', claimed: 'Claim being checked', approved: 'Refund approved', refunded: 'Refunded', rejected: 'Claim not approved', declined: 'Not accepted', ended: 'Ended', void: 'Stopped'};
+function money(minor, cur){ return cur === 'USD' ? '$' + (Number(minor || 0) / 100).toFixed(0) : inr(Math.round(Number(minor || 0) / 100)); }
 function guBar(label, n, need){ const pct = need ? Math.min(100, Math.round(n / need * 100)) : 0; return `<div class="gubar"><div class="gubar-t"><span>${esc(label)}</span><b>${esc(n)}${need ? ' / ' + esc(need) : ''}</b></div>${need ? `<div class="gubar-track"><i style="width:${pct}%"></i></div>` : ''}</div>`; }
-function guCard(v, kind){
-  const R = obj(v.rules), k = obj(v[kind]), cur = k.current, ro = wr();
-  const say = state.acctMsg && state.acctMsgWhere === 'gu-' + kind ? `<p class="acctmsg${state.acctMsgErr ? ' err' : ''}" role="status">${esc(state.acctMsg)}</p>` : '';
-  const title = kind === 'interview' ? 'Interview Guarantee' : 'Job Guarantee';
-  const price = money(k.price, k.currency);
-  const promise = kind === 'interview' ? `An interview within ${R.days} days, or you get back the ${price} and the plan fees you paid in that time.` : `An accepted offer through Concierge within ${Math.round(R.jobDays / 30)} months, or you get back the ${price} and your plan fees, and owe no Concierge fee for that case.`;
-  const rules = kind === 'interview' ? [
-      `Keep Pro or Ultra active for the ${R.days} days.`,
-      `Send at least ${R.minApplications} applications, in at least ${R.minWeeks} different weeks. Auto-apply counts; postings the scam check marks unsafe don't.`,
-      'An interview is a live conversation (phone, video or in person) with the employer or its recruiter about a role, recruiter screens included. Online tests and recorded one-way videos don\'t count. Interviews from anywhere count, and so does an invitation you decline.',
-      `No interview by day ${R.days}: claim here within ${R.claimDays} days. A person checks it within 5 working days, and the refund goes to your original payment method.`]
-    : [`Keep Pro or Ultra and your Concierge case open for ${Math.round(R.jobDays / 30)} months.`,
-      'Answer your partner\'s proposals within 7 days, go to the interviews you agree to, and don\'t turn down an offer that meets the pay and locations in your intake.',
-      `No accepted offer by the end: claim here within ${R.claimDays} days. Your partner checks the case, and the plan fees paid in those months come back.`];
-  const rulesHtml = `<ul class="gurules">${rules.map(r => `<li>${esc(r)}</li>`).join('')}</ul>`;
+const fDay = s => s ? new Date(s).toLocaleDateString('en-IN', {day: 'numeric', month: 'short', year: 'numeric'}) : '';
+function guInterview(v){
+  const R = obj(v.rules), k = obj(v.interview), cur = k.current, ro = wr(), price = money(k.price, k.currency);
+  const say = state.acctMsg && state.acctMsgWhere === 'gu-interview' ? `<p class="acctmsg${state.acctMsgErr ? ' err' : ''}" role="status">${esc(state.acctMsg)}</p>` : '';
+  const rules = ['Apply below. A person on our team reviews it within 2 working days. Applying is free.',
+    `If we accept you, pay ${price} once within ${R.payWithinDays} days. Your ${R.days} days start when the payment goes through.`,
+    `Your part: keep Pro or Ultra, and send at least ${R.minApplications} applications in at least ${R.minWeeks} different weeks. Auto-apply counts; postings the scam check marks unsafe don't.`,
+    'An interview is a live conversation (phone, video or in person) with the employer or its recruiter about a role, recruiter screens included. Online tests and recorded one-way videos don\'t count. Interviews from anywhere count, and so does an invitation you decline.',
+    `No interview by day ${R.days}: claim here within ${R.claimDays} days and get the full ${price} back. Plan fees aren't part of the refund.`];
   let body = '';
-  if (kind === 'job' && !v.conciergeEnabled) body = '<p class="small">The Job Guarantee comes with Concierge, which isn\'t available yet.</p>';
-  else if (cur && cur.status === 'pending'){
-    body = `<div class="gustate"><span class="pill">${esc(GU_STATUS.pending)}</span><p class="small">It starts the moment your payment of ${esc(money(cur.price, cur.currency))} goes through. An unpaid checkout lapses after 2 days.</p></div>
-      ${safeUrl(cur.payUrl) ? `<div class="ract" style="justify-content:flex-start"><a class="btn solid buy" href="${esc(safeUrl(cur.payUrl))}" target="_blank" rel="noopener">Pay ${esc(money(cur.price, cur.currency))}</a><button class="btn ghost" data-act="gu-reload">I've paid</button></div>` : ''}`;
-  }
-  else if (cur && !['ended', 'void', 'rejected', 'refunded'].includes(cur.status)){
+  const st = cur && cur.status;
+  if (st === 'applied') body = `<div class="gustate"><span class="pill">${GU_STATUS.applied}</span><p class="small">Sent ${esc(fDay(cur.agreedAt))}. We'll email you within 2 working days. Roles you're aiming for: ${esc(obj(cur.application).roles || '')}</p></div>`;
+  else if (st === 'accepted' || st === 'pending') body = `<div class="gustate"><span class="pill strong">${GU_STATUS[st]}</span><p class="small">${esc(cur.reason || 'You were accepted.')} Pay by ${esc(fDay(cur.payBy))}; your ${esc(R.days)} days start the moment the payment goes through.</p></div>
+      <div class="ract" style="justify-content:flex-start">${st === 'pending' && safeUrl(cur.payUrl) ? `<a class="btn solid buy" href="${esc(safeUrl(cur.payUrl))}" target="_blank" rel="noopener">Pay ${esc(money(cur.price, cur.currency))}</a><button class="btn ghost" data-act="gu-reload">I've paid</button>`
+        : `<button class="btn solid buy" data-act="gu-pay"${ro}${k.canPay ? '' : ' disabled'}>Pay ${esc(money(cur.price || k.price, cur.currency || k.currency))}</button>`}</div>`;
+  else if (st === 'active' || st === 'met'){
     const pr = obj(cur.progress);
-    const bars = kind === 'interview' ? guBar('Applications', pr.applications || 0, R.minApplications) + guBar('Different weeks', pr.weeks || 0, R.minWeeks) + guBar('Interviews', pr.interviews || 0, 0)
-      : guBar('Concierge case', CC_STATUS[pr.caseStatus] || pr.caseStatus || 'open', 0);
-    const days = cur.status === 'active' ? `<p class="small">${esc(pr.daysLeft)} days left · ends ${esc(new Date(cur.endsAt).toLocaleDateString('en-IN', {day: 'numeric', month: 'short', year: 'numeric'}))}</p>` : '';
-    const claim = cur.status === 'claimable' ? `<form id="gu-claim-${kind}" class="formgrid gu-claim" novalidate data-kind="${kind}">
-        <p class="full">You did your part and the window ended without ${kind === 'interview' ? 'an interview' : 'an accepted offer'}. Claim up to <b>${esc(money(cur.estimate, cur.currency))}</b> by ${esc(new Date(cur.claimBy).toLocaleDateString('en-IN', {day: 'numeric', month: 'short'}))}.</p>
-        <label class="f full" for="gu-note-${kind}">Anything we should know (optional)<textarea id="gu-note-${kind}" name="note" rows="2"${ro}></textarea></label>
-        <label class="full cccheck"><input type="checkbox" name="attest"${ro}> I confirm I had no ${kind === 'interview' ? 'interview or interview invitation' : 'accepted offer'} in this window, from Propelo or anywhere else.</label>
-        <div class="full"><button class="btn solid" type="submit"${ro}>Claim my refund</button></div></form>` : '';
-    const refund = cur.refund ? `<p>Refund: <b>${esc(money(cur.refund, cur.currency))}</b></p>` : '';
-    body = `<div class="gustate"><span class="pill ${['met', 'refunded', 'approved'].includes(cur.status) ? 'strong' : ''}">${esc(GU_STATUS[cur.status] || cur.status)}</span>${cur.reason ? `<p class="small">${esc(cur.reason)}</p>` : ''}${refund}</div>
-      ${cur.status === 'active' || cur.status === 'met' ? `<div class="gubars">${bars}</div>${days}` : ''}${claim}${arr(pr.interviewRoles).length ? `<p class="small">Interviews: ${arr(pr.interviewRoles).map(r => esc(r.company)).join(', ')}</p>` : ''}`;
-  } else {
-    const el = obj(k.eligibility), checks = arr(el.checks);
-    const last = cur && ['ended', 'void', 'rejected'].includes(cur.status) ? `<p class="small">Last time: ${esc(GU_STATUS[cur.status])}. ${esc(cur.reason || '')}</p>` : '';
-    body = `${last}<p class="groupl" style="margin-top:4px">Before you start</p><ul class="guchecks">${checks.map(c => `<li class="${c.ok ? 'ok' : 'no'}"><span class="ck${c.ok ? '' : ' no'}">${c.ok ? I.check : I.cross}</span><div><b>${esc(c.label)}</b><small>${esc(c.detail)}</small></div></li>`).join('')}</ul>
-      <label class="cccheck" style="margin-top:12px"><input type="checkbox" id="gu-agree-${kind}"${ro}${el.ok ? '' : ' disabled'}> I've read the <a href="/terms#guarantees" target="_blank" rel="noopener">guarantee terms</a>.</label>
-      <div class="ract" style="justify-content:flex-start;margin-top:12px">${checks.some(c => c.id === 'plan' && !c.ok) ? `<button class="btn solid buy" data-act="tab" data-tab="setup">See Pro and Ultra</button>` : `<button class="btn solid buy" data-act="gu-enroll" data-kind="${kind}"${ro}${el.ok && k.canPay ? '' : ' disabled'}>Buy for ${esc(price)}</button>`}<span class="small app-only">Add-ons are bought on the web, at your Propelo address.</span><span class="small web-only">${k.canPay ? `One time. Refund up to ${esc(money(k.estimate, k.currency))} if it fails.` : 'Payments for add-ons aren\'t set up on this server yet.'}</span></div>`;
+    body = `<div class="gustate"><span class="pill ${st === 'met' ? 'strong' : ''}">${GU_STATUS[st]}</span>${cur.reason ? `<p class="small">${esc(cur.reason)}</p>` : ''}</div>
+      <div class="gubars">${guBar('Applications', pr.applications || 0, R.minApplications)}${guBar('Different weeks', pr.weeks || 0, R.minWeeks)}${guBar('Interviews', pr.interviews || 0, 0)}</div>
+      ${st === 'active' ? `<p class="small">${esc(pr.daysLeft ?? R.days)} days left · ends ${esc(fDay(cur.endsAt))}</p>` : ''}`;
   }
-  return `<section class="panel gucard"><div class="guhead"><span class="gushield">${I.shield}</span><div><div class="gutitle"><h2>${esc(title)}</h2><span class="guprice">${esc(price)}<small> one time</small></span></div><p>${esc(promise)}</p></div></div>${say}${body}
-    <details class="gudetails"><summary>The rules</summary>${rulesHtml}</details></section>`;
+  else if (st === 'claimable') body = `<form id="gu-claim-interview" class="formgrid gu-claim" novalidate data-kind="interview">
+      <p class="full">You did your part and the window ended without an interview. Claim your <b>${esc(money(cur.price, cur.currency))}</b> back by ${esc(fDay(cur.claimBy))}.</p>
+      <label class="f full" for="gu-note">Anything we should know (optional)<textarea id="gu-note" name="note" rows="2"${ro}></textarea></label>
+      <label class="full cccheck"><input type="checkbox" name="attest"${ro}> I confirm I had no interview or interview invitation in this window, from Propelo or anywhere else.</label>
+      <div class="full"><button class="btn solid" type="submit"${ro}>Claim my refund</button></div></form>`;
+  else if (['claimed', 'approved', 'refunded', 'rejected'].includes(st)) body = `<div class="gustate"><span class="pill ${st !== 'rejected' ? 'strong' : ''}">${GU_STATUS[st]}</span>${cur.reason ? `<p class="small">${esc(cur.reason)}</p>` : ''}${cur.refund ? `<p>Refund: <b>${esc(money(cur.refund, cur.currency))}</b></p>` : ''}</div>`;
+  if (!body){
+    const el = obj(k.eligibility), checks = arr(el.checks);
+    const last = cur && GU_STATUS[st] ? `<p class="small"><b>${esc(GU_STATUS[st])}.</b> ${esc(cur.reason || '')}</p>` : '';
+    const planOff = checks.some(c => c.id === 'plan' && !c.ok);
+    const roles = [].concat(settings().targetRoles || []).join(', ');
+    body = `${last}<ul class="guchecks">${checks.map(c => `<li><span class="ck${c.ok ? '' : c.advisory ? ' adv' : ' no'}">${c.ok ? I.check : c.advisory ? '!' : I.cross}</span><div><b>${esc(c.label)}</b><small>${esc(c.detail)}</small></div></li>`).join('')}</ul>
+      ${planOff ? `<div class="ract" style="justify-content:flex-start"><button class="btn solid buy" data-act="tab" data-tab="setup">See Pro and Ultra</button></div>`
+      : `<form id="gu-apply" class="formgrid" novalidate>
+        <label class="f full" for="gu-roles">Roles you're aiming for<input id="gu-roles" name="roles" value="${esc(roles)}" placeholder="Backend engineer, data analyst"${ro}></label>
+        <label class="f full" for="gu-why">Anything we should know (optional)<textarea id="gu-why" name="note" rows="2" placeholder="Notice period, cities, a gap you'd like to explain"${ro}></textarea></label>
+        <label class="full cccheck"><input type="checkbox" name="agree"${ro}> I've read the <a href="/terms#guarantees" target="_blank" rel="noopener">guarantee terms</a>. I pay ${esc(price)} only if I'm accepted.</label>
+        <div class="full"><button class="btn solid" type="submit"${ro}${el.ok ? '' : ' disabled'}>Apply for the Interview Guarantee</button></div></form>`}`;
+  }
+  return `<section class="panel gucard" id="gu-interview"><div class="guhead"><span class="gushield">${I.shield}</span><div><div class="gutitle"><h2>Interview Guarantee</h2><span class="guprice">${esc(price)}<small> once, ${esc(R.days)} days</small></span></div>
+      <p>An interview within ${esc(R.days)} days, or the full ${esc(price)} back.</p></div></div>${say}${body}
+    <details class="gudetails"><summary>The rules</summary><ul class="gurules">${rules.map(r => `<li>${esc(r)}</li>`).join('')}</ul></details></section>`;
+}
+function guJob(v){
+  const j = obj(v.job), c = obj(obj(state.concierge).case);
+  const pct = `${j.rateLow}% of the yearly fixed pay (${j.rateHigh}% on the part above ${lakh(j.band)})`;
+  let body;
+  if (!j.concierge) body = '<p class="small">The Job Guarantee isn\'t open on this server yet.</p>';
+  else if (c.status && c.status !== 'closed') body = `<div class="gustate"><span class="pill ${c.status === 'requested' ? '' : 'strong'}">${esc(c.status === 'requested' ? 'Application under review' : (CC_STATUS[c.status] || c.status))}</span></div><div class="ract" style="justify-content:flex-start"><button class="btn" data-act="tab" data-tab="concierge">Open your Job Guarantee</button></div>`;
+  else body = `${c.closedReason ? `<p class="small"><b>Last time:</b> ${esc(c.closedReason)}</p>` : ''}<div class="ract" style="justify-content:flex-start"><button class="btn solid" data-act="tab" data-tab="concierge">Apply for the Job Guarantee</button><span class="small">For jobs in ${esc(arr(j.countries).map(x => x === 'IN' ? 'India' : x).join(', ') || 'India')}. Applying is free.</span></div>`;
+  return `<section class="panel gucard"><div class="guhead"><span class="gushield" style="background:var(--violet-tint, var(--lav))">${I.user}</span><div><div class="gutitle"><h2>Job Guarantee</h2><span class="guprice">₹0<small> upfront</small></span></div>
+      <p>A talent partner works with you until you're hired. You pay ${esc(pct)} only after you join. Not placed, nothing to pay.</p></div></div>${body}
+    <details class="gudetails"><summary>How it works</summary><ul class="gurules"><li>Apply with the roles, cities and pay you want. We review every application and take on people we believe we can place, and tell you why if we can't.</li><li>Your partner proposes companies; nothing is sent until you approve each one.</li><li>The fee is split into three instalments from 30 days after you join, and cancelled if the employer ends the job within 90 days.</li></ul></details></section>`;
 }
 function renderGuarantee(){
-  const head = `<div class="hero" style="padding-bottom:6px"><div><h1>Guarantees</h1><p class="sub">Optional add-ons for Pro and Ultra members, not part of any plan. If Propelo doesn't get you there and you did your part, you get your money back. They're promises of a refund, never of a job, on rules you can check here before you pay.</p></div></div>`;
-  if (!cloud()) return head + `<div class="panel"><p class="small">Guarantees are part of Pro and Ultra on Propelo Cloud.</p></div>`;
+  const head = `<div class="hero" style="padding-bottom:6px"><div><h1>Guarantees</h1><p class="sub">For Pro and Ultra members, by application, and not part of any plan. No interview, your money back. Not placed, no fee.</p></div></div>`;
+  if (!cloud()) return head + `<div class="panel"><p class="small">Guarantees are for Pro and Ultra members on Propelo Cloud.</p></div>`;
   const v = state.guarantee;
   if (!v){ if (!state.guLoading){ state.guLoading = true; loadGuarantee(); } return head + '<div class="panel"><p class="small">Loading…</p></div>'; }
   if (!v.enabled) return head + `<div class="panel"><p class="small">Guarantees aren't offered on this server.</p></div>`;
-  return head + `<div class="gugrid">${guCard(v, 'interview')}${guCard(v, 'job')}</div>
-    <p class="small" style="margin-top:18px">One refund of each guarantee per account. <a href="/terms#guarantees" target="_blank" rel="noopener">Guarantee terms</a></p>`;
+  if (!state.concierge && obj(v.job).concierge && !state.ccLoading){ state.ccLoading = true; loadConcierge(); }
+  return head + `<div class="gugrid">${guInterview(v)}${guJob(v)}</div><p class="small" style="margin-top:18px"><a href="/terms#guarantees" target="_blank" rel="noopener">Guarantee terms</a></p>`;
+}
+/* Home: a quiet card with both options for Pro and Ultra members who haven't applied (the pop-up shows once). */
+function guHomeCard(){
+  const v = state.guarantee; if (!v || !v.enabled || !v.planAllows) return '';
+  const cur = obj(v.interview).current, cc = obj(obj(state.concierge).case);
+  if ((cur && !['declined', 'ended', 'void'].includes(cur.status)) || (cc.status && cc.status !== 'closed')) return '';
+  return `<section class="card guhome"><div class="chead"><div><h2>Want us to stand behind your search?</h2><p class="muted">Interview Guarantee: ${esc(money(obj(v.interview).price, obj(v.interview).currency))} once, an interview in ${esc(obj(v.rules).days)} days or your money back. Job Guarantee: nothing upfront, a fee only after you join. Both by application.</p></div><button class="btn solid" data-act="gu-offer">See both</button></div></section>`;
+}
+/* The offer, once, for Pro and Ultra members who haven't applied: a pop-up with both options. */
+/* Company logos: the same ones the public job board shows (fetched from each company's own website). */
+function loadLogos(){
+  const site = obj(state.me).jobsSite; if (!site || state.logos || state.logosLoading) return;
+  state.logosLoading = true;
+  fetch(site + 'logos/map.json', {credentials: 'omit'}).then(r => r.ok ? r.json() : {}).then(m => { state.logos = m && typeof m === 'object' ? m : {}; render(); }).catch(() => { state.logos = {}; });
+}
+document.addEventListener('error', e => { const t = e.target; if (t && t.tagName === 'IMG' && t.parentNode && t.parentNode.classList && t.parentNode.classList.contains('clogo')) t.parentNode.remove(); }, true);
+const coSlug = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80);
+function coLogo(company, size){
+  const f = obj(state.logos)[coSlug(company)], site = obj(state.me).jobsSite;
+  if (!f || !site || !/^[a-f0-9]{16}\.(png|jpg|gif|webp|ico|svg)$/.test(f)) return '';
+  return `<span class="clogo${size ? ' ' + size : ''}" aria-hidden="true"><img src="${esc(site + 'logos/' + f)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"></span>`;
+}
+function maybeOfferGuarantee(){
+  const v = state.guarantee;
+  if (!v || !v.enabled || !v.planAllows || state.guOfferShown) return;
+  const cur = obj(v.interview).current;
+  if (cur && !['declined', 'ended', 'void'].includes(cur.status)) return;
+  let seen = false; try { seen = localStorage.getItem('propelo.guOffer') === '1'; } catch (e) {}
+  if (seen) return;
+  state.guOfferShown = true; setTimeout(openGuOffer, 1200);
+}
+function openGuOffer(){
+  const v = obj(state.guarantee), k = obj(v.interview), j = obj(v.job), days = obj(v.rules).days;
+  if (!v.enabled || document.querySelector('dialog.guoffer')) return;
+  try { localStorage.setItem('propelo.guOffer', '1'); } catch (e) {}
+  const d = document.createElement('dialog'); d.className = 'guoffer'; d.setAttribute('aria-labelledby', 'guo-h');
+  d.innerHTML = `<form method="dialog" class="guo"><button class="guo-x" value="close" aria-label="Close">×</button>
+    <span class="pill">For Pro and Ultra members</span><h2 id="guo-h">Want us to stand behind your search?</h2>
+    <p class="muted">Apply for either guarantee. A person on our team reviews every application.</p>
+    <div class="guo-grid">
+      <div class="guo-card"><b>Interview Guarantee</b><span class="guo-price">${esc(money(k.price, k.currency))}<small> once, ${esc(days)} days</small></span><p>An interview within ${esc(days)} days, or the full price back. You pay only if we accept you.</p><button class="btn solid" value="interview">Apply</button></div>
+      ${j.concierge ? `<div class="guo-card"><b>Job Guarantee</b><span class="guo-price">₹0<small> upfront</small></span><p>A talent partner works with you until you're hired. ${esc(j.rateLow)}% of fixed pay (${esc(j.rateHigh)}% above ${esc(lakh(j.band))}) only after you join.</p><button class="btn solid" value="job">Apply</button></div>` : ''}
+    </div><button class="btn ghost" value="close">Not now</button></form>`;
+  document.body.appendChild(d);
+  d.addEventListener('close', () => { const r = d.returnValue; d.remove();
+    if (r === 'interview'){ setTab('guarantee'); setTimeout(() => { const f = $('#gu-roles'); if (f) f.focus(); }, 300); }
+    else if (r === 'job') setTab('concierge'); });
+  d.showModal();
 }
 function ccOut(f, ctc){ const r = ccFee(f, ctc); return Number(ctc) > 0 ? `Fee <b>${esc(inr(r.fee))}</b>${r.tax ? ` + ${esc(inr(r.tax))} GST` : ''}, about ${r.rate.toFixed(1)}% of ${esc(lakh(ctc))}, in three monthly instalments after you join.` : 'Type a yearly fixed pay to see the fee.'; }
 
@@ -2375,7 +2452,7 @@ function renderWarm(){
 /* ---------- Skipped ---------- */
 function renderSkipped(){
   const list = jobsArr().filter(j => j.stage === 'skipped').sort((a, b) => (toDate(b.foundAt) || 0) - (toDate(a.foundAt) || 0) || byFresh(a, b));
-  const rows = list.map((j, i) => { const sk = obj(j.skip); return `<tr class="click${enterCls(i)}" data-act="open" data-id="${esc(j.id)}" tabindex="0"><td class="role"><b>${esc(j.title)}</b><span>${esc(j.company)}${j.location ? ', ' + esc(j.location) : ''}</span></td><td><span class="pill">${esc(sk.gate || 'Skipped')}</span></td><td style="max-width:420px;white-space:normal">${esc(sk.reason || '')}</td><td><button class="btn sm" data-act="override" data-id="${esc(j.id)}"${wr()}>Prepare anyway</button></td></tr>`; }).join('');
+  const rows = list.map((j, i) => { const sk = obj(j.skip); return `<tr class="click${enterCls(i)}" data-act="open" data-id="${esc(j.id)}" tabindex="0"><td class="role"><b>${esc(j.title)}</b><span>${coLogo(j.company)}${esc(j.company)}${j.location ? ', ' + esc(j.location) : ''}</span></td><td><span class="pill">${esc(sk.gate || 'Skipped')}</span></td><td style="max-width:420px;white-space:normal">${esc(sk.reason || '')}</td><td><button class="btn sm" data-act="override" data-id="${esc(j.id)}"${wr()}>Prepare anyway</button></td></tr>`; }).join('');
   return `<div class="hero" style="padding-bottom:10px"><div><h1>Skip log</h1><p class="sub">Every role the search turned down, with the filter it failed and what would change it. Overrule any of them.</p></div></div>
     <div class="panel">${rows ? `<div class="tablewrap"><table class="grid"><thead><tr><th>Role</th><th>Filter</th><th>Reason</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : empty('Nothing skipped yet', 'When the search turns a role down, it lands here with the reason.')}</div>`;
 }
@@ -3423,6 +3500,7 @@ function renderHome(){
   <p class="lede">${esc(say)}</p>${nudges.length ? `<p class="nudges">${nudges.join('<span aria-hidden="true">·</span>')}</p>` : ''}
   ${todayBlock(all, f, weeks)}
   <section class="card anyjob"><div class="chead"><div><h2>Found a job somewhere else?</h2><p class="muted">Any role, from any site, a WhatsApp forward or an email. Paste it and Propelo checks whether it looks real, shows how you fit, and writes a truthful resume and cover letter for it.</p></div><button class="btn sm" data-act="tab" data-tab="new">Check a job</button></div></section>
+  ${guHomeCard()}
   ${autoStatus().key !== 'ready' && autoStatus().key !== 'off' ? `<div style="margin-top:18px">${renderAutoMini()}</div>` : ''}
   <div class="showing"><span class="muted">Showing</span><div class="pseg" role="group" aria-label="Period">${rng}</div></div>
   <section class="card"><div class="chead"><div><h2>Your funnel</h2><p class="muted">How far each application has got, and where the ones that stopped are now.</p></div>
@@ -3526,7 +3604,7 @@ function matchOf(j){ const m = arr(obj(j.tailor).match); return m.length ? `${m.
 function renderBoard(list){
   return `<div class="board" id="board">${BOARD.map(([key, label]) => { const items = list.filter(j => boardCol(j) === key);
     return `<div class="bcol" data-col="${key}"><div class="bhead"><span class="bdot bd-${key}"></span><b>${label}</b><span class="muted">${items.length}</span></div>
-      ${items.map(j => { const ab = toDate(j.applyBy); return `<div class="bcard" draggable="${state.canWrite && state.db ? 'true' : 'false'}" data-act="open-app" data-id="${esc(j.id)}" tabindex="0"><span class="muted bco">${esc(j.company)}</span><b>${esc(j.title)}</b><span class="muted bmeta">${esc([j.location, j.workMode].filter(Boolean).join(' · '))}</span>${ab && key === 'todo' ? `<span class="pill due">Apply by ${esc(fDate.format(ab))}</span>` : ''}${j.needsYou && !isApplied(j) ? '<span class="pill needs">Needs you</span>' : j.autoApply === 'queued' && !isApplied(j) ? '<span class="pill queued">Queued for auto-apply</span>' : key === 'todo' && state.canWrite ? `<button class="btn sm bq" data-act="${belowLine(j) ? 'apply-anyway' : 'queue'}" data-id="${esc(j.id)}">${belowLine(j) ? 'Auto-apply anyway' : 'Auto-apply'}</button>` : ''}<span class="bfoot"><span>${esc(matchOf(j))}</span><span>${esc(relDay(j.updatedAt || foundAt(j)))}</span></span></div>`; }).join('') || '<p class="bempty">Drop a card here</p>'}</div>`; }).join('')}</div>`;
+      ${items.map(j => { const ab = toDate(j.applyBy); return `<div class="bcard" draggable="${state.canWrite && state.db ? 'true' : 'false'}" data-act="open-app" data-id="${esc(j.id)}" tabindex="0"><span class="muted bco">${coLogo(j.company)}${esc(j.company)}</span><b>${esc(j.title)}</b><span class="muted bmeta">${esc([j.location, j.workMode].filter(Boolean).join(' · '))}</span>${ab && key === 'todo' ? `<span class="pill due">Apply by ${esc(fDate.format(ab))}</span>` : ''}${j.needsYou && !isApplied(j) ? '<span class="pill needs">Needs you</span>' : j.autoApply === 'queued' && !isApplied(j) ? '<span class="pill queued">Queued for auto-apply</span>' : key === 'todo' && state.canWrite ? `<button class="btn sm bq" data-act="${belowLine(j) ? 'apply-anyway' : 'queue'}" data-id="${esc(j.id)}">${belowLine(j) ? 'Auto-apply anyway' : 'Auto-apply'}</button>` : ''}<span class="bfoot"><span>${esc(matchOf(j))}</span><span>${esc(relDay(j.updatedAt || foundAt(j)))}</span></span></div>`; }).join('') || '<p class="bempty">Drop a card here</p>'}</div>`; }).join('')}</div>`;
 }
 function relDay(v){ const d = toDate(v); if (!d) return ''; const n = Math.floor((Date.now() - d) / 864e5); return n <= 0 ? 'Today' : n === 1 ? 'Yesterday' : n < 30 ? n + ' days ago' : fDate.format(d); }
 
@@ -3598,7 +3676,7 @@ function renderApp(){
     <section class="card"><div class="chead"><h2>The posting</h2>${url ? `<a class="btn sm" href="${esc(url)}" target="_blank" rel="noopener">${I.link}Open original</a>` : ''}</div>${postingText(j) ? `<div class="jdtext">${esc(postingText(j))}</div>` : '<p class="muted">The full text is saved once the search reads it, or when you paste it into a new application.</p>'}</section></div>`;
   else body = `<div class="narrow"><section class="card"><h2>Your notes</h2><textarea id="notes-${esc(j.id)}" data-act="notes" data-id="${esc(j.id)}" rows="8" placeholder="Anything to remember about this one"${wr()} style="margin-top:12px">${esc(j.notes || '')}</textarea><p class="muted" style="margin-top:8px">Saves when you click away.</p></section>${parts.timeline ? `<section class="card"><h2>Timeline</h2><div style="margin-top:12px">${parts.timeline}</div></section>` : ''}</div>`;
   return `<div class="apphead"><div class="crumbs"><button class="linkish" data-act="tab" data-tab="pipeline">Applications</button> /</div>
-    <div class="phead" style="padding-top:6px"><h1 class="apptitle">${esc(j.title)}<span class="appco"><span class="muted"> · </span>${esc(j.company)}</span></h1>
+    <div class="phead" style="padding-top:6px"><h1 class="apptitle">${esc(j.title)}<span class="appco"><span class="muted"> · </span>${coLogo(j.company, 'lg')}${esc(j.company)}</span></h1>
     <div class="ract appact"><label class="stagepick"><span class="stage-dot ${esc(j.stage || 'found')}"></span><select data-act="stage" data-id="${esc(j.id)}" aria-label="Stage"${wr()}>${parts.stageOpts}</select></label>${parts.actions}${t.resume ? `<button class="btn" data-act="dl-resume" data-id="${esc(j.id)}">${NI.down}Resume</button>` : ''}</div></div>
     <p class="appmeta">${meta.map(x => `<span>${esc(x)}</span>`).join('')}${url ? `<a href="${esc(url)}" target="_blank" rel="noopener">Posting</a>` : ''}${j.applyTo ? (/@/.test(j.applyTo) && !/^https?:/i.test(j.applyTo) ? `<a href="mailto:${esc(j.applyTo)}">Apply by email: ${esc(j.applyTo)}</a>` : safeUrl(j.applyTo) ? `<a href="${esc(safeUrl(j.applyTo))}" target="_blank" rel="noopener">Where to apply</a>` : '') : ''}</p>
     <div class="atabs" role="tablist">${tabs}</div></div><div class="appbody">${body}</div>`;
@@ -4380,16 +4458,16 @@ document.addEventListener('click', e => {
   else if (act === 'ct-import'){ const add = contactsFromRoles(); saveContacts(contacts().concat(add), add.length + (add.length === 1 ? ' contact' : ' contacts') + ' added from your roles.'); }
   else if (act === 'ct-delete'){ if (confirm('Delete this contact?')){ state.ctEdit = null; saveContacts(contacts().filter(c => c.id !== el.dataset.id), 'Deleted.'); } }
   else if (act === 'cc-role'){ cloudPost('api/concierge/roles/' + encodeURIComponent(el.dataset.sid) + '/' + el.dataset.d).then(v => { state.concierge = v; toast(el.dataset.d === 'approve' ? 'Approved. Your partner can apply now.' : 'Declined.'); render(); }).catch(d => acctSay(d.error || 'Could not save.', true, 'concierge')); }
-  else if (act === 'gu-enroll'){ const kind = el.dataset.kind, box = $('#gu-agree-' + kind);
-    if (!box || !box.checked) return acctSay('Read and accept the guarantee terms first.', true, 'gu-' + kind);
+  else if (act === 'gu-pay'){
     const w = window.open('', '_blank');  // opened inside the click so the payment page isn't blocked as a pop-up
-    cloudPost('api/guarantee/' + kind + '/buy', {agree: true, termsVersion: obj(state.guarantee).termsVersion}).then(v => { state.guarantee = v;
-      if (safeUrl(v.payUrl) && w){ w.location = v.payUrl; acctSay('The payment page opened in a new tab. Your guarantee starts when the payment goes through.', false, 'gu-' + kind); }
-      else { if (w) w.close(); acctSay('Pay from the button below to start it.', false, 'gu-' + kind); } })
-      .catch(d => { if (w) w.close(); acctSay(d.error || 'Could not start the payment.', true, 'gu-' + kind); }); }
+    cloudPost('api/guarantee/interview/buy', {agree: true, termsVersion: obj(state.guarantee).termsVersion}).then(v => { state.guarantee = v;
+      if (safeUrl(v.payUrl) && w){ w.location = v.payUrl; acctSay('The payment page opened in a new tab. Your days start when the payment goes through.', false, 'gu-interview'); }
+      else { if (w) w.close(); acctSay('Use the Pay button below to start.', false, 'gu-interview'); } })
+      .catch(d => { if (w) w.close(); acctSay(d.error || 'Could not start the payment.', true, 'gu-interview'); }); }
+  else if (act === 'gu-offer'){ openGuOffer(); }
   else if (act === 'gu-reload'){ loadGuarantee(); }
   else if (act === 'cc-pause'){ cloudPost('api/concierge/pause', {pause: el.dataset.p === '1'}).then(v => { state.concierge = v; render(); }).catch(d => acctSay(d.error || 'Could not change it.', true, 'concierge')); }
-  else if (act === 'cc-close'){ if (!confirm('Close your Concierge case? Fees still apply to offers from companies you already approved, within the time in the terms.')) return; cloudPost('api/concierge/close').then(v => { state.concierge = v; render(); }).catch(d => acctSay(d.error || 'Could not close it.', true, 'concierge')); }
+  else if (act === 'cc-close'){ if (!confirm('Close your Job Guarantee? Fees still apply to offers from companies you already approved, within the time in the terms.')) return; cloudPost('api/concierge/close').then(v => { state.concierge = v; render(); }).catch(d => acctSay(d.error || 'Could not close it.', true, 'concierge')); }
   else if (act === 'cc-pay'){ el.disabled = true; cloudPost('api/concierge/instalments/' + encodeURIComponent(el.dataset.id) + '/pay').then(d => { location.href = d.url; }).catch(d => { el.disabled = false; acctSay(d.error || 'Could not open the payment.', true, 'concierge'); }); }
   else if (act === 'ask-q'){ askRun(el.dataset.q); }
   else if (act === 'ask-clear'){ state.ask = {msgs: [], busy: false}; render(); }
@@ -4451,13 +4529,19 @@ document.addEventListener('submit', e => {
   }
   if (e.target.id === 'cc-form'){
     e.preventDefault(); const f = e.target;
-    if (!f.agree.checked) return acctSay('Read and accept the Concierge terms first.', true, 'concierge');
+    if (!f.agree.checked) return acctSay('Read and accept the Job Guarantee terms first.', true, 'concierge');
     if (!f.roles.value.trim()) return acctSay('Tell us which roles you want.', true, 'concierge');
     const intake = {roles: f.roles.value, locations: f.locations.value, currentCtc: f.currentCtc.value, expectedCtc: f.expectedCtc.value, noticeDays: f.noticeDays.value, phone: f.phone.value, notes: f.notes.value};
     cloudPost('api/concierge/request', {agree: true, termsVersion: obj(state.concierge).termsVersion, country: f.country.value, intake}).then(v => { state.concierge = v; acctSay('Sent. A talent partner will reply within two working days.', false, 'concierge'); render(); window.scrollTo({top: 0, behavior: 'smooth'}); })
       .catch(d => acctSay(d.error || 'Could not send it.', true, 'concierge'));
     return;
   }
+  if (e.target.id === 'gu-apply'){ e.preventDefault(); const f = e.target;
+    if (!f.agree.checked) return acctSay('Read and accept the guarantee terms first.', true, 'gu-interview');
+    if (f.roles.value.trim().length < 3) return acctSay("Tell us which roles you're aiming for.", true, 'gu-interview');
+    cloudPost('api/guarantee/interview/apply', {agree: true, termsVersion: obj(state.guarantee).termsVersion, roles: f.roles.value, note: f.note.value})
+      .then(v => { state.guarantee = v; acctSay("Sent. We'll review it within 2 working days and email you.", false, 'gu-interview'); })
+      .catch(d => acctSay(d.error || 'Could not send it.', true, 'gu-interview')); return; }
   if (/^gu-claim-/.test(e.target.id)){ e.preventDefault(); const f = e.target, kind = f.dataset.kind;
     if (!f.attest.checked) return acctSay('Confirm the statement first.', true, 'gu-' + kind);
     cloudPost('api/guarantee/' + kind + '/claim', {attest: true, note: f.note.value}).then(v => { state.guarantee = v; acctSay('Claim sent. A person checks it within 5 working days.', false, 'gu-' + kind); }).catch(d => acctSay(d.error || 'Could not send the claim.', true, 'gu-' + kind)); return; }
@@ -4465,7 +4549,7 @@ document.addEventListener('submit', e => {
   if (e.target.id === 'cc-offer'){
     e.preventDefault(); const f = e.target;
     cloudPost('api/concierge/offer', {company: f.company.value, fixedCtc: f.fixedCtc.value, joiningDate: f.joiningDate.value}).then(v => { state.concierge = v; const r = obj(v.reported);
-      acctSay(r.feeable ? 'Congratulations! Your partner will check the offer letter; the fee and dates appear here once confirmed.' : "Congratulations! This company wasn't one you approved through Concierge, so there's no fee for it.", false, 'concierge'); render(); })
+      acctSay(r.feeable ? 'Congratulations! Your partner will check the offer letter; the fee and dates appear here once confirmed.' : "Congratulations! This company wasn't one you approved through your Job Guarantee, so there's no fee for it.", false, 'concierge'); render(); })
       .catch(d => acctSay(d.error || 'Could not report it.', true, 'concierge'));
     return;
   }
@@ -4832,6 +4916,7 @@ async function bootStandalone(){
   state.db = db;
   subscribe(db, () => {});
   render();
+  if (state.status === 'cloud'){ loadLogos(); loadGuarantee(); }
 }
 
 async function boot(){

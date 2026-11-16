@@ -1,6 +1,5 @@
 """Company logos: a logo only for a company whose own website the evidence names, never a guess."""
 
-import io
 import json
 import struct
 import zlib
@@ -83,3 +82,26 @@ def test_site_publishes_logos(tmp_path):
     by = {j["c"]: j for j in jobs}
     assert by["Company 1"]["lo"].startswith("logos/") and (tmp_path / "out" / by["Company 1"]["lo"]).exists()
     assert "lo" not in by["Company 2"]
+    # the app shows the same logos: a map of company slug -> file next to them
+    lmap = json.loads((tmp_path / "out" / "logos" / "map.json").read_text())
+    assert lmap == {"company-1": by["Company 1"]["lo"][len("logos/"):]}
+
+
+def test_well_known_employers_get_their_own_site():
+    """Workday codes and sites that block the automatic check still get the company's own logo."""
+    assert logos.known_domain("Hpe") == "hpe.com" and logos.known_domain("Jci") == "johnsoncontrols.com"
+    assert logos.known_domain("Medtronic (Redeploymentmedtroniccareers)") == "medtronic.com"
+    assert logos.known_domain("‎ConnectWise") == "connectwise.com"
+    assert logos.known_domain("Some Startup Nobody Knows") == ""
+    m = logos.discover([{"id": "1", "company": "NVIDIA", "url": "https://nvidia.wd5.myworkdayjobs.com/x"}], {})
+    assert m == {"nvidia": "nvidia.com"}  # not a guess to verify
+
+
+def test_known_domains_are_plain_websites():
+    import re
+    from pathlib import Path
+    data = json.loads((Path(logos.__file__).parent / "data" / "company_domains.json").read_text())["domains"]
+    assert len(data) > 300
+    for name, d in data.items():
+        assert re.fullmatch(r"[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,6}", d), (name, d)
+        assert not logos.NOT_COMPANY.search(d) or name.lower() in ("ashby", "workday", "rippling"), (name, d)  # ATS makers hire too

@@ -66,14 +66,18 @@ def usd(cents: int) -> str:
 
 
 def addons(cfg: Config) -> list[dict]:
-    """Extras Pro and Ultra members can buy once. Not part of any plan."""
+    """Options Pro and Ultra members can apply for. Not part of any plan; the team reviews every application."""
     if not cfg.guarantee_enabled:
         return []
-    return [{"id": "interview", "name": "Interview Guarantee", "priceInr": cfg.guarantee_interview_inr, "priceUsd": usd(cfg.guarantee_interview_usd_cents),
-             "for": ["pro", "ultra"], "days": cfg.guarantee_days,
-             "line": f"An interview within {cfg.guarantee_days} days, or this price and the plan fees you paid in that time back."},
-            {"id": "job", "name": "Job Guarantee", "priceInr": cfg.guarantee_job_inr, "priceUsd": None, "for": ["pro", "ultra"], "days": cfg.job_guarantee_days,
-             "line": f"With Concierge in India: an accepted offer within {round(cfg.job_guarantee_days / 30)} months, or this price and your plan fees back, and no Concierge fee."}]
+    out = [{"id": "interview", "name": "Interview Guarantee", "priceInr": cfg.guarantee_interview_inr, "priceUsd": usd(cfg.guarantee_interview_usd_cents),
+            "for": ["pro", "ultra"], "days": cfg.guarantee_days, "when": f"once, for {cfg.guarantee_days} days, after we accept you",
+            "line": f"Apply, and once we accept you, pay once. An interview within {cfg.guarantee_days} days, or the full price back."}]
+    if cfg.concierge_enabled:
+        out.append({"id": "job", "name": "Job Guarantee", "priceInr": 0, "priceUsd": None, "for": ["pro", "ultra"], "days": None,
+                    "when": "nothing upfront",
+                    "line": f"Apply, and once we accept you, a talent partner works with you until you're hired. Pay {cfg.concierge_rate_low}% of the "
+                            f"yearly fixed pay ({cfg.concierge_rate_high}% on the part above ₹{cfg.concierge_band // 100000} lakh) only after you join. India only for now."})
+    return out
 
 
 # The hosted service's settings, used for the website's plan cards (render.yaml turns these on).

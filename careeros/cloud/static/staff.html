@@ -52,8 +52,8 @@ dl{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 14px;mar
 <header><a class="logo" href="/app">propelo<span class="dot"></span></a><span class="muted small" id="me"></span></header>
 <div class="layout">
   <aside>
-    <button class="case" id="claims-btn" type="button"><span class="row"><b>Guarantee claims</b><span class="pill req" id="claims-n" hidden></span></span><span class="small muted">Interview and Job Guarantee refunds to decide</span></button>
-    <div class="row"><h1 style="font-size:20px">Concierge</h1></div>
+    <button class="case" id="claims-btn" type="button"><span class="row"><b>Interview Guarantee</b><span class="pill req" id="claims-n" hidden></span></span><span class="small muted">Applications to review and refund claims to decide</span></button>
+    <div class="row"><h1 style="font-size:20px">Job Guarantee</h1></div>
     <label>Show<select id="filter"><option value="">Open and queued</option><option value="requested">Requested</option><option value="active">Active</option><option value="paused">Paused</option><option value="offer">Offer</option><option value="placed">Placed</option><option value="closed">Closed</option></select></label>
     <div id="cases" class="list"><p class="muted small">Loading…</p></div>
   </aside>
@@ -87,12 +87,18 @@ dl{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 14px;mar
   const money = (minor, cur) => cur === 'USD' ? '$' + (Number(minor || 0) / 100).toFixed(2) : inr(Math.round(Number(minor || 0) / 100));
   async function claims(open){
     const d = await api('/api/staff/guarantees');
-    const n = d.claims.filter(c => c.status === 'claimed').length;
+    const n = d.claims.filter(c => ['claimed', 'applied'].includes(c.status)).length;
     $('#claims-n').hidden = !n; $('#claims-n').textContent = n + ' to decide';
     if (!open) return;
     current = null;
     document.querySelectorAll('.case').forEach(b => b.setAttribute('aria-current', String(b.id === 'claims-btn')));
-    const rows = d.claims.map(c => { const p = c.progress || {}, el = (c.eligibility || {}).checks || [];
+    const apps = d.claims.filter(c => c.status === 'applied').map(c => { const a = c.application || {}, el = (c.eligibility || {}).checks || [];
+      return `<div class="item" style="display:block"><div><b>${esc(c.name || c.email)}</b> · ${esc(c.plan)} · applied ${esc(when(c.appliedAt))}<br><span class="small muted">${esc(c.email)}</span></div>
+        <p class="small"><b>Aiming for:</b> ${esc(a.roles || '')}${a.note ? `<br><b>Their note:</b> ${esc(a.note)}` : ''}</p>
+        <p class="small muted">${el.map(x => esc(x.label) + (x.ok ? ' ✓' : x.advisory ? ' (advisory)' : ' ✗') + (x.detail ? ': ' + esc(x.detail) : '')).join(' · ')}</p>
+        <p class="small muted">Accept only if their profile, target roles and market make an interview in ${esc(d.days || 45)} days realistic. If you accept, they pay ${esc(money(c.price || 0, c.currency))} within 7 days to start.</p>
+        <form class="row" data-claim="${esc(c.id)}" style="flex-wrap:wrap;gap:8px;margin-top:8px"><input name="note" placeholder="Note to them (needed to decline: why, in a sentence they'll read)" style="flex:1;min-width:260px"><button class="btn" name="d" value="accept">Accept</button><button class="btn ghost" name="d" value="decline">Decline</button></form></div>`; }).join('');
+    const rows = d.claims.filter(c => c.status !== 'applied').map(c => { const p = c.progress || {}, el = (c.eligibility || {}).checks || [];
       return `<div class="item" style="display:block"><div class="row" style="justify-content:space-between"><div><b>${esc(c.name || c.email)}</b> · ${c.kind === 'interview' ? 'Interview Guarantee' : 'Job Guarantee'} · ${esc(c.plan)}<br>
         <span class="small muted">${esc(c.email)} · window ${esc(when(c.startsAt))} to ${esc(when(c.endsAt))} · claimed ${esc(when(c.claimedAt))} · ${esc(c.status)}${c.refund ? ' · refund ' + esc(money(c.refund, c.currency)) : ''}</span></div></div>
         ${c.kind === 'interview' ? `<p class="small">Applications ${esc(p.applications)} of ${esc(p.needApplications)} · weeks ${esc(p.weeks)} of ${esc(p.needWeeks)} · interviews in the pipeline ${esc(p.interviews)} · unsafe postings left out ${esc(p.unsafeSkipped || 0)}</p>` : `<p class="small">Concierge case: ${esc(p.caseStatus || '')}. Check proposals answered within 7 days, interviews attended and offers declined in the case before deciding.</p>`}
@@ -100,7 +106,9 @@ dl{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 14px;mar
         ${c.note ? `<p class="small">Their note: ${esc(c.note)}</p>` : ''}
         ${c.status === 'claimed' ? `<form class="row" data-claim="${esc(c.id)}" style="flex-wrap:wrap;gap:8px;margin-top:8px"><input name="note" placeholder="Note to them (needed to reject)" style="flex:1;min-width:220px"><input name="amount" type="number" min="1" placeholder="Refund in ${c.currency === 'USD' ? 'cents' : 'paise'} (optional)" style="width:230px"><button class="btn" name="d" value="approve">Approve</button><button class="btn ghost" name="d" value="reject">Reject</button></form>`
           : c.status === 'approved' ? `<form class="row" data-claim="${esc(c.id)}" style="margin-top:8px;gap:8px"><input name="note" placeholder="Refund reference" style="flex:1"><button class="btn" name="d" value="refunded">Refund issued in Razorpay or Dodo</button></form>` : ''}</div>`; }).join('');
-    $('#detail').innerHTML = `<h1>Guarantee claims</h1><p class="msg" id="say" hidden></p>
+    $('#detail').innerHTML = `<h1>Interview Guarantee</h1><p class="msg" id="say" hidden></p>
+      <h2>Applications</h2><div class="list">${apps || '<p class="muted small">No applications waiting.</p>'}</div>
+      <h2 style="margin-top:24px">Refund claims</h2>
       <p class="small muted">Before approving, look at their pipeline and inbox for an interview, invitation or offer in the window. Issue the refund in the payment provider's dashboard to the original payment method, then mark it here. Every decision is logged.</p>
       <div class="list">${rows || '<p class="muted small">No claims waiting.</p>'}</div>`;
   }
@@ -127,7 +135,7 @@ dl{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 14px;mar
       ${['verified', 'invoicing'].includes(pl.status) ? `<p class="small muted" style="margin-top:8px">If the employer ends the job within 90 days of joining, unpaid instalments are cancelled.</p><button class="btn sm ghost" data-early="${esc(pl.id)}">The employer ended the job</button>` : ''}</div>`).join('');
     $('#detail').innerHTML = `
       <div class="row" style="justify-content:space-between"><div><h1>${esc(k.candidate.name || k.candidate.email)}</h1><span class="muted small">${esc(k.candidate.email)} · plan ${esc(k.candidate.plan)} · terms ${esc(k.termsVersion)} accepted ${esc(when(k.agreedAt))}</span></div>
-        <div class="row">${!k.partnerId ? '<button class="btn" data-take>Take this case</button>' : mine ? '<span class="pill">Your case</span>' : '<span class="pill">Another partner\'s case</span>'}
+        <div class="row">${k.status === 'requested' ? '<button class="btn ghost" data-decline>Decline application</button>' : ''}${!k.partnerId ? `<button class="btn" data-take>${k.status === 'requested' ? 'Accept and take this case' : 'Take this case'}</button>` : mine ? '<span class="pill">Your case</span>' : '<span class="pill">Another partner\'s case</span>'}
         <select id="status">${['requested', 'active', 'paused', 'offer', 'placed', 'closed'].map(x => `<option${x === k.status ? ' selected' : ''}>${x}</option>`).join('')}</select></div></div>
       <p id="say" class="msg" hidden></p>
       <div class="card"><h2>What they want</h2><dl><dt>Roles</dt><dd>${esc(i.roles)}</dd><dt>Where</dt><dd>${esc(i.locations || '—')} (${esc(k.country)})</dd><dt>Current fixed</dt><dd>${inr(i.currentCtc)}</dd><dt>Expected fixed</dt><dd>${inr(i.expectedCtc)} · fee at that pay ${inr(k.feePreview.fee)}</dd><dt>Notice</dt><dd>${esc(i.noticeDays)} days</dd><dt>Phone</dt><dd>${esc(i.phone || '—')}</dd>${i.notes ? `<dt>Notes</dt><dd>${esc(i.notes)}</dd>` : ''}</dl></div>
@@ -146,6 +154,7 @@ dl{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 14px;mar
     if (t.id === 'claims-btn') return claims(true).catch(err => say(err.message, true));
     if (t.classList.contains('case')) return open(t.dataset.id);
     if (t.hasAttribute('data-take')) return act('take');
+    if (t.hasAttribute('data-decline')){ const why = prompt('Why are we declining? They will read this (a sentence or two).'); if (why && why.trim().length >= 10) act('decline', {reason: why.trim()}); else if (why !== null) say('Write at least a sentence so they know why.', true); return; }
     if (t.dataset.verify) return act('verify', {placementId: t.dataset.verify, fixedCtc: Number(document.querySelector(`[data-ctc="${t.dataset.verify}"]`).value), joiningDate: document.querySelector(`[data-join="${t.dataset.verify}"]`).value});
     if (t.dataset.early){ if (confirm('Did the employer end the job within 90 days of joining? Unpaid instalments will be cancelled.')) act('end-early', {placementId: t.dataset.early, byEmployer: true}); }
   });
@@ -157,7 +166,7 @@ dl{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 14px;mar
   document.addEventListener('submit', e => {
     e.preventDefault(); const f = e.target;
     if (f.dataset.claim){ const d = (e.submitter || {}).value; if (!d) return;
-      return api(`/api/staff/guarantees/${encodeURIComponent(f.dataset.claim)}/${d}`, {note: f.note.value, amount: f.amount ? f.amount.value : ''}).then(() => claims(true)).then(() => say('Saved.')).catch(err => say(err.message, true)); }
+      return api(`/api/staff/guarantees/${encodeURIComponent(f.dataset.claim)}/${d}`, {note: f.note.value, amount: f.amount && f.amount.value ? f.amount.value : ''}).then(() => claims(true)).then(() => say('Saved.')).catch(err => say(err.message, true)); }
     if (f.id === 'propose') return act('propose', {company: f.company.value, title: f.title.value, url: f.url.value, why: f.why.value});
     if (f.id === 'note'){ if (!f.body.value.trim()) return; return act('note', {body: f.body.value, shared: !f.private.checked}); }
   });

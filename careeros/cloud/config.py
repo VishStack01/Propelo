@@ -3,6 +3,8 @@ production refuses to start without the settings that matter (see `check`)."""
 
 from __future__ import annotations
 
+import re
+
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -21,11 +23,20 @@ def _list(name: str) -> list[str]:
     return [x.strip().lower() for x in os.environ.get(name, "").split(",") if x.strip()]
 
 
+def _site_url(v: str) -> str:
+    """The job board's address with a trailing slash, or '' when it isn't a plain https (or local http) URL."""
+    v = (v or "").strip()
+    if not re.match(r"^(https://[a-z0-9.-]+(:\d+)?|http://(127\.0\.0\.1|localhost)(:\d+)?)(/[\w./-]*)?$", v, re.I):
+        return ""
+    return v if v.endswith("/") else v + "/"
+
+
 @dataclass
 class Config:
     app_env: str = "development"  # development | staging | production
     database_url: str = "sqlite:///data/cloud.db"
     public_url: str = "http://127.0.0.1:8000"
+    jobs_site_url: str = "https://vishstack01.github.io/careeros/"  # the public job board; the app shows its company logos
     upload_dir: Path = Path("data/uploads")
     max_upload_mb: int = 5
     user_storage_mb: int = 25
@@ -60,15 +71,17 @@ class Config:
     # Money-back guarantees (see guarantee.py): an interview within GUARANTEE_DAYS on Pro or Ultra, and a job
     # within JOB_GUARANTEE_DAYS with Concierge, or the plan fees paid in that time are refunded.
     guarantee_enabled: bool = False
-    guarantee_days: int = 60
-    guarantee_min_apps: int = 30
-    guarantee_min_weeks: int = 4
+    guarantee_days: int = 45
+    guarantee_min_apps: int = 25
+    guarantee_min_weeks: int = 3
     guarantee_min_matches: int = 40
     guarantee_claim_days: int = 30
     job_guarantee_days: int = 180
-    # The guarantees are paid add-ons for Pro and Ultra members, bought once per guarantee window.
-    guarantee_interview_inr: int = 999
-    guarantee_interview_usd_cents: int = 1900
+    # Pro and Ultra members apply for the Interview Guarantee; once the team accepts them they pay its price once,
+    # and get it back if there's no interview in GUARANTEE_DAYS. The Job Guarantee has no upfront price: it is a
+    # reviewed Concierge application, paid by the placement fee after joining (guarantee_job_inr is unused).
+    guarantee_interview_inr: int = 2999
+    guarantee_interview_usd_cents: int = 3400
     guarantee_job_inr: int = 2999
     dodo_product_guarantee: str = ""   # a one-time Dodo product priced at the Interview Guarantee's dollar price
     security_email: str = ""  # shown in /.well-known/security.txt; falls back to SUPPORT_EMAIL
@@ -105,6 +118,7 @@ class Config:
             app_env=e("APP_ENV", "development").lower(),
             database_url=e("DATABASE_URL", "sqlite:///data/cloud.db"),
             public_url=e("PUBLIC_URL", "http://127.0.0.1:8000").rstrip("/"),
+            jobs_site_url=_site_url(e("JOBS_SITE_URL", "https://vishstack01.github.io/careeros/")),
             upload_dir=Path(e("UPLOAD_DIR", "data/uploads")),
             max_upload_mb=_int("MAX_UPLOAD_MB", 5),
             user_storage_mb=_int("USER_STORAGE_MB", 25),
@@ -135,14 +149,14 @@ class Config:
             concierge_instalments=_int("CONCIERGE_INSTALMENTS", 3),
             concierge_attribution_days=_int("CONCIERGE_ATTRIBUTION_DAYS", 180),
             guarantee_enabled=e("GUARANTEE", "off").strip().lower() in ("on", "1", "true", "yes"),
-            guarantee_days=_int("GUARANTEE_DAYS", 60),
-            guarantee_min_apps=_int("GUARANTEE_MIN_APPLICATIONS", 30),
-            guarantee_min_weeks=_int("GUARANTEE_MIN_WEEKS", 4),
+            guarantee_days=_int("GUARANTEE_DAYS", 45),
+            guarantee_min_apps=_int("GUARANTEE_MIN_APPLICATIONS", 25),
+            guarantee_min_weeks=_int("GUARANTEE_MIN_WEEKS", 3),
             guarantee_min_matches=_int("GUARANTEE_MIN_MATCHES", 40),
             guarantee_claim_days=_int("GUARANTEE_CLAIM_DAYS", 30),
             job_guarantee_days=_int("JOB_GUARANTEE_DAYS", 180),
-            guarantee_interview_inr=_int("GUARANTEE_INTERVIEW_PRICE_INR", 999),
-            guarantee_interview_usd_cents=_int("GUARANTEE_INTERVIEW_PRICE_USD_CENTS", 1900),
+            guarantee_interview_inr=_int("GUARANTEE_INTERVIEW_PRICE_INR", 2999),
+            guarantee_interview_usd_cents=_int("GUARANTEE_INTERVIEW_PRICE_USD_CENTS", 3400),
             guarantee_job_inr=_int("JOB_GUARANTEE_PRICE_INR", 2999),
             dodo_product_guarantee=e("DODO_PRODUCT_GUARANTEE", "").strip(),
             security_email=e("SECURITY_EMAIL", "").strip(),

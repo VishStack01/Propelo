@@ -127,6 +127,8 @@ def test_delivery_threads_follow_ups_and_logs_the_role(setup):
     job = c.get("/api/d/jobs/r1").json()["data"]
     assert job["outreach"]["email"]["status"] == "sent" and job["outreach"]["email"]["auto"] is True
     assert "automatically, from your Gmail" in job["timeline"][-1]["event"]
+    with cloud.db.tx() as t:  # pin the send to the test's Monday so the follow-up days don't depend on the real clock
+        t.execute("UPDATE outreach_sends SET sent_at = ? WHERE user_id = ?", (_iso(MONDAY_1030_IST), c.uid))
 
     # day 7: a follow-up in the same thread; nothing earlier
     assert _plan(cloud, c.uid, MONDAY_1030_IST + timedelta(days=4)) == []

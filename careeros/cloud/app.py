@@ -67,6 +67,11 @@ class Principal:
         return self.user["id"]
 
 
+
+def _origin(url: str) -> str:
+    m = re.match(r"^(https?://[^/]+)", url or "")
+    return m.group(1) if m else ""
+
 def pdf_text(data: bytes, max_pages: int = 8, max_chars: int = 40000) -> str:
     """Best-effort text of an uploaded resume, so the user's agent can read it without the file."""
     try:
@@ -251,9 +256,10 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
         if cfg.secure_cookies:
             response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
         if not request.url.path.startswith("/_blob/"):
+            logo_src = (" " + _origin(cfg.jobs_site_url)) if cfg.jobs_site_url else ""
             response.headers["Content-Security-Policy"] = (
                 f"default-src 'self'; script-src 'self' 'nonce-{nonce}'; manifest-src 'self'; worker-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-                "font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; "
+                f"font-src https://fonts.gstatic.com; img-src 'self' data:{logo_src}; connect-src 'self'{logo_src}; frame-ancestors 'none'; "
                 "base-uri 'none'; form-action 'self'; object-src 'none'")
         if request.url.path.startswith("/api/"):
             response.headers.setdefault("Cache-Control", "no-store")
@@ -319,12 +325,15 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
                          f'<div class="price">{price}</div><ul>{items}</ul><a class="{cls}" href="/signup">Start free</a></article>')
         extras = ""
         for ad in plans.addons(cfg):
-            usd_part = f'<span class="usd">${ad["priceUsd"]}</span>' if ad["priceUsd"] else f'<span class="usd">₹{ad["priceInr"]:,} (rupees only)</span>'
+            if ad["priceInr"]:
+                price = f'<span class="inr">₹{ad["priceInr"]:,}</span><span class="usd">${ad["priceUsd"]}</span>'
+            else:
+                price = '<span>No upfront fee</span>'
             extras += (f'<article class="addon"><div><h3>{html_escape(ad["name"])}</h3><p>{html_escape(ad["line"])}</p></div>'
-                       f'<p class="aprice"><span class="inr">₹{ad["priceInr"]:,}</span>{usd_part}<small>one time</small></p></article>')
+                       f'<p class="aprice">{price}<small>{html_escape(ad["when"])}</small></p></article>')
         if extras:
-            extras = ('<section class="addons"><h2>Add-ons for Pro and Ultra members</h2><p class="note">Not part of any plan. Buy one in the app once '
-                      'you\'re on Pro or Ultra and eligible. <a href="/terms#guarantees">Guarantee terms</a></p>' + extras + '</section>')
+            extras = ('<section class="addons"><h2>Guarantees for Pro and Ultra members</h2><p class="note">Not part of any plan. Apply in the app; '
+                      'a person on our team reviews every application. <a href="/terms#guarantees">Guarantee terms</a></p>' + extras + '</section>')
         text = (STATIC / "pricing.html").read_text(encoding="utf-8").replace("<!--PLANS-->", "".join(cards)).replace("<!--ADDONS-->", extras) \
             .replace('<body data-cur="INR">', f'<body data-cur="{cur}">', 1).replace("<script>", f'<script nonce="{request.state.nonce}">')
         return HTMLResponse(text)
@@ -590,7 +599,7 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
             ai = plans.ai_status(c, cfg, p.user)
         quota = plans.plan_info(cfg, plan)["storageMb"]
         return dict(repo.public_user(p.user), via=p.kind, plan=plan, ai=ai, billing=cfg.billing_enabled,
-                    storage={"usedBytes": used, "quotaBytes": quota * 1024 * 1024},
+                    storage={"usedBytes": used, "quotaBytes": quota * 1024 * 1024}, jobsSite=cfg.jobs_site_url,
                     feed={"generatedAt": state.get("generatedAt"), "inventory": state.get("records"), "companies": state.get("companies")})
 
     @app.patch("/api/me")
@@ -1568,6 +1577,22 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
         with db.tx() as c:
             return guarantee.view(c, cfg, p.user)
 
+    @app.post("/api/guarantee/interview/apply")
+    def guarantee_apply(request: Request, body: dict = Body(default={}), p: Principal = Depends(session_only)):
+        """Apply for the Interview Guarantee (Pro and Ultra). The team reviews it; payment comes only after acceptance."""
+        if body.get("agree") is not True or body.get("termsVersion") != guarantee.TERMS_VERSION:
+            raise err(400, "Read and accept the guarantee terms first.", "guarantee")
+        try:
+            with db.tx() as c:
+                limited(c, f"guarantee:{p.uid}", 10, 86400)
+                guarantee.apply(c, cfg, p.user, {"roles": body.get("roles"), "note": body.get("note")}, client_ip(request))
+                send(c, p.user["email"], mail.guarantee(cfg.public_url, "interview", "applied"))
+                for to in staff_emails(c):
+                    send(c, to, mail.guarantee(cfg.public_url, "interview", "staff-applied"))
+                return guarantee.view(c, cfg, p.user)
+        except guarantee.GuaranteeError as e:
+            raise gerr(e) from None
+
     @app.post("/api/guarantee/{kind}/buy")
     def guarantee_buy(kind: str, request: Request, body: dict = Body(default={}), p: Principal = Depends(session_only)):
         """Buy a guarantee add-on (Pro and Ultra only): returns the payment page. It starts when the payment goes through."""
@@ -1615,7 +1640,7 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
     def staff_guarantees(p: Principal = Depends(staff_only)):
         with db.tx() as c:
             repo.audit(c, p.uid, "guarantee-claims-viewed", "")
-            return {"claims": guarantee.staff_list(c, cfg)}
+            return {"claims": guarantee.staff_list(c, cfg), "days": cfg.guarantee_days}
 
     @app.post("/api/staff/guarantees/{gid}/{decision}")
     def staff_guarantee_decide(gid: str, decision: str, body: dict = Body(default={}), p: Principal = Depends(staff_only)):
@@ -1628,9 +1653,10 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
             with db.tx() as c:
                 g = guarantee.decide(c, cfg, p.uid, gid, decision, str(body.get("note") or ""), amount)
                 u = c.one("SELECT email FROM users WHERE id = ?", (g["user_id"],))
-                if u and decision in ("approve", "reject"):
-                    send(c, u["email"], mail.guarantee(cfg.public_url, g["kind"], "approved" if decision == "approve" else "rejected"))
-                return {"claims": guarantee.staff_list(c, cfg)}
+                what = {"approve": "approved", "reject": "rejected", "accept": "accepted", "decline": "declined"}.get(decision)
+                if u and what:
+                    send(c, u["email"], mail.guarantee(cfg.public_url, g["kind"], what))
+                return {"claims": guarantee.staff_list(c, cfg), "days": cfg.guarantee_days}
         except guarantee.GuaranteeError as e:
             raise gerr(e) from None
 
@@ -1665,11 +1691,22 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
             with db.tx() as c:
                 case = _staff_case(c, cid, p)
                 owner = c.one("SELECT id, email FROM users WHERE id = ?", (case["user_id"],))
-                if action == "take":
+                if action == "decline":
+                    # A Job Guarantee (Concierge) application the team doesn't accept: closed with a reason the member reads.
+                    why = " ".join(str(body.get("reason") or "").split())[:600]
+                    if case["status"] != "requested":
+                        raise concierge.ConciergeError("Only an application waiting for review can be declined.")
+                    if len(why) < 10:
+                        raise concierge.ConciergeError("Say why, in a sentence the member will read.")
+                    concierge.set_status(c, cid, "closed", "Not accepted: " + why)
+                    send(c, owner["email"], mail.concierge(cfg.public_url, "declined"))
+                elif action == "take":
                     if case["partner_id"] and case["partner_id"] != p.uid and not p.user["is_admin"]:
                         raise concierge.ConciergeError("Another partner has this case.")
                     c.execute("UPDATE concierge_cases SET partner_id = ?, status = CASE WHEN status = 'requested' THEN 'active' ELSE status END, updated_at = ? WHERE id = ?",
                               (str(body.get("partnerId") or p.uid) if p.user["is_admin"] else p.uid, now_iso(), cid))
+                    if case["status"] == "requested":
+                        send(c, owner["email"], mail.concierge(cfg.public_url, "accepted"))
                 elif action == "status":
                     concierge.set_status(c, cid, str(body.get("status") or ""), str(body.get("reason") or ""))
                 elif action == "note":

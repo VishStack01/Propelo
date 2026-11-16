@@ -27,7 +27,7 @@ from email.utils import format_datetime
 from pathlib import Path
 from xml.sax.saxutils import escape
 
-from . import logos
+from . import logos, showcase
 from . import tags as tagger
 from .models import iso
 
@@ -74,6 +74,7 @@ def compact(r: dict) -> dict:
         "ar": t.get("archetype", ""), "lg": (f.get("legit") or {}).get("tier", ""), "rp": (f.get("reposts") or {}).get("count", 0),
         "pt": t.get("payTier", tagger.pay_tier(f)), "ph": f.get("salaryHigh"),
         "src": r.get("source", ""), "via": r.get("via", ""), "u": r["url"],
+        **({"tp": 1} if showcase.top_name(r.get("company", "")) else {}),
     }
 
 
@@ -164,6 +165,9 @@ def build(feed_dir: str | Path, out_dir: str | Path, demo: str | Path | None = N
         (out / "logos").mkdir()
         for f in used:
             shutil.copy(Path(logos_dir) / "files" / f, out / "logos" / f)
+        # Company slug -> logo, for the Propelo app's role lists (it shows the same logos as the board).
+        lmap = {c["cs"]: c["lo"][len("logos/"):] for c in compacts if c.get("lo")}
+        (out / "logos" / "map.json").write_text(json.dumps(lmap, separators=(",", ":"), sort_keys=True), encoding="utf-8")
     companies: dict[str, dict] = {}
     for c in compacts:
         e = companies.setdefault(c["cs"], {"name": c["c"], "slug": c["cs"], "jobs": 0, **({"lo": c["lo"]} if c.get("lo") else {})})
@@ -210,6 +214,14 @@ def build(feed_dir: str | Path, out_dir: str | Path, demo: str | Path | None = N
                 dest = out / f.relative_to(site_dir)
                 dest.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy(f, dest)
+        # The website's examples and logo strip, from this scan's real roles at top companies.
+        idx = out / "index.html"
+        logo_map = {c["cs"]: c["lo"] for c in compacts if c.get("lo")}
+        try:  # "posted 2 h ago" is counted from the scan, which is what the page describes
+            scan_at = datetime.fromisoformat(str(summary.get("generatedAt")).replace("Z", "+00:00"))
+        except ValueError:
+            scan_at = now
+        idx.write_text(showcase.render(idx.read_text(encoding="utf-8"), records, logo_map, summary.get("openings") or len(records), scan_at), encoding="utf-8")
     else:
         (out / "index.html").write_text(board, encoding="utf-8")
     (out / ".nojekyll").write_text("")

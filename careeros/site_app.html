@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Propelo Jobs</title>
-<meta name="description" content="Open roles in India and remote worldwide, read straight from company career pages every hour: engineering, AI and data, product and design, marketing, sales, finance and operations.">
+<meta name="description" content="Open roles in India and around the world, read straight from company career pages every hour, with top companies and well-paid roles one tap away: engineering, AI and data, product, marketing, sales, finance, operations, healthcare, education and more.">
 <link rel="alternate" type="application/rss+xml" title="Propelo Jobs" href="feed.xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -306,7 +306,7 @@ footer{color:var(--muted)}
 </style>
 </head>
 <body>
-<div class="strip"><div class="wrap"><span id="strip">Open roles in India and remote, read straight from company career pages.</span></div></div>
+<div class="strip"><div class="wrap"><span id="strip">Open roles in India and around the world, read straight from company career pages.</span></div></div>
 <header class="top"><div class="wrap">
   <a class="brand" href="#/" aria-label="Propelo jobs">propelo<span class="dot" aria-hidden="true"></span></a>
   <nav class="nav" aria-label="Main">
@@ -322,13 +322,15 @@ footer{color:var(--muted)}
 <main id="v-jobs">
   <section class="wrap hero">
     <div class="kicker" aria-hidden="true"><span>Job board</span><span>From company career pages</span></div>
-    <h1 id="h1">Open roles in India and remote</h1>
+    <h1 id="h1">Open roles in India and around the world</h1>
     <p class="sub" id="sub">Read straight from company career pages and remote job boards. Every role links to the company's own application page.</p>
     <p class="meta-line" id="metaline"></p>
     <form class="search" id="sform" role="search">
       <input id="q" type="search" placeholder="Try: Bengaluru AI internships, 0-1 years, 8+ LPA" aria-label="Search roles in plain words" autocomplete="off">
       <select id="where" aria-label="Where">
-        <option value="any">Anywhere you can work from India</option>
+        <option value="any">Everywhere</option>
+        <option value="india-ok">Anywhere you can work from India</option>
+        <option value="abroad">Outside India</option>
         <option value="remote">Remote, open to India</option>
         <option value="worldwide">Remote worldwide</option>
         <option value="remote-india">Remote within India</option>
@@ -392,15 +394,17 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt
 const fmt = n => Number(n).toLocaleString('en-IN');
 const safeUrl = u => /^https?:\/\//i.test(u || '') ? u : '';
 const WHERE_LABEL = {ww:'Remote worldwide', ro:'Remote, open to India', ri:'Remote, India', ru:'Remote, check eligibility', rx:'Remote, not open to India', s:'South India', i:'India', a:'Abroad', u:''};
-const WHERE_SETS = {any:['ww','ro','ri','ru','s','i','u'], remote:['ww','ro','ri'], worldwide:['ww'], 'remote-india':['ri'], south:['s'], india:['s','i']};
+// 'any' is everywhere, worldwide; 'india-ok' keeps roles someone in India can take.
+const WHERE_SETS = {any:['ww','ro','ri','ru','s','i','u','a','rx'], 'india-ok':['ww','ro','ri','ru','s','i','u'], abroad:['a','rx'], remote:['ww','ro','ri'], worldwide:['ww'], 'remote-india':['ri'], south:['s'], india:['s','i']};
 const LEVELS = ['Fresher','Entry','Internship','Mid','Senior','Not stated'];
 /* Job families (top-level categories) and one-tap lists, like the big US boards have. */
 const FAMILIES = ['Software Engineering','AI & Data','Product & Design','Marketing & Growth','Sales & Accounts','Finance & Strategy','Operations & People','Engineering & Trades','Healthcare','Education','Legal','Retail & Hospitality','Media & Writing'];
 const LISTS = {
+  top: {label: 'Top companies', test: j => j.tp === 1},
   internships: {label: 'Internships', test: j => j.lv === 'Internship' || j.ty === 'Internship'},
   newgrad: {label: 'New grad & freshers', test: j => j.lv === 'Fresher' || j.lv === 'Entry'},
   remote: {label: 'Remote', test: j => ['ww','ro','ri'].includes(j.w)},
-  pay20: {label: '20 LPA+', test: j => j.pt === '20+'},
+  pay20: {label: 'Well paid (20 LPA+)', test: j => j.pt === '20+'},
   fresh: {label: 'Posted today', test: j => (hoursAgo(j.p) ?? 1e9) < 24},
   saved: {label: 'Saved', test: j => SAVED.has(j.id), mine: true}
 };
@@ -523,7 +527,7 @@ function facet(title, key, values, label){
 }
 function renderFilters(){
   const whereCounts = {}; for (const j of ALL) if (pass(j, 'where')) for (const [k, set] of Object.entries(WHERE_SETS)) if (set.includes(j.w)) whereCounts[k] = (whereCounts[k] || 0) + 1;
-  const whereOpts = [['any','Anywhere you can work from India'],['remote','Remote, open to India'],['worldwide','Remote worldwide'],['remote-india','Remote within India'],['south','South India, on-site or hybrid'],['india','India, on-site or hybrid']]
+  const whereOpts = [['any','Everywhere'],['india-ok','Anywhere you can work from India'],['abroad','Outside India'],['remote','Remote, open to India'],['worldwide','Remote worldwide'],['remote-india','Remote within India'],['south','South India, on-site or hybrid'],['india','India, on-site or hybrid']]
     .map(([k, l]) => `<label class="opt"><input type="radio" name="where" data-f="where" value="${k}" ${F.where === k ? 'checked' : ''}><span>${l}</span><span class="n">${fmt(whereCounts[k] || 0)}</span></label>`).join('');
   const postedCounts = {}; for (const j of ALL) if (pass(j, 'posted')){ const h = hoursAgo(j.p); for (const [d] of POSTED) if (!d || (h != null && h <= Number(d) * 24)) postedCounts[d] = (postedCounts[d] || 0) + 1; }
   const postedOpts = POSTED.map(([d, l]) => `<label class="opt"><input type="radio" name="posted" data-f="posted" value="${d}" ${F.posted === d ? 'checked' : ''}><span>${l}</span><span class="n">${fmt(postedCounts[d] || 0)}</span></label>`).join('');
@@ -572,7 +576,7 @@ function renderUnderstood(){
   if (F.q) add('q', 'Words: ' + F.q);
   if (F.city) add('city', F.city);
   if (F.list) add('list', LISTS[F.list].label);
-  if (F.where !== 'any') add('where', {remote:'Remote, open to India', worldwide:'Remote worldwide', 'remote-india':'Remote within India', south:'South India', india:'India'}[F.where]);
+  if (F.where !== 'any') add('where', {'india-ok':'Open to people in India', abroad:'Outside India', remote:'Remote, open to India', worldwide:'Remote worldwide', 'remote-india':'Remote within India', south:'South India', india:'India'}[F.where]);
   if (F.lv.size) add('lv', [...F.lv].join(', '));
   if (F.minpay) add('minpay', F.minpay + '+ LPA stated');
   if (F.posted) add('posted', POSTED.find(x => x[0] === F.posted)[1]);
@@ -712,7 +716,7 @@ window.addEventListener('hashchange', route);
   } catch(e) { $('#count').textContent = 'The role list could not load. Refresh the page to try again.'; return; }
   ALL.forEach(j => { j.fm = j.fm || 'Other'; j.cat = j.cat || []; j.sk = j.sk || []; j.pk = j.pk || []; j.ar = j.ar || ''; j.lg = j.lg || ''; j.rp = j.rp || 0; });
   const upd = META.feedAt ? ago(META.feedAt) : '';
-  $('#h1').textContent = `${fmt(ALL.length)} open roles in India and remote`;
+  $('#h1').textContent = `${fmt(ALL.length)} open roles in India and around the world`;
   $('#sub').textContent = `Read straight from ${fmt(META.companyBoards || 0)} company career pages and ${fmt(META.remoteBoards || 0)} remote job boards${upd ? ', updated ' + upd : ''}. Every role links to the company's own application page.`;
   $('#strip').innerHTML = '';
   $('#metaline').innerHTML = `<b>${fmt(META.companiesTracked || 0)}</b> companies tracked · <b>${fmt(ALL.filter(j => (hoursAgo(j.p) ?? 1e9) < 24).length)}</b> roles posted in the last 24 hours · <b>${fmt(ALL.filter(j => j.lo).length)}</b> with the company's logo`;

@@ -2,6 +2,17 @@
 
 All notable changes to CareerOS. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [semantic versioning](https://semver.org/).
 
+## [2.6.0] - 2026-11-16
+
+### Changed
+- **Guarantees are applied for, and the team decides.** Neither guarantee is bought directly. Pro and Ultra members apply from the Guarantees tab, a one-time pop-up or a card on Home, and a person reviews each application within 2 working days, accepting or declining with a reason. **Interview Guarantee:** once accepted, pay ₹2,999 (or $34) within 7 days for 45 days; send 25 applications in at least 3 different weeks; no interview, and the full ₹2,999 comes back (plan fees aren't part of it). **Job Guarantee:** the Concierge service under a clearer name, with nothing upfront and 8% of yearly fixed pay (6% above ₹20 lakh) only after joining. `/staff` lists applications with Accept and Decline, and Concierge cases waiting for review can be declined with a reason. Terms version 2026-11-16b; migration `0008_guarantee_review.sql`.
+- **Real company logos in more places.** A checked list of 440+ well-known employers' own websites (`careeros/data/company_domains.json`) covers Workday codes like "Hpe" and "Jci" and sites that block the automatic check, roughly doubling the roles that get their company's logo on the job board. The app's role lists and application pages show the same logos (from the job board's `logos/map.json`; set `JOBS_SITE_URL`).
+- **The website shows real roles and real companies.** A strip of well-known companies hiring now, with their logos and open-role counts, and the example roles on the page are real recent openings at those companies, in India, remote and abroad. The job board defaults to roles everywhere, with "Top companies" and "Well paid" lists.
+
+### Fixed
+- The phone mockups' dock showed empty squares; it has icons now.
+- A test about day-7 follow-ups depended on the real clock.
+
 ## [2.5.0] - 2026-11-16
 
 ### Changed
