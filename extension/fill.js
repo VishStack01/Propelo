@@ -22,9 +22,21 @@
     ["currentCompany", /current (company|employer|organi[sz]ation)|present (company|employer)|^company( name)?$/i],
     ["currentTitle", /current (title|role|designation|position|job title)|^(job )?title$|designation/i],
     ["experienceYears", /(years|yrs)( of)? (total |relevant |work |professional )?experience|total experience|experience \((in )?years\)|^experience$/i],
-    ["noticePeriod", /notice period|how soon can you (join|start)|earliest (start|joining)|availability to (join|start)/i],
-    ["expectedCtcLpa", /expected (ctc|salary|compensation|pay)|salary expectation|desired (salary|compensation)|compensation expectation/i],
-    ["currentCtcLpa", /current (ctc|salary|compensation|pay)|present (ctc|salary)/i],
+    // Indian HR screening questions, specific ones first.
+    ["noticeBuyout", /buy ?-?out|early (release|relieving)|notice (period )?(is )?negotiable|negotiable notice/i],
+    ["servingNotice", /serving (your |the )?notice|(currently )?(in|on) (your |the )?notice period|resigned already|have you resigned/i],
+    ["lastWorkingDay", /last working (day|date)|\blwd\b|relieving date|date of relieving/i],
+    ["noticePeriod", /notice period|how soon can you (join|start)|earliest (start|joining)|availability to (join|start)|joining (time|availability)|when can you join/i],
+    ["expectedCtcLpa", /expected (ctc|salary|compensation|pay|package)|salary expectation|desired (salary|compensation)|compensation expectation|\bectc\b/i],
+    ["fixedCtcLpa", /fixed (ctc|pay|component|salary|compensation)|base (salary|pay)/i],
+    ["variableCtcLpa", /variable (pay|ctc|component|compensation)|incentives?|bonus component|annual bonus/i],
+    ["currentCtcLpa", /current (ctc|salary|compensation|pay|package)|present (ctc|salary)|\bcctc\b|last drawn/i],
+    ["bondOk", /\bbond\b|service agreement|commitment (period|agreement)/i],
+    ["currentlyEmployed", /currently (employed|working)|are you (currently )?(employed|working)|employment status/i],
+    ["gapReason", /\bgap\b|career break|break in (your )?(career|employment|education)/i],
+    ["shiftsOk", /night shifts?|rotational shifts?|shift timings?|work in shifts/i],
+    ["officeOk", /work(ing)? from (the )?office|in[- ]office|on[- ]?site|onsite|days a week (in|from) (the )?office/i],
+    ["preferredCities", /preferred (job |work )?(location|city|cities)|location preference|which (city|cities|location)/i],
     ["graduationYear", /graduation (year|date)|year of (graduation|passing)|passing year|batch/i],
     ["cgpa", /\bc?gpa\b|cgpa|^percentage$|percentage (scored|obtained)|aggregate (marks|score|percentage)|academic score|marks obtained/i],
     ["branch", /\bbranch\b|speciali[sz]ation|^major$|^stream$|^discipline$|field of study/i],
@@ -42,7 +54,10 @@
   ];
   // Questions about someone else (a referrer, a reference, an emergency contact) are never filled with your details.
   var OTHER_PERSON = /referr(er|ed by|ing employee)|\breference\b|emergency|guardian|father|mother|spouse|parent|recruiter'?s|manager'?s|employee'?s/i;
-  var CHOICE_KEYS = { workAuthIndia: 1, sponsorshipAbroad: 1, relocate: 1, noticePeriod: 1, degree: 1, backlogs: 1 };
+  var CHOICE_KEYS = { workAuthIndia: 1, sponsorshipAbroad: 1, relocate: 1, noticePeriod: 1, degree: 1, backlogs: 1, servingNotice: 1, noticeBuyout: 1,
+    bondOk: 1, currentlyEmployed: 1, shiftsOk: 1, officeOk: 1, preferredCities: 1 };
+  var CTC = { expectedCtcLpa: 1, currentCtcLpa: 1, fixedCtcLpa: 1, variableCtcLpa: 1 };
+  var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   function words(s) { return String(s || "").toLowerCase().replace(/[^a-z0-9 ]+/g, " ").split(/\s+/).filter(function (w) { return w.length > 2 && !/^(the|and|you|your|for|with|this|that|are|our|why|what|how|please|tell|describe)$/.test(w); }); }
   // A saved answer fits a question when they share most of their words, and a company-only answer
   // is used only on that company's form.
@@ -119,8 +134,21 @@
     return best;
   }
 
-  function valueFor(key, a) {
+  function valueFor(key, a, label, el) {
     var v = a[key];
+    if (/^prefer not/i.test(String(v || ""))) v = "";
+    if (key === "lastWorkingDay" && v) {
+      var d = new Date(String(v) + "T00:00:00");
+      if (isNaN(d) || d < new Date(new Date().toDateString()) || !/^yes/i.test(a.servingNotice || "")) v = "";  // only a real, upcoming date
+      else if (!el || el.type !== "date") v = d.getDate() + " " + MON[d.getMonth()] + " " + d.getFullYear();
+    }
+    if (CTC[key] && v !== undefined && v !== null && v !== "") {
+      // Stored in lakhs a year. A form that asks in rupees gets rupees; a monthly figure is left to you.
+      var l = String(label || "") + " " + String(el && el.placeholder || "");
+      if (/per month|monthly|\/\s*month|\bpm\b/i.test(l) || (key !== "expectedCtcLpa" && /expect|desir/i.test(label || ""))) v = "";
+      else if (!/lpa|lakh|\blacs?\b|\blac\b|in l\b/i.test(l) && (/\binr\b|rupees|₹|\brs\.?\b|in numbers|absolute/i.test(l) || /\d{5,}/.test(String(el && el.placeholder || "")) || +(el && el.min) >= 10000)) v = Math.round(parseFloat(v) * 100000);
+    }
+    if (key === "preferredCities" && v && el && (el.tagName === "SELECT" || el.type === "radio" || el.__combo)) v = String(v).split(/[,;/]/)[0].trim();
     if (key === "firstName" && !v) v = String(a.fullName || "").split(" ")[0];
     if (key === "lastName" && !v) v = String(a.fullName || "").split(" ").slice(1).join(" ");
     if (key === "sponsorshipAbroad" && /not applicable/i.test(v || "")) v = "No";
@@ -229,21 +257,68 @@
     return cur + " " + lo + (hi && hi !== lo ? "–" + hi : "") + (unit ? " per " + unit : "");
   }
 
-  window.__careerosFill = function (data) {
-    var out = { host: location.hostname, filled: [], needs: [], skippedSensitive: 0, resume: "", blocked: false };
-    if (BLOCKED.test(location.hostname)) { out.blocked = true; return out; }
+  // Custom dropdowns (Workday, Angular Material, react-select): open, pick the option that matches, or close and leave it.
+  var COMBO = '[role=combobox], [aria-haspopup=listbox], button[aria-haspopup=true][aria-expanded]';
+  function isCombo(el) { return el.matches && el.matches(COMBO) && !(el.tagName === "SELECT"); }
+  var PLACEHOLDER = /^(select|choose|please select|search|type to search|--|none selected|select one|select\.\.\.)/i;
+  function comboHasValue(el) {
+    if (el.tagName === "INPUT") {
+      if (String(el.value || "").trim()) return true;
+      var box = el.closest("[class*=container], [class*=control], [class*=select]") || el.parentElement;
+      return !!(box && box.querySelector("[class*=singleValue], [class*=single-value], [class*=multiValue], [class*=multi-value], [data-automation-id=selectedItem]"));
+    }
+    var t = clean(el.textContent || "");
+    return !!t && !PLACEHOLDER.test(t) && !/^\s*$/.test(t);
+  }
+  function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  function press(el) { ["pointerdown", "mousedown", "pointerup", "mouseup", "click"].forEach(function (t) { el.dispatchEvent(new MouseEvent(t, { bubbles: true, cancelable: true, view: window })); }); }
+  function optionsFor(el) {
+    var ids = (el.getAttribute("aria-controls") || el.getAttribute("aria-owns") || "").split(/\s+/).filter(Boolean), scope = null;
+    for (var i = 0; i < ids.length && !scope; i++) scope = document.getElementById(ids[i]);
+    var list = Array.prototype.slice.call((scope || document).querySelectorAll("[role=option]"));
+    return list.filter(function (o) { var r = o.getBoundingClientRect(); return r.width > 0 && r.height > 0 && o.getAttribute("aria-disabled") !== "true"; })
+      .map(function (o) { return { el: o, text: clean(o.textContent) }; });
+  }
+  function fillCombo(el, data, out) {
+    var a = data.applicant || {}, label = labelOf(el), hint = hints(el), key = matchKey(label, hint);
+    el.setAttribute("data-careeros-seen", "1");
+    if (key === "__sensitive") { out.skippedSensitive++; return Promise.resolve(); }
+    if (comboHasValue(el)) return Promise.resolve();
+    el.__combo = true;
+    var want = key ? valueFor(key, a, label, el) : "";
+    if (/gender|ethnic|race|veteran|disabilit|caste|religio/i.test(label)) want = "";
+    if (!want) { if (required(el, label)) { out.needs.push({ label: label || "A choice", why: "Pick the answer that's true for you." }); mark(el, "needs"); } return Promise.resolve(); }
+    var typed = false;
+    try { el.scrollIntoView({ block: "center" }); } catch (e) { /* ignore */ }
+    press(el);
+    if (el.tagName === "INPUT") { setValue(el, String(want).split(/[,(]/)[0].trim()); el.focus(); typed = true; }
+    return wait(350).then(function () {
+      var hit = pickOption(optionsFor(el), want);
+      if (hit) { press(hit.el); mark(el, "filled"); out.filled.push({ label: label || key, value: hit.text }); return wait(150); }
+      el.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+      if (typed) setValue(el, "");
+      if (required(el, label)) { out.needs.push({ label: label || "A choice", why: "None of the choices matched your details. Pick one yourself." }); mark(el, "needs"); }
+      return wait(100);
+    });
+  }
+
+  function pass(data, out, onlyNew) {
     var a = (data && data.applicant) || {};
-    if (/prefer not/i.test(a.backlogs || "")) delete a.backlogs;
-    out.fromAnswers = 0;
-    var seenRadio = {};
+    var seenRadio = {}, combos = [];
     var fields = Array.prototype.slice.call(document.querySelectorAll("input, textarea, select"));
+    Array.prototype.slice.call(document.querySelectorAll(COMBO)).forEach(function (c) { if (c.tagName !== "INPUT" && c.tagName !== "SELECT" && fields.indexOf(c) < 0) fields.push(c); });
     fields.forEach(function (el) {
+      if (onlyNew && el.getAttribute("data-careeros-seen")) return;
       var type = (el.type || "").toLowerCase();
+      if (el.tagName !== "INPUT" && el.tagName !== "TEXTAREA" && el.tagName !== "SELECT") { if (visible(el)) combos.push(el); return; }
       if (/^(submit|button|reset|image|hidden|password|checkbox|range|color|search)$/.test(type)) {
-        if (type === "checkbox" && required(el, labelOf(el)) && !el.checked && visible(el)) { out.needs.push({ label: labelOf(el) || "A required checkbox", why: "Tick it yourself if it's true." }); mark(el, "needs"); }
+        if (type === "checkbox" && !el.getAttribute("data-careeros-seen") && required(el, labelOf(el)) && !el.checked && visible(el)) { out.needs.push({ label: labelOf(el) || "A required checkbox", why: "Tick it yourself if it's true." }); mark(el, "needs"); }
+        if (type === "checkbox" && visible(el)) el.setAttribute("data-careeros-seen", "1");
         return;
       }
       if (!visible(el)) return;
+      el.setAttribute("data-careeros-seen", "1");
+      if (el.tagName === "INPUT" && isCombo(el) && type !== "radio") { combos.push(el); return; }
       var label = labelOf(el), hint = hints(el), key = matchKey(label, hint);
       if (key === "__sensitive") { out.skippedSensitive++; if (required(el, label)) { out.needs.push({ label: label || "A private field", why: "Propelo never fills this. Type it yourself if you choose to share it." }); mark(el, "needs"); } return; }
 
@@ -260,10 +335,11 @@
       if (type === "radio") {
         if (seenRadio[el.name]) return; seenRadio[el.name] = 1;
         var group = Array.prototype.slice.call(document.querySelectorAll('input[type=radio][name="' + (window.CSS ? CSS.escape(el.name) : el.name) + '"]'));
+        group.forEach(function (r) { r.setAttribute("data-careeros-seen", "1"); });
         if (group.some(function (r) { return r.checked; })) return;
         var q = questionOf(el, group);
         var gkey = matchKey(q, el.name || "");
-        var want = gkey && gkey !== "__sensitive" && CHOICE_KEYS[gkey] ? valueFor(gkey, a) : gkey === "__sensitive" ? "" : "";
+        var want = gkey && gkey !== "__sensitive" && CHOICE_KEYS[gkey] ? valueFor(gkey, a, q, el) : "";
         var opts = group.map(function (r) { return { el: r, text: labelOf(r) || r.value }; });
         var hit = want ? pickOption(opts, want) : null;
         if (hit) { hit.el.click(); mark(hit.el, "filled"); out.filled.push({ label: q, value: hit.text }); }
@@ -273,14 +349,16 @@
 
       var current = el.tagName === "SELECT" ? (el.selectedIndex > 0 ? el.value : "") : el.value;
       if (String(current || "").trim()) return; // never overwrite what's there
-      var v = key ? valueFor(key, a) : "";
+      var v = key ? valueFor(key, a, label, el) : "";
       if (key === "gender" || /gender|ethnic|race|veteran|disabilit|caste|religio/i.test(label)) v = ""; // voluntary questions stay with you
       if (el.tagName === "SELECT") {
         var o = v ? pickOption(Array.prototype.slice.call(el.options).map(function (x) { return { el: x, text: x.text || x.value }; }), v) : null;
         if (o) { setValue(el, o.el.value); mark(el, "filled"); out.filled.push({ label: label, value: o.text }); return; }
-      } else if (v) {
+      } else if (v !== "" && v !== null && v !== undefined) {
+        v = String(v);
         if (type === "number" && isNaN(parseFloat(v))) v = "";
         if (type === "email" && v.indexOf("@") < 0) v = "";
+        if (type === "date" && !/^\d{4}-\d{2}-\d{2}$/.test(v)) v = "";
         if (v) { setValue(el, v); mark(el, "filled"); out.filled.push({ label: label || key, value: v }); return; }
       }
       var saved = (el.tagName === "TEXTAREA" || type === "text" || !type) && !key ? savedAnswer(label, data.answers, data.company) : null;
@@ -290,6 +368,47 @@
         mark(el, "needs");
       }
     });
-    return out;
+    // Dropdowns one at a time, since each opens a list of its own.
+    return combos.slice(0, 30).reduce(function (p, el) { return p.then(function () { return fillCombo(el, data, out); }); }, Promise.resolve());
+  }
+
+  function blank() { return { host: location.hostname, filled: [], needs: [], skippedSensitive: 0, resume: "", blocked: false, fromAnswers: 0 }; }
+
+  // Questions that appear after the first fill (a follow-up that shows once you answer, the next page of a
+  // Workday form) are filled too, for up to 15 minutes. Still never overwrites, never submits.
+  var watch = { obs: null, data: null, timer: 0, until: 0, rounds: 0, busy: false };
+  function startWatch(data) {
+    watch.data = data; watch.until = Date.now() + 15 * 60 * 1000; watch.rounds = 0;
+    if (watch.obs || !window.MutationObserver || !document.body) return;
+    watch.obs = new MutationObserver(function () {
+      if (Date.now() > watch.until || watch.rounds >= 40) { watch.obs.disconnect(); watch.obs = null; return; }
+      clearTimeout(watch.timer);
+      watch.timer = setTimeout(refill, 700);
+    });
+    watch.obs.observe(document.body, { childList: true, subtree: true });
+  }
+  function refill() {
+    if (watch.busy || !watch.data) return;
+    var fresh = Array.prototype.slice.call(document.querySelectorAll("input:not([data-careeros-seen]), textarea:not([data-careeros-seen]), select:not([data-careeros-seen])"))
+      .some(function (el) { return el.type !== "hidden" && visible(el); });
+    var freshCombo = Array.prototype.slice.call(document.querySelectorAll(COMBO)).some(function (el) { return !el.getAttribute("data-careeros-seen") && visible(el); });
+    if (!fresh && !freshCombo) return;
+    watch.busy = true; watch.rounds++;
+    var out = blank();
+    pass(watch.data, out, true).then(function () {
+      watch.busy = false;
+      if ((out.filled.length || out.needs.length) && typeof window.__careerosOnMore === "function") { try { window.__careerosOnMore(out); } catch (e) { /* the panel is gone */ } }
+    }, function () { watch.busy = false; });
+  }
+
+  window.__careerosFill = function (data) {
+    var out = blank();
+    if (BLOCKED.test(location.hostname)) { out.blocked = true; return Promise.resolve(out); }
+    data = data || {};
+    var a = data.applicant || {};
+    if (/prefer not/i.test(a.backlogs || "")) delete a.backlogs;
+    // A fresh fill looks at every field again (a field you cleared can be filled again); never overwrites.
+    Array.prototype.slice.call(document.querySelectorAll("[data-careeros-seen]")).forEach(function (el) { el.removeAttribute("data-careeros-seen"); });
+    return pass(data, out, false).then(function () { if (data.watch !== false) startWatch(data); return out; });
   };
 })();

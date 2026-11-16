@@ -272,7 +272,8 @@ def test_catalog_has_three_plans_in_two_currencies(cloud):
     pro, ultra = cat["plans"][1], cat["plans"][2]
     assert (pro["priceInr"], pro["priceUsd"], ultra["priceInr"], ultra["priceUsd"]) == (499, "22.50", 1199, "48.50")
     assert ultra["aiCredits"] == 1500 and ultra["autoApplyPerDay"] == 60 and ultra["matchEveryMinutes"] == 15
-    assert ultra["copilotPerDay"] is None and ultra["linkedinReview"] is True
+    assert ultra["copilotPerDay"] == 200 and ultra["mockInterviews"] == 60 and ultra["linkedinReview"] is True
+    assert not any("nlimited copilot" in f for p in cat["plans"] for f in p["features"])
     assert cloud.client().get("/api/plans", headers={"CF-IPCountry": "US"}).json()["currency"] == "USD"
     assert cloud.client().get("/api/plans", headers={"CF-IPCountry": "IN"}).json()["currency"] == "INR"
     assert cloud.client().get("/api/plans?currency=usd").json()["currency"] == "USD"

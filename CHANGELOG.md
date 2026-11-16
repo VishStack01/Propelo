@@ -2,6 +2,19 @@
 
 All notable changes to CareerOS. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [semantic versioning](https://semver.org/).
 
+## [2.7.0] - 2026-11-16
+
+### Added
+- **Indian HR questions.** Application details now hold: currently working, serving notice and last working day, notice buyout, fixed and variable pay, preferred cities, working from the office, night or rotational shifts, a service bond and a one-line career gap. The extension and auto-apply answer these only from what you saved; "Prefer not to say" leaves the question for you, a last working day in the past is never used, and pay goes in the form's own unit (lakhs, or rupees when the form asks in rupees; monthly figures are left to you).
+- **Indian portals in the extension.** Internshala, Unstop, Instahyre, Cutshort, Hirist, iimjobs, Superset and Pod.ai can show the on-page panel and get filled when you ask; you press Submit. Auto-apply hands these roles to you instead of applying there, as it does for LinkedIn, Naukri, Indeed and Wellfound.
+- **Review queue, made for phones.** One role at a time: approve (or "Apply anyway" below the 4.0 line), skip, or save for later. Roles that need you come first, with an **apply kit**: your details, the tailored resume, cover note and screening answers, each with a Copy button, for applying on a phone where extensions don't run. Nothing is submitted from the queue.
+
+### Changed
+- **More reliable autofill.** The extension now fills custom dropdowns (Workday, Angular Material, react-select and others that use a listbox), keeps filling for 15 minutes as new questions appear (a follow-up question, the next page of a Workday application), and reads job pages that draw late or change without a reload (Darwinbox, Keka, Zoho Recruit). It still never overwrites what's typed and never presses Submit.
+- **Ultra's copilot and mock interviews have a stated fair-use limit:** 200 questions a day and 60 mock interviews a month, with no limit on your own AI key. Prices are unchanged.
+- The hourly job scan is on again, so the job board and Fresh roles get new roles every hour.
+- The website calls Concierge the Job Guarantee, by application, matching the app.
+
 ## [2.6.0] - 2026-11-16
 
 ### Changed

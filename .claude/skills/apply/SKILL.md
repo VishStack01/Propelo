@@ -57,5 +57,8 @@ it reads `profile/applicant` and the uploaded resume, applies to roles you queue
 
 ## Never
 - Apply through LinkedIn Easy Apply, Indeed Apply or any platform whose terms forbid automation.
+  That includes Naukri, Wellfound, Internshala, Unstop, Instahyre, Cutshort, Hirist, iimjobs and campus
+  placement portals (Superset and the like): hand those roles to the person (needsYouKind "platform"); the
+  extension fills those forms when they ask, and they press Submit.
 - Create accounts or enter passwords on the user's behalf.
 - Solve or bypass a captcha.

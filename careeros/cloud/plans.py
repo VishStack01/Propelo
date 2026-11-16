@@ -7,7 +7,8 @@ Three plans:
          actions on the service's model, and unlimited AI on your own key.
   Pro    hourly matching, a larger AI allowance, a higher auto-apply cap and more storage.
   Ultra  matching within 15 minutes of each scan, the largest AI allowance, the highest
-         auto-apply cap, the copilot and mock interviews without limits, and LinkedIn review.
+         auto-apply cap, the most copilot questions and mock interviews (a stated fair-use limit, none
+         on your own key), and LinkedIn review.
 
 Payments: India pays in rupees through Razorpay subscriptions; everyone else pays in US dollars
 through Dodo Payments, which is the merchant of record (it charges and files VAT and sales tax).
@@ -107,15 +108,15 @@ def catalog(cfg: Config) -> list[dict]:
                       "Priority support"]},
         {"id": "ultra", "name": "Ultra", "priceInr": cfg.ultra_price_inr, "priceUsd": usd(cfg.ultra_price_usd_cents), "aiCredits": cfg.ultra_ai_credits,
          "matchEveryMinutes": 15, "matchEveryHours": 0.25, "autoApplyPerDay": 60, "autoApplyPerMonth": 1000, "storageMb": max(cfg.user_storage_mb, 100),
-         "copilotPerDay": None, "mockInterviews": None, "autoEmailsPerDay": 25, "linkedinReview": True,
+         "copilotPerDay": 200, "mockInterviews": 60, "autoEmailsPerDay": 25, "linkedinReview": True,
          "features": ["Everything in Pro",
                       "New roles matched within 15 minutes of each scan",
                       f"{cfg.ultra_ai_credits:,} AI actions a month",
                       "Auto-apply up to 1,000 a month (60 a day), every one above your apply line",
-                      "Unlimited copilot questions and mock interviews",
+                      "Ask Propelo, 200 questions a day, and 60 mock interviews a month (no limit on your own AI key)",
                       "LinkedIn profile review",
                       "Recruiter emails from your Gmail, up to 25 a day, with day 7 and 14 follow-ups",
-                      "Optional Concierge in India, with priority for a talent partner",
+                      
                       "Fastest support"]},
     ]
 
@@ -193,7 +194,7 @@ def take_feature(c: Conn, cfg: Config, uid: str, plan: str, feature: str) -> tup
     n = int(c.scalar("SELECT count FROM feature_usage WHERE user_id = ? AND period = ? AND feature = ?", (uid, per, feature)) or 0)
     if n > limit:
         c.execute("UPDATE feature_usage SET count = count - 1 WHERE user_id = ? AND period = ? AND feature = ?", (uid, per, feature))
-        nxt = "Ultra has no limit" if plan == "pro" else "Pro and Ultra allow more"
+        nxt = "Ultra allows more" if plan == "pro" else "Pro and Ultra allow more" if plan == "free" else "That's Ultra's fair-use limit"
         return False, f"You've used your {limit} {noun}. {nxt}, or add your own AI key in Settings."
     return True, ""
 

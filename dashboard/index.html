@@ -1169,6 +1169,17 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
 .cccalc{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:16px;align-items:end}
 .cc-out{margin:0 0 10px;font-size:16px}
 .ck.adv{background:var(--warn, #c98a00);font-size:12px;font-weight:700}.ck.no{background:var(--bad)}
+.apsub{display:grid;gap:2px;margin-top:8px;padding-top:16px;border-top:1px solid var(--line)}.apsub small{color:var(--muted);font-size:13px}
+.qbar{margin:4px 0 14px;font-size:13.5px;color:var(--muted)}
+.qcard{display:grid;gap:10px;max-width:640px;padding:22px}.qtop{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.qco{display:flex;align-items:center;gap:4px;font-weight:600;font-size:15px}.qtitle{font-size:26px;line-height:1.15;margin:0;letter-spacing:-.02em}
+.qpills{display:flex;flex-wrap:wrap;gap:6px}.qpills:empty{display:none}.qwhy{margin:0;font-size:14.5px;color:var(--ink-2)}.qwhy.warn{color:var(--bad)}
+.qacts{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}.qcard .linkish{justify-self:start}.qempty{display:grid;gap:8px;justify-items:start}
+@media (max-width:640px){.qcard{padding:18px}.qtitle{font-size:22px}.qacts{display:grid;grid-template-columns:1fr 1fr}.qacts .btn{justify-content:center;min-height:48px}.qacts .btn.solid{grid-column:1/-1;order:-1}}
+.kit{border:0;border-radius:24px;padding:0;width:min(560px,calc(100vw - 24px));max-height:calc(100vh - 40px);background:var(--panel);color:var(--ink);box-shadow:0 24px 60px rgba(0,0,0,.28)}
+.kit::backdrop{background:rgba(21,21,21,.45)}.kit-in{display:grid;gap:10px;padding:20px}.kit-head{display:flex;justify-content:space-between;gap:10px}.kit h2{margin:0;font-size:22px}.kit h3{margin:10px 0 0;font-size:15px}
+.kitrow{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}.kitrow span{grid-column:1/-1;font-size:12.5px;color:var(--muted)}.kitrow .copytext{white-space:pre-wrap;word-break:break-word;font-size:14.5px}
+.kit .guo-x{position:static}
 .clogo{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:6px;background:#fff;box-shadow:inset 0 0 0 1px var(--line);overflow:hidden;vertical-align:-5px;margin-right:8px;flex:none}
 .clogo img{width:100%;height:100%;object-fit:contain;padding:2px}.clogo.lg{width:30px;height:30px;border-radius:8px;vertical-align:-7px;margin-left:2px}
 .eyebrow.cow,.bco{display:inline-flex;align-items:center}
@@ -2154,6 +2165,7 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
     <button class="tab" role="tab" id="t-resume" aria-controls="p-resume" aria-selected="false" data-act="tab" data-tab="resume"><svg class="i" viewBox="0 0 24 24"><path d="M7 3.5h7l4 4V20a.5.5 0 01-.5.5h-10.5A.5.5 0 016.5 20V4a.5.5 0 01.5-.5z"/><path d="M14 3.5V8h4M9.5 12h5M9.5 15.5h5"/></svg>Base resume</button>
     <span class="grp">Job search</span>
     <button class="tab" role="tab" id="t-today" aria-controls="p-today" aria-selected="false" data-act="tab" data-tab="today"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>Fresh roles <span class="ct hot" id="c-today" hidden></span></button>
+    <button class="tab" role="tab" id="t-queue" aria-controls="p-queue" aria-selected="false" data-act="tab" data-tab="queue"><svg class="i" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="16" rx="3"/><path d="M9 9.5l2 2 4-4M9 15h6"/></svg>Review queue <span class="ct hot" id="c-queue" hidden></span></button>
     <button class="tab" role="tab" id="t-pipeline" aria-controls="p-pipeline" aria-selected="false" data-act="tab" data-tab="pipeline"><svg class="i" viewBox="0 0 24 24"><rect x="3.5" y="7" width="17" height="12.5" rx="2.5"/><path d="M9 7V5.5A1.5 1.5 0 0110.5 4h3A1.5 1.5 0 0115 5.5V7"/><path d="M3.5 12.5h17"/></svg>Applications <span class="ct" id="c-pipeline">0</span></button>
     <button class="tab" role="tab" id="t-auto" aria-controls="p-auto" aria-selected="false" data-act="tab" data-tab="auto"><svg class="i" viewBox="0 0 24 24"><path d="M13 3L5 13.5h6L10 21l8-10.5h-6z"/></svg>Auto-apply <span class="ct" id="c-auto"></span></button>
     <button class="tab" role="tab" id="t-outreach" aria-controls="p-outreach" aria-selected="false" data-act="tab" data-tab="outreach"><svg class="i" viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"/><path d="M4.5 7l7.5 6 7.5-6"/></svg>Outreach <span class="ct" id="c-outreach">0</span></button>
@@ -2202,6 +2214,7 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
   <section role="tabpanel" id="p-ask" aria-labelledby="t-ask" hidden></section>
   <section role="tabpanel" id="p-concierge" aria-labelledby="t-concierge" hidden></section>
   <section role="tabpanel" id="p-guarantee" aria-labelledby="t-guarantee" hidden></section>
+  <section role="tabpanel" id="p-queue" aria-labelledby="t-queue" hidden></section>
   <section role="tabpanel" id="p-skipped" aria-labelledby="t-skipped" hidden></section>
   <section role="tabpanel" id="p-setup" aria-labelledby="t-setup" hidden></section>
   <section role="tabpanel" id="p-auto" aria-labelledby="t-auto" hidden></section>
@@ -2228,6 +2241,7 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
 <div class="addsheet" id="sheet-add" role="dialog" aria-label="Add">
   <h2>Add...</h2>
   <button type="button" data-act="tab" data-tab="new"><span class="ci" style="background:var(--pink)"><svg class="i" viewBox="0 0 24 24"><path d="M7 3.5h7l4 4V20H6.5V3.5z"/><path d="M14 3.5V8h4M9.5 13h5M12 10.5v5"/></svg></span><span>New application<small>Paste a posting; get a fit score and a tailored resume</small></span></button>
+  <button type="button" data-act="tab" data-tab="queue"><span class="ci" style="background:var(--bgreen)"><svg class="i" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="16" rx="3"/><path d="M9 9.5l2 2 4-4M9 15h6"/></svg></span><span>Review queue<small>Approve, skip or apply, one role at a time</small></span></button>
   <button type="button" data-act="tab" data-tab="today"><span class="ci" style="background:var(--yellow)"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg></span><span>Fresh roles<small>Checked against your filters, with quotes</small></span></button>
   <button type="button" data-act="tab" data-tab="profile"><span class="ci" style="background:var(--bgreen)"><svg class="i" viewBox="0 0 24 24"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5"/><path d="M4.5 15v4.5h15V15"/></svg></span><span>Your resume<small>Upload it once; every application starts from it</small></span></button>
   <button type="button" data-act="tab" data-tab="calendar"><span class="ci" style="background:var(--bblue)"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M8 3.5v4M16 3.5v4M4 10h16"/></svg></span><span>Interview or follow-up<small>See what's coming up this week</small></span></button>
@@ -2358,7 +2372,7 @@ const state = {
 };
 const cloud = () => state.status === 'cloud';
 const FRESH_PAGE = 24;
-const TABS = ['home','today','pipeline','auto','outreach','contacts','ask','concierge','guarantee','skipped','setup','profile','resume','calendar','new','app','inbox','tools'];
+const TABS = ['home','today','queue','pipeline','auto','outreach','contacts','ask','concierge','guarantee','skipped','setup','profile','resume','calendar','new','app','inbox','tools'];
 
 /* ---------- derived ---------- */
 const jobsArr = () => Array.from(state.jobs.values());
@@ -2690,6 +2704,18 @@ function renderApplicantForm(){
         ${sel('relocate', 'Open to relocating', ['Yes', 'Within south India', 'No'], 'Within south India')}
         ${sel('gender', 'Gender, for optional diversity questions', ['Prefer not to say', 'Woman', 'Man', 'Non-binary'], 'Prefer not to say')}
         ${inp('howHeard', '"How did you hear about us?"', 'text', {ph: "Company careers page", full: true})}
+        <div class="full apsub"><b>Questions Indian employers ask</b><small>Filled only when a form asks, and only with what you put here. "Prefer not to say" leaves the question for you.</small></div>
+        ${sel('currentlyEmployed', 'Currently working', ['Prefer not to say', 'Yes', 'No'], 'Prefer not to say')}
+        ${sel('servingNotice', 'Serving notice now', ['No', 'Yes'], 'No')}
+        ${inp('lastWorkingDay', 'Last working day', 'date', {hint: 'if serving notice'})}
+        ${sel('noticeBuyout', 'Can shorten or buy out notice', ['Prefer not to say', 'No', 'Yes, partly', 'Yes, fully'], 'Prefer not to say')}
+        ${inp('fixedCtcLpa', 'Current fixed pay', 'number', {hint: 'LPA, optional', attrs: ' min="0" step="0.1"'})}
+        ${inp('variableCtcLpa', 'Current variable pay', 'number', {hint: 'LPA, optional', attrs: ' min="0" step="0.1"'})}
+        ${inp('preferredCities', 'Preferred cities', 'text', {ph: 'Bengaluru, Hyderabad, Remote'})}
+        ${sel('officeOk', 'Working from the office', ['Prefer not to say', 'Yes', 'Hybrid only', 'Remote only'], 'Prefer not to say')}
+        ${sel('shiftsOk', 'Night or rotational shifts', ['Prefer not to say', 'Yes', 'No'], 'Prefer not to say')}
+        ${sel('bondOk', 'Willing to sign a service bond', ['Prefer not to say', 'Yes', 'No'], 'Prefer not to say')}
+        <label class="f full" for="ap-gapReason">A gap in your career, in a sentence <small>optional, used only when a form asks</small><textarea id="ap-gapReason" name="gapReason" rows="2" maxlength="400" placeholder="e.g. Six months in 2024 caring for a family member; kept up with a course in data engineering."${ro}>${esc(a.gapReason || '')}</textarea></label>
         <p class="never full">Never stored or asked for: passwords, one-time codes, Aadhaar, PAN, bank details, passport, date of birth. You sign in to job sites yourself in the Claude desktop app's browser.</p>
         <div class="full"><button class="btn solid" type="submit"${ro}>Save details</button></div>
       </form>
@@ -3286,6 +3312,80 @@ function coLogo(company, size){
   const f = obj(state.logos)[coSlug(company)], site = obj(state.me).jobsSite;
   if (!f || !site || !/^[a-f0-9]{16}\.(png|jpg|gif|webp|ico|svg)$/.test(f)) return '';
   return `<span class="clogo${size ? ' ' + size : ''}" aria-hidden="true"><img src="${esc(site + 'logos/' + f)}" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer"></span>`;
+}
+/* ---------- Review queue: the phone way to work through roles, one card at a time ----------
+   Roles that need you first (forms auto-apply can't send: portals, a missing answer), then packages
+   waiting for approval, then fresh roles above your apply line. Approving queues a role for auto-apply;
+   below the 4.0 line the button says "Apply anyway". Nothing is submitted from here. */
+function queueItems(){
+  const later = state.qLater || new Set();
+  const need = waitingJobs().map(j => ({j, kind: 'yours'}));
+  const ready = jobsArr().filter(j => j.stage === 'ready').sort((a, b) => decOrder(a.decision) - decOrder(b.decision) || byFresh(a, b)).map(j => ({j, kind: 'ready'}));
+  const fresh = jobsArr().filter(j => (j.stage === 'found' || !j.stage) && !j.autoApply && inWindow(j, state.win) && !belowLine(j)).sort(byPriority).slice(0, 60).map(j => ({j, kind: 'fresh'}));
+  const all = need.concat(ready, fresh);
+  return all.filter(x => !later.has(x.j.id)).concat(all.filter(x => later.has(x.j.id)));
+}
+function renderQueue(){
+  const items = queueItems(), ro = wr();
+  const head = `<div class="hero" style="padding-bottom:4px"><div><h1>Review queue</h1><p class="sub">One role at a time. Approve to send it with auto-apply, skip what isn't for you, and apply yourself where a site needs you. Nothing is submitted from this screen.</p></div></div>`;
+  if (!items.length) return head + `<div class="panel qempty"><p><b>You're all caught up.</b></p><p class="small">New roles that fit your filters land in Fresh roles and show up here.</p><button class="btn" data-act="tab" data-tab="today">See fresh roles</button></div>`;
+  const total = items.length, {j, kind} = items[0];
+  const u = safeUrl(j.applyUrl) || safeUrl(j.url);
+  const label = kind === 'yours' ? (j.needsYouKind === 'platform' ? `Apply on ${esc(j.applyOn || 'the site')} yourself` : 'Needs you') : kind === 'ready' ? 'Package ready for approval' : 'Fresh role';
+  const risk = obj(j.risk || obj(j.facts).legit);
+  const actions = kind === 'yours'
+    ? `${u ? `<a class="btn" href="${esc(u)}" target="_blank" rel="noopener">Open the form</a>` : ''}<button class="btn" data-act="q-kit" data-id="${esc(j.id)}">Apply kit</button>
+       <button class="btn ghost" data-act="q-skip" data-id="${esc(j.id)}"${ro}>Not for me</button><button class="btn solid" data-act="q-applied" data-id="${esc(j.id)}"${ro}>I applied</button>`
+    : `<button class="btn ghost" data-act="q-skip" data-id="${esc(j.id)}"${ro}>Skip</button><button class="btn" data-act="q-later" data-id="${esc(j.id)}">Later</button>
+       ${belowLine(j) ? `<button class="btn solid" data-act="q-anyway" data-id="${esc(j.id)}"${ro}>Apply anyway</button>` : `<button class="btn solid" data-act="q-approve" data-id="${esc(j.id)}" data-kind="${kind}"${ro}>Approve</button>`}`;
+  return head + `<p class="qbar">${total} ${total === 1 ? 'role' : 'roles'} to go</p>
+    <article class="panel qcard" aria-live="polite">
+      <div class="qtop"><span class="pill${kind === 'yours' ? ' due' : kind === 'ready' ? ' strong' : ''}">${label}</span>${fitPill(j)}</div>
+      <div class="qco">${coLogo(j.company, 'lg')}<span>${esc(j.company)}</span></div>
+      <h2 class="qtitle">${esc(j.title)}</h2>
+      ${metaLine(j)}
+      <div class="qpills">${regionPill(j)}${payPill(j)}${freshPill(j)}</div>
+      ${j.needsYou && kind === 'yours' ? `<p class="qwhy"><b>Why it needs you:</b> ${esc(j.needsYou)}</p>` : ''}
+      ${j.decisionReason ? `<p class="qwhy">${esc(j.decisionReason)}</p>` : ''}
+      ${risk.tier === 'suspicious' ? `<p class="qwhy warn"><b>Check this posting before you apply.</b> The scam check flagged it.</p>` : ''}
+      <div class="qacts">${actions}</div>
+      <button class="linkish small" data-act="open" data-id="${esc(j.id)}">See the full role${kind === 'ready' ? ' and its package' : ''}</button>
+    </article>`;
+}
+function queueHomeCard(){
+  const items = queueItems(); if (!items.length) return '';
+  const yours = items.filter(x => x.kind === 'yours').length;
+  return `<section class="card guhome"><div class="chead"><div><h2>${items.length} ${items.length === 1 ? 'role is' : 'roles are'} waiting for your call</h2><p class="muted">${yours ? `${yours} need you to apply on the site yourself, with an apply kit to copy from. ` : ''}Approve, skip or save for later, one at a time, from your phone too.</p></div><button class="btn solid" data-act="tab" data-tab="queue">Review queue</button></div></section>`;
+}
+/* Apply kit: everything a form asks, ready to copy on a phone, where extensions don't run. */
+function openKit(j){
+  const a = applicant(), rows = [];
+  const add = (label, v) => { if (v !== undefined && v !== null && String(v).trim() !== '' && !/^prefer not/i.test(String(v))) rows.push([label, String(v)]); };
+  add('Full name', a.fullName); add('Email', a.email); add('Phone', a.phone); add('City', a.city);
+  add('LinkedIn', a.linkedin); add('GitHub', a.github); add('Portfolio', a.portfolio);
+  add('Current title', a.currentTitle); add('Current company', a.currentCompany);
+  add('Total experience (years)', a.experienceYears); add('Notice period', a.noticePeriod);
+  if (a.servingNotice === 'Yes'){ add('Serving notice', 'Yes'); add('Last working day', a.lastWorkingDay); }
+  add('Notice buyout', a.noticeBuyout);
+  add('Current CTC (LPA)', a.currentCtcLpa); add('Fixed pay (LPA)', a.fixedCtcLpa); add('Variable pay (LPA)', a.variableCtcLpa); add('Expected CTC (LPA)', a.expectedCtcLpa);
+  add('Preferred cities', a.preferredCities); add('Open to relocating', a.relocate);
+  add('Highest degree', a.degree); add('College', a.college); add('Graduation year', a.graduationYear); add('CGPA or percentage', a.cgpa); add('Branch', a.branch);
+  add('Work authorization in India', a.workAuthIndia); add('Working from the office', a.officeOk); add('Night or rotational shifts', a.shiftsOk); add('Service bond', a.bondOk);
+  add('Career gap', a.gapReason);
+  const res = obj(j.resume), resUrl = safeUrl(res.url) || (/^[A-Za-z0-9_-]{8,64}$/.test(String(res.asset || '')) ? '/_blob/' + res.asset : null), base = obj(a.resume);
+  const resumeLink = resUrl || (base.id ? '/_blob/' + base.id : '');
+  const block = (label, text) => `<div class="kitrow">${label ? `<span>${esc(label)}</span>` : ''}<div class="copytext">${esc(text)}</div><button class="btn sm" data-act="copy" type="button" aria-label="Copy ${esc(label)}">Copy</button></div>`;
+  const d = document.createElement('dialog'); d.className = 'kit'; d.setAttribute('aria-labelledby', 'kit-h');
+  d.innerHTML = `<div class="kit-in"><div class="kit-head"><div><h2 id="kit-h">Apply kit</h2><p class="muted small">${esc(j.company)} · ${esc(j.title)}</p></div><button class="guo-x" data-kit-close aria-label="Close">×</button></div>
+    ${resumeLink ? `<a class="btn block" href="${esc(resumeLink)}" target="_blank" rel="noopener">${resUrl ? 'Tailored resume (PDF)' : 'Your resume (PDF)'}</a>` : '<p class="small">Upload your resume in Profile to have it here.</p>'}
+    ${j.coverNote ? `<h3>Cover note</h3>${block('', j.coverNote)}` : ''}
+    ${arr(j.screening).length ? `<h3>Screening answers</h3>${arr(j.screening).map(x => block(x.q || 'Answer', x.a || '')).join('')}` : ''}
+    <h3>Your details</h3>${rows.length ? rows.map(([l, v]) => block(l, v)).join('') : '<p class="small">Add your application details in Profile.</p>'}
+    <p class="small muted">Only what you saved in Propelo. Never here: passwords, codes, Aadhaar, PAN, bank details, passport or date of birth.</p></div>`;
+  document.body.appendChild(d);
+  d.addEventListener('click', e => { if (e.target === d || e.target.closest('[data-kit-close]')) d.close(); });
+  d.addEventListener('close', () => d.remove());
+  d.showModal();
 }
 function maybeOfferGuarantee(){
   const v = state.guarantee;
@@ -4434,6 +4534,7 @@ function renderHome(){
   <p class="lede">${esc(say)}</p>${nudges.length ? `<p class="nudges">${nudges.join('<span aria-hidden="true">·</span>')}</p>` : ''}
   ${todayBlock(all, f, weeks)}
   <section class="card anyjob"><div class="chead"><div><h2>Found a job somewhere else?</h2><p class="muted">Any role, from any site, a WhatsApp forward or an email. Paste it and Propelo checks whether it looks real, shows how you fit, and writes a truthful resume and cover letter for it.</p></div><button class="btn sm" data-act="tab" data-tab="new">Check a job</button></div></section>
+  ${queueHomeCard()}
   ${guHomeCard()}
   ${autoStatus().key !== 'ready' && autoStatus().key !== 'off' ? `<div style="margin-top:18px">${renderAutoMini()}</div>` : ''}
   <div class="showing"><span class="muted">Showing</span><div class="pseg" role="group" aria-label="Period">${rng}</div></div>
@@ -5187,6 +5288,7 @@ function renderNow(){
   const ci = $('#c-inbox'); if (ci){ const n = inboxNew().length; ci.textContent = n || ''; ci.hidden = !n; }
   const ca = $('#c-auto'); if (ca){ const st = autoStatus(); ca.textContent = st.short; ca.className = 'ct ' + st.cls; }
   const ctT = $('#c-today'); if (ctT){ ctT.textContent = ready || ''; ctT.hidden = !ready; }
+  const ctQ = $('#c-queue'), nQ = queueItems().length; if (ctQ){ ctQ.textContent = nQ || ''; ctQ.hidden = !nQ; }
   const who = $('#who'); if (who){ const nm = personName(); who.innerHTML = `<span class="av">${esc((nm.match(/\b\w/g) || ['C']).slice(0, 2).join('').toUpperCase())}</span><span class="wt"><b>${esc(nm || 'You')}</b><small>${autoOn() ? 'Auto-apply on' : 'Auto-apply off'}${aiReady() ? ' · Claude on' : ''}</small></span>`; }
   const seg = $('#seg'); seg.dataset.v = state.win; seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.w === state.win)));
   const ae = document.activeElement;
@@ -5202,6 +5304,7 @@ function renderNow(){
     if (k === 'ask') p.innerHTML = renderAsk();
     if (k === 'concierge') p.innerHTML = renderConcierge();
     if (k === 'guarantee') p.innerHTML = renderGuarantee();
+    if (k === 'queue') p.innerHTML = renderQueue();
     if (k === 'skipped') p.innerHTML = renderSkipped();
     if (k === 'setup' && !state.formDirty && !state.apDirty && !state.acctDirty) p.innerHTML = renderSetup();
     if (k === 'home'){
@@ -5251,7 +5354,7 @@ function leave(id){ const el = document.querySelector(`[data-row="${CSS.escape(i
 let toastT = 0;
 function toast(msg){ const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 3200); }
 function copyFrom(btn){
-  const block = btn.closest('.copyblock'); if (!block) return;
+  const block = btn.closest('.copyblock, .kitrow'); if (!block) return;
   const el = $('.copytext', block); const text = el.textContent;
   const done = () => { btn.textContent = 'Copied'; setTimeout(() => { btn.textContent = 'Copy'; }, 1600); };
   const fallback = () => { try { const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast('Text selected. Press Ctrl+C or Cmd+C to copy.'); } catch(e){} };
@@ -5399,6 +5502,12 @@ document.addEventListener('click', e => {
       else { if (w) w.close(); acctSay('Use the Pay button below to start.', false, 'gu-interview'); } })
       .catch(d => { if (w) w.close(); acctSay(d.error || 'Could not start the payment.', true, 'gu-interview'); }); }
   else if (act === 'gu-offer'){ openGuOffer(); }
+  else if (act === 'q-kit'){ const j = state.jobs.get(id); if (j) openKit(j); }
+  else if (act === 'q-later'){ (state.qLater = state.qLater || new Set()).add(id); render(); }
+  else if (act === 'q-skip'){ const j = state.jobs.get(id); leave(id).then(() => patchJob(id, {stage: 'skipped', autoApply: j && j.autoApply ? 'done' : (j && j.autoApply) || '', needsYou: '', needsYouKind: '', skip: {gate: 'Your call', reason: 'Skipped by you from the review queue'}}, 'Skipped by you', 'Skipped. It is in the skip log if you change your mind.')); }
+  else if (act === 'q-applied'){ const j = state.jobs.get(id), t = nowIso(); patchJob(id, {stage: 'applied', appliedAt: t, appliedVia: 'you', needsYou: '', needsYouKind: '', autoApply: j && j.autoApply ? 'done' : '', followUps: j ? seedFollowUps(j, t) : []}, 'Marked as applied by you', 'Marked as applied. Follow-ups are set for day 7 and 14.'); }
+  else if (act === 'q-approve'){ const t = nowIso(); if (el.dataset.kind === 'ready') patchJob(id, {stage: 'approved', approvedAt: t}, 'Approved by you', 'Approved and queued for submission.'); else patchJob(id, {stage: 'approved', approvedAt: t, autoApply: 'queued', queuedAt: t}, 'Queued for auto-apply by you', autoReadyMsg()); }
+  else if (act === 'q-anyway'){ const t = nowIso(); patchJob(id, {stage: 'approved', approvedAt: t, autoApply: 'queued', queuedAt: t, scoreOverride: true}, 'Apply anyway: you chose to send it below the 4.0 apply line', autoReadyMsg()); }
   else if (act === 'gu-reload'){ loadGuarantee(); }
   else if (act === 'cc-pause'){ cloudPost('api/concierge/pause', {pause: el.dataset.p === '1'}).then(v => { state.concierge = v; render(); }).catch(d => acctSay(d.error || 'Could not change it.', true, 'concierge')); }
   else if (act === 'cc-close'){ if (!confirm('Close your Job Guarantee? Fees still apply to offers from companies you already approved, within the time in the terms.')) return; cloudPost('api/concierge/close').then(v => { state.concierge = v; render(); }).catch(d => acctSay(d.error || 'Could not close it.', true, 'concierge')); }
@@ -5533,7 +5642,7 @@ document.addEventListener('submit', e => {
   if (e.target.id === 'applicant-form'){
     e.preventDefault(); if (!state.db) return;
     const f = e.target, data = {};
-    for (const el of f.querySelectorAll('input[name], select[name]')){
+    for (const el of f.querySelectorAll('input[name], select[name], textarea[name]')){
       const v = el.value.trim();
       if (el.type === 'number') data[el.name] = v === '' ? '' : Number(v); else data[el.name] = v;
     }
@@ -5541,6 +5650,7 @@ document.addEventListener('submit', e => {
     if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) bad.push('the email address');
     if (data.phone && (data.phone.replace(/\D/g, '').length < 10)) bad.push('the phone number');
     for (const k of ['linkedin','github','portfolio']) if (data[k] && !/^https?:\/\//i.test(data[k])) data[k] = 'https://' + data[k];
+    if (data.servingNotice !== 'Yes') data.lastWorkingDay = '';
     if (bad.length){ toast('Check ' + listJoin(bad) + '.'); return; }
     const next = Object.assign({}, applicant(), data, {updatedAt: nowIso()});
     if (document.activeElement) document.activeElement.blur();

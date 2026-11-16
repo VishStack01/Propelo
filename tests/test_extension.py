@@ -138,3 +138,49 @@ def test_dashboard_gauge_is_the_extension_gauge():
     assert copy == (EXT / "gauge.js").read_text(encoding="utf-8").strip()
     for f in ("gauge.js",):
         assert ".submit(" not in (EXT / f).read_text() and "eval(" not in (EXT / f).read_text()
+
+
+def test_indian_hr_questions_dropdowns_and_late_questions(browser):
+    from datetime import date, timedelta
+    lwd = date.today() + timedelta(days=20)
+    page = _open(browser, "india.html", "https://unstop.com/jobs/backend-engineer-acme-123")
+    a = {**APPLICANT, "servingNotice": "Yes", "lastWorkingDay": lwd.isoformat(), "noticeBuyout": "Yes, partly", "currentCtcLpa": 12.5,
+         "expectedCtcLpa": 18, "fixedCtcLpa": 11, "bondOk": "Prefer not to say", "preferredCities": "Bengaluru, Hyderabad", "shiftsOk": "No",
+         "gapReason": "Six months caring for a family member in 2024."}
+    page.evaluate("() => { window.more = []; window.__careerosOnMore = m => window.more.push(m); }")
+    r = page.evaluate("d => window.__careerosFill(d)", {"applicant": a, "resume": None})
+    val = lambda sel: page.eval_on_selector(sel, "e => e.value")  # noqa: E731
+    text = lambda sel: page.eval_on_selector(sel, "e => e.options[e.selectedIndex].text")  # noqa: E731
+    assert text("#buy") == "Yes"
+    assert page.eval_on_selector("input[name=serving][value=y]", "e => e.checked")
+    assert val("#lwd") == lwd.isoformat() and val("#lwd2") == f"{lwd.day} {lwd.strftime('%b')} {lwd.year}"
+    assert val("#cc") == "1250000"  # the form asks in rupees
+    assert val("#ec") == "18" and val("#fx") == "11"
+    assert val("#mon") == ""  # monthly figures are left to you
+    assert page.eval_on_selector("#bond", "e => e.selectedIndex") == 0  # "prefer not to say" stays unanswered
+    assert val("#pl") == "Bengaluru, Hyderabad" and text("#pls") == "Bengaluru"
+    assert page.evaluate("window.shiftPicked") == "No"  # a custom dropdown, opened and picked
+    assert any(f["label"].startswith("Are you comfortable with rotational shifts") for f in r["filled"])
+    # A question that appears after the fill is filled too, and the panel hears about it.
+    page.evaluate("window.addLater()")
+    page.wait_for_function("window.more.length > 0", timeout=5000)
+    assert val("#gap").startswith("Six months caring") and val("#np") == "30 days"
+    assert page.evaluate("window.more[0].filled.length") == 2
+    assert not page.evaluate("window.submitted")
+    page.close()
+
+
+def test_past_last_working_day_is_not_used(browser):
+    page = _open(browser, "india.html", "https://unstop.com/jobs/x")
+    page.evaluate("d => window.__careerosFill(d)", {"applicant": {**APPLICANT, "servingNotice": "Yes", "lastWorkingDay": "2020-01-31"}, "resume": None, "watch": False})
+    assert page.eval_on_selector("#lwd", "e => e.value") == "" and page.eval_on_selector("#lwd2", "e => e.value") == ""
+    page.close()
+
+
+def test_extension_lists_indian_portals_but_never_the_blocked_boards():
+    bg = (EXT / "background.js").read_text()
+    for host in ("internshala.com", "unstop.com", "instahyre.com", "cutshort.io", "joinsuperset.com", "darwinbox.in", "keka.com", "zohorecruit"):
+        assert host in bg, host
+    hosts = bg[bg.index("var JOB_HOSTS"):bg.index("];", bg.index("var JOB_HOSTS"))]
+    for host in ("linkedin", "naukri", "indeed", "wellfound"):
+        assert host not in hosts

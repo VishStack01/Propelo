@@ -89,6 +89,15 @@
     if (g && m && !m.__shown && window.PropeloGauge) { m.__shown = true; window.PropeloGauge.animate(g); }
   }
 
+  // Questions that appear after a fill (the next page of a Workday form, a follow-up question) are filled by
+  // fill.js on its own; it tells the panel here what it did.
+  window.__careerosOnMore = function (more) {
+    if (!S.report) S.report = { filled: [], needs: [] };
+    S.report.filled = S.report.filled.concat(more.filled || []);
+    S.report.needs = S.report.needs.concat(more.needs || []);
+    S.msg = "Filled " + (more.filled || []).length + " more as new questions appeared.";
+    render();
+  };
   function fill() {
     S.busy = "fill"; S.msg = ""; render();
     var p = S.page || page();
@@ -165,13 +174,27 @@
           });
         }
       });
-      if (String(S.page.jd || "").length >= 200) {
-        send({ type: "match", page: { url: S.page.url, title: S.page.title, jd: S.page.jd } }).then(function (r) {
-          if (r.ok) S.match = r.data; else S.matchErr = r.status === 400 ? "" : (r.error || "");
-          render();
-        });
-      } else { S.matchErr = "Open the job description to see your match."; render(); }
+      matchWhenReady(0);
     });
   }
+  // Hiring systems built as single-page apps (Darwinbox, Keka, Zoho Recruit, Workday) draw the job a moment
+  // after the page loads, and change it without a reload: read again until the description is there.
+  var lastUrl = location.href;
+  function matchWhenReady(tries, keep) {
+    S.page = page();
+    if (String(S.page.jd || "").length >= 200) {
+      S.matchErr = "";
+      send({ type: "match", page: { url: S.page.url, title: S.page.title, jd: S.page.jd } }).then(function (r) {
+        if (r.ok) S.match = r.data; else S.matchErr = r.status === 400 ? "" : (r.error || "");
+        render();
+      });
+    } else if (tries < 5) setTimeout(function () { matchWhenReady(tries + 1, keep); }, [800, 1500, 2500, 4000, 6000][tries]);
+    else if (!keep) { S.matchErr = "Open the job description to see your match."; render(); }
+  }
+  setInterval(function () {
+    if (location.href === lastUrl || !host.isConnected) return;
+    lastUrl = location.href;  // the next step of the same application keeps its fill report and score
+    matchWhenReady(0, true);
+  }, 1000);
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start); else start();
 })();

@@ -1,0 +1,33 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Backend Engineer | Acme Careers</title></head><body>
+<h1>Backend Engineer</h1>
+<form id="f">
+  <label for="buy">Is your notice period negotiable or can you buy out?</label>
+  <select id="buy"><option value="">Select</option><option>Yes</option><option>No</option></select>
+  <fieldset><legend>Are you currently serving notice period? *</legend>
+    <label><input type="radio" name="serving" value="y"> Yes</label><label><input type="radio" name="serving" value="n"> No</label></fieldset>
+  <label for="lwd">Last working day</label><input type="date" id="lwd">
+  <label for="lwd2">Last working date (DD Mon YYYY)</label><input type="text" id="lwd2">
+  <label for="cc">Current CTC (in INR)</label><input type="text" id="cc">
+  <label for="ec">Expected CTC (LPA)</label><input type="text" id="ec">
+  <label for="fx">Current fixed CTC (LPA)</label><input type="text" id="fx">
+  <label for="mon">Current monthly salary</label><input type="text" id="mon">
+  <label for="bond">Willing to sign a 1-year service bond?</label>
+  <select id="bond"><option value="">Select</option><option>Yes</option><option>No</option></select>
+  <label for="pl">Preferred locations</label><input type="text" id="pl">
+  <label for="pls">Preferred location</label>
+  <select id="pls"><option value="">Choose</option><option>Hyderabad</option><option>Bengaluru</option><option>Pune</option></select>
+  <span id="shl">Are you comfortable with rotational shifts?</span>
+  <button type="button" id="shift" aria-haspopup="listbox" aria-labelledby="shl" aria-controls="shlist" aria-expanded="false">Select One</button>
+  <ul id="shlist" role="listbox" hidden><li role="option">Yes</li><li role="option">No</li></ul>
+  <div id="more"></div>
+  <button type="submit">Submit</button>
+</form>
+<script>
+  window.submitted = false;
+  document.getElementById('f').addEventListener('submit', e => { e.preventDefault(); window.submitted = true; });
+  const b = document.getElementById('shift'), l = document.getElementById('shlist');
+  b.addEventListener('click', () => { l.hidden = !l.hidden; b.setAttribute('aria-expanded', String(!l.hidden)); });
+  l.addEventListener('click', e => { const o = e.target.closest('[role=option]'); if (!o) return; b.textContent = o.textContent; l.hidden = true; window.shiftPicked = o.textContent; });
+  window.addLater = () => { document.getElementById('more').innerHTML = '<label for="gap">Please explain any gap in your career</label><textarea id="gap"></textarea><label for="np">Notice period</label><input id="np" type="text">'; };
+</script>
+</body></html>

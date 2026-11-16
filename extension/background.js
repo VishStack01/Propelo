@@ -13,7 +13,11 @@ var JOB_HOSTS = [
   "https://*.recruitee.com/*", "https://*.teamtailor.com/*", "https://*.icims.com/*", "https://jobs.jobvite.com/*",
   "https://*.breezy.hr/*", "https://*.bamboohr.com/*", "https://*.jobs.personio.de/*", "https://*.jobs.personio.com/*",
   "https://*.zohorecruit.com/*", "https://*.zohorecruit.in/*", "https://*.darwinbox.in/*", "https://*.keka.com/*",
-  "https://*.freshteam.com/*", "https://*.successfactors.com/*", "https://*.successfactors.eu/*", "https://*.taleo.net/*"
+  "https://*.freshteam.com/*", "https://*.successfactors.com/*", "https://*.successfactors.eu/*", "https://*.taleo.net/*",
+  // Indian early-career and campus portals: filled when you ask, and you press Submit.
+  "https://internshala.com/*", "https://*.internshala.com/*", "https://unstop.com/*", "https://*.unstop.com/*",
+  "https://www.instahyre.com/*", "https://cutshort.io/*", "https://*.cutshort.io/*", "https://*.joinsuperset.com/*",
+  "https://*.hirist.tech/*", "https://www.iimjobs.com/*", "https://*.app.pod.ai/*"
 ];
 var BLOCKED = /(^|\.)(linkedin\.com|naukri\.com|indeed\.[a-z.]+|wellfound\.com|angel\.co)$/i;
 var SCRIPT_ID = "propelo-onpage";
@@ -57,7 +61,8 @@ function fillData() {
       var applicant = {};
       ["fullName", "email", "phone", "city", "linkedin", "github", "portfolio", "currentTitle", "currentCompany", "experienceYears", "noticePeriod",
         "currentCtcLpa", "expectedCtcLpa", "degree", "college", "graduationYear", "cgpa", "branch", "backlogs", "state", "pinCode",
-        "workAuthIndia", "sponsorshipAbroad", "relocate", "howHeard"].forEach(function (k) { if (a[k] !== undefined && a[k] !== null && a[k] !== "") applicant[k] = a[k]; });
+        "workAuthIndia", "sponsorshipAbroad", "relocate", "howHeard", "servingNotice", "lastWorkingDay", "noticeBuyout",
+        "fixedCtcLpa", "variableCtcLpa", "bondOk", "currentlyEmployed", "gapReason", "shiftsOk", "officeOk", "preferredCities"].forEach(function (k) { if (a[k] !== undefined && a[k] !== null && a[k] !== "") applicant[k] = a[k]; });
       var answers = (a.answers || []).filter(function (x) { return x && x.q && x.a; }).map(function (x) { return { q: x.q, a: x.a, company: x.company || "" }; });
       cache = { at: Date.now(), data: { applicant: applicant, resume: resume, answers: answers } };
       return cache.data;
