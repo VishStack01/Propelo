@@ -2465,6 +2465,7 @@ function openKit(j){
 function maybeOfferGuarantee(){
   const v = state.guarantee;
   if (!v || !v.enabled || !v.planAllows || state.guOfferShown) return;
+  if (state.me && state.me.partner) return; // a consultancy's students are not shown our own offers
   const cur = obj(v.interview).current;
   if (cur && !['declined', 'ended', 'void'].includes(cur.status)) return;
   let seen = false; try { seen = localStorage.getItem('propelo.guOffer') === '1'; } catch (e) {}

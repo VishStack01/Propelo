@@ -128,14 +128,21 @@ def loc_class(job: Job, f: dict) -> tuple[str, str]:
 
 def days_open(posted_at, first_seen: str, today) -> int | None:
     """Days since the listing went up: the earlier of the posting's own date and the day the scan first
-    saw it. None when neither is known."""
+    saw it. A posting date more than POSTED_TRUST_DAYS old is not trusted (evergreen listings and boards
+    that keep a requisition's original date), so the first-seen date decides. None when neither is known."""
     days = []
-    for raw in (str(posted_at or "")[:10], first_seen or ""):
+    for i, raw in enumerate((str(posted_at or "")[:10], first_seen or "")):
         try:
-            days.append((today - datetime.strptime(raw, "%Y-%m-%d").date()).days)
+            d = (today - datetime.strptime(raw, "%Y-%m-%d").date()).days
         except ValueError:
             continue
+        if i == 0 and d > POSTED_TRUST_DAYS:
+            continue
+        days.append(d)
     return max(0, max(days)) if days else None
+
+
+POSTED_TRUST_DAYS = 120
 
 
 def to_feed(job: Job, company: dict, via: str = "careers") -> dict:

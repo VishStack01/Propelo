@@ -82,6 +82,7 @@ def test_days_open():
     assert days_open("2026-10-20T10:00:00Z", "2026-11-01", today) == 28
     assert days_open("", "2026-11-10", today) == 7
     assert days_open(None, "", today) is None
+    assert days_open("2019-04-01T00:00:00Z", "2026-10-21", today) == 27  # an old posting date is not trusted
 
 
 def _job(desc, location="London, UK"):

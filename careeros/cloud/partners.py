@@ -369,7 +369,10 @@ def _days_open(rec: dict, first_seen_at: str, today: datetime) -> int | None:
     f = rec.get("facts") or {}
     if f.get("daysOpen") is not None:
         return int(f["daysOpen"])
-    starts = [d for d in (_dt(rec.get("postedAt")), _dt(first_seen_at)) if d]
+    posted, seen = _dt(rec.get("postedAt")), _dt(first_seen_at)
+    if posted and (today - posted).days > 120:
+        posted = None  # an evergreen or back-dated listing: the day we first saw it decides
+    starts = [d for d in (posted, seen) if d]
     return max(0, (today - min(starts)).days) if starts else None
 
 
