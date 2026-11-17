@@ -113,3 +113,19 @@ def guarantee(public_url: str, kind: str, what: str) -> tuple[str, str]:
     }
     subject, body = texts[what]
     return subject, body.replace("{u}", public_url)
+
+
+def business(public_url: str, what: str, name: str = "") -> tuple[str, str]:
+    """Business account notices (consultancies and agencies)."""
+    n = name or "your business account"
+    texts = {
+        "requested": ("We got your pilot request", f"Thanks for asking for a free pilot for {n}. A person on the team replies within 2 working days.\n\nYour business page: {{u}}/partner\n"),
+        "staff-requested": ("New business pilot request", f"{n} asked for a free pilot. Review it at {{u}}/partner (staff section).\n"),
+        "pilot": ("Your free pilot has started", f"Your 30-day pilot for {n} is on. Share your invite link or set up your feed here:\n\n{{u}}/partner\n"),
+        "paid": ("Payment received", f"Thanks. Your payment for {n} went through and your account runs for the next 30 days. Nothing renews by itself; we'll remind you a week before it ends.\n\n{{u}}/partner\n"),
+        "soon": ("Your business account ends in a week", f"{n} ends in 7 days or less. Pay for the next 30 days from your business page to keep it running; nothing renews by itself.\n\n{{u}}/partner\n"),
+        "ended": ("Your business account has ended", f"{n} has ended, so students' seats and the roles feed are paused. Pay from your business page to switch it back on; nothing was deleted.\n\n{{u}}/partner\n"),
+    }
+    subject, body = texts[what]
+    return subject, body.replace("{u}", public_url)
+

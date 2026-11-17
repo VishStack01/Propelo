@@ -141,3 +141,118 @@ def test_clean_filters_rejects_nonsense():
         partners.clean_filters({"sponsor": "maybe"})
     f = partners.clean_filters({"keywords": "Engineer, ,Data", "countries": ["gb", "XX"], "minDaysOpen": 900})
     assert f["keywords"] == ["engineer", "data"] and f["countries"] == ["GB"] and f["minDaysOpen"] == 365
+
+
+# ---------------------------------------------------------------- buying online and free pilots
+
+import hashlib  # noqa: E402
+import hmac  # noqa: E402
+from datetime import datetime, timedelta, timezone  # noqa: E402
+
+
+@pytest.fixture
+def pay(cloud, monkeypatch):
+    cloud.cfg.razorpay_key_id, cloud.cfg.razorpay_key_secret, cloud.cfg.razorpay_webhook_secret = "rzp_test_k", "s", "whs"
+    links = []
+
+    def fake_post(url, body, key, secret):
+        links.append(body)
+        return {"id": f"plink_B{len(links)}", "short_url": f"https://rzp.io/i/b{len(links)}"}
+    from careeros.cloud import plans
+    monkeypatch.setattr(plans, "_post", fake_post)
+    cloud.links = links
+    return cloud
+
+
+def _paid(cloud, link_id, amount, n=1):
+    ev = json.dumps({"event": "payment_link.paid", "payload": {"payment_link": {"entity": {"id": link_id, "status": "paid", "amount_paid": amount}}}}).encode()
+    sig = hmac.new(b"whs", ev, hashlib.sha256).hexdigest()
+    return cloud.client().post("/api/billing/webhook", content=ev, headers={"X-Razorpay-Signature": sig, "X-Razorpay-Event-Id": f"evt_{link_id}_{n}",
+                                                                            "Content-Type": "application/json"}).json()
+
+
+def test_business_page_and_catalog(cloud):
+    assert cloud.client().get("/business").status_code == 200
+    cat = cloud.client().get("/api/business/plans?currency=INR").json()
+    ids = {p["id"]: p for p in cat["plans"]}
+    assert ids["consultancy-growth"]["price"] == 1_499_900 and ids["consultancy-growth"]["seats"] == 50
+    assert ids["agency-feed"]["kind"] == "agency"
+    assert cloud.client().get("/terms").status_code == 200
+
+
+def test_buy_a_consultancy_plan_online(pay):
+    cloud = pay
+    owner = cloud.user("owner@consult.example")
+    body = {"plan": "consultancy-growth", "name": "Bright Abroad", "currency": "INR", "details": {"website": "brightabroad.example", "city": "Hyderabad"}}
+    assert owner.post("/api/business/start", json=body).status_code == 400  # terms first
+    r = owner.post("/api/business/start", json=dict(body, agree=True))
+    assert r.status_code == 200, r.text
+    d = r.json()
+    assert d["url"] == "https://rzp.io/i/b1" and cloud.links[0]["amount"] == 1_499_900
+    assert d["partner"]["status"] == "pending" and not d["partner"]["live"]
+    # Not live before payment: no seats yet.
+    code = owner.get("/api/partner").json()["partners"][0]["inviteUrl"].rsplit("/", 1)[1]
+    assert cloud.client().get(f"/api/join/{code}").json()["open"] is False
+    # Asking again reuses the open link.
+    assert owner.post("/api/business/start", json=dict(body, agree=True)).json()["url"] == "https://rzp.io/i/b1"
+
+    assert _paid(cloud, "plink_B1", 1_000)["result"] == "short"
+    assert _paid(cloud, "plink_B1", 1_499_900, 2)["result"] == "paid"
+    assert _paid(cloud, "plink_B1", 1_499_900, 3)["result"] == "duplicate"
+    v = owner.get("/api/partner").json()["partners"][0]
+    assert v["status"] == "active" and v["live"] and v["seats"] == 50 and v["payments"][0]["amount"] == 1_499_900
+    end1 = datetime.fromisoformat(v["endsAt"].replace("Z", "+00:00"))
+    assert timedelta(days=29) < end1 - datetime.now(timezone.utc) <= timedelta(days=30)
+    assert cloud.client().get(f"/api/join/{code}").json()["open"] is True
+    assert any("Payment received" in m["subject"] for m in cloud.outbox)
+
+    # Paying again extends from the current end date.
+    pay_url = owner.post(f"/api/partner/{v['id']}/pay", json={}).json()["url"]
+    assert pay_url == "https://rzp.io/i/b2"
+    assert _paid(cloud, "plink_B2", 1_499_900, 4)["result"] == "paid"
+    end2 = datetime.fromisoformat(owner.get("/api/partner").json()["partners"][0]["endsAt"].replace("Z", "+00:00"))
+    assert timedelta(days=29, hours=23) < end2 - end1 <= timedelta(days=30, minutes=1)
+
+
+def test_free_pilot_request_and_approval(pay):
+    cloud = pay
+    admin = cloud.user("admin@example.com")
+    owner = cloud.user("agency@talent.example")
+    r = owner.post("/api/business/start", json={"plan": "agency-feed", "name": "Talent Bridge", "pilot": True, "agree": True,
+                                               "details": {"note": "IT staffing, Bengaluru"}})
+    assert r.status_code == 200 and "url" not in r.json()
+    assert r.json()["partner"]["status"] == "requested"
+    assert any("pilot request" in m["subject"].lower() for m in cloud.outbox)
+    row = [p for p in admin.get("/api/staff/partners").json()["partners"] if p["name"] == "Talent Bridge"][0]
+    assert row["request"]["note"] == "IT staffing, Bengaluru"
+    assert owner.post(f"/api/staff/partners/{row['id']}/approve-pilot").status_code == 404  # staff only
+    assert admin.post(f"/api/staff/partners/{row['id']}/approve-pilot").status_code == 200
+    v = owner.get("/api/partner").json()["partners"][0]
+    assert v["status"] == "pilot" and v["live"]
+    key = owner.post(f"/api/partner/{v['id']}/rotate-key").json()["key"]
+    assert cloud.client().get(f"/api/partner-feed/{v['slug']}.json", params={"key": key}).status_code == 200
+    # A second pilot for the same kind is refused once one is running.
+    r = owner.post("/api/business/start", json={"plan": "agency-feed", "name": "Again", "pilot": True, "agree": True})
+    assert r.status_code == 400
+
+
+def test_reminders_once_per_end_date(cloud):
+    from careeros.cloud import partners
+    admin = cloud.user("admin@example.com")
+    cloud.user("owner@x.example")
+    r = admin.post("/api/staff/partners", json={"kind": "consultancy", "name": "Soon Co", "adminEmail": "owner@x.example", "seats": 5, "status": "active",
+                                                "endsAt": (datetime.now(timezone.utc) + timedelta(days=3)).strftime("%Y-%m-%dT%H:%M:%SZ")})
+    pid = r.json()["partner"]["id"]
+    with cloud.db.tx() as c:
+        assert partners.reminders(c) == [(pid, "soon")]
+        assert partners.reminders(c) == []
+        later = datetime.now(timezone.utc) + timedelta(days=4)
+        assert partners.reminders(c, now=later) == [(pid, "ended")]
+        assert partners.reminders(c, now=later) == []
+
+
+def test_dollar_checkout_needs_a_product(pay, monkeypatch):
+    cloud = pay
+    owner = cloud.user("us@agency.example")
+    r = owner.post("/api/business/start", json={"plan": "agency-feed", "name": "US Agency", "agree": True, "currency": "USD"})
+    assert r.status_code == 400 and "isn't set up" in r.json()["error"]

@@ -1332,6 +1332,11 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
                 result, g = guarantee.mark_paid(c, cfg, "razorpay", ref=str(link.get("id") or ""), amount=link.get("amount_paid"))
                 if result == "unknown":
                     result = concierge.mark_paid(c, str(link.get("id") or ""))
+                    if result == "unknown":
+                        result, pt = partners.mark_paid(c, "razorpay", ref=str(link.get("id") or ""), amount=link.get("amount_paid"))
+                        if result == "paid":
+                            for to in partners.admin_emails(c, pt["id"]):
+                                send(c, to, mail.business(cfg.public_url, "paid", pt["name"]))
                 elif result == "paid":
                     u = c.one("SELECT email FROM users WHERE id = ?", (g["user_id"],))
                     if u:
@@ -1377,6 +1382,22 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
                         if u:
                             send(c, u["email"], mail.guarantee(cfg.public_url, g["kind"], "enrolled"))
             log.info(json.dumps({"event": "billing-webhook", "provider": "dodo", "kind": "guarantee-" + str(event.get("type"))[:40], "result": result}))
+            return {"ok": True, "result": result}
+        if str(event.get("type", "")).startswith("payment.") and meta.get("partner_payment_id"):
+            # A business account bought in dollars.
+            eid = "dodo:" + headers["webhook-id"][:100]
+            with db.tx() as c:
+                if c.one("SELECT 1 AS x FROM billing_events WHERE id = ?", (eid,)):
+                    return {"ok": True, "result": "duplicate"}
+                c.execute("INSERT INTO billing_events(id, provider, kind, provider_sub_id, received_at, payload) VALUES (?, 'dodo', ?, ?, ?, ?)",
+                          (eid, str(event.get("type"))[:60], str(data.get("payment_id") or "")[:100], now_iso(), json.dumps(event)[:20000]))
+                result = "ignored"
+                if event.get("type") == "payment.succeeded":
+                    result, pt = partners.mark_paid(c, "dodo", payment_id=str(meta.get("partner_payment_id"))[:64], amount=data.get("total_amount"))
+                    if result == "paid":
+                        for to in partners.admin_emails(c, pt["id"]):
+                            send(c, to, mail.business(cfg.public_url, "paid", pt["name"]))
+            log.info(json.dumps({"event": "billing-webhook", "provider": "dodo", "kind": "business-" + str(event.get("type"))[:40], "result": result}))
             return {"ok": True, "result": result}
         ev = plans.dodo_event(cfg, event)
         with db.tx() as c:
@@ -1631,6 +1652,65 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
             return JSONResponse({"generatedAt": gen, "partner": pt["name"], "count": len(rows), "roles": rows}, headers=headers)
         headers["Content-Disposition"] = f'attachment; filename="{pt["slug"]}-roles.csv"'
         return Response(partners.to_csv(rows), media_type="text/csv; charset=utf-8", headers=headers)
+
+    @app.get("/business", include_in_schema=False)
+    def business_page(request: Request):
+        return html("business.html", request.state.nonce)
+
+    @app.get("/api/business/plans")
+    def business_plans(request: Request):
+        return partners.catalog(cfg, guess_currency(request))
+
+    @app.post("/api/business/start")
+    def business_start(request: Request, body: dict = Body(...), p: Principal = Depends(session_only)):
+        pilot = body.get("pilot") is True
+        if body.get("agree") is not True:
+            raise err(400, "Read and accept the business terms first.", "terms")
+        try:
+            with db.tx() as c:
+                limited(c, f"bstart:{p.uid}", 10, 3600)
+                pt = partners.start(c, p.user, str(body.get("plan") or ""), str(body.get("name") or ""), body.get("details") or {},
+                                    str(body.get("currency") or guess_currency(request)), pilot)
+                repo.audit(c, p.uid, "business.pilot-request" if pilot else "business.start", client_ip(request), {"partner": pt["id"], "plan": pt.get("plan")})
+                if pilot:
+                    send(c, p.user["email"], mail.business(cfg.public_url, "requested", pt["name"]))
+                    for to in staff_emails(c):
+                        send(c, to, mail.business(cfg.public_url, "staff-requested", pt["name"]))
+                    return {"partner": partners.view(c, pt, cfg.public_url)}
+                got = partners.checkout(c, cfg, p.user, pt)
+                return {"partner": partners.view(c, partners.get(c, pt["id"]), cfg.public_url), "url": got["url"]}
+        except partners.PartnerError as e:
+            raise perr(e)
+        except plans.BillingError as e:
+            raise err(502, str(e), "billing")
+
+    @app.post("/api/partner/{pid}/pay")
+    def partner_pay(pid: str, body: dict = Body(default={}), p: Principal = Depends(session_only)):
+        try:
+            with db.tx() as c:
+                pt = own_partner(c, pid, p)
+                plan = str(body.get("plan") or pt.get("plan") or "")
+                if plan not in partners.BUSINESS_PLANS or partners.BUSINESS_PLANS[plan]["kind"] != pt["kind"]:
+                    raise partners.PartnerError("Choose a plan for this kind of account.")
+                cur = str(body.get("currency") or pt.get("currency") or "INR")
+                c.execute("UPDATE partners SET plan = ?, currency = ?, updated_at = ? WHERE id = ?", (plan, cur if cur in ("INR", "USD") else "INR", now_iso(), pid))
+                got = partners.checkout(c, cfg, p.user, partners.get(c, pid))
+                return {"url": got["url"]}
+        except partners.PartnerError as e:
+            raise perr(e)
+        except plans.BillingError as e:
+            raise err(502, str(e), "billing")
+
+    @app.post("/api/staff/partners/{pid}/approve-pilot")
+    def staff_partner_pilot(pid: str, p: Principal = Depends(staff_only)):
+        try:
+            with db.tx() as c:
+                pt = partners.approve_pilot(c, pid)
+                for to in partners.admin_emails(c, pid):
+                    send(c, to, mail.business(cfg.public_url, "pilot", pt["name"]))
+                return {"partner": partners.staff_row(c, pt)}
+        except partners.PartnerError as e:
+            raise perr(e)
 
     @app.get("/api/staff/partners")
     def staff_partners(p: Principal = Depends(staff_only)):

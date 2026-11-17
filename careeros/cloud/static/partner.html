@@ -75,7 +75,17 @@ input,select,textarea{font:15px var(--f);color:var(--ink);background:var(--card)
     const b = p.branding || {};
     return b.logo ? `<img src="${esc(b.logo)}?v=${Date.now()}" alt="">` : `<span class="tile" aria-hidden="true">${esc((p.name || '?').slice(0, 1).toUpperCase())}</span>`;
   }
-  function status(p){ return `<span class="pill ${p.live ? 'live' : 'off'}">${p.live ? (p.status === 'pilot' ? 'Pilot' : 'Active') : 'Paused'}</span>${p.endsAt ? `<span class="small muted">until ${esc(when(p.endsAt))}</span>` : ''}`; }
+  const money = (minor, cur) => cur === 'USD' ? '$' + (minor / 100).toLocaleString('en-US') : '₹' + Math.round(minor / 100).toLocaleString('en-IN');
+  function billing(p){
+    const note = {requested: 'You asked for a free pilot. A person replies within 2 working days, by email.',
+      pending: 'Waiting for your payment. Your account starts as soon as it goes through.',
+      paused: 'This account is paused.', ended: 'This account has ended. Nothing was deleted; pay to switch it back on.'}[p.status]
+      || (!p.live ? 'This account has ended. Nothing was deleted; pay to switch it back on.' : p.status === 'pilot' ? `Free pilot until ${when(p.endsAt)}.` : `Paid until ${when(p.endsAt)}. Nothing renews by itself; we remind you a week before.`);
+    const pay = p.canPay && p.price ? `<button class="btn" data-act="pay" data-pid="${esc(p.id)}">${p.status === 'pending' ? 'Pay' : 'Pay for 30 days'} · ${esc(money(p.price, p.currency))}</button>` : '';
+    const hist = (p.payments || []).length ? `<p class="small muted" style="margin:8px 0 0">Payments: ${p.payments.map(x => esc(money(x.amount, x.currency)) + ' on ' + esc(when(x.paidAt))).join(', ')}</p>` : '';
+    return `<section class="card"><div class="row" style="justify-content:space-between"><div><h2 style="margin:0 0 4px">${esc(p.planName || 'Plan')}</h2><p class="small muted" style="margin:0">${esc(note)}</p>${hist}</div>${pay}</div><div class="err" id="pay-err-${esc(p.id)}" role="alert"></div></section>`;
+  }
+  function status(p){ const label = p.live ? (p.status === 'pilot' ? 'Pilot' : 'Active') : ({requested: 'Pilot requested', pending: 'Awaiting payment', paused: 'Paused'}[p.status] || 'Ended'); return `<span class="pill ${p.live ? 'live' : 'off'}">${label}</span>${p.endsAt && p.live ? `<span class="small muted">until ${esc(when(p.endsAt))}</span>` : ''}`; }
 
   function consultancy(p){
     const t = p.totals || {};
@@ -85,6 +95,7 @@ input,select,textarea{font:15px var(--f);color:var(--ink);background:var(--card)
       <td class="small">${(s.interviewRoles || []).map(r => esc(r.company + ' · ' + r.title)).join('<br>')}</td>
       <td><button class="btn sm ghost" data-act="remove" data-pid="${esc(p.id)}" data-uid="${esc(s.id)}">Remove</button></td></tr>`).join('');
     return `<section class="card"><div class="row" style="justify-content:space-between"><div class="brand">${mark(p)}<div><h1>${esc(p.name)}</h1><div class="row">${status(p)}<span class="small muted">Students get ${esc(p.studentPlan === 'ultra' ? 'Ultra' : 'Pro')}</span></div></div></div></div></section>
+    ${billing(p)}
     <section class="card"><div class="stats">
       <div class="stat"><b>${p.seatsUsed} / ${p.seats}</b><span class="small muted">seats used</span></div>
       <div class="stat"><b>${t.matched || 0}</b><span class="small muted">roles matched</span></div>
@@ -116,6 +127,7 @@ input,select,textarea{font:15px var(--f);color:var(--ink);background:var(--card)
     const f = p.filters || {}, k = state.key[p.id];
     const opts = COUNTRIES.map(([c, n]) => `<label class="row small"><input type="checkbox" class="f-c-${esc(p.id)}" value="${c}"${(f.countries || []).includes(c) ? ' checked' : ''} style="width:auto;min-height:0"> ${esc(n)}</label>`).join('');
     return `<section class="card"><div class="brand">${mark(p)}<div><h1>${esc(p.name)}</h1><div class="row">${status(p)}</div></div></div></section>
+    ${billing(p)}
     <section class="card"><h2>Your daily roles feed</h2><p class="small muted">Open roles from employers' own career pages, refreshed every hour, filtered by the settings below. Open it in a spreadsheet, or pull it into your CRM or n8n with the key. Roles only: no personal data.</p>
       <div class="copy"><input readonly value="${esc(p.feedUrl)}" aria-label="CSV feed"><button class="btn sm" data-act="copy" data-v="${esc(p.feedUrl)}">Copy</button></div>
       <div class="copy" style="margin-top:8px"><input readonly value="${esc(p.feedJsonUrl)}" aria-label="JSON feed"><button class="btn sm" data-act="copy" data-v="${esc(p.feedJsonUrl)}">Copy</button></div>
@@ -150,7 +162,9 @@ input,select,textarea{font:15px var(--f);color:var(--ink);background:var(--card)
     if (!state.staff) return '';
     const rows = state.staff.map(p => `<tr><td><b>${esc(p.name)}</b><br><span class="small muted">${esc(p.kind)} · ${esc(p.slug)}</span></td><td>${esc(p.status)}${p.live ? '' : ' (off)'}</td>
       <td class="n">${p.kind === 'consultancy' ? `${p.seatsUsed} / ${p.seats}` : '–'}</td><td class="small">${esc(p.admins.join(', '))}</td><td class="small">${esc((p.billing || {}).amount || '')} ${esc((p.billing || {}).currency || '')}</td><td class="small">${esc(when(p.endsAt))}</td>
-      <td><select data-act="staff-status" data-pid="${esc(p.id)}" aria-label="Status">${['pilot', 'active', 'paused', 'ended'].map(s => `<option${s === p.status ? ' selected' : ''}>${s}</option>`).join('')}</select></td></tr>`).join('');
+      <td><select data-act="staff-status" data-pid="${esc(p.id)}" aria-label="Status">${['requested', 'pending', 'pilot', 'active', 'paused', 'ended'].map(s => `<option${s === p.status ? ' selected' : ''}>${s}</option>`).join('')}</select>
+      ${p.status === 'requested' ? `<button class="btn sm" data-act="approve-pilot" data-pid="${esc(p.id)}" style="margin-top:6px">Start ${p.kind === 'consultancy' ? '25-seat ' : ''}pilot</button>` : ''}</td></tr>
+      ${Object.keys(p.request || {}).length ? `<tr><td colspan="7" class="small muted">${esc(p.plan)} · ${Object.entries(p.request).map(([k, v]) => esc(k) + ': ' + esc(v)).join(' · ')}</td></tr>` : ''}`).join('');
     return `<section class="card"><h2>All business accounts (staff)</h2>${rows ? `<div class="tablewrap"><table><thead><tr><th>Account</th><th>Status</th><th>Seats</th><th>Admins</th><th>Agreed</th><th>Until</th><th>Change</th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="muted">None yet.</p>'}</section>
     <section class="card"><h2>Add a business account</h2><p class="small muted">The admin must already have an account (they sign up with their work email first).</p>
       <div class="grid2"><label class="f">Kind<select id="n-kind"><option value="consultancy">Consultancy (student portal)</option><option value="agency">Recruiting agency (roles feed)</option></select></label>
@@ -183,6 +197,8 @@ input,select,textarea{font:15px var(--f);color:var(--ink);background:var(--card)
     const pid = b.dataset.pid, act = b.dataset.act;
     try {
       if (act === 'copy'){ await navigator.clipboard.writeText(b.dataset.v); b.textContent = 'Copied'; setTimeout(() => { b.textContent = 'Copy'; }, 1500); return; }
+      if (act === 'pay'){ b.disabled = true; const d = await api(`/api/partner/${pid}/pay`, 'POST', {}); if (/^https:\/\//.test(d.url)) location.href = d.url; return; }
+      if (act === 'approve-pilot'){ await api(`/api/staff/partners/${pid}/approve-pilot`, 'POST'); return load(); }
       if (act === 'rotate-invite'){ if (!confirm('Make a new invite link? The old link stops working.')) return; await api(`/api/partner/${pid}/rotate-invite`, 'POST'); return load(); }
       if (act === 'rotate-key'){ if (!confirm('Make a new key? Anything using the old key stops working.')) return; state.key[pid] = (await api(`/api/partner/${pid}/rotate-key`, 'POST')).key; return load(); }
       if (act === 'remove'){ if (!confirm('Remove this student? Their seat is freed and they go back to the free plan.')) return; await api(`/api/partner/${pid}/remove/${b.dataset.uid}`, 'POST'); return load(); }
@@ -217,8 +233,9 @@ input,select,textarea{font:15px var(--f);color:var(--ink);background:var(--card)
         return;
       }
     } catch (err) {
-      const box = $('#' + (act === 'save-brand' ? 'b-err-' + pid : act === 'save-filters' ? 'f-err-' + pid : act === 'staff-create' ? 'n-err' : 'x')) ;
+      const box = $('#' + (act === 'pay' ? 'pay-err-' + pid : act === 'save-brand' ? 'b-err-' + pid : act === 'save-filters' ? 'f-err-' + pid : act === 'staff-create' ? 'n-err' : 'x')) ;
       if (box) box.textContent = err.message; else alert(err.message);
+      if (b) b.disabled = false;
     }
   });
   document.addEventListener('change', async e => {

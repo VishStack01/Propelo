@@ -17,21 +17,23 @@ what was agreed and `status` / `ends_at` switch access on and off.
 from __future__ import annotations
 
 import base64
+import os
 import csv
 import io
 import json
 import re
 import secrets
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from .. import countries
 from . import repo
+from . import plans
 from .db import Conn, now_iso
 from .security import new_token, token_hash
 
 KINDS = ("consultancy", "agency")
-STATUSES = ("pilot", "active", "paused", "ended")
+STATUSES = ("requested", "pending", "pilot", "active", "paused", "ended")  # requested: a free pilot asked for; pending: awaiting the first payment
 LIVE = ("pilot", "active")
 STUDENT_PLANS = ("pro", "ultra")
 CONSENT = ("{name} will see your progress: how many roles were matched to you, how many you applied to, and "
@@ -333,8 +335,16 @@ def student_progress(c: Conn, uid: str) -> dict:
 
 def view(c: Conn, p: dict, public_url: str) -> dict:
     """What the partner's admins see."""
+    plan = BUSINESS_PLANS.get(p.get("plan") or "")
+    end = _dt(p.get("ends_at"))
+    soon = bool(end and end - datetime.now(timezone.utc) <= timedelta(days=10))
     out = {"id": p["id"], "kind": p["kind"], "name": p["name"], "slug": p["slug"], "status": p["status"], "live": is_live(p),
-           "endsAt": p.get("ends_at"), "brand": p["brand"], "logo": bool(p.get("logo")), "branding": branding(p)}
+           "endsAt": p.get("ends_at"), "brand": p["brand"], "logo": bool(p.get("logo")), "branding": branding(p),
+           "plan": p.get("plan") or "", "planName": plan["name"] if plan else "", "currency": p.get("currency") or "INR",
+           "price": plan[p.get("currency") or "INR"] if plan and (p.get("currency") or "INR") in plan else None,
+           "canPay": bool(plan) and p["status"] in ("pending", "pilot", "active", "paused", "ended") and (p["status"] == "pending" or not is_live(p) or soon or p["status"] == "pilot"),
+           "payments": [{"amount": r["amount"], "currency": r["currency"], "plan": r["plan"], "paidAt": r["paid_at"]}
+                        for r in c.all("SELECT amount, currency, plan, paid_at FROM partner_payments WHERE partner_id = ? AND status = 'paid' ORDER BY paid_at DESC LIMIT 12", (p["id"],))]}
     if p["kind"] == "consultancy":
         rows = c.all("SELECT m.user_id, m.joined_at, m.status, u.name, u.email FROM partner_members m JOIN users u ON u.id = m.user_id "
                      "WHERE m.partner_id = ? AND m.role = 'student' AND m.status = 'active' ORDER BY m.joined_at", (p["id"],))
@@ -353,7 +363,8 @@ def staff_row(c: Conn, p: dict) -> dict:
     return {"id": p["id"], "kind": p["kind"], "name": p["name"], "slug": p["slug"], "status": p["status"], "seats": int(p["seats"] or 0),
             "seatsUsed": seats_used(c, p["id"]) if p["kind"] == "consultancy" else None, "endsAt": p.get("ends_at"),
             "billing": p["billing"], "admins": [a["email"] for a in admins], "filters": p["filters"], "createdAt": p["created_at"],
-            "inviteCode": p["invite_code"] if p["kind"] == "consultancy" else None, "live": is_live(p)}
+            "inviteCode": p["invite_code"] if p["kind"] == "consultancy" else None, "live": is_live(p),
+            "plan": p.get("plan") or "", "currency": p.get("currency") or "INR", "request": json.loads(p.get("request") or "{}") if isinstance(p.get("request"), str) else (p.get("request") or {})}
 
 
 # ---------------------------------------------------------------- the agency feed
@@ -449,3 +460,171 @@ def to_csv(rows: list[dict]) -> str:
         # Spreadsheet formula injection: a cell starting with = + - @ is read as a formula.
         w.writerow({k: ("'" + v if isinstance(v, str) and v[:1] in ("=", "+", "-", "@") else v) for k, v in r.items()})
     return buf.getvalue()
+
+
+# ---------------------------------------------------------------- buying online and free pilots
+
+PERIOD_DAYS = 30
+PILOT_DAYS = 30
+PILOT_SEATS = 25
+# Prices in minor units (paise, cents). Prepaid for 30 days; nothing renews by itself.
+BUSINESS_PLANS = {
+    "consultancy-starter": {"kind": "consultancy", "name": "Consultancy Starter", "seats": 25, "INR": 999_900, "USD": 11_900},
+    "consultancy-growth": {"kind": "consultancy", "name": "Consultancy Growth", "seats": 50, "INR": 1_499_900, "USD": 17_900},
+    "consultancy-plus": {"kind": "consultancy", "name": "Consultancy Plus", "seats": 150, "INR": 2_999_900, "USD": 34_900},
+    "agency-feed": {"kind": "agency", "name": "Agency roles feed", "seats": 0, "INR": 499_900, "USD": 9_900},
+}
+
+
+def dodo_product(plan_id: str, env: dict | None = None) -> str:
+    """A one-time Dodo product per business plan, priced at its dollar price: DODO_PRODUCT_CONSULTANCY_GROWTH and so on."""
+    env = os.environ if env is None else env
+    return str(env.get("DODO_PRODUCT_" + plan_id.upper().replace("-", "_"), "")).strip()
+
+
+def can_pay(cfg, currency: str, plan_id: str = "") -> bool:
+    if currency == "USD":
+        return bool(cfg.dodo_enabled and (not plan_id or dodo_product(plan_id)))
+    return bool(cfg.razorpay_key_id and cfg.razorpay_key_secret)
+
+
+def catalog(cfg, currency: str) -> dict:
+    cur = currency if currency in ("INR", "USD") else "INR"
+    return {"currency": cur, "periodDays": PERIOD_DAYS, "pilotDays": PILOT_DAYS, "pilotSeats": PILOT_SEATS,
+            "plans": [{"id": k, "kind": v["kind"], "name": v["name"], "seats": v["seats"], "price": v[cur],
+                       "payable": can_pay(cfg, cur, k)} for k, v in BUSINESS_PLANS.items()]}
+
+
+def clean_request(d: dict) -> dict:
+    d = d or {}
+    out = {}
+    for k, n in (("website", 200), ("city", 80), ("phone", 30), ("note", 600), ("students", 40)):
+        v = re.sub(r"\s+", " ", str(d.get(k) or "")).strip()[:n]
+        if v:
+            out[k] = v
+    if out.get("website") and not re.match(r"^https?://", out["website"]):
+        out["website"] = "https://" + out["website"]
+    return out
+
+
+def start(c: Conn, user: dict, plan_id: str, name: str, details: dict, currency: str, pilot: bool) -> dict:
+    """A business asks for a free pilot (status requested, the team decides) or starts buying (status pending
+    until the payment). The person asking becomes its admin. One open request per person and kind."""
+    plan = BUSINESS_PLANS.get(plan_id)
+    if not plan:
+        raise PartnerError("Choose a plan.")
+    cur = currency if currency in ("INR", "USD") else "INR"
+    req = clean_request(details)
+    for p in admin_partners(c, user["id"]):
+        if p["kind"] == plan["kind"] and p["status"] in ("requested", "pending"):
+            c.execute("UPDATE partners SET plan = ?, currency = ?, request = ?, name = ?, status = ?, updated_at = ? WHERE id = ?",
+                      (plan_id, cur, json.dumps(req), (name or p["name"]).strip()[:80] or p["name"], "requested" if pilot else "pending", now_iso(), p["id"]))
+            return get(c, p["id"])
+        if p["kind"] == plan["kind"] and is_live(p) and not pilot:
+            c.execute("UPDATE partners SET plan = ?, currency = ?, updated_at = ? WHERE id = ?", (plan_id, cur, now_iso(), p["id"]))
+            return get(c, p["id"])  # an existing account buying (another month, or a bigger plan)
+        if p["kind"] == plan["kind"] and pilot and p["status"] in ("pilot", "active"):
+            raise PartnerError("You already have an account. Open it from your business page.")
+    p, _ = create(c, plan["kind"], name, user["id"], seats=0, status="requested" if pilot else "pending")
+    c.execute("UPDATE partners SET plan = ?, currency = ?, request = ? WHERE id = ?", (plan_id, cur, json.dumps(req), p["id"]))
+    add_admin(c, p["id"], user["id"])
+    return get(c, p["id"])
+
+
+def checkout(c: Conn, cfg, user: dict, p: dict, post=None) -> dict:
+    """A one-time payment for 30 days of the partner's plan. Razorpay payment link in rupees, Dodo checkout in
+    dollars. Access starts or extends on the provider's paid webhook, never on this call."""
+    plan = BUSINESS_PLANS.get(p.get("plan") or "")
+    if not plan or plan["kind"] != p["kind"]:
+        raise PartnerError("Choose a plan first.")
+    cur = p.get("currency") if p.get("currency") in ("INR", "USD") else "INR"
+    if not can_pay(cfg, cur, p["plan"]):
+        raise PartnerError("Online payment in this currency isn't set up yet. Write to us and we'll send a payment link.")
+    open_row = c.one("SELECT * FROM partner_payments WHERE partner_id = ? AND status = 'open' AND plan = ? AND currency = ? AND created_at > ?",
+                     (p["id"], p["plan"], cur, now_iso(timedelta(hours=-20))))
+    if open_row and open_row["url"]:
+        return {"provider": open_row["provider"], "id": open_row["ref"], "url": open_row["url"]}
+    pay_id = uuid.uuid4().hex
+    amount = plan[cur]
+    if cur == "INR":
+        r = (post or plans._post)(f"{plans.RAZORPAY_API}/payment_links", {
+            "amount": amount, "currency": "INR", "accept_partial": False, "description": f"Propelo {plan['name']} ({PERIOD_DAYS} days)",
+            "customer": {"name": (user.get("name") or "")[:80], "email": user["email"][:120]}, "notify": {"email": True, "sms": False},
+            "reference_id": pay_id[:40], "callback_url": f"{cfg.public_url}/partner", "callback_method": "get",
+            "notes": {"partner_id": p["id"], "partner_payment_id": pay_id}}, cfg.razorpay_key_id, cfg.razorpay_key_secret)
+        if not str(r.get("id", "")).startswith("plink_") or not str(r.get("short_url", "")).startswith("https://"):
+            raise PartnerError("Razorpay returned an unexpected payment link.")
+        got = {"provider": "razorpay", "id": r["id"], "url": r["short_url"]}
+    else:
+        d = plans.Dodo(cfg, post)
+        r = d.call("POST", f"{d.base}/checkouts", {"product_cart": [{"product_id": dodo_product(p["plan"]), "quantity": 1}],
+                   "customer": {"email": user["email"][:200], "name": (user.get("name") or user["email"].split("@")[0])[:120]},
+                   "return_url": f"{cfg.public_url}/partner", "metadata": {"partner_id": p["id"], "partner_payment_id": pay_id}}, cfg.dodo_api_key)
+        url, sid = str(r.get("checkout_url") or ""), str(r.get("session_id") or "")
+        if not url.startswith("https://") or not sid:
+            raise PartnerError("Dodo Payments returned an unexpected checkout.")
+        got = {"provider": "dodo", "id": sid, "url": url}
+    c.execute("INSERT INTO partner_payments(id, partner_id, plan, provider, ref, amount, currency, status, url, created_by, created_at) "
+              "VALUES (?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?)", (pay_id, p["id"], p["plan"], got["provider"], got["id"][:120], amount, cur, got["url"][:600], user["id"], now_iso()))
+    return got
+
+
+def mark_paid(c: Conn, provider: str, ref: str = "", payment_id: str = "", amount: int | None = None,
+              now: datetime | None = None) -> tuple[str, dict | None]:
+    """From a verified webhook: start or extend the account by 30 days. Returns (result, partner)."""
+    row = c.one("SELECT * FROM partner_payments WHERE ref = ? AND provider = ?", (ref, provider)) if ref else None
+    if not row and payment_id:
+        row = c.one("SELECT * FROM partner_payments WHERE id = ?", (payment_id[:64],))
+    if not row:
+        return "unknown", None
+    p = get(c, row["partner_id"])
+    if row["status"] == "paid":
+        return "duplicate", p
+    if amount is not None and int(amount) < int(row["amount"]):
+        return "short", p
+    now = now or datetime.now(timezone.utc)
+    base = _dt(p.get("ends_at")) if p and p["status"] in ("active", "pilot") and _dt(p.get("ends_at")) and _dt(p["ends_at"]) > now else now
+    ends = (base + timedelta(days=PERIOD_DAYS)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    plan = BUSINESS_PLANS.get(row["plan"]) or {}
+    c.execute("UPDATE partner_payments SET status = 'paid', paid_at = ? WHERE id = ?", (now_iso(), row["id"]))
+    c.execute("UPDATE partners SET status = 'active', plan = ?, seats = ?, ends_at = ?, reminded = '', billing = ?, updated_at = ? WHERE id = ?",
+              (row["plan"], int(plan.get("seats") or 0), ends, json.dumps({"amount": str(row["amount"] / 100), "currency": row["currency"], "note": f"paid online ({provider})"}),
+               now_iso(), row["partner_id"]))
+    return "paid", get(c, row["partner_id"])
+
+
+def approve_pilot(c: Conn, pid: str, now: datetime | None = None) -> dict:
+    p = get(c, pid)
+    if not p:
+        raise PartnerError("Not found.")
+    now = now or datetime.now(timezone.utc)
+    seats = PILOT_SEATS if p["kind"] == "consultancy" else 0
+    c.execute("UPDATE partners SET status = 'pilot', seats = MAX(seats, ?), ends_at = ?, reminded = '', updated_at = ? WHERE id = ?"
+              if c.kind == "sqlite" else
+              "UPDATE partners SET status = 'pilot', seats = GREATEST(seats, ?), ends_at = ?, reminded = '', updated_at = ? WHERE id = ?",
+              (seats, (now + timedelta(days=PILOT_DAYS)).strftime("%Y-%m-%dT%H:%M:%SZ"), now_iso(), pid))
+    return get(c, pid)
+
+
+def admin_emails(c: Conn, pid: str) -> list[str]:
+    return [r["email"] for r in c.all("SELECT u.email FROM partner_members m JOIN users u ON u.id = m.user_id "
+                                      "WHERE m.partner_id = ? AND m.role = 'admin' AND m.status = 'active'", (pid,))]
+
+
+def reminders(c: Conn, now: datetime | None = None) -> list[tuple[str, str]]:
+    """Accounts ending within 7 days, or just ended, that haven't been told yet: [(partner_id, "soon"|"ended")].
+    Each notice is sent once per end date."""
+    now = now or datetime.now(timezone.utc)
+    out = []
+    for r in c.all("SELECT * FROM partners WHERE status IN ('pilot', 'active') AND ends_at IS NOT NULL"):
+        p = _load(r)
+        end = _dt(p["ends_at"])
+        if not end:
+            continue
+        what = "ended" if end <= now else "soon" if end - now <= timedelta(days=7) else ""
+        tag = f"{what}:{p['ends_at']}"
+        if what and tag not in (p.get("reminded") or "").split("|"):
+            c.execute("UPDATE partners SET reminded = ?, updated_at = ? WHERE id = ?", (((p.get("reminded") or "") + "|" + tag).strip("|")[-400:], now_iso(), p["id"]))
+            out.append((p["id"], what))
+    return out
+
