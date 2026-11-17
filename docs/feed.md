@@ -12,7 +12,7 @@ flowchart LR
   Discover --> Boards[("feed/boards.json")]
   Boards --> Scan["careeros scan<br/>8 hiring systems"]
   Remote["9 remote job boards<br/>(public JSON / RSS)"] --> Scan
-  Scan --> Feed[("feed/india.jsonl.gz<br/>on the feed branch")]
+  Scan --> Feed[("india.jsonl.gz<br/>feed-latest release")]
   Feed --> Filter["careeros filter-feed<br/>your settings, known roles"]
   Filter --> Dash["dashboard"]
   Platforms["config/platforms.toml<br/>(96 platforms)"] --> Agent["agent run<br/>login-free pages, x-ray searches"]
@@ -68,7 +68,7 @@ When a remote board re-lists a role that is also on the company's own board, the
 company's posting wins. Boards that ask for gentle polling are respected:
 Remotive is read every 6 hours, Jobicy at most hourly.
 
-Output, published to the `feed` branch by `.github/workflows/scan.yml`:
+Output, published as assets of the `feed-latest` release by `.github/workflows/scan.yml` (download from `https://github.com/VishStack01/careeros/releases/download/feed-latest/<file>`):
 
 | File | What |
 |---|---|
@@ -102,7 +102,7 @@ budget on the platforms the feed can't read (see [platforms.md](platforms.md)).
 ## Running it yourself
 
 Fork the repo and enable Actions: the `scan` workflow runs every hour on
-GitHub's free runners and publishes your fork's `feed` branch. Or run it locally:
+GitHub's free runners and publishes your fork's `feed-latest` release. Or run it locally:
 
 ```bash
 careeros discover            # first run: ~40 minutes for 1,396 companies

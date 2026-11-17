@@ -441,7 +441,7 @@ def main(argv: list[str] | None = None) -> None:
     sp.set_defaults(fn=cmd_scan)
 
     sp = sub.add_parser("filter-feed", help="Apply your filters to the India feed")
-    sp.add_argument("--feed", default="https://raw.githubusercontent.com/VishStack01/careeros/feed/feed/india.jsonl.gz")
+    sp.add_argument("--feed", default="https://github.com/VishStack01/careeros/releases/download/feed-latest/india.jsonl.gz")
     sp.add_argument("--settings-json", help="The dashboard's settings/profile document (JSON)")
     sp.add_argument("--settings", default="config/settings.toml")
     sp.add_argument("--known", help="Folder or file of roles already on the dashboard")

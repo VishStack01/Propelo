@@ -12,7 +12,7 @@ This page is the architecture, the deployment guide and the operations runbook. 
 
 ```mermaid
 flowchart LR
-  Scan["Hourly scan<br/>(GitHub Actions)"] --> Feed[("Public feed<br/>feed branch")]
+  Scan["Hourly scan<br/>(GitHub Actions)"] --> Feed[("Public feed<br/>feed-latest release")]
   Feed --> Worker["Worker<br/>ingest · match · email · cleanup"]
   Worker --> DB[("PostgreSQL")]
   Browser["Dashboard + sign-in pages"] --> API["Web app / API<br/>(FastAPI)"]

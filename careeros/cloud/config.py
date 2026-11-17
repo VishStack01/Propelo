@@ -9,7 +9,7 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
-DEFAULT_FEED = "https://raw.githubusercontent.com/VishStack01/careeros/feed/feed/"
+DEFAULT_FEED = "https://github.com/VishStack01/careeros/releases/download/feed-latest/"
 
 
 def _int(name: str, default: int) -> int:

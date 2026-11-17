@@ -11,7 +11,7 @@ and why, is at the end.
 |---|---|---|
 | Is it still open? | Asks the hiring system's own API first (Greenhouse, Lever, Ashby, SmartRecruiters, Workable), then reads the page for a closure notice or an Apply button. Anything else is "uncertain", never a guess. | `careeros liveness <url>`, `careeros/liveness.py` |
 | Is it a real opening? | Observations, not accusations: posting age, a closure notice, re-listing, how specific the posting is, contradictions (an "entry-level" title asking 5 years), whether pay is shown and whether a recruiter posted it for an unnamed client. Three tiers: Looks real, Check before applying, Suspicious. | `careeros/signals.py`, shown on the job board and in the dashboard |
-| Re-listed? | The same company and the same title words, posted again after the earlier listing disappeared, within 90 days. Parallel openings don't count. | `RepostHistory` in `careeros/signals.py`; history kept on the feed branch |
+| Re-listed? | The same company and the same title words, posted again after the earlier listing disappeared, within 90 days. Parallel openings don't count. | `RepostHistory` in `careeros/signals.py`; history kept with the feed (feed-latest release) |
 | Can you legally take it? | "US citizens only", security clearances and "must be authorized to work in X" rule a role out unless X is India. "No visa sponsorship" doesn't, for remote work from India. | the Work authorization gate in `careeros/gates.py` |
 | Role family | Forward deployed, Agentic and automation, AI platform and LLMOps, Solutions architect, AI product, AI transformation, Applied AI and LLM engineering. A filter on the job board. | `careeros/signals.py` |
 
