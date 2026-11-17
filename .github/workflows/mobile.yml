@@ -12,9 +12,9 @@ on:
   workflow_dispatch:
     inputs:
       app_url:
-        description: "Your Propelo server, e.g. https://careeros-web.onrender.com"
+        description: "Your Propelo server, e.g. https://app.propelo.org"
         required: true
-        default: "https://careeros-web.onrender.com"
+        default: "https://app.propelo.org"
       ios:
         description: "Also check that the iOS project builds (macOS runner)"
         type: boolean

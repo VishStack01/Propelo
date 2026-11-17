@@ -36,7 +36,7 @@ class Config:
     app_env: str = "development"  # development | staging | production
     database_url: str = "sqlite:///data/cloud.db"
     public_url: str = "http://127.0.0.1:8000"
-    jobs_site_url: str = "https://vishstack01.github.io/careeros/"  # the public job board; the app shows its company logos
+    jobs_site_url: str = "https://propelo.org/"  # the public job board; the app shows its company logos
     upload_dir: Path = Path("data/uploads")
     max_upload_mb: int = 5
     user_storage_mb: int = 25
@@ -118,7 +118,7 @@ class Config:
             app_env=e("APP_ENV", "development").lower(),
             database_url=e("DATABASE_URL", "sqlite:///data/cloud.db"),
             public_url=e("PUBLIC_URL", "http://127.0.0.1:8000").rstrip("/"),
-            jobs_site_url=_site_url(e("JOBS_SITE_URL", "https://vishstack01.github.io/careeros/")),
+            jobs_site_url=_site_url(e("JOBS_SITE_URL", "https://propelo.org/")),
             upload_dir=Path(e("UPLOAD_DIR", "data/uploads")),
             max_upload_mb=_int("MAX_UPLOAD_MB", 5),
             user_storage_mb=_int("USER_STORAGE_MB", 25),

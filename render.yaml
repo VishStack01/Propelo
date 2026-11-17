@@ -1,5 +1,5 @@
 # One-click deploy on Render: a PostgreSQL database, the web app and the worker.
-# After the first deploy, set PUBLIC_URL (your https://...onrender.com or custom domain),
+# After the first deploy, set PUBLIC_URL (https://app.propelo.org once the custom domain is added),
 # SMTP_URL, MAIL_FROM, SUPPORT_EMAIL and BOOTSTRAP_ADMIN_EMAIL in the dashboard, then redeploy.
 # Optional: CAREEROS_LLM + a provider key for the hosted AI allowance, the RAZORPAY_* values to take
 # rupee payments and the DODO_* values to take dollar payments. The full walk-through is docs/launch.md.

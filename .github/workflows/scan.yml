@@ -194,7 +194,10 @@ jobs:
       - name: Build the job board
         if: always()
         run: |
-          base="https://${GITHUB_REPOSITORY_OWNER,,}.github.io/${GITHUB_REPOSITORY#*/}/"
+          # The site's address: the repository variable SITE_URL (https://propelo.org/ once the custom domain is set
+          # in Settings > Pages), else the default GitHub Pages address.
+          base="${{ vars.SITE_URL }}"
+          [ -n "$base" ] || base="https://${GITHUB_REPOSITORY_OWNER,,}.github.io/${GITHUB_REPOSITORY#*/}/"
           careeros site --feed feed --out site --demo dashboard/index.html --base-url "$base" --logos .logo-cache
 
       - uses: actions/configure-pages@v5

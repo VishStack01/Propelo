@@ -3,7 +3,7 @@
   "appName": "Propelo",
   "webDir": "www",
   "server": {
-    "url": "https://careeros-web.onrender.com",
+    "url": "https://app.propelo.org",
     "cleartext": false,
     "errorPath": "offline.html"
   },

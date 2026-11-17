@@ -92,9 +92,9 @@ The web app is installable already. For the stores, see [mobile/README.md](../mo
 
 ## 10. Repository and launch
 
-- In GitHub, set the repository's About: description, website `https://vishstack01.github.io/careeros/`, topics `job-search`, `ai-agent`, `india`, `open-source`, `career`, `resume`.
+- In GitHub, set the repository's About: description, website `https://propelo.org/`, topics `job-search`, `ai-agent`, `india`, `open-source`, `career`, `resume`.
 - Turn on the hourly scan: `gh workflow enable scan.yml`. The worker ingests every 15 minutes; Ultra accounts are matched on every ingest.
-- `website/index.html` has `<meta name="careeros-app" content="https://careeros-web.onrender.com">`. Change it if the app lives on your domain.
+- `website/index.html` has `<meta name="careeros-app" content="https://app.propelo.org">`: every "Start free" and legal link points at the app there.
 - Start with `SIGNUP_MODE=allowlist` for a private beta, then open sign-ups.
 
 To give someone a plan without payment, sign in as the operator and run in the browser console:
@@ -137,3 +137,44 @@ Two guarantees sit outside the plans. Pro and Ultra members apply for them (the 
 2. **USAJOBS** (US federal roles): request a key at developer.usajobs.gov and add `USAJOBS_KEY` and `USAJOBS_EMAIL` (the email you registered with).
 3. **Watch the feed size** after turning on the hourly scan: `feed/summary.json` shows `openings` and `trimmed`. Raise or lower `CAREEROS_FEED_MAX` in `scan.yml` to keep `full.jsonl.gz` well under 100 MB.
 4. **Chrome Web Store:** zip the `extension` folder (the extension workflow builds it), pay the one-time developer fee, and describe the permissions as the extension's README does: no sites up front, the hiring sites only when the person switches on the panel, and never LinkedIn, Naukri, Indeed or Wellfound. Store review asks why each permission is needed; the README's table is the answer.
+
+## 11. The domain: propelo.org (site) and app.propelo.org (app)
+
+The public site (landing page, job board, docs, demo) is GitHub Pages on `propelo.org`; the app (sign-in,
+dashboard, `/business`, `/partner`, payments) is Render on `app.propelo.org`.
+
+**DNS at your registrar** (remove any parking or forwarding records for `@` and `www` first):
+
+| type | name | value |
+| --- | --- | --- |
+| A | @ | 185.199.108.153 |
+| A | @ | 185.199.109.153 |
+| A | @ | 185.199.110.153 |
+| A | @ | 185.199.111.153 |
+| AAAA | @ | 2606:50c0:8000::153, 2606:50c0:8001::153, 2606:50c0:8002::153, 2606:50c0:8003::153 (one record each) |
+| CNAME | www | vishstack01.github.io |
+| CNAME | app | the target Render shows when you add the domain (normally `careeros-web.onrender.com`) |
+
+These are GitHub's published Pages addresses; check them against GitHub's "Managing a custom domain for your
+GitHub Pages site" page when you set them.
+
+**GitHub:** Settings > Pages > Custom domain `propelo.org`, wait for the DNS check, then tick Enforce HTTPS.
+Verify the domain for your account (Settings > Pages > Add a verified domain) so nobody else can claim it.
+Then Settings > Secrets and variables > Actions > Variables: `SITE_URL` = `https://propelo.org/` (the job board's
+links and sitemap use it from the next scan).
+
+**Render:** the web service > Settings > Custom Domains > add `app.propelo.org`; Render issues the certificate.
+Then set the environment and redeploy:
+
+- `PUBLIC_URL=https://app.propelo.org` (links in emails, payment return pages, invite links)
+- `JOBS_SITE_URL=https://propelo.org/` (company logos; already the default)
+- `MAIL_FROM=Propelo <hello@propelo.org>` and `SUPPORT_EMAIL=support@propelo.org`, after your mail service
+  has verified `propelo.org` (it gives you SPF, DKIM and DMARC records to add to DNS). Use a mailbox you read.
+
+**Payment providers:** Razorpay webhook `https://app.propelo.org/api/billing/webhook`; Dodo webhook
+`https://app.propelo.org/api/billing/dodo-webhook`; update the website URL in both dashboards to
+`https://propelo.org`. The old `onrender.com` address keeps working, so nothing breaks while DNS changes.
+
+**Then rebuild the mobile app** (`mobile.yml`, server `https://app.propelo.org`) and, in the extension, students
+connect to `https://app.propelo.org`.
+

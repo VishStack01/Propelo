@@ -118,7 +118,7 @@
   }
   function renderConnect() {
     app.innerHTML = '<h1>Connect to Propelo</h1><p class="muted">Fills application forms from your Propelo profile. You review every answer and press Submit yourself.</p>' +
-      '<form id="connect" class="card" novalidate><label>Your Propelo address<input type="url" id="server" placeholder="https://your-careeros-server" value="' + esc(S.server || "") + '" required></label>' +
+      '<form id="connect" class="card" novalidate><label>Your Propelo address<input type="url" id="server" placeholder="https://app.propelo.org" value="' + esc(S.server || "") + '" required></label>' +
       '<label>Computer key<input type="password" id="key" placeholder="cos_k_…" autocomplete="off" required></label>' +
       '<p class="muted">Make one in Propelo: Settings, Your computer, Create computer key. The key stays in this browser.</p>' +
       '<button class="btn solid block" type="submit"' + (S.busy ? " disabled" : "") + '>' + (S.busy === "connect" ? '<span class="spin" aria-hidden="true"></span>Checking…' : "Connect") + '</button></form>' +

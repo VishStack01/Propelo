@@ -27,8 +27,8 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-Homepage = "https://vishstack01.github.io/careeros/"
-Documentation = "https://vishstack01.github.io/careeros/docs.html"
+Homepage = "https://propelo.org/"
+Documentation = "https://propelo.org/docs.html"
 Repository = "https://github.com/VishStack01/careeros"
 Issues = "https://github.com/VishStack01/careeros/issues"
 Changelog = "https://github.com/VishStack01/careeros/blob/main/CHANGELOG.md"

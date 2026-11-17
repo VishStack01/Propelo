@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://vishstack01.github.io/careeros/"><img src="website/assets/og.png" alt="Propelo: find the roles you qualify for, apply with only what's true" width="820"></a>
+  <a href="https://propelo.org/"><img src="website/assets/og.png" alt="Propelo: find the roles you qualify for, apply with only what's true" width="820"></a>
 </p>
 
 <h1 align="center">Propelo</h1>
@@ -19,10 +19,10 @@
 </p>
 
 <p align="center">
-  <a href="https://vishstack01.github.io/careeros/"><b>Website</b></a> ·
-  <a href="https://vishstack01.github.io/careeros/docs.html"><b>Docs</b></a> ·
-  <a href="https://vishstack01.github.io/careeros/jobs.html"><b>Live job board</b></a> ·
-  <a href="https://vishstack01.github.io/careeros/demo/"><b>Dashboard demo</b></a>
+  <a href="https://propelo.org/"><b>Website</b></a> ·
+  <a href="https://propelo.org/docs.html"><b>Docs</b></a> ·
+  <a href="https://propelo.org/jobs.html"><b>Live job board</b></a> ·
+  <a href="https://propelo.org/demo/"><b>Dashboard demo</b></a>
 </p>
 
 ---
@@ -93,12 +93,12 @@ Most job bots optimise the weakest variable: volume. They read job cards instead
 
 ## The job board
 
-The hourly scan also publishes a public job board on GitHub Pages ([jobs.html](https://vishstack01.github.io/careeros/jobs.html)), in the spirit of Arbeitnow: seven job families (Software Engineering, AI & Data, Product & Design, Marketing & Growth, Sales & Accounts, Finance & Strategy, Operations & People), quick lists (internships, new grads, remote, 20 LPA and up, last 24 hours), search, filters with counts (where you can work from, experience, posted date, contract, specialty, skills, perks), a page per role with the full posting and the quoted facts, and a page per company. Only roles still open and posted in the last 60 days are listed.
+The hourly scan also publishes a public job board on GitHub Pages ([jobs.html](https://propelo.org/jobs.html)), in the spirit of Arbeitnow: seven job families (Software Engineering, AI & Data, Product & Design, Marketing & Growth, Sales & Accounts, Finance & Strategy, Operations & People), quick lists (internships, new grads, remote, 20 LPA and up, last 24 hours), search, filters with counts (where you can work from, experience, posted date, contract, specialty, skills, perks), a page per role with the full posting and the quoted facts, and a page per company. Only roles still open and posted in the last 60 days are listed.
 
 | Endpoint | What |
 |---|---|
-| [`/api/jobs.json`](https://vishstack01.github.io/careeros/api/jobs.json) | 100 roles per page, newest first; `links.next` points to `api/jobs/page-2.json` |
-| [`/feed.xml`](https://vishstack01.github.io/careeros/feed.xml) | RSS of the 100 newest roles |
+| [`/api/jobs.json`](https://propelo.org/api/jobs.json) | 100 roles per page, newest first; `links.next` points to `api/jobs/page-2.json` |
+| [`/feed.xml`](https://propelo.org/feed.xml) | RSS of the 100 newest roles |
 | `/data/jobs/<id>.json` | One role with its full text and facts |
 
 Build it yourself with `careeros site --feed feed --out site`. When a `website/` folder is present, the site's home page is the project website and the board lives at `jobs.html`.
@@ -256,7 +256,7 @@ tests/               415 tests, including real browser form fills, every LLM pro
 - [Build your own](docs/build-your-own.md)
 - [Launch it as a product](docs/launch.md), the [runbook](docs/runbook.md) and [how Propelo compares](docs/competitors.md)
 - [Design rules](docs/design.md)
-- [Bring your own key](https://vishstack01.github.io/careeros/docs.html#key)
+- [Bring your own key](https://propelo.org/docs.html#key)
 - [Responsible use](docs/responsible-use.md)
 - [Roadmap](docs/roadmap.md)
 - [AGENTS.md](AGENTS.md): instructions for Claude Code, Codex and Antigravity
