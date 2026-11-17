@@ -185,6 +185,18 @@ def feature_period(span: str, now: datetime | None = None) -> str:
     return (now or datetime.now(timezone.utc)).strftime("%Y-%m-%d" if span == "day" else "%Y-%m")
 
 
+# AI actions on the service's model that stay on the main model: the writing a recruiter reads.
+MAIN_MODEL_FEATURES = ("tailor", "refine", "regen", "prep")
+
+
+def hosted_tier(tier: str, feature: str) -> str:
+    """The tier the service's own model runs at. "complex" stays; "default" becomes "quick" unless the action
+    writes the application itself. Own keys are not affected (the member pays for their own model)."""
+    if tier == "complex" or feature in MAIN_MODEL_FEATURES:
+        return tier
+    return "quick"
+
+
 def take_feature(c: Conn, cfg: Config, uid: str, plan: str, feature: str) -> tuple[bool, str]:
     """Count one use of a metered feature. (allowed, message when not)."""
     if feature == "linkedin":

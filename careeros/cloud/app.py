@@ -2041,6 +2041,9 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
                 plans.take_credit(c, p.uid, "own")
             else:
                 model, kind = plans.hosted_config(), "hosted"
+                # The service pays for its own model: quick tasks (parsing, scoring, copilot, mocks, drafts) run on the
+                # quick model, and only the writing a recruiter reads (tailored resume and its edits) on the main one.
+                tier = plans.hosted_tier(tier, feature)
                 if not model:
                     raise err(503, "AI isn't available on this server. Add your own key in Settings.", "ai_off")
                 plan = plans.plan_of(c, p.user)

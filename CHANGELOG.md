@@ -2,6 +2,18 @@
 
 All notable changes to CareerOS. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [semantic versioning](https://semver.org/).
 
+## [2.8.0] - 2026-11-17
+
+### Added
+- **Business accounts.** A study-abroad consultancy or placement cell gets a branded space at `/partner`, an invite link and seats: each student who joins gets Pro while the account is active, and the consultancy sees their progress (roles matched, applications, interviews, offers, roles from sponsoring employers), never resumes, answers or messages. Students read exactly that before joining and can leave in Settings. A recruiting agency gets a filtered CSV or JSON feed of open roles (days open, the posting's sponsorship line, the UK sponsor register) with its own key. Staff create both at `/partner`. Migration `0009_partners.sql`; see `docs/business.md`.
+- **Visa sponsorship on every role.** What the posting says (sponsors, cannot sponsor, or nothing, shown as unclear and never guessed), and for UK roles whether the employer is on the Home Office register of licensed sponsors (downloaded daily) and whether stated pay meets the Skilled Worker floors. A new setting, "I need visa sponsorship", skips roles that can't sponsor you.
+- **How long each role has been open**, from the day the scan first saw the listing.
+- `careeros sample-roles`: a free sample of the agency feed for one niche, for outreach.
+
+### Changed
+- **The job feed is published as release assets** (`feed-latest`), not to a force-pushed branch, which the repository's rules block. It had not updated since 31 Oct; the scan now also fails loudly when the feed is more than 3 hours old.
+- **AI actions on the service's model use the quick model** for parsing, scoring, copilot, mocks and drafts; the tailored resume and its edits stay on the main model. Your own key is unaffected.
+
 ## [2.7.0] - 2026-11-16
 
 ### Added
