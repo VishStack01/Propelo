@@ -256,3 +256,11 @@ def test_dollar_checkout_needs_a_product(pay, monkeypatch):
     owner = cloud.user("us@agency.example")
     r = owner.post("/api/business/start", json={"plan": "agency-feed", "name": "US Agency", "agree": True, "currency": "USD"})
     assert r.status_code == 400 and "isn't set up" in r.json()["error"]
+
+
+def test_signup_keeps_where_to_go_after_confirming(cloud):
+    c = cloud.client()
+    assert c.post("/api/auth/signup", json={"email": "new@student.example", "password": "correct horse battery", "next": "/join/abc123"}).status_code == 202
+    assert "/verify#token=" in cloud.outbox[-1]["text"] and "&next=%2Fjoin%2Fabc123" in cloud.outbox[-1]["text"]
+    assert c.post("/api/auth/signup", json={"email": "evil@student.example", "password": "correct horse battery", "next": "//evil.example"}).status_code == 202
+    assert "next=" not in cloud.outbox[-1]["text"]

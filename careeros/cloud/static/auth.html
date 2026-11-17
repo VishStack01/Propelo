@@ -238,7 +238,8 @@ input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 45%,transparent) 
 (function(){
   const $ = (s, el) => (el || document).querySelector(s);
   const params = new URLSearchParams(location.search);
-  const token = new URLSearchParams(location.hash.slice(1)).get('token') || '';
+  const frag = new URLSearchParams(location.hash.slice(1));
+  const token = frag.get('token') || '', afterVerify = frag.get('next') || '';
   if (token) history.replaceState(null, '', location.pathname + location.search); // keep the link out of history
   let mode = location.pathname.replace(/^\/+|\/+$/g, '') || 'login';
   let lastEmail = '';
@@ -272,7 +273,7 @@ input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 45%,transparent) 
     let data = {}; try { data = await r.json(); } catch(e){}
     return {ok: r.ok, status: r.status, data};
   }
-  const next = () => { const n = params.get('next') || '/'; return /^\/(?!\/)/.test(n) ? n : '/'; };
+  const next = () => { const n = params.get('next') || '/'; return /^\/(?![\/\\])[^\s]*$/.test(n) ? n : '/'; };
 
   document.addEventListener('click', e => {
     const b = e.target.closest('.show'); if (!b) return;
@@ -308,7 +309,7 @@ input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 45%,transparent) 
     if (f.password.value.length < 10){ msg(f, 'Use at least 10 characters for your password.'); f.password.focus(); return; }
     if (!f.agree.checked){ msg(f, 'Please agree to the terms and privacy notice.'); return; }
     busy(f, true, 'Creating your account…');
-    const r = await post('/api/auth/signup', {name: f.name.value.trim(), email, password: f.password.value});
+    const r = await post('/api/auth/signup', {name: f.name.value.trim(), email, password: f.password.value, next: next() !== '/' ? next() : ''});
     busy(f, false);
     if (r.ok){ lastEmail = email; $('#sent-text').textContent = `We sent a link to ${email}. It expires in 24 hours.`; show('sent'); return; }
     msg(f, r.data.error || 'Sign-up failed. Try again.');
@@ -347,7 +348,7 @@ input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 45%,transparent) 
     const fail = text => { $('#v-icon').innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>'; $('#v-title').textContent = "That link didn't work"; msg(box, text); $('#v-back').hidden = false; };
     if (!token){ fail('Open the link from your email, or sign in to get a new one.'); return; }
     const r = await post('/api/auth/verify', {token});
-    if (r.ok){ $('#v-icon').innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>'; $('#v-title').textContent = 'Email confirmed'; msg(box, 'Taking you to your dashboard…', 'ok'); setTimeout(() => { location.replace('/'); }, 900); return; }
+    if (r.ok){ $('#v-icon').innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>'; $('#v-title').textContent = 'Email confirmed'; const dest = /^\/(?![\/\\])[^\s]*$/.test(afterVerify) ? afterVerify : '/'; msg(box, dest === '/' ? 'Taking you to your dashboard…' : 'Taking you back…', 'ok'); setTimeout(() => { location.replace(dest); }, 900); return; }
     fail(r.data.error || 'That link has expired or was already used.');
   }
 

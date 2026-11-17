@@ -28,6 +28,7 @@ from collections import defaultdict, deque
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from urllib.parse import quote
 from zoneinfo import ZoneInfo
 
 from fastapi import Body, Depends, FastAPI, HTTPException, Request, Response
@@ -433,6 +434,12 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
         if not cfg.signup_allowed(email):
             raise err(403, "Sign-up is by invitation right now.", "closed")
         ip = client_ip(request)
+        # Where to land after confirming the email (a join link, the business page). Same-site paths only.
+        nxt = str(body.get("next") or "")[:200]
+        nxt = nxt if re.fullmatch(r"/(?!/)[A-Za-z0-9/_?=&.%-]*", nxt) else ""
+
+        def vlink(token: str) -> str:
+            return link("/verify", token) + (f"&next={quote(nxt, safe='')}" if nxt else "")
         pw_hash = security.hash_password(password, cfg.password_iterations)
         with db.tx() as c:
             limited(c, "signup:" + security.ip_key(ip), 10, 3600)
@@ -442,11 +449,11 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
                 send(c, email, mail.already_registered(f"{cfg.public_url}/forgot"))
             elif existing:
                 token = repo.issue_link_token(c, existing["id"], "verify", timedelta(hours=24))
-                send(c, email, mail.verify_email(existing["name"], link("/verify", token)))
+                send(c, email, mail.verify_email(existing["name"], vlink(token)))
             else:
                 uid = repo.create_user(c, email, name, pw_hash, is_admin=bool(cfg.bootstrap_admin_email) and email == cfg.bootstrap_admin_email)
                 token = repo.issue_link_token(c, uid, "verify", timedelta(hours=24))
-                send(c, email, mail.verify_email(name, link("/verify", token)))
+                send(c, email, mail.verify_email(name, vlink(token)))
                 repo.audit(c, uid, "signup", ip)
         return {"ok": True, "message": "Check your inbox for a link to confirm your email."}
 
@@ -1682,7 +1689,8 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
         except partners.PartnerError as e:
             raise perr(e)
         except plans.BillingError as e:
-            raise err(502, str(e), "billing")
+            log.warning(json.dumps({"event": "business-checkout-failed", "error": str(e)[:300]}))
+            raise err(502, "We couldn't start the payment just now. Try again in a minute, or write to us and we'll send a payment link.", "billing")
 
     @app.post("/api/partner/{pid}/pay")
     def partner_pay(pid: str, body: dict = Body(default={}), p: Principal = Depends(session_only)):
@@ -1699,7 +1707,8 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
         except partners.PartnerError as e:
             raise perr(e)
         except plans.BillingError as e:
-            raise err(502, str(e), "billing")
+            log.warning(json.dumps({"event": "business-checkout-failed", "error": str(e)[:300]}))
+            raise err(502, "We couldn't start the payment just now. Try again in a minute, or write to us and we'll send a payment link.", "billing")
 
     @app.post("/api/staff/partners/{pid}/approve-pilot")
     def staff_partner_pilot(pid: str, p: Principal = Depends(staff_only)):
@@ -1918,7 +1927,8 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
         except guarantee.GuaranteeError as e:
             raise gerr(e) from None
         except plans.BillingError as e:
-            raise err(502, str(e), "billing") from None
+            log.warning(json.dumps({"event": "guarantee-checkout-failed", "error": str(e)[:300]}))
+            raise err(502, "We couldn't start the payment just now. Try again in a minute, or write to us and we'll send a payment link.", "billing") from None
 
     @app.post("/api/admin/guarantee")
     def admin_guarantee(body: dict = Body(...), p: Principal = Depends(admin_only)):
