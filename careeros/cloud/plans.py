@@ -159,7 +159,14 @@ def _paid_plan(s: dict | None) -> str:
 def plan_of(c: Conn, user: dict) -> str:
     if user.get("is_admin"):
         return "ultra"
-    return _paid_plan(subscription(c, user["id"]))
+    own = _paid_plan(subscription(c, user["id"]))
+    if own == "ultra":
+        return own
+    from . import partners  # a seat from a consultancy (see partners.py)
+    seat = partners.seat_plan(c, user["id"])
+    if seat == "ultra" or (seat == "pro" and own == "free"):
+        return seat
+    return own
 
 
 def usage(c: Conn, uid: str) -> dict:

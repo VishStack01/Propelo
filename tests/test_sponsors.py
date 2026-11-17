@@ -115,7 +115,6 @@ def test_gate_blocks_no_sponsorship_only_when_needed():
 
 def test_gate_for_someone_on_a_uk_visa_uses_the_register():
     from datetime import datetime, timezone
-    from careeros import scan as _scan  # noqa: F401  (record shape lives there)
     reg = sponsors.UkRegister(ROWS)
     s = _settings(True)
     s.location.home = "GB"

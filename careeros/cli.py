@@ -404,6 +404,20 @@ def main(argv: list[str] | None = None) -> None:
     sp.add_argument("--source", help="A local copy of companies/hiring.json")
     sp.set_defaults(fn=cmd_yc_companies)
 
+    sp = sub.add_parser("sample-roles", help="A free sample of the agency feed (CSV) for one niche, to send in outreach")
+    sp.add_argument("--feed", default="https://github.com/VishStack01/careeros/releases/download/feed-latest/",
+                    help="Folder or URL holding india.jsonl.gz")
+    sp.add_argument("--keywords", default="", help="Title words, comma separated (any of)")
+    sp.add_argument("--exclude", default="")
+    sp.add_argument("--countries", default="", help="ISO codes, comma separated, e.g. GB,IE")
+    sp.add_argument("--cities", default="")
+    sp.add_argument("--remote", choices=("any", "exclude", "only"), default="any")
+    sp.add_argument("--min-days", type=int, default=0, help="Only roles open at least this many days")
+    sp.add_argument("--sponsor", choices=("", "offers", "not-no", "uk-register"), default="")
+    sp.add_argument("--limit", type=int, default=50)
+    sp.add_argument("--out", default="sample-roles.csv")
+    sp.set_defaults(fn=cmd_sample_roles)
+
     sp = sub.add_parser("uk-sponsors", help="Download the Home Office register of licensed sponsors (Skilled Worker)")
     sp.add_argument("--out", default="feed/uk-sponsors.csv")
     sp.set_defaults(fn=cmd_uk_sponsors)
@@ -933,6 +947,27 @@ def cmd_yc_companies(a) -> None:
     from . import deep
     deep.write(rows, a.out)
     print(f"YC: {len(data)} companies hiring; {len(rows)} hiring in India or remotely written to {a.out} for discover.")
+
+
+def cmd_sample_roles(a) -> int:
+    from collections import Counter
+    from .cloud import ingest, partners
+    records = ingest._jsonl(ingest._fetch(a.feed, "india.jsonl.gz"))
+    if not records:
+        print("Could not read india.jsonl.gz from", a.feed)
+        return 1
+    filters = {"keywords": a.keywords, "exclude": a.exclude, "countries": [x.strip() for x in a.countries.split(",") if x.strip()],
+               "cities": a.cities, "remote": a.remote, "minDaysOpen": a.min_days, "sponsor": a.sponsor, "limit": a.limit}
+    rows = partners.records_rows(records, filters)
+    Path(a.out).write_text(partners.to_csv(rows), encoding="utf-8")
+    days = [r["days_open"] for r in rows if isinstance(r["days_open"], int)]
+    top = Counter(r["company"] for r in rows).most_common(5)
+    print(f"{len(rows)} roles -> {a.out}")
+    if rows:
+        print(f"Open {min(days) if days else '?'}-{max(days) if days else '?'} days; sponsoring per posting: "
+              f"{sum(1 for r in rows if r['sponsorship'] == 'says it sponsors')}; on the UK register: {sum(1 for r in rows if r['uk_sponsor_register'] == 'listed')}")
+        print("Most roles: " + ", ".join(f"{c} ({n})" for c, n in top))
+    return 0
 
 
 def cmd_uk_sponsors(a) -> int:

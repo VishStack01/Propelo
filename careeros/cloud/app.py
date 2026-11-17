@@ -42,7 +42,7 @@ from ..dedupe import canonical_url, company_key
 from ..scamcheck import check as scam_check
 from . import mailer as mail
 from . import linkedin as li_auth
-from . import autosend, concierge, guarantee, mailbox, plans, repo, security
+from . import autosend, concierge, guarantee, mailbox, partners, plans, repo, security
 from .config import Config
 from .db import Database, now_iso
 from .ingest import feed_state
@@ -619,8 +619,11 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
             state = feed_state(c)
             plan = plans.plan_of(c, p.user)
             ai = plans.ai_status(c, cfg, p.user)
+            seat = partners.student_of(c, p.uid)
+            partner_admin = bool(partners.admin_partners(c, p.uid))
         quota = plans.plan_info(cfg, plan)["storageMb"]
         return dict(repo.public_user(p.user), via=p.kind, plan=plan, ai=ai, billing=cfg.billing_enabled,
+                    partner=partners.branding(seat), partnerAdmin=partner_admin,
                     storage={"usedBytes": used, "quotaBytes": quota * 1024 * 1024}, jobsSite=cfg.jobs_site_url,
                     feed={"generatedAt": state.get("generatedAt"), "inventory": state.get("records"), "companies": state.get("companies")})
 
@@ -1489,6 +1492,192 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
                                 '<title>Done</title><body style="font:17px/1.6 system-ui,sans-serif;background:#FAF3E6;max-width:560px;margin:12vh auto;padding:0 20px">'
                                 '<h1 style="font-weight:500">Done</h1><p>You won\'t get emails sent with Propelo at this address again.</p></body>')
         return {"ok": True}
+
+    # ------------------------------------------------------------ business accounts (consultancies and agencies)
+    def perr(e: partners.PartnerError):
+        return err(404 if str(e) == "Not found." else 400, str(e), "partner")
+
+    def own_partner(c, pid: str, p: Principal) -> dict:
+        ps = [x for x in partners.admin_partners(c, p.uid) if x["id"] == pid]
+        if not ps and not (p.user["is_admin"] or p.user.get("is_staff")):
+            raise err(404, "Not found.")
+        found = ps[0] if ps else partners.get(c, pid)
+        if not found:
+            raise err(404, "Not found.")
+        return found
+
+    @app.get("/join/{code}", include_in_schema=False)
+    def join_page(request: Request, code: str):
+        return html("join.html", request.state.nonce)
+
+    @app.get("/partner", include_in_schema=False)
+    def partner_page(request: Request):
+        if not request.cookies.get(COOKIE):
+            return RedirectResponse("/login?next=/partner", status_code=303)
+        return html("partner.html", request.state.nonce)
+
+    @app.get("/api/join/{code}")
+    def join_info(code: str):
+        with db.tx() as c:
+            pt = partners.by_code(c, code)
+            if not pt or pt["kind"] != "consultancy":
+                raise err(404, "This invite link isn't valid.")
+            left = int(pt["seats"] or 0) - partners.seats_used(c, pt["id"])
+        return {**partners.branding(pt), "open": partners.is_live(pt) and left > 0,
+                "consent": partners.CONSENT.format(name=pt["name"]), "plan": pt["student_plan"]}
+
+    @app.get("/api/partner-logo/{slug}")
+    def partner_logo(slug: str):
+        with db.tx() as c:
+            got = partners.logo_bytes(partners.by_slug(c, slug))
+        if not got:
+            raise err(404, "Not found.")
+        return Response(got[0], media_type=got[1], headers={"Cache-Control": "public, max-age=3600", "X-Content-Type-Options": "nosniff"})
+
+    @app.post("/api/partner/join")
+    def partner_join(body: dict = Body(...), p: Principal = Depends(session_only)):
+        try:
+            with db.tx() as c:
+                limited(c, f"pjoin:{p.uid}", 20, 3600)
+                pt = partners.join(c, str(body.get("code") or ""), p.uid, body.get("consent") is True)
+                repo.audit(c, p.uid, "partner.join", detail={"partner": pt["id"]})
+                return {"ok": True, "partner": partners.branding(pt)}
+        except partners.PartnerError as e:
+            raise perr(e)
+
+    @app.post("/api/partner/leave")
+    def partner_leave(p: Principal = Depends(session_only)):
+        with db.tx() as c:
+            partners.leave(c, p.uid)
+        return {"ok": True}
+
+    @app.get("/api/partner")
+    def partner_view(p: Principal = Depends(session_only)):
+        with db.tx() as c:
+            return {"partners": [partners.view(c, x, cfg.public_url) for x in partners.admin_partners(c, p.uid)],
+                    "student": partners.branding(partners.student_of(c, p.uid))}
+
+    @app.patch("/api/partner/{pid}")
+    def partner_update(pid: str, body: dict = Body(...), p: Principal = Depends(session_only)):
+        try:
+            with db.tx() as c:
+                own_partner(c, pid, p)
+                changes = {k: body[k] for k in ("brand", "filters") if k in body}
+                pt = partners.update(c, pid, changes)
+                return partners.view(c, pt, cfg.public_url)
+        except partners.PartnerError as e:
+            raise perr(e)
+
+    @app.post("/api/partner/{pid}/logo")
+    def partner_set_logo(pid: str, body: dict = Body(...), p: Principal = Depends(session_only)):
+        try:
+            with db.tx() as c:
+                own_partner(c, pid, p)
+                partners.set_logo(c, pid, body.get("dataUrl") or None)
+                return partners.view(c, partners.get(c, pid), cfg.public_url)
+        except partners.PartnerError as e:
+            raise perr(e)
+
+    @app.post("/api/partner/{pid}/rotate-invite")
+    def partner_rotate_invite(pid: str, p: Principal = Depends(session_only)):
+        with db.tx() as c:
+            own_partner(c, pid, p)
+            partners.rotate_code(c, pid)
+            return partners.view(c, partners.get(c, pid), cfg.public_url)
+
+    @app.post("/api/partner/{pid}/rotate-key")
+    def partner_rotate_key(pid: str, p: Principal = Depends(session_only)):
+        with db.tx() as c:
+            pt = own_partner(c, pid, p)
+            if pt["kind"] != "agency":
+                raise err(400, "Only agency accounts have a feed key.")
+            return {"key": partners.rotate_key(c, pid)}
+
+    @app.post("/api/partner/{pid}/remove/{uid}")
+    def partner_remove(pid: str, uid: str, p: Principal = Depends(session_only)):
+        with db.tx() as c:
+            own_partner(c, pid, p)
+            partners.remove(c, pid, uid)
+            return partners.view(c, partners.get(c, pid), cfg.public_url)
+
+    @app.get("/api/partner/{pid}/preview")
+    def partner_preview(pid: str, p: Principal = Depends(session_only)):
+        """The first 50 rows of an agency's feed with its current filters, for the settings page."""
+        with db.tx() as c:
+            pt = own_partner(c, pid, p)
+            if pt["kind"] != "agency":
+                raise err(400, "Only agency accounts have a feed.")
+            rows = partners.feed_rows(c, {**pt["filters"], "limit": 50})
+        return {"rows": rows, "columns": partners.FEED_COLUMNS}
+
+    @app.get("/api/partner-feed/{name}")
+    def partner_feed(name: str, request: Request, key: str = ""):
+        m = re.fullmatch(r"([a-z0-9-]{1,60})\.(csv|json)", name)
+        if not m:
+            raise err(404, "Not found.")
+        auth = request.headers.get("authorization", "")
+        token = auth[7:].strip() if auth.lower().startswith("bearer ") else key
+        with db.tx() as c:
+            pt = partners.by_key(c, token)
+            if not pt or pt["slug"] != m.group(1):
+                raise err(401, "Wrong or missing feed key.", "unauthenticated")
+            if not partners.is_live(pt):
+                raise err(403, "This feed is paused. Contact us to switch it back on.", "paused")
+            limited(c, f"pfeed:{pt['id']}", 120, 3600)
+            rows = partners.feed_rows(c, pt["filters"])
+            gen = feed_state(c).get("generatedAt")
+        headers = {"Cache-Control": "private, max-age=300", "X-Feed-Generated-At": str(gen or "")}
+        if m.group(2) == "json":
+            return JSONResponse({"generatedAt": gen, "partner": pt["name"], "count": len(rows), "roles": rows}, headers=headers)
+        headers["Content-Disposition"] = f'attachment; filename="{pt["slug"]}-roles.csv"'
+        return Response(partners.to_csv(rows), media_type="text/csv; charset=utf-8", headers=headers)
+
+    @app.get("/api/staff/partners")
+    def staff_partners(p: Principal = Depends(staff_only)):
+        with db.tx() as c:
+            rows = [partners._load(r) for r in c.all("SELECT * FROM partners ORDER BY created_at DESC LIMIT 500")]
+            return {"partners": [partners.staff_row(c, x) for x in rows]}
+
+    @app.post("/api/staff/partners", status_code=201)
+    def staff_partner_create(body: dict = Body(...), p: Principal = Depends(staff_only)):
+        email = str(body.get("adminEmail") or "").strip().lower()
+        try:
+            with db.tx() as c:
+                admin = c.one("SELECT id FROM users WHERE email = ?", (email,)) if email else None
+                if email and not admin:
+                    raise partners.PartnerError("No account with that email. Ask them to sign up first, then add them.")
+                pt, key = partners.create(c, str(body.get("kind") or ""), str(body.get("name") or ""), p.uid,
+                                          seats=int(body.get("seats") or 0), status=str(body.get("status") or "pilot"),
+                                          ends_at=body.get("endsAt") or None, brand=body.get("brand") or {}, filters=body.get("filters") or {},
+                                          billing=body.get("billing") or {}, student_plan=str(body.get("studentPlan") or "pro"))
+                if admin:
+                    partners.add_admin(c, pt["id"], admin["id"])
+                return {"partner": partners.staff_row(c, pt), "feedKey": key}
+        except (partners.PartnerError, ValueError) as e:
+            raise err(400, str(e), "partner")
+
+    @app.patch("/api/staff/partners/{pid}")
+    def staff_partner_update(pid: str, body: dict = Body(...), p: Principal = Depends(staff_only)):
+        try:
+            with db.tx() as c:
+                pt = partners.update(c, pid, body)
+                email = str(body.get("addAdmin") or "").strip().lower()
+                if email:
+                    u = c.one("SELECT id FROM users WHERE email = ?", (email,))
+                    if not u:
+                        raise partners.PartnerError("No account with that email.")
+                    partners.add_admin(c, pid, u["id"])
+                return {"partner": partners.staff_row(c, pt)}
+        except (partners.PartnerError, ValueError) as e:
+            raise perr(partners.PartnerError(str(e)))
+
+    @app.post("/api/staff/partners/{pid}/rotate-key")
+    def staff_partner_key(pid: str, p: Principal = Depends(staff_only)):
+        with db.tx() as c:
+            pt = partners.get(c, pid)
+            if not pt or pt["kind"] != "agency":
+                raise err(404, "Not found.")
+            return {"key": partners.rotate_key(c, pid)}
 
     # ------------------------------------------------------------ Concierge (human-run search, fee only after joining)
     def cerr(e: concierge.ConciergeError):

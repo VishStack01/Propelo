@@ -2614,6 +2614,7 @@ function renderCloud(){
     <div class="panel acct">
       <div class="who"><span class="av" aria-hidden="true">${esc((me.name || me.email || '?').trim().charAt(0).toUpperCase())}</span><div><b>${esc(me.name || 'Your account')}</b><div class="small">${esc(me.email || '')}</div></div></div>
       ${msg}
+      ${me.partner ? `<p class="small">Your account is provided by <b>${esc(me.partner.name)}</b>. They see how many roles were matched to you, your applications, interviews and offers, never your resume, answers or messages.${me.partner.contactEmail ? ` Contact: ${esc(me.partner.contactEmail)}.` : ''}</p><div class="btns"><button class="btn sm ghost" data-act="partner-leave">Leave ${esc(me.partner.name)}</button></div>` : ''}
       <div class="btns"><a class="btn sm" href="api/me/export" download>Export my data</a><button class="btn sm" data-act="signout">Sign out</button><button class="btn sm ghost" data-act="signout-all">Sign out everywhere</button></div>
       <details><summary>Change password</summary><form id="pw-form" class="acct-form" novalidate>
         <input type="password" name="current" autocomplete="current-password" placeholder="Current password" aria-label="Current password" required>
@@ -4595,6 +4596,7 @@ document.addEventListener('click', e => {
   else if (act === 'pay20'){ state.pay20 = !state.pay20; render(); }
   else if (act === 'conn-remove'){ const doc = {rows: [], count: 0, removedAt: nowIso()}; enqueue('profile/connections', () => state.db.doc('profile/connections').set(doc)).then(() => { state.connections = doc; toast('Connections removed from your dashboard.'); render(); }).catch(() => {}); }
   else if (act === 'signout'){ api('api/auth/logout', {method: 'POST'}).catch(() => {}).finally(() => { location.href = 'login'; }); }
+  else if (act === 'partner-leave'){ if (confirm('Leave ' + ((state.me.partner || {}).name || 'your consultancy') + '? They stop seeing your progress and your account goes back to your own plan.')) api('api/partner/leave', {method: 'POST'}).then(() => location.reload()).catch(e => toast(e.message || 'Could not leave. Try again.')); }
   else if (act === 'signout-all'){ api('api/me/logout-all', {method: 'POST'}).catch(() => {}).finally(() => { location.href = 'login'; }); }
   else if (act === 'key-hide'){ state.newKey = null; render(); }
   else if (act === 'upgrade'){ el.disabled = true; const b = obj(state.billing), cs = arr(b.currencies); const cur = cs.includes(state.planCur) ? state.planCur : (cs.includes(guessCur()) ? guessCur() : cs[0]); cloudPost('api/billing/checkout', {plan: el.dataset.plan || 'pro', currency: cur}).then(d => { location.href = d.url; }).catch(d => { el.disabled = false; acctSay(d.error || 'Could not start the payment.', true, 'plan'); }); }
@@ -5070,7 +5072,24 @@ async function bootStandalone(){
   state.db = db;
   subscribe(db, () => {});
   render();
-  if (state.status === 'cloud'){ loadLogos(); loadGuarantee(); }
+  if (state.status === 'cloud'){ loadLogos(); loadGuarantee(); partnerChrome(); }
+}
+function partnerChrome(){
+  // A student of a consultancy sees who provides their account; a consultancy or agency admin gets a link to their business page.
+  const me = state.me || {}, side = document.querySelector('.side');
+  if (!side || side.querySelector('.partnerline')) return;
+  if (me.partner && me.partner.name){
+    const box = document.createElement('div'); box.className = 'partnerline';
+    box.style.cssText = 'display:flex;align-items:center;gap:8px;margin:-4px 0 10px;font-size:12.5px;color:var(--muted)';
+    if (me.partner.logo){ const img = document.createElement('img'); img.src = me.partner.logo; img.alt = ''; img.style.cssText = 'width:20px;height:20px;border-radius:5px;object-fit:contain;background:#fff'; box.appendChild(img); }
+    const t = document.createElement('span'); t.textContent = 'Provided by ' + me.partner.name; box.appendChild(t);
+    side.querySelector('.brand').after(box);
+  }
+  if (me.partnerAdmin){
+    const a = document.createElement('a'); a.className = 'btn ghost partnerline'; a.href = '/partner'; a.textContent = 'Business account';
+    a.style.cssText = 'margin:0 0 10px;justify-content:center';
+    side.querySelector('.newbtn').after(a);
+  }
 }
 
 async function boot(){
