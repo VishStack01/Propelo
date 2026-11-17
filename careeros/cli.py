@@ -404,6 +404,10 @@ def main(argv: list[str] | None = None) -> None:
     sp.add_argument("--source", help="A local copy of companies/hiring.json")
     sp.set_defaults(fn=cmd_yc_companies)
 
+    sp = sub.add_parser("uk-sponsors", help="Download the Home Office register of licensed sponsors (Skilled Worker)")
+    sp.add_argument("--out", default="feed/uk-sponsors.csv")
+    sp.set_defaults(fn=cmd_uk_sponsors)
+
     sp = sub.add_parser("payers", help="Early-career pay by company from real offers (leetcode-compensation, MIT)")
     sp.add_argument("--out", default="config/pay/offers-pay.csv")
     sp.add_argument("--source", help="A local copy of final_data.json instead of downloading it")
@@ -929,6 +933,17 @@ def cmd_yc_companies(a) -> None:
     from . import deep
     deep.write(rows, a.out)
     print(f"YC: {len(data)} companies hiring; {len(rows)} hiring in India or remotely written to {a.out} for discover.")
+
+
+def cmd_uk_sponsors(a) -> int:
+    from . import sponsors
+    try:
+        n = sponsors.fetch_register(a.out)
+    except OSError as e:
+        print(f"UK sponsor register not updated: {e}")
+        return 1
+    print(f"UK sponsor register: {n} Skilled Worker sponsors -> {a.out}")
+    return 0
 
 
 def cmd_payers(a) -> None:

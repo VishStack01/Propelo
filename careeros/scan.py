@@ -27,7 +27,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
 
-from . import company_names, extract, geo, paydata, signals, tags
+from . import company_names, extract, geo, paydata, signals, sponsors, tags
 from .dedupe import canonical_url, fingerprint, job_id
 from .models import Job, iso
 from .sources import SCOUTS, greenhouse, smartrecruiters
@@ -124,6 +124,18 @@ def loc_class(job: Job, f: dict) -> tuple[str, str]:
     if where["abroad"]:
         return "abroad", job.location
     return "unknown", job.location
+
+
+def days_open(posted_at, first_seen: str, today) -> int | None:
+    """Days since the listing went up: the earlier of the posting's own date and the day the scan first
+    saw it. None when neither is known."""
+    days = []
+    for raw in (str(posted_at or "")[:10], first_seen or ""):
+        try:
+            days.append((today - datetime.strptime(raw, "%Y-%m-%d").date()).days)
+        except ValueError:
+            continue
+    return max(0, max(days)) if days else None
 
 
 def to_feed(job: Job, company: dict, via: str = "careers") -> dict:
@@ -310,6 +322,17 @@ def run(boards_path: str | Path, out_dir: str | Path, workers: int = 16, detail_
         r["facts"]["legit"] = signals.legitimacy(r["title"], r.get("text", ""), r["facts"], r.get("postedAt", ""), rp)
     history.prune()
     history.save()
+    # How long each listing has been open, and what we know about visa sponsorship (the posting's own
+    # words; for UK roles also the Home Office sponsor register and the Skilled Worker salary floors).
+    register = sponsors.UkRegister.from_csv(out_dir / "uk-sponsors.csv")
+    today = datetime.now(timezone.utc).date()
+    for r in unique:
+        first = history.first_seen(r["company"], r["title"], r["url"])
+        r["facts"]["firstSeen"] = first
+        r["facts"]["daysOpen"] = days_open(r.get("postedAt"), first, today)
+        v = sponsors.visa_facts(r["company"], r.get("location") or "", r.get("text") or r.get("summary") or "", r.get("salary") or "", register)
+        if v:
+            r["facts"]["visa"] = v
     with gzip.open(out_dir / "india.jsonl.gz", "wt", encoding="utf-8") as f, \
             gzip.open(out_dir / "full.jsonl.gz", "wt", encoding="utf-8") as full:
         for r in unique:
@@ -326,6 +349,11 @@ def run(boards_path: str | Path, out_dir: str | Path, workers: int = 16, detail_
         "generatedAt": iso(datetime.now(timezone.utc)),
         "legitimacy": {t: sum(1 for r in unique if r["facts"]["legit"]["tier"] == t) for t in ("high", "caution", "suspicious")},
         "relisted": sum(1 for r in unique if r["facts"]["reposts"].get("count")),
+        "visa": {"offers": sum(1 for r in unique if (r["facts"].get("visa") or {}).get("status") == "offers"),
+                 "no": sum(1 for r in unique if (r["facts"].get("visa") or {}).get("status") == "no"),
+                 "ukRoles": sum(1 for r in unique if (r["facts"].get("visa") or {}).get("uk")),
+                 "ukOnRegister": sum(1 for r in unique if ((r["facts"].get("visa") or {}).get("ukRegister") or {}).get("listed")),
+                 "registerSize": len(register)},
         "companies": sum(1 for e in companies.values() if e.get("category") != "deep" or e.get("status") == "mapped"),
         "boards": len(mapped), "openings": len(unique),
         "deepSweep": {"checked": sum(1 for e in companies.values() if e.get("category") == "deep" and e.get("checkedAt")),

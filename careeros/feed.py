@@ -62,6 +62,7 @@ def settings_from_dashboard(doc: dict) -> Settings:
     floor = doc.get("salaryFloorLpa")
     s.salary_floor_lpa = float(floor) if floor not in (None, "", 0) else None
     s.require_stated_pay = bool(doc.get("requireStatedPay"))
+    s.needs_sponsorship = bool(doc.get("needsSponsorship"))
     fams = [f for f in (doc.get("families") or []) if f in tagger_families()]
     if fams:
         # Families chosen: they decide, plus any target roles typed in (the built-in tech keywords no longer apply).
@@ -234,6 +235,10 @@ def match(records: list[dict], settings: Settings, known: list[tuple[str, dict]]
             doc["skills"] = r["tags"]["skills"]
         if (r.get("tags") or {}).get("payTier"):
             doc["payTier"] = r["tags"]["payTier"]
+        if (r.get("facts") or {}).get("visa"):
+            doc["visa"] = r["facts"]["visa"]  # sponsorship: the posting's words, UK register, salary floor
+        if (r.get("facts") or {}).get("daysOpen") is not None:
+            doc["daysOpen"] = r["facts"]["daysOpen"]
         if (r.get("facts") or {}).get("payBand"):
             doc["payBand"] = r["facts"]["payBand"]
         if d.kept:

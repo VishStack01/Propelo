@@ -268,6 +268,11 @@ class RepostHistory:
             prev_last = max(prev_last or x["last"], x["last"])
         return {"count": n, "since": since, "firstSeen": listings[0]["first"]} if n else {"count": 0, "firstSeen": cur["first"]}
 
+    def first_seen(self, company: str, title: str, url: str) -> str:
+        """The day this listing (this URL) was first seen by the scan, or ""."""
+        cur = next((x for x in self.data.get(title_identity(company, title), []) if x["url"] == url), None)
+        return cur["first"] if cur else ""
+
     def prune(self, now: datetime | None = None, keep_days: int = 150) -> None:
         cutoff = ((now or datetime.now(timezone.utc)) - timedelta(days=keep_days)).strftime("%Y-%m-%d")
         for k in list(self.data):

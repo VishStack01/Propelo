@@ -36,6 +36,7 @@ class Settings:
     priority_within_hours: int = 48
     salary_floor_lpa: float | None = 7.0
     require_stated_pay: bool = False  # True: a role must state pay at or above the floor
+    needs_sponsorship: bool = False  # True: on-site roles abroad must be able to sponsor a work visa
     usd_inr: float = 88.0
     role_keywords: list[str] = field(default_factory=lambda: list(DEFAULT_ROLE_KEYWORDS))
     # Job families to keep (see tags.FAMILIES). Empty: decide by role keywords only.
@@ -61,7 +62,7 @@ class Settings:
         for key in (
             "max_required_years", "max_posting_age_days", "ghost_after_days", "priority_within_hours",
             "salary_floor_lpa", "usd_inr", "role_keywords", "title_exclude", "dealbreakers",
-            "company_blocklist", "allow_internships", "daily_cap", "reapply_cooldown_days", "require_stated_pay", "families",
+            "company_blocklist", "allow_internships", "daily_cap", "reapply_cooldown_days", "require_stated_pay", "needs_sponsorship", "families",
             "experience_years",
         ):
             if key in search:

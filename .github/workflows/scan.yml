@@ -85,6 +85,15 @@ jobs:
             careeros yc-companies --out feed/yc-companies.csv 2>&1 | tee -a feed/deep.log
           fi
 
+      - name: UK sponsor register (daily)
+        # The Home Office's public list of employers licensed to sponsor Skilled Worker visas, so UK
+        # roles can say whether the employer can sponsor at all. Kept with the feed between runs.
+        continue-on-error: true
+        run: |
+          if [ ! -f feed/uk-sponsors.csv ] || [ $(( 10#$(date -u +%H) )) -eq 5 ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            careeros uk-sponsors --out feed/uk-sponsors.csv
+          fi
+
       - name: Discover job boards
         # New companies, boards that errored last scan, and unmapped companies
         # every 14 days (swept boards every 21). At most 800 per run and 18 minutes,

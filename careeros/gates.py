@@ -11,7 +11,7 @@ import re
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
 
-from . import countries, extract, geo, signals, tags
+from . import countries, extract, geo, signals, sponsors, tags
 from .models import Check, Job, iso
 from .settings import Settings
 
@@ -279,6 +279,36 @@ def gate_work_auth(job: Job, region: str, home: str = "IN") -> Check:
     return Check("Work authorization", True, "No restriction stated")
 
 
+def gate_sponsorship(job: Job, region: str, s: Settings) -> Check | None:
+    """For someone who needs a visa to work where the role is: a posting that says it cannot sponsor,
+    or (UK) an employer missing from the Home Office register of licensed sponsors, rules the role out.
+    A posting that says nothing passes as "unclear", with the reason shown; it is never guessed."""
+    if not s.needs_sponsorship:
+        return None
+    f = _facts(job)
+    if (s.location.home or "IN") != "IN":
+        on_site_abroad = region == "local"  # someone on a visa where they live needs it for local roles too
+    else:
+        loc = (f or {}).get("loc") if f is not None and "loc" in f else ("abroad" if geo.classify(job.location)["abroad"] else "")
+        on_site_abroad = loc == "abroad" and not region.startswith("remote")
+    if not on_site_abroad:
+        return None
+    v = (f.get("visa") or {}) if f is not None and "loc" in f else sponsors.visa_facts(job.company, job.location, job.description, job.salary_text)
+    if v.get("status") == "no":
+        return Check("Visa sponsorship", False, "Says it cannot sponsor a visa.", v.get("quote", ""))
+    reg = v.get("ukRegister")
+    if reg is not None and not reg.get("listed"):
+        return Check("Visa sponsorship", False, "Not on the UK register of licensed sponsors, so it cannot sponsor a Skilled Worker visa.",
+                     "Home Office register of licensed sponsors (Skilled Worker)")
+    sal = v.get("ukSalary") or {}
+    if sal.get("status") == "below":
+        return Check("Visa sponsorship", False, f"Pays £{sal['amount']:,}, below the Skilled Worker salary floors.", sal.get("quote", ""))
+    if v.get("status") == "offers":
+        return Check("Visa sponsorship", True, sponsors.label(v), v.get("quote", ""))
+    return Check("Visa sponsorship", True, sponsors.label(v) + ". Unclear: ask before applying.",
+                 (reg or {}).get("name", "") and f"On the register as {reg['name']}")
+
+
 def gate_dealbreakers(job: Job, s: Settings) -> Check:
     for word in s.dealbreakers:
         m = re.search(re.escape(word), job.description or "", re.I)
@@ -296,6 +326,9 @@ def evaluate(job: Job, s: Settings, now: datetime | None = None) -> Decision:
     loc, region = gate_location(job, s)
     pay, sal = gate_pay(job, s)
     checks += [loc, gate_work_auth(job, region, s.location.home), pay, gate_dealbreakers(job, s)]
+    visa = gate_sponsorship(job, region, s)
+    if visa is not None:
+        checks.append(visa)
     if sal and not job.salary_text:
         job.salary_text = sal.describe()
     kept = all(c.passed for c in checks)
