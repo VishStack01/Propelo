@@ -469,9 +469,9 @@ PILOT_DAYS = 30
 PILOT_SEATS = 25
 # Prices in minor units (paise, cents). Prepaid for 30 days; nothing renews by itself.
 BUSINESS_PLANS = {
-    "consultancy-starter": {"kind": "consultancy", "name": "Consultancy Starter", "seats": 25, "INR": 999_900, "USD": 11_900},
-    "consultancy-growth": {"kind": "consultancy", "name": "Consultancy Growth", "seats": 50, "INR": 1_499_900, "USD": 17_900},
-    "consultancy-plus": {"kind": "consultancy", "name": "Consultancy Plus", "seats": 150, "INR": 2_999_900, "USD": 34_900},
+    "consultancy-starter": {"kind": "consultancy", "name": "Starter Pack", "seats": 25, "INR": 1_499_900, "USD": 15_900},
+    "consultancy-growth": {"kind": "consultancy", "name": "Growth", "seats": 50, "INR": 2_999_900, "USD": 31_900},
+    "consultancy-plus": {"kind": "consultancy", "name": "Plus Pack", "seats": 100, "INR": 4_499_900, "USD": 47_900},
     "agency-feed": {"kind": "agency", "name": "Agency roles feed", "seats": 0, "INR": 499_900, "USD": 9_900},
 }
 

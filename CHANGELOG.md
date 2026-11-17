@@ -9,6 +9,7 @@ All notable changes to CareerOS. The format follows [Keep a Changelog](https://k
 - **Visa sponsorship on every role.** What the posting says (sponsors, cannot sponsor, or nothing, shown as unclear and never guessed), and for UK roles whether the employer is on the Home Office register of licensed sponsors (downloaded daily) and whether stated pay meets the Skilled Worker floors. A new setting, "I need visa sponsorship", skips roles that can't sponsor you.
 - **How long each role has been open**, from the day the scan first saw the listing.
 - `careeros sample-roles`: a free sample of the agency feed for one niche, for outreach.
+- **Business plans, 30 days prepaid:** Starter Pack ₹14,999 (25 students), Growth ₹29,999 (50 students), Plus Pack ₹44,999 (100 students), and the agency roles feed ₹4,999. Buy at `/business` or ask for a free 30-day pilot; nothing renews by itself.
 
 ### Changed
 - **The job feed is published as release assets** (`feed-latest`), not to a force-pushed branch, which the repository's rules block. It had not updated since 31 Oct; the scan now also fails loudly when the feed is more than 3 hours old.

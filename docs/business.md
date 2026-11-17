@@ -40,10 +40,23 @@ careeros sample-roles --keywords engineer,developer --countries GB --remote excl
 Reads the public feed (or `--feed <folder>`) and writes the same columns as the agency feed, longest
 open first, plus a one-line summary to paste into an email.
 
+## Plans
+
+| plan | students | price for 30 days |
+| --- | ---: | ---: |
+| Starter Pack | 25 | ₹14,999 ($159) |
+| Growth | 50 | ₹29,999 ($319) |
+| Plus Pack | 100 | ₹44,999 ($479) |
+| Agency roles feed | n/a | ₹4,999 ($99) |
+
+Set in `BUSINESS_PLANS` (`careeros/cloud/partners.py`). Dollar checkout needs a Dodo product per plan:
+`DODO_PRODUCT_CONSULTANCY_STARTER`, `DODO_PRODUCT_CONSULTANCY_GROWTH`, `DODO_PRODUCT_CONSULTANCY_PLUS`, `DODO_PRODUCT_AGENCY_FEED`.
+
 ## Billing
 
-Agreed and invoiced by hand at first (Razorpay or Dodo payment links). `billing` keeps what was agreed;
-`status` and `ends_at` switch access on and off.
+Bought online at `/business` (Razorpay payment link in rupees, Dodo checkout in dollars): each payment adds 30 days
+from the current end date. Reminders go a week before the end and at the end. Staff can still set status,
+seats and end dates by hand at `/partner` for deals agreed outside the site.
 
 ## Visa sponsorship facts
 

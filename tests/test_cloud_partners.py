@@ -175,7 +175,7 @@ def test_business_page_and_catalog(cloud):
     assert cloud.client().get("/business").status_code == 200
     cat = cloud.client().get("/api/business/plans?currency=INR").json()
     ids = {p["id"]: p for p in cat["plans"]}
-    assert ids["consultancy-growth"]["price"] == 1_499_900 and ids["consultancy-growth"]["seats"] == 50
+    assert ids["consultancy-growth"]["price"] == 2_999_900 and ids["consultancy-growth"]["seats"] == 50
     assert ids["agency-feed"]["kind"] == "agency"
     assert cloud.client().get("/terms").status_code == 200
 
@@ -188,7 +188,7 @@ def test_buy_a_consultancy_plan_online(pay):
     r = owner.post("/api/business/start", json=dict(body, agree=True))
     assert r.status_code == 200, r.text
     d = r.json()
-    assert d["url"] == "https://rzp.io/i/b1" and cloud.links[0]["amount"] == 1_499_900
+    assert d["url"] == "https://rzp.io/i/b1" and cloud.links[0]["amount"] == 2_999_900
     assert d["partner"]["status"] == "pending" and not d["partner"]["live"]
     # Not live before payment: no seats yet.
     code = owner.get("/api/partner").json()["partners"][0]["inviteUrl"].rsplit("/", 1)[1]
@@ -197,10 +197,10 @@ def test_buy_a_consultancy_plan_online(pay):
     assert owner.post("/api/business/start", json=dict(body, agree=True)).json()["url"] == "https://rzp.io/i/b1"
 
     assert _paid(cloud, "plink_B1", 1_000)["result"] == "short"
-    assert _paid(cloud, "plink_B1", 1_499_900, 2)["result"] == "paid"
-    assert _paid(cloud, "plink_B1", 1_499_900, 3)["result"] == "duplicate"
+    assert _paid(cloud, "plink_B1", 2_999_900, 2)["result"] == "paid"
+    assert _paid(cloud, "plink_B1", 2_999_900, 3)["result"] == "duplicate"
     v = owner.get("/api/partner").json()["partners"][0]
-    assert v["status"] == "active" and v["live"] and v["seats"] == 50 and v["payments"][0]["amount"] == 1_499_900
+    assert v["status"] == "active" and v["live"] and v["seats"] == 50 and v["payments"][0]["amount"] == 2_999_900
     end1 = datetime.fromisoformat(v["endsAt"].replace("Z", "+00:00"))
     assert timedelta(days=29) < end1 - datetime.now(timezone.utc) <= timedelta(days=30)
     assert cloud.client().get(f"/api/join/{code}").json()["open"] is True
@@ -209,7 +209,7 @@ def test_buy_a_consultancy_plan_online(pay):
     # Paying again extends from the current end date.
     pay_url = owner.post(f"/api/partner/{v['id']}/pay", json={}).json()["url"]
     assert pay_url == "https://rzp.io/i/b2"
-    assert _paid(cloud, "plink_B2", 1_499_900, 4)["result"] == "paid"
+    assert _paid(cloud, "plink_B2", 2_999_900, 4)["result"] == "paid"
     end2 = datetime.fromisoformat(owner.get("/api/partner").json()["partners"][0]["endsAt"].replace("Z", "+00:00"))
     assert timedelta(days=29, hours=23) < end2 - end1 <= timedelta(days=30, minutes=1)
 
