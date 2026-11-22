@@ -68,13 +68,14 @@ def rows_of(path: Path) -> Iterator[list[str]]:
             import openpyxl
         except ImportError as e:  # pragma: no cover - the registers workflow installs it
             raise OSError("Reading Excel files needs openpyxl (pip install openpyxl)") from e
-        wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
-        try:
-            for ws in wb.worksheets:
-                for row in ws.iter_rows(values_only=True):
-                    yield ["" if v is None else str(v).strip() for v in row]
-        finally:
-            wb.close()
+        with open(path, "rb") as f:  # as a file object: openpyxl refuses paths that don't end in .xlsx
+            wb = openpyxl.load_workbook(f, read_only=True, data_only=True)
+            try:
+                for ws in wb.worksheets:
+                    for row in ws.iter_rows(values_only=True):
+                        yield ["" if v is None else str(v).strip() for v in row]
+            finally:
+                wb.close()
         return
     if head[:4] == b"%PDF":
         raise OSError("The list is a PDF, which this reader doesn't parse")

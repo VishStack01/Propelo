@@ -238,7 +238,7 @@ def test_register_spreadsheets_are_tallied_and_used(tmp_path):
     ws.append(["Province/Territory", "Program Stream", "Employer", "Address", "Occupation", "Approved LMIAs", "Approved Positions"])
     ws.append(["Ontario", "High Wage", "Maple Software Ltd.", "Toronto", "21231", "2", "5"])
     ws.append(["Ontario", "High Wage", "Maple Software Ltd.", "Toronto", "21232", "1", "1"])
-    ca = tmp_path / "lmia.xlsx"
+    ca = tmp_path / "lmia"  # downloads are saved without an extension
     wb.save(ca)
     assert registers.tally(registers.rows_of(ca), (r"^employer$", r"employer"), (r"approved positions", r"positions")) == {"Maple Software Ltd.": 6}
     ie = tmp_path / "ie.csv"
