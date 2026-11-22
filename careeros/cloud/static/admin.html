@@ -37,6 +37,11 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12.5px}
 <main>
   <section class="card"><h1>Overview</h1><div class="stats" id="stats" style="margin-top:12px"><p class="muted">Loading…</p></div><div id="feed" class="small muted" style="margin-top:10px"></div></section>
 
+  <section class="card"><div class="row" style="justify-content:space-between"><h2>Sign-ups and where they came from</h2>
+    <form id="funnel-form" class="row" novalidate><select name="days" aria-label="Period"><option value="7">Last 7 days</option><option value="14" selected>Last 14 days</option><option value="30">Last 30 days</option><option value="90">Last 90 days</option></select></form></div>
+    <p class="small muted" style="margin:0 0 8px">Put <code>?src=a-short-label</code> on every link you share (for example <code>propelo.org/jobs.html?co=GB&amp;vs=uk&amp;src=reddit-ukjobs</code>) and each channel gets its own row. Counts only.</p>
+    <div id="funnel" class="tablewrap"><p class="muted small">Loading…</p></div></section>
+
   <section class="card"><h2>Find an account</h2>
     <form id="find" class="row" novalidate><input type="email" name="email" placeholder="Email address" aria-label="Email address" required style="flex:1;min-width:220px"><button class="btn" type="submit">Look up</button></form>
     <div class="say" id="find-say" role="status"></div>
@@ -117,6 +122,16 @@ code{font-family:ui-monospace,Menlo,monospace;font-size:12.5px}
       $('#audit').innerHTML = d.events.length ? `<table><thead><tr><th>When</th><th>Event</th><th>Account</th><th>Detail</th></tr></thead><tbody>${d.events.map(x => `<tr><td>${esc(when(x.at))}</td><td>${esc(x.kind)}</td><td>${esc(x.email || '')}</td><td><code>${esc(JSON.stringify(x.detail).slice(0, 160))}</code></td></tr>`).join('')}</tbody></table>` : '<p class="muted small">No events.</p>';
     } catch (e) { $('#audit').innerHTML = `<p class="say err">${esc(e.message)}</p>`; }
   }
+  async function funnel(days){
+    try {
+      const f = await api('/api/admin/funnel?days=' + encodeURIComponent(days));
+      const pct = (n, d) => d ? ' <span class="muted">(' + Math.round(100 * n / d) + '%)</span>' : '';
+      const row = (name, r, bold) => `<tr${bold ? ' style="font-weight:600"' : ''}><td>${esc(name)}</td><td>${esc(r.signups)}</td><td>${esc(r.confirmed)}${pct(r.confirmed, r.signups)}</td><td>${esc(r.profile)}${pct(r.profile, r.signups)}</td><td>${esc(r.matched)}${pct(r.matched, r.signups)}</td><td>${esc(r.applied)}${pct(r.applied, r.signups)}</td><td>${esc(r.paying)}${pct(r.paying, r.signups)}</td></tr>`;
+      $('#funnel').innerHTML = `<table><thead><tr><th>Came from</th><th>Signed up</th><th>Confirmed email</th><th>Built a profile</th><th>Got matches</th><th>Applied</th><th>Pays</th></tr></thead><tbody>${row('Everyone', f.total, true)}${f.bySource.map(r => row(r.source, r)).join('')}</tbody></table><p class="small muted" style="margin:8px 0 0">Students on business seats right now: ${esc(f.businessSeats)}. "Pays" counts subscriptions and passes, not seats or free grants.</p>`;
+    } catch (e) { $('#funnel').innerHTML = `<p class="say err">${esc(e.message)}</p>`; }
+  }
+  $('#funnel-form').addEventListener('change', e => funnel(e.target.value));
+  funnel(14);
   $('#audit-form').addEventListener('submit', e => { e.preventDefault(); audit(e.target.kind.value.trim()); });
   overview().catch(e => { $('#stats').innerHTML = `<p class="say err">${esc(e.message)}</p>`; });
   audit('');

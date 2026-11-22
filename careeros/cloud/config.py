@@ -71,6 +71,11 @@ class Config:
     # Money-back guarantees (see guarantee.py): GUARANTEE_MIN_INTERVIEWS interviews or a second round within GUARANTEE_DAYS on Pro or Ultra, and a job
     # within JOB_GUARANTEE_DAYS with Concierge, or the plan fees paid in that time are refunded.
     guarantee_enabled: bool = False
+    pass_enabled: bool = False          # PASS=on: sell Pro for a fixed number of days, paid once (passes.py)
+    pass_days: int = 90
+    pass_inr: int = 1199
+    pass_usd_cents: int = 5400
+    dodo_product_pass: str = ""        # a one-time Dodo product priced at the pass's dollar price
     guarantee_days: int = 45
     guarantee_min_apps: int = 25
     guarantee_min_weeks: int = 3
@@ -150,6 +155,11 @@ class Config:
             concierge_instalments=_int("CONCIERGE_INSTALMENTS", 3),
             concierge_attribution_days=_int("CONCIERGE_ATTRIBUTION_DAYS", 180),
             guarantee_enabled=e("GUARANTEE", "off").strip().lower() in ("on", "1", "true", "yes"),
+            pass_enabled=e("PASS", "off").strip().lower() in ("on", "1", "true", "yes"),
+            pass_days=_int("PASS_DAYS", 90),
+            pass_inr=_int("PASS_PRICE_INR", 1199),
+            pass_usd_cents=_int("PASS_PRICE_USD_CENTS", 5400),
+            dodo_product_pass=e("DODO_PRODUCT_PASS", "").strip(),
             guarantee_days=_int("GUARANTEE_DAYS", 45),
             guarantee_min_apps=_int("GUARANTEE_MIN_APPLICATIONS", 25),
             guarantee_min_weeks=_int("GUARANTEE_MIN_WEEKS", 3),
@@ -244,6 +254,8 @@ class Config:
                 problems.append("Dodo Payments is half set up: set all of DODO_API_KEY, DODO_WEBHOOK_SECRET and DODO_PRODUCT_PRO, or none.")
         if self.concierge_enabled and not (0 < self.concierge_rate_high <= self.concierge_rate_low <= 8):
             problems.append("CONCIERGE_RATE_LOW and CONCIERGE_RATE_HIGH must be between 0 and 8, with the rate above the band no higher than below it.")
+        if self.pass_enabled and not (7 <= self.pass_days <= 366 and self.pass_inr >= 1 and self.pass_usd_cents >= 100):
+            problems.append("PASS is on but PASS_DAYS (7 to 366), PASS_PRICE_INR or PASS_PRICE_USD_CENTS is out of range.")
         if self.guarantee_enabled and not (30 <= self.guarantee_days <= 180 and 1 <= self.guarantee_min_weeks <= self.guarantee_days // 7
                                            and self.guarantee_min_apps >= 1 and 1 <= self.guarantee_min_interviews <= 10 and 90 <= self.job_guarantee_days <= 365):
             problems.append("Guarantee settings look wrong: GUARANTEE_DAYS 30 to 180, GUARANTEE_MIN_WEEKS within it, JOB_GUARANTEE_DAYS 90 to 365.")

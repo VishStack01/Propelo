@@ -2,6 +2,7 @@
 
 | version | date | product version | change | why |
 | --- | --- | --- | --- | --- |
+| 1.3 | 22 Nov 2026 | 2.11.0 | R-020 and R-022 fixed; R-050 to R-052 added (job board sign-up link, Pro pass, sponsor check and visa-jobs pages) | 14-day growth plan |
 | 1.2 | 22 Nov 2026 | 2.10.0 | Register R-045 to R-049 (feed intake memory, sponsor data per country, continuous scans, database size) | Scan expansion for students abroad |
 | 1.1 | 22 Nov 2026 | 2.9.1 | Interview Guarantee now ₹4,999 for 3 interviews or a second round; simpler site menu | Founder's decision |
 | 1.0 | 22 Nov 2026 | 2.9.0 | Repository created: 01-15, register (44 items), QA log (35 tests), generated routes/database/workflows, sync test | Launch audit requested by the founder |

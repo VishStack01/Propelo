@@ -43,7 +43,7 @@ from ..dedupe import canonical_url, company_key
 from ..scamcheck import check as scam_check
 from . import mailer as mail
 from . import linkedin as li_auth
-from . import autosend, concierge, guarantee, mailbox, mfa, partners, plans, repo, security
+from . import autosend, concierge, guarantee, mailbox, mfa, partners, passes, plans, repo, security
 from .config import Config
 from .db import Database, now_iso
 from .ingest import feed_state
@@ -502,7 +502,8 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
                 token = repo.issue_link_token(c, existing["id"], "verify", timedelta(hours=24))
                 send(c, email, mail.verify_email(existing["name"], vlink(token)))
             else:
-                uid = repo.create_user(c, email, name, pw_hash, is_admin=bool(cfg.bootstrap_admin_email) and email == cfg.bootstrap_admin_email)
+                uid = repo.create_user(c, email, name, pw_hash, is_admin=bool(cfg.bootstrap_admin_email) and email == cfg.bootstrap_admin_email,
+                                       source=body.get("src"))
                 token = repo.issue_link_token(c, uid, "verify", timedelta(hours=24))
                 send(c, email, mail.verify_email(name, vlink(token)))
                 repo.audit(c, uid, "signup", ip)
@@ -709,7 +710,7 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
             partner_admin = bool(partners.admin_partners(c, p.uid))
         quota = plans.plan_info(cfg, plan)["storageMb"]
         return dict(repo.public_user(p.user), via=p.kind, plan=plan, ai=ai, billing=cfg.billing_enabled,
-                    partner=partners.branding(seat), partnerAdmin=partner_admin,
+                    partner=partners.branding(seat), partnerAdmin=partner_admin, supportEmail=cfg.support_email,
                     storage={"usedBytes": used, "quotaBytes": quota * 1024 * 1024}, jobsSite=cfg.jobs_site_url,
                     feed={"generatedAt": state.get("generatedAt"), "inventory": state.get("records"), "companies": state.get("companies")})
 
@@ -1366,7 +1367,33 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
     def billing(p: Principal = Depends(session_only)):
         with db.tx() as c:
             return dict(plans.billing_view(c, cfg, p.user), ai=plans.ai_status(c, cfg, p.user),
-                        features=plans.feature_usage(c, cfg, p.uid, plans.plan_of(c, p.user)))
+                        features=plans.feature_usage(c, cfg, p.uid, plans.plan_of(c, p.user)), **{"pass": passes.view(c, cfg, p.user)})
+
+    @app.post("/api/billing/pass")
+    async def buy_pass(request: Request, body: dict = Body(default={}), p: Principal = Depends(session_only)):
+        """Pro for a fixed number of days, paid once. Returns the provider's hosted payment page."""
+        currency = str(body.get("currency") or "").upper() or guess_currency(request)
+        if currency not in plans.CURRENCIES:
+            raise err(400, "Pay in INR or USD.", "bad_currency")
+        with db.tx() as c:
+            limited(c, f"checkout:{p.uid}", 10, 3600)
+            why = "Passes aren't on sale right now." if not cfg.pass_enabled else passes.can_buy(c, p.user)
+        if why:
+            raise err(409 if cfg.pass_enabled else 503, why, "pass_unavailable")
+
+        def go():
+            with db.tx() as c:
+                return passes.start(c, cfg, p.user, currency)
+        try:
+            out = await run_in_threadpool(go)
+        except passes.PassError as e:
+            raise err(503, str(e), "pass_unavailable")
+        except plans.BillingError as e:
+            log.warning(json.dumps({"event": "checkout-failed", "provider": "pass", "error": str(e)[:200]}))
+            raise err(502, "We couldn't start the payment. Try again in a minute.", "billing")
+        with db.tx() as c:
+            repo.audit(c, p.uid, "pass-checkout-started", client_ip(request), {"currency": currency})
+        return {"url": out["url"]}
 
     @app.post("/api/billing/checkout")
     async def checkout(request: Request, body: dict = Body(default={}), p: Principal = Depends(session_only)):
@@ -1480,6 +1507,12 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
                         if result == "paid":
                             for to in partners.admin_emails(c, pt["id"]):
                                 send(c, to, mail.business(cfg.public_url, "paid", pt["name"]))
+                        elif result == "unknown":
+                            result, ps = passes.mark_paid(c, cfg, "razorpay", ref=str(link.get("id") or ""), amount=link.get("amount_paid"))
+                            if result == "paid":
+                                u = c.one("SELECT email FROM users WHERE id = ?", (ps["user_id"],))
+                                if u:
+                                    send(c, u["email"], mail.pass_started(cfg.public_url, ps["days"], ps["ends_at"]))
                 elif result == "paid":
                     u = c.one("SELECT email FROM users WHERE id = ?", (g["user_id"],))
                     if u:
@@ -1525,6 +1558,23 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
                         if u:
                             send(c, u["email"], mail.guarantee(cfg.public_url, g["kind"], "enrolled"))
             log.info(json.dumps({"event": "billing-webhook", "provider": "dodo", "kind": "guarantee-" + str(event.get("type"))[:40], "result": result}))
+            return {"ok": True, "result": result}
+        if str(event.get("type", "")).startswith("payment.") and meta.get("pass_id"):
+            # A pass bought in dollars.
+            eid = "dodo:" + headers["webhook-id"][:100]
+            with db.tx() as c:
+                if c.one("SELECT 1 AS x FROM billing_events WHERE id = ?", (eid,)):
+                    return {"ok": True, "result": "duplicate"}
+                c.execute("INSERT INTO billing_events(id, provider, kind, provider_sub_id, received_at, payload) VALUES (?, 'dodo', ?, ?, ?, ?)",
+                          (eid, str(event.get("type"))[:60], str(data.get("payment_id") or "")[:100], now_iso(), json.dumps(event)[:20000]))
+                result = "ignored"
+                if event.get("type") == "payment.succeeded":
+                    result, ps = passes.mark_paid(c, cfg, "dodo", pass_id=str(meta.get("pass_id"))[:64], amount=data.get("total_amount"))
+                    if result == "paid":
+                        u = c.one("SELECT email FROM users WHERE id = ?", (ps["user_id"],))
+                        if u:
+                            send(c, u["email"], mail.pass_started(cfg.public_url, ps["days"], ps["ends_at"]))
+            log.info(json.dumps({"event": "billing-webhook", "provider": "dodo", "kind": "pass-" + str(event.get("type"))[:40], "result": result}))
             return {"ok": True, "result": result}
         if str(event.get("type", "")).startswith("payment.") and meta.get("partner_payment_id"):
             # A business account bought in dollars.
@@ -2388,5 +2438,33 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
                 "billingEnabled": cfg.billing_enabled,
                 "hostedAi": plans.hosted_config() is not None,
             }
+
+    @app.get("/api/admin/funnel")
+    def admin_funnel(days: int = 14, p: Principal = Depends(admin_only)):
+        """Sign-ups in the last `days` days by where they came from, and how far each group got: confirmed the email,
+        built a profile, got matches, applied, pays. Counts only; no person is listed."""
+        days = max(1, min(int(days), 365))
+        since = now_iso(timedelta(days=-days))
+        def step(cond: str, name: str) -> str:
+            return "SUM(CASE WHEN " + cond + " THEN 1 ELSE 0 END) AS " + name
+
+        def has(where: str) -> str:
+            return "EXISTS (SELECT 1 FROM docs d WHERE d.user_id = u.id AND " + where + ")"
+        paying = ("(EXISTS (SELECT 1 FROM subscriptions s WHERE s.user_id = u.id AND s.plan IN ('pro', 'ultra') AND s.status IN ('active', 'pending')) "
+                  "OR EXISTS (SELECT 1 FROM passes x WHERE x.user_id = u.id AND x.status = 'paid'))")
+        cols = ", ".join([
+            step("u.email_verified_at IS NOT NULL", "confirmed"),
+            step(has("d.collection = 'brain' AND d.id = 'brain'"), "profile"),
+            step(has("d.collection = 'jobs'"), "matched"),
+            step(has("d.collection = 'jobs' AND d.data LIKE '%\"appliedAt\"%'"), "applied"),
+            step(paying, "paying")])
+        sql = ("SELECT CASE WHEN u.signup_source = '' THEN 'direct' ELSE u.signup_source END AS source, COUNT(*) AS signups, " + cols
+               + " FROM users u WHERE u.created_at > ? GROUP BY 1 ORDER BY 2 DESC LIMIT 60")
+        with db.tx() as c:
+            rows = c.all(sql, (since,))
+            seats = c.scalar("SELECT COUNT(*) AS n FROM partner_members WHERE status = 'active' AND role = 'student'")
+        keys = ("signups", "confirmed", "profile", "matched", "applied", "paying")
+        rows = [{"source": r["source"], **{k: int(r[k] or 0) for k in keys}} for r in rows]
+        return {"days": days, "since": since, "total": {k: sum(r[k] for r in rows) for k in keys}, "bySource": rows, "businessSeats": int(seats or 0)}
 
     return app

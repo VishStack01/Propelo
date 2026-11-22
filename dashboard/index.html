@@ -3595,6 +3595,11 @@ function renderPlan(){
       <div class="price">${price(pl)}${pl.priceInr ? '<small> / month</small>' : ''}</div>
       <ul>${arr(pl.features).map(f => `<li>${esc(f)}</li>`).join('')}</ul>${action}</article>`;
   }).join('');
+  // A pass: Pro for a fixed number of days, paid once. Shown only when the server sells it and this account has no subscription.
+  const ps = b.pass, psPrice = ps ? (cur$ === 'USD' ? '$' + ps.priceUsd : inr(ps.priceInr)) : '';
+  const passBox = ps && ps.onSale && !ps.blocked && arr(ps.currencies).includes(cur$) ? `<div class="panel" style="margin-top:14px;display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap">
+      <div><b>Prefer to pay once? Pro pass, ${esc(ps.days)} days for ${esc(psPrice)}.</b><p class="small" style="margin:4px 0 0">${ps.running ? 'Your pass runs until ' + esc(fDate.format(new Date(ps.running.endsAt))) + '. Buying another adds its days to the end. ' : ''}Pay once by ${cur$ === 'USD' ? 'card' : 'UPI, card or netbanking'}. Nothing renews and there is nothing to cancel.</p></div>
+      <button class="btn solid buy" data-act="buy-pass">Buy the ${esc(ps.days)}-day pass</button></div>` : '';
   const curSwitch = curs.length > 1 ? `<div class="curseg" role="group" aria-label="Currency">${curs.map(x => `<button type="button" class="${x === cur$ ? 'on' : ''}" aria-pressed="${x === cur$}" data-act="plan-cur" data-cur="${x}">${x === 'INR' ? '₹ INR' : '$ USD'}</button>`).join('')}</div>` : '';
   const pct = ai.limit ? Math.min(100, Math.round(ai.used / ai.limit * 100)) : 0;
   const meter = own ? `<p class="small">AI actions run on your own ${esc(own.provider)} key: ${esc(ai.ownUsed || 0)} this month, no limit from us.</p>`
@@ -3610,7 +3615,7 @@ function renderPlan(){
         <div><button class="btn sm solid" type="submit">Save key</button></div>
         <p class="small">Stored encrypted. Only its last four characters are ever shown, and only your account uses it.</p></form>`;
   return `<div class="planwrap"><div id="plan"><div class="sh"><h2 style="font-size:24px">Plan</h2><p class="web-only">${paid ? 'Thanks for supporting Propelo.' : 'Everything that finds and checks roles is free.'}</p><p class="app-only">Your plan and what it includes. Plans are managed in Propelo on the web.</p>${curSwitch}</div>${say('plan')}
-    <div class="plans">${cards}</div></div>
+    <div class="plans">${cards}</div>${passBox}</div>
   <div id="ai"><div class="sh"><h2 style="font-size:24px">AI</h2><p>Reading postings, scoring fit and tailoring resumes and cover letters use a model. Every answer is checked against your own profile before you see it.</p></div>
     <div class="panel acct">${say('ai')}${meter}<details${own ? '' : ' open'}><summary>Use your own key</summary>${keyBox}</details></div></div></div>`;
 }
@@ -5537,6 +5542,7 @@ document.addEventListener('click', e => {
   else if (act === 'signout-all'){ api('api/me/logout-all', {method: 'POST'}).catch(() => {}).finally(() => { location.href = 'login'; }); }
   else if (act === 'key-hide'){ state.newKey = null; render(); }
   else if (act === 'upgrade'){ el.disabled = true; const b = obj(state.billing), cs = arr(b.currencies); const cur = cs.includes(state.planCur) ? state.planCur : (cs.includes(guessCur()) ? guessCur() : cs[0]); cloudPost('api/billing/checkout', {plan: el.dataset.plan || 'pro', currency: cur}).then(d => { location.href = d.url; }).catch(d => { el.disabled = false; acctSay(d.error || 'Could not start the payment.', true, 'plan'); }); }
+  else if (act === 'buy-pass'){ el.disabled = true; const b = obj(state.billing), cs = arr(obj(b.pass).currencies); const cur = cs.includes(state.planCur) ? state.planCur : (cs.includes(guessCur()) ? guessCur() : cs[0]); cloudPost('api/billing/pass', {currency: cur}).then(d => { location.href = d.url; }).catch(d => { el.disabled = false; acctSay(d.error || 'Could not start the payment.', true, 'plan'); }); }
   else if (act === 'ct-new'){ state.ctEdit = 'new'; render(); }
   else if (act === 'ct-edit'){ state.ctEdit = el.dataset.id; render(); window.scrollTo({top: 0, behavior: 'smooth'}); }
   else if (act === 'ct-close'){ state.ctEdit = null; render(); }
@@ -6044,6 +6050,13 @@ function partnerChrome(){
     const a = document.createElement('a'); a.className = 'btn ghost partnerline'; a.href = me.isAdmin ? '/admin' : '/staff'; a.textContent = me.isAdmin ? 'Admin' : 'Staff';
     a.style.cssText = 'margin:0 0 10px;justify-content:center';
     side.querySelector('.newbtn').after(a);
+  }
+  if (me.supportEmail){
+    // Help from every screen: an email to the team with the plan filled in, so nobody has to hunt for the contact page.
+    const a = document.createElement('a'); a.className = 'partnerline'; a.textContent = 'Help: email the team';
+    a.href = 'mailto:' + me.supportEmail + '?subject=' + encodeURIComponent('Help with Propelo (' + (me.plan || 'free') + ' plan)');
+    a.style.cssText = 'display:block;margin:10px 0 0;font-size:13.5px;color:var(--muted);text-decoration:underline';
+    side.appendChild(a);
   }
   if (me.partnerAdmin){
     const a = document.createElement('a'); a.className = 'btn ghost partnerline'; a.href = '/partner'; a.textContent = 'Business account';

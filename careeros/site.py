@@ -27,7 +27,7 @@ from email.utils import format_datetime
 from pathlib import Path
 from xml.sax.saxutils import escape
 
-from . import countries, logos, showcase, sponsors
+from . import countries, growth_pages, logos, showcase, sponsors
 from . import tags as tagger
 from .models import iso
 
@@ -155,7 +155,7 @@ def _rss(jobs: list[dict], base_url: str, now: datetime) -> str:
             f"<lastBuildDate>{format_datetime(now)}</lastBuildDate>" + "".join(items) + "</channel></rss>\n")
 
 
-PAGES = ("index.html", "jobs.html", "docs.html", "check.html")
+PAGES = ("index.html", "jobs.html", "docs.html", "check.html", "sponsor-check.html")
 NOT_FOUND = """<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Page not found · Propelo</title><meta name="robots" content="noindex"><link rel="icon" href="{base}assets/favicon.svg" type="image/svg+xml">
@@ -168,11 +168,12 @@ a{{display:inline-flex;align-items:center;min-height:44px;padding:0 18px;margin:
 """
 
 
-def seo(out: Path, base_url: str) -> None:
+def seo(out: Path, base_url: str, extra: tuple[str, ...] = ()) -> None:
     """Canonical and social tags with absolute URLs, structured data on the home page, robots.txt, sitemap.xml and a
     404 page. The site's address is `base_url` (https://propelo.org/ once the custom domain is live)."""
     base = base_url if base_url.endswith("/") else base_url + "/"
-    for name in PAGES:
+    pages = PAGES + tuple(extra)
+    for name in pages:
         f = out / name
         if not f.is_file():
             continue
@@ -212,7 +213,7 @@ def seo(out: Path, base_url: str) -> None:
             demo.write_text(t.replace("<head>", '<head>\n<meta name="robots" content="noindex">', 1), encoding="utf-8")
     (out / "robots.txt").write_text(f"User-agent: *\nAllow: /\nDisallow: /data/\nDisallow: /demo/\nSitemap: {base}sitemap.xml\n", encoding="utf-8")
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    urls = "".join(f"<url><loc>{base if n == 'index.html' else base + n}</loc><lastmod>{today}</lastmod></url>" for n in PAGES if (out / n).is_file())
+    urls = "".join(f"<url><loc>{base if n == 'index.html' else base + n}</loc><lastmod>{today}</lastmod></url>" for n in pages if (out / n).is_file())
     (out / "sitemap.xml").write_text(f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>\n',
                                      encoding="utf-8")
     (out / "404.html").write_text(NOT_FOUND.format(base=base), encoding="utf-8")
@@ -307,13 +308,17 @@ def build(feed_dir: str | Path, out_dir: str | Path, demo: str | Path | None = N
         except ValueError:
             scan_at = now
         idx.write_text(showcase.render(idx.read_text(encoding="utf-8"), records, logo_map, summary.get("openings") or len(records), scan_at), encoding="utf-8")
+        # Free sponsor check (the registers as text) and the visa-jobs lists, from this scan.
+        growth = growth_pages.visa_pages(records, out, site_dir, scan_at)
+        meta["sponsorCheck"] = growth_pages.sponsor_data(feed_dir, out)
     else:
         (out / "index.html").write_text(board, encoding="utf-8")
+        growth = []
     (out / ".nojekyll").write_text("")
     if demo and Path(demo).exists():
         (out / "demo").mkdir()
         shutil.copy(demo, out / "demo" / "index.html")
     if base_url:
-        seo(out, base_url)
+        seo(out, base_url, tuple(growth))
     log(f"Job board: {len(records)} roles, {len(companies)} companies ({len(used)} logos), {pages} API pages -> {out}")
     return meta

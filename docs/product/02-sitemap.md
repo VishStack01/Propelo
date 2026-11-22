@@ -36,6 +36,8 @@ flowchart TD
 | Job board | jobs.html (+ `#/job/<id>`, `#/companies`, `#/api`) | visitor, job seeker | Browse and filter 58k+ roles; role detail with quotes | none | Search, filter, open role, apply on employer site | employer pages, app signup | Verified |
 | Docs | docs.html | developer, power user | Install, own key, run locally | none | Read | GitHub | Verified |
 | Scam check | check.html | anyone with a suspicious offer | Free warning-sign check, in the browser | none | Paste text, see signals | app signup | Verified |
+| Sponsor check | sponsor-check.html | anyone abroad | Free lookup: is this employer on the UK or Dutch sponsor register? Runs in the browser | none | Search a company, open its roles | job board, app signup | Verified (local build) |
+| Visa sponsor jobs | visa-jobs.html, visa-jobs-uk.html and six more countries; lists/*.md | students and graduates abroad, search engines | Recent junior and mid-level roles with a sponsorship signal, rebuilt by every scan | none | Open a role, sign up, check an employer | job board, app signup | Verified (local build) |
 | Demo | demo/index.html | visitor | Dashboard with fictional data | none | Click around | app signup | Verified (noindex) |
 | 404 | 404.html | anyone | Lost link recovery | none | Home, jobs, docs | | Implemented (generated) |
 | robots / sitemap / RSS / API | robots.txt, sitemap.xml, feed.xml, api/jobs.json | crawlers, developers | Discovery and reuse | none | | | Implemented |
@@ -119,6 +121,7 @@ flowchart TD
 | Admin console | `/admin` | admin | session + two-step (production) | Verified (local) |
 | Staff desk (Job Guarantee, Interview Guarantee) | `/staff` | staff, admin | session + two-step (production) | Implemented |
 | Business accounts (staff section) | `/partner` | staff, admin | session + two-step (production) | Verified |
+| Sign-up funnel by source | `/admin` (`/api/admin/funnel`) | admin | session + two-step (production) | Verified (local) |
 | Content management (blog) | (none) | | | **Missing** (no blog) |
 | Feature flags / config UI | (none; env vars on Render) | | | Won't do before launch |
 | Support tickets | (none; email) | | | **Missing** (P2) |
@@ -133,6 +136,7 @@ flowchart TD
 | Manage / cancel | `/api/billing/portal`, `/api/billing/cancel` | Implemented |
 | Webhooks | `/api/billing/webhook`, `/api/billing/dodo-webhook` | Verified with signed test events |
 | Business plans | `/business`, `/partner` | Verified with test webhooks |
+| Pro pass (pay once, no renewal) | `/app#setup` › Billing (`/api/billing/pass`); off unless `PASS=on` | Implemented; tested with signed test webhooks; live Not verified |
 | Invoices / GST receipts | provider emails only | **Partial** |
 
 ## 8. Legal and privacy

@@ -18,7 +18,18 @@
   // Links into the hosted app follow <meta name="careeros-app">, so the address lives in one place.
   var appMeta = document.querySelector('meta[name="careeros-app"]');
   var appUrl = appMeta && /^https:\/\//.test(appMeta.content) ? appMeta.content.replace(/\/+$/, "") : "";
-  if (appUrl) $$("[data-app]").forEach(function (a) { a.href = appUrl + a.getAttribute("data-app"); });
+  // A link that brought the visitor here can carry a short label (?src=reddit-ukjobs, or utm_source / ref).
+  // It is passed on to the sign-up page so each channel's sign-ups can be counted. No cookie, nothing about the person.
+  var src = "";
+  try {
+    var qs = new URLSearchParams(location.search);
+    src = (qs.get("src") || qs.get("utm_source") || qs.get("ref") || "").slice(0, 40);
+    if (src) sessionStorage.setItem("propelo-src", src); else src = sessionStorage.getItem("propelo-src") || "";
+  } catch (e) { src = ""; }
+  if (appUrl) $$("[data-app]").forEach(function (a) {
+    var path = a.getAttribute("data-app");
+    a.href = appUrl + path + (src ? (path.indexOf("?") < 0 ? "?" : "&") + "src=" + encodeURIComponent(src) : "");
+  });
 
   // Small screens: the links fold into one menu button.
   var menu = document.querySelector(".menu"), links = document.getElementById("links");

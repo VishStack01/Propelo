@@ -2,11 +2,11 @@
 
 Generated from `careeros/cloud/migrations/*.sql`. Do not edit by hand.
 
-30 tables.
+31 tables.
 
 ## users
 
-`id`, `email`, `name`, `password_hash`, `email_verified_at`, `is_admin`, `disabled_at`, `created_at`, `updated_at`, `last_login_at`, `password_changed_at`, `is_staff (0005_concierge)`, `mfa_secret (0011_mfa)`, `mfa_enabled_at (0011_mfa)`, `mfa_recovery (0011_mfa)`, `mfa_last_step (0011_mfa)`
+`id`, `email`, `name`, `password_hash`, `email_verified_at`, `is_admin`, `disabled_at`, `created_at`, `updated_at`, `last_login_at`, `password_changed_at`, `is_staff (0005_concierge)`, `mfa_secret (0011_mfa)`, `mfa_enabled_at (0011_mfa)`, `mfa_recovery (0011_mfa)`, `mfa_last_step (0011_mfa)`, `signup_source (0013_growth)`
 
 ## sessions
 
@@ -123,3 +123,7 @@ Generated from `careeros/cloud/migrations/*.sql`. Do not edit by hand.
 ## partner_payments
 
 `id`, `partner_id`, `plan`, `provider`, `ref`, `amount`, `currency`, `status`, `url`, `created_by`, `created_at`, `paid_at`
+
+## passes
+
+`id`, `user_id`, `plan`, `days`, `price`, `currency`, `provider`, `pay_ref`, `status`, `created_at`, `paid_at`, `ends_at`

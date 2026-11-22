@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Can this employer sponsor my visa? Free UK and Netherlands sponsor check | Propelo</title>
+<meta name="description" content="Type a company name and see if it is on the UK Home Office register of licensed sponsors or the Dutch register of recognised sponsors. Free, no sign-up, updated daily from the official lists.">
+<meta property="og:title" content="Can this employer sponsor my visa? Free sponsor check">
+<meta property="og:description" content="Search the official UK and Dutch sponsor registers by company name. Free, no sign-up.">
+<meta property="og:image" content="assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="careeros-app" content="https://app.propelo.org">
+<meta name="theme-color" content="#FAF3E6">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<script>document.documentElement.className = document.documentElement.className.replace('no-js', 'js');</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+<style>
+.chk{padding-block:56px 96px}
+.chk h1{font:500 clamp(40px,5.6vw,76px)/1.04 var(--font);letter-spacing:-.045em;color:var(--ink);max-width:14ch}
+.chk h1 mark{background:linear-gradient(transparent 58%,var(--mark) 58%,var(--mark) 92%,transparent 92%);color:inherit;padding:0 .04em}
+.chk .sub{margin-top:20px;max-width:36em}
+.chk-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:28px;margin-top:44px;align-items:start}
+.chk-box{background:var(--paper);border-radius:var(--r-card);box-shadow:inset 0 0 0 1px var(--line);padding:24px}
+.chk-box label{display:block;font-weight:600;color:var(--ink);font-size:15px}
+.chk-box label small{font-weight:400;color:var(--muted)}
+.chk-box textarea,.chk-box input{display:block;width:100%;margin-top:8px;font:400 16px/1.55 var(--font);color:var(--ink);background:var(--page);border:0;box-shadow:inset 0 0 0 1.5px var(--line-2);border-radius:var(--r-ctl);padding:14px 16px;resize:vertical}
+.chk-box textarea{min-height:230px}
+.chk-box input{height:50px}
+.chk-box textarea:focus,.chk-box input:focus{outline:none;box-shadow:inset 0 0 0 2px var(--ink)}
+.chk-box .chk-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:18px}
+.chk-box .chk-row .note{font-size:14px;color:var(--muted)}
+.res{margin-top:22px;border-radius:var(--r-card);padding:22px 24px}
+.res[hidden]{display:none}
+.res.ok{background:var(--lav-t)}
+.res.caution{background:var(--yellow-t)}
+.res.high{background:var(--pink-t)}
+.res h2{font:600 22px/1.25 var(--font);color:var(--ink);letter-spacing:-.02em}
+.res p{margin-top:8px}
+.res ul{margin:14px 0 0;padding-left:20px;list-style:disc}
+.res li{margin-top:10px}
+.res q{display:block;margin-top:4px;font-size:14.5px;color:var(--muted);quotes:"\201C" "\201D"}
+.tips{background:var(--sand);border-radius:var(--r-card);padding:24px}
+.tips h2{font:600 20px/1.3 var(--font);color:var(--ink)}
+.tips ol{margin:14px 0 0;padding-left:22px;list-style:decimal}
+.tips li::marker,.res li::marker{color:var(--muted);font-weight:600}
+.tips li{margin-top:10px}
+.tips li b{color:var(--ink);font-weight:600}
+.tips .help{margin-top:18px;font-size:15px}
+.chk-cta{margin-top:20px;background:var(--ink);color:var(--page);border-radius:var(--r-card);padding:24px}
+.chk-cta h2{font:600 20px/1.3 var(--font)}
+.chk-cta p{margin-top:8px;color:inherit;opacity:.82}
+.chk-cta .btn{margin-top:16px;background:var(--page);color:var(--ink)}
+@media (max-width:900px){.chk-grid{grid-template-columns:1fr}}
+@media (max-width:600px){.chk{padding-block:28px 64px}.chk-box,.tips,.chk-cta,.res{padding:18px}}
+.sp-tabs{display:flex;gap:8px;margin-top:4px}
+.sp-tabs button{height:40px;padding:0 16px;border-radius:999px;border:0;box-shadow:inset 0 0 0 1.5px var(--line-2);background:var(--page);font:500 15px var(--font);color:var(--ink);cursor:pointer}
+.sp-tabs button[aria-pressed="true"]{background:var(--ink);color:var(--page);box-shadow:none}
+.sp-list{margin-top:14px;display:grid;gap:10px}
+.sp-item{background:var(--paper);border-radius:var(--r-ctl);box-shadow:inset 0 0 0 1px var(--line);padding:14px 16px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center}
+.sp-item b{color:var(--ink);font-weight:600}
+.sp-item span{color:var(--muted);font-size:14.5px}
+.sp-item a{font-weight:600;color:var(--ink);text-decoration:underline;font-size:14.5px}
+.sp-meta{margin-top:14px;font-size:14.5px;color:var(--muted)}
+</style>
+</head>
+<body data-page="sponsor-check">
+<a class="skip" href="#main">Skip to content</a>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="M4 12h15M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 8h16M4 16h16"/></symbol>
+</svg>
+<nav class="top" aria-label="Main">
+  <div class="wrap">
+    <a class="brand" href="./" aria-label="Propelo home">propelo<i></i></a>
+    <div class="links" id="links">
+      <a href="./#product">Product</a>
+      <a href="jobs.html">Job board</a>
+      <a href="./#guarantees">Guarantees</a>
+      <a href="./#pricing">Pricing</a>
+      <a data-app="/business" href="https://app.propelo.org/business">For consultancies</a>
+      <a href="docs.html">Docs</a>
+      <a class="signin" data-app="/login" href="https://app.propelo.org/login">Sign in</a>
+      <a class="btn sm" data-app="/signup" href="https://app.propelo.org/signup">Start free</a>
+    </div>
+    <button class="menu" type="button" aria-label="Menu" aria-expanded="false" aria-controls="links"><svg><use href="#i-menu"/></svg></button>
+  </div>
+</nav>
+
+<main id="main" class="chk">
+  <div class="wrap">
+    <h1>Can this employer <mark>sponsor you?</mark></h1>
+    <p class="sub">Type a company name. Propelo searches the official lists of employers licensed to sponsor work visas: the UK Home Office register (Skilled Worker route) and the Dutch immigration service's register of recognised sponsors. It's free, needs no sign-up, and the lists are re-read every day.</p>
+
+    <div class="chk-grid">
+      <div>
+        <form class="chk-box" id="sp-form" novalidate>
+          <label>Country</label>
+          <div class="sp-tabs" role="group" aria-label="Country"><button type="button" data-cc="uk" aria-pressed="true">United Kingdom</button><button type="button" data-cc="nl" aria-pressed="false">Netherlands</button></div>
+          <label for="sp-q" style="margin-top:16px">Company name</label>
+          <input id="sp-q" type="search" autocomplete="off" placeholder="For example: Monzo, Deloitte, ASML" required>
+          <div class="chk-row"><button class="btn" type="submit">Check<svg><use href="#i-right"/></svg></button><span class="note" id="sp-note">Loading the register…</span></div>
+        </form>
+        <div class="res" id="sp-res" hidden role="status" aria-live="polite"></div>
+        <div class="sp-list" id="sp-list"></div>
+        <p class="sp-meta" id="sp-meta"></p>
+      </div>
+      <aside>
+        <div class="tips">
+          <h2>What a listing means</h2>
+          <ol>
+            <li><b>Listed means allowed, not promised.</b> The employer holds a licence to sponsor. Whether one role is sponsored is the employer's choice: ask before you apply.</li>
+            <li><b>Not listed means it can't sponsor that route today.</b> In the UK you may still work there on a Graduate visa, which needs no sponsor.</li>
+            <li><b>Names differ.</b> Registers use legal names ("Monzo Bank Ltd"). Try the shortest form of the name, and check the town.</li>
+            <li><b>Pay matters too.</b> A UK Skilled Worker visa needs the role to meet a salary floor. Propelo shows it on each UK role that states pay.</li>
+          </ol>
+          <p class="help">Sources: <a href="https://www.gov.uk/government/publications/register-of-licensed-sponsors-workers" rel="noopener">GOV.UK register of licensed sponsors</a> and the <a href="https://ind.nl/en/public-register-recognised-sponsors" rel="noopener">IND public register</a>. This is information, not immigration advice.</p>
+        </div>
+        <div class="chk-cta">
+          <h2>See roles at employers that can sponsor</h2>
+          <p>Propelo reads company career pages several times a day and marks every UK and Dutch role whose employer is on the register. Match them to your resume for free.</p>
+          <a class="btn sm" data-app="/signup" href="https://app.propelo.org/signup">Start free<svg><use href="#i-right"/></svg></a>
+          <a class="btn sm" href="jobs.html?co=GB&amp;vs=uk" style="margin-left:8px">Browse UK sponsor roles</a>
+        </div>
+      </aside>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap fgrid">
+    <div><a class="brand" href="./">propelo<i></i></a><p>Fresh roles from company career pages, honest checks, and applications built only from your real experience. Made in India, MIT licensed.</p></div>
+    <div><h4>Product</h4><ul><li><a href="jobs.html">Job board</a></li><li><a href="check.html">Scam check</a></li><li><a href="sponsor-check.html">Sponsor check</a></li><li><a href="visa-jobs.html">Visa sponsor jobs</a></li><li><a href="./#concierge">Concierge</a></li><li><a href="./#pricing">Pricing</a></li></ul></div>
+    <div><h4>Developers</h4><ul><li><a href="docs.html">Docs</a></li><li><a href="https://github.com/VishStack01/careeros">GitHub</a></li></ul></div>
+    <div><h4>Legal</h4><ul><li><a data-app="/terms" href="https://app.propelo.org/terms">Terms</a></li><li><a data-app="/privacy" href="https://app.propelo.org/privacy">Privacy</a></li></ul></div>
+  </div>
+  <div class="wrap fbase"><span>© 2026 Propelo</span><span>MIT licence</span></div>
+</footer>
+
+<script>
+(function () {
+  // The registers as plain text (name, tab, town, tab, rating), written by `careeros site` from the official lists.
+  var data = {uk: null, nl: null}, cc = 'uk';
+  var $ = function (id) { return document.getElementById(id); };
+  var SUFFIX = /\b(ltd|limited|plc|llp|llc|inc|incorporated|corp|corporation|co|company|group|holdings?|uk|international|the|and|b v|n v|bv|nv)\b/g;
+  function key(s) { return String(s || '').toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9 ]+/g, ' ').replace(SUFFIX, ' ').replace(/\s+/g, ' ').trim(); }
+  function load(code) {
+    if (data[code]) return Promise.resolve(data[code]);
+    $('sp-note').textContent = 'Loading the register…';
+    return fetch('data/sponsors-' + code + '.txt', {cache: 'no-cache'}).then(function (r) { if (!r.ok) throw new Error('missing'); return r.text(); }).then(function (t) {
+      var rows = t.split('\n').filter(Boolean).map(function (line) { var p = line.split('\t'); return {name: p[0], town: p[1] || '', rating: p[2] || '', k: key(p[0])}; });
+      data[code] = rows;
+      $('sp-note').textContent = rows.length.toLocaleString('en-GB') + ' employers on the ' + (code === 'uk' ? 'UK' : 'Dutch') + ' register.';
+      return rows;
+    }).catch(function () { $('sp-note').textContent = 'The register could not be loaded. Try again in a few minutes.'; return []; });
+  }
+  function el(tag, text, cls) { var e = document.createElement(tag); if (text) e.textContent = text; if (cls) e.className = cls; return e; }
+  function show(q) {
+    var k = key(q), res = $('sp-res'), list = $('sp-list');
+    list.textContent = ''; res.hidden = true; $('sp-meta').textContent = '';
+    if (k.length < 2) return;
+    load(cc).then(function (rows) {
+      if (!rows.length) return;
+      var exact = [], starts = [], has = [];
+      for (var i = 0; i < rows.length; i++) {
+        var r = rows[i];
+        if (r.k === k) exact.push(r); else if (r.k.indexOf(k + ' ') === 0) starts.push(r); else if ((' ' + r.k + ' ').indexOf(' ' + k + ' ') >= 0) has.push(r);
+      }
+      var sure = exact.length > 0 || starts.length === 1;  // one register name that starts with this name: the same employer's legal name
+      var hits = exact.concat(starts, has), where = cc === 'uk' ? 'UK register of licensed sponsors' : 'Dutch register of recognised sponsors';
+      res.className = 'res ' + (sure ? 'ok' : hits.length ? 'caution' : 'high');
+      res.textContent = '';
+      res.append(el('h2', sure ? 'Yes: on the ' + where : hits.length ? 'Possible matches on the ' + where : 'No employer with that name on the ' + where));
+      res.append(el('p', sure ? 'This employer holds a licence to sponsor. That does not mean every role is sponsored: ask before you apply.'
+        : hits.length ? 'No exact match, but these names are close. Check the town and the legal name.'
+        : 'Check the spelling and try the shortest form of the name. If it is still missing, this employer cannot sponsor on this route today.'));
+      res.hidden = false;
+      hits.slice(0, 25).forEach(function (r) {
+        var item = el('div', '', 'sp-item'), left = el('div');
+        left.append(el('b', r.name)); left.append(document.createElement('br'));
+        left.append(el('span', [r.town, r.rating].filter(Boolean).join(' · ')));
+        var a = el('a', 'Open roles'); a.href = 'jobs.html?q=' + encodeURIComponent(r.name.replace(/\b(ltd|limited|plc|llp|b\.?v\.?|n\.?v\.?)\.?$/i, '').trim()) + (cc === 'uk' ? '&co=GB' : '&co=NL');
+        item.append(left); item.append(a); list.append(item);
+      });
+      if (hits.length > 25) $('sp-meta').textContent = 'Showing 25 of ' + hits.length + ' matches. Type more of the name to narrow it.';
+    });
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.sp-tabs button'), function (b) {
+    b.addEventListener('click', function () {
+      cc = b.getAttribute('data-cc');
+      Array.prototype.forEach.call(document.querySelectorAll('.sp-tabs button'), function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      load(cc).then(function () { show($('sp-q').value); });
+    });
+  });
+  $('sp-form').addEventListener('submit', function (e) { e.preventDefault(); show($('sp-q').value); });
+  var q0 = new URLSearchParams(location.search).get('q');
+  load('uk').then(function () { if (q0) { $('sp-q').value = q0; show(q0); } });
+})();
+</script>
+<script src="assets/site.js"></script>
+</body>
+</html>

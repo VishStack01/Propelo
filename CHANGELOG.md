@@ -2,6 +2,20 @@
 
 All notable changes to CareerOS. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [semantic versioning](https://semver.org/).
 
+## [2.11.0] - 2026-11-22
+
+Built to bring people in without ad spend and to make each channel measurable.
+
+### Added
+- **Free sponsor check** (`sponsor-check.html`): type a company name and see whether it is on the UK Home Office register of licensed sponsors or the Dutch register of recognised sponsors. Runs in the browser from the registers the scan already downloads.
+- **Visa sponsor jobs pages** (`visa-jobs.html` and one page each for the UK, US, Canada, Australia, Germany, the Netherlands and Ireland): recent junior and mid-level roles with a sponsorship signal, read from employers' own career pages and rebuilt by every scan. Roles that say they cannot sponsor are never listed. The same lists are written as Markdown (`lists/*.md`) for a public list on GitHub.
+- **Sign-up sources.** A link can carry a short label (`?src=reddit-ukjobs`; `utm_source` and `ref` work too). The label is kept with the sign-up, and `/admin` shows, per label, how many people signed up, confirmed, built a profile, got matches, applied and pay. A label only: no advertising cookies.
+- **Pro pass, off by default (`PASS=on`).** Pro for 90 days paid once, by UPI or card in rupees or a one-time checkout in dollars; nothing renews. A second pass adds its days to the first.
+- **Help from every screen:** an "email the team" link in the app's side menu.
+
+### Fixed
+- **The job board had no way to sign up.** It now has a "Get matched free" button and a line on every role page.
+
 ## [2.10.0] - 2026-11-22
 
 Built for people studying or working abroad, most of all Indian students after a master's in the US, UK, Canada, Australia, Germany, Ireland and the Netherlands. No paid data sources were added: everything below reads public pages and public lists.

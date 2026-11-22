@@ -24,10 +24,16 @@ def _j(x) -> str:
 
 
 # ------------------------------------------------------------------ users
-def create_user(c: Conn, email: str, name: str, password_hash: str, is_admin: bool = False) -> str:
+def clean_source(s) -> str:
+    """A sign-up source label: lowercase letters, digits, dot, dash, underscore; 40 characters at most."""
+    import re
+    return re.sub(r"[^a-z0-9._-]+", "-", str(s or "").strip().lower())[:40].strip("-")
+
+
+def create_user(c: Conn, email: str, name: str, password_hash: str, is_admin: bool = False, source: str = "") -> str:
     uid, now = new_id(), now_iso()
-    c.execute("INSERT INTO users(id, email, name, password_hash, is_admin, created_at, updated_at, password_changed_at) "
-              "VALUES (?, ?, ?, ?, ?, ?, ?, ?)", (uid, email, name, password_hash, 1 if is_admin else 0, now, now, now))
+    c.execute("INSERT INTO users(id, email, name, password_hash, is_admin, created_at, updated_at, password_changed_at, signup_source) "
+              "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (uid, email, name, password_hash, 1 if is_admin else 0, now, now, now, clean_source(source)))
     set_doc(c, uid, "settings", "profile", dict(DEFAULT_SETTINGS, updatedAt=now))
     set_doc(c, uid, "brain", "status", {"state": "waiting", "summary": "Upload your resume, then build your Career Brain.", "updatedAt": now})
     return uid

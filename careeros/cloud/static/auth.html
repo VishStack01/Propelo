@@ -327,6 +327,18 @@ input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 45%,transparent) 
     msg(f, r.data.error || "That code didn't work."); f.code.select();
   });
 
+  // The short label on the link that brought this visitor (?src=..., utm_source or ref), kept for this browser so a
+  // sign-up after looking around is still counted for that channel. A label only: no cookie and nothing about the person.
+  function source(){
+    let s = '';
+    try {
+      const q = new URLSearchParams(location.search);
+      s = (q.get('src') || q.get('utm_source') || q.get('ref') || '').slice(0, 40);
+      if (s) localStorage.setItem('propelo-src', s); else s = localStorage.getItem('propelo-src') || '';
+    } catch (e) { s = ''; }
+    return s;
+  }
+  source();
   $('#f-signup').addEventListener('submit', async e => {
     e.preventDefault(); const f = e.target; msg(f, '');
     const email = f.email.value.trim();
@@ -335,7 +347,7 @@ input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 45%,transparent) 
     if (f.password.value.length < 10){ msg(f, 'Use at least 10 characters for your password.'); f.password.focus(); return; }
     if (!f.agree.checked){ msg(f, 'Please agree to the terms and privacy notice.'); return; }
     busy(f, true, 'Creating your account…');
-    const r = await post('/api/auth/signup', {name: f.name.value.trim(), email, password: f.password.value, next: next() !== '/' ? next() : ''});
+    const r = await post('/api/auth/signup', {name: f.name.value.trim(), email, password: f.password.value, next: next() !== '/' ? next() : '', src: source()});
     busy(f, false);
     if (r.ok){ lastEmail = email; $('#sent-text').textContent = `We sent a link to ${email}. It expires in 24 hours.`; show('sent'); return; }
     msg(f, r.data.error || 'Sign-up failed. Try again.');

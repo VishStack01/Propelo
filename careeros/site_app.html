@@ -315,7 +315,9 @@ footer{color:var(--muted)}
     <a href="#/api" data-nav="api">API</a>
     <a href="demo/">Dashboard demo</a>
     <a href="./" data-home>About Propelo</a>
-    <a href="https://github.com/VishStack01/careeros" target="_blank" rel="noopener">GitHub</a>
+    <a href="sponsor-check.html">Sponsor check</a>
+    <a href="https://github.com/VishStack01/Propelo" target="_blank" rel="noopener">GitHub</a>
+    <a class="btn solid" data-signup="jobboard" href="https://app.propelo.org/signup?src=jobboard" style="height:36px;color:var(--btn-ink)">Get matched free</a>
   </nav>
 </div></header>
 
@@ -450,6 +452,14 @@ const COUNTRIES = [['US','United States'],['GB','United Kingdom'],['CA','Canada'
 const COUNTRY_NAME = Object.fromEntries(COUNTRIES);
 const VISA = [['sponsors','Says it sponsors visas'],['uk','On the UK sponsor register'],['nl','Dutch recognised sponsor'],['opt','Takes OPT or CPT (US)'],['everify','Uses E-Verify (US)']];
 const VISA_NAME = Object.fromEntries(VISA);
+// Sign-up links carry a short label for where the visitor came from (the label on the link that brought them, else
+// the part of the board they clicked), so each channel's sign-ups can be counted. No cookie, nothing about the person.
+const APP_URL = 'https://app.propelo.org';
+let SRC = '';
+try { const q0 = new URLSearchParams(location.search); SRC = (q0.get('src') || q0.get('utm_source') || q0.get('ref') || '').slice(0, 40);
+  if (SRC) sessionStorage.setItem('propelo-src', SRC); else SRC = sessionStorage.getItem('propelo-src') || ''; } catch (e) { SRC = ''; }
+function signupUrl(where){ return APP_URL + '/signup?src=' + encodeURIComponent(SRC || 'board-' + where); }
+document.querySelectorAll('[data-signup]').forEach(a => { a.href = signupUrl(a.dataset.signup); });
 const QUICK = [['AI & ML','cat'],['Backend','cat'],['Frontend','cat'],['Full stack','cat'],['Data','cat'],['Design','cat'],['DevOps & Cloud','cat'],['Python','sk'],['React','sk'],['Visa sponsorship','pk']];
 let ALL = [], META = {}, COMPANIES = [], shown = 40;
 let F = {q:'', fm:'', list:'', city:'', minpay:'', nl:false, where:'any', lv:new Set(), posted:'', ty:new Set(), cat:new Set(), sk:new Set(), pk:new Set(), ar:new Set(), lg:new Set(), pt:new Set(), co:new Set(), vs:new Set(), all:false, company:'', sort:'new'};
@@ -633,6 +643,7 @@ async function openJob(id){
         <button class="btn big" type="button" data-act="save" data-id="${esc(d.id)}" aria-pressed="${SAVED.has(d.id)}">${SAVED.has(d.id) ? 'Saved' : 'Save'}</button>
         <button class="btn big" type="button" data-act="hide" data-id="${esc(d.id)}" aria-pressed="${HIDDEN.has(d.id)}">${HIDDEN.has(d.id) ? 'Hidden' : 'Hide'}</button>
         <button class="btn big" type="button" data-act="copy">Copy link</button></div>
+      <p class="small" style="margin:10px 0 0">Applying? Propelo scores this role against your resume, tailors your resume using only what's true, and tracks the application. <a href="${signupUrl('job')}" style="text-decoration:underline">Start free</a></p>
       ${d.facts ? `<div class="facts" aria-label="What the posting says">${d.facts.map(f => `<div class="fact"><span class="k">${esc(f.k)}</span><span class="v">${esc(f.v)}</span>${f.q ? `<q>${esc(f.q)}</q>` : ''}</div>`).join('')}</div>` : ''}
       <div class="dsec"><h3>About the role</h3><div class="desc">${paragraphs(d.text)}</div></div>
       ${others.length ? `<div class="others"><h3 style="font-size:18px">More roles at ${esc(d.c)}</h3>${others.map(o => `<a href="#/job/${encodeURIComponent(o.id)}"><span>${esc(o.t)}</span><span class="small">${esc(ago(o.p))}</span></a>`).join('')}</div>` : ''}
