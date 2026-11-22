@@ -1,10 +1,11 @@
 # Secret scanning (see .github/workflows/security.yml). The default rules apply everywhere,
-# except the test suite, whose keys and secrets are all made-up placeholders.
+# except the test suite, whose keys and secrets are all made-up placeholders, and the scan's board map,
+# whose "token" fields are public job-board names (for example a Greenhouse board slug), not credentials.
 title = "Propelo"
 
 [extend]
 useDefault = true
 
 [allowlist]
-description = "Fake credentials in tests"
-paths = ['''^tests/''']
+description = "Fake credentials in tests; public board names in the feed"
+paths = ['''^tests/''', '''^feed/boards\.json$''', '''^feed/boards-cache/''']

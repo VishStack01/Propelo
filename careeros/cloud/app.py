@@ -43,7 +43,7 @@ from ..dedupe import canonical_url, company_key
 from ..scamcheck import check as scam_check
 from . import mailer as mail
 from . import linkedin as li_auth
-from . import autosend, concierge, guarantee, mailbox, partners, plans, repo, security
+from . import autosend, concierge, guarantee, mailbox, mfa, partners, plans, repo, security
 from .config import Config
 from .db import Database, now_iso
 from .ingest import feed_state
@@ -237,14 +237,21 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
             raise err(403, "Computer keys can't do this. Sign in on the dashboard.", "forbidden")
         return p
 
+    def needs_mfa(p: Principal) -> None:
+        # Staff and admins can see other people's data and approve money: in production they need two-step sign-in.
+        if cfg.is_production and not mfa.enabled(p.user):
+            raise err(403, "Turn on two-step sign-in in Settings first. Staff and admin pages need it.", "mfa_required")
+
     def admin_only(p: Principal = Depends(session_only)) -> Principal:
         if not p.user["is_admin"]:
             raise err(404, "Not found.")
+        needs_mfa(p)
         return p
 
     def staff_only(p: Principal = Depends(session_only)) -> Principal:
         if not (p.user["is_admin"] or p.user.get("is_staff")):
             raise err(404, "Not found.")
+        needs_mfa(p)
         return p
 
     def check_col(col: str, did: str | None = None) -> None:
@@ -253,8 +260,10 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
         if did is not None and not _DOC_ID.match(did):
             raise err(404, "Not found.")
 
-    def html(name: str, nonce: str) -> HTMLResponse:
+    def html(name: str, nonce: str, canonical: str = "") -> HTMLResponse:
         text = (STATIC / name).read_text(encoding="utf-8")
+        if canonical:
+            text = text.replace("</title>", f'</title>\n<link rel="canonical" href="{cfg.public_url}{canonical}">', 1)
         return HTMLResponse(text.replace("<script>", f'<script nonce="{nonce}">'))
 
     # ------------------------------------------------------------ middleware
@@ -290,10 +299,36 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
                              "ms": round((time.perf_counter() - t0) * 1000, 1)}))
         return response
 
+    def wants_page(request: Request) -> bool:
+        return request.method == "GET" and not request.url.path.startswith("/api/") and "text/html" in request.headers.get("accept", "")
+
     @app.exception_handler(StarletteHTTPException)
     async def http_error(request: Request, exc: StarletteHTTPException):
+        # A person in a browser gets a page: sign-in for pages that need it, a real 404 page for wrong links.
+        if wants_page(request) and exc.status_code == 401:
+            return RedirectResponse(f"/login?next={quote(request.url.path, safe='/')}", status_code=303)
+        if wants_page(request) and exc.status_code == 403 and isinstance(exc.detail, dict) and exc.detail.get("code") == "mfa_required":
+            return RedirectResponse("/app#setup", status_code=303)
+        if wants_page(request) and exc.status_code == 404:
+            return HTMLResponse((STATIC / "notfound.html").read_text(encoding="utf-8"), status_code=404)
         body = exc.detail if isinstance(exc.detail, dict) else {"error": str(exc.detail)}
         return JSONResponse(body, status_code=exc.status_code, headers=getattr(exc, "headers", None))
+
+    @app.get("/robots.txt", include_in_schema=False)
+    def robots():
+        # The app's public pages can be found; the private app, staff pages and the API cannot.
+        text = ("User-agent: *\nAllow: /business\nAllow: /pricing\nAllow: /privacy\nAllow: /terms\nAllow: /refunds\nAllow: /contact\n"
+                "Allow: /signup\nAllow: /login\nDisallow: /app\nDisallow: /partner\nDisallow: /staff\nDisallow: /join/\nDisallow: /api/\n"
+                "Disallow: /verify\nDisallow: /reset\nDisallow: /forgot\nDisallow: /optout\n"
+                f"Sitemap: {cfg.public_url}/sitemap.xml\n")
+        return Response(text, media_type="text/plain", headers={"Cache-Control": "public, max-age=86400"})
+
+    @app.get("/sitemap.xml", include_in_schema=False)
+    def sitemap():
+        pages = ("/business", "/pricing", "/signup", "/privacy", "/terms", "/refunds", "/contact")
+        urls = "".join(f"<url><loc>{cfg.public_url}{x}</loc></url>" for x in pages)
+        return Response(f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>',
+                        media_type="application/xml", headers={"Cache-Control": "public, max-age=86400"})
 
     def guess_currency(request: Request) -> str:
         q = (request.query_params.get("currency") or "").upper()
@@ -310,17 +345,32 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
     def home(request: Request):
         if not request.cookies.get(COOKIE):
             return RedirectResponse("/login", status_code=303)
-        return html("dashboard.html", request.state.nonce)
+        page = html("dashboard.html", request.state.nonce)
+        page.headers["X-Robots-Tag"] = "noindex"
+        return page
 
     @app.get("/app", include_in_schema=False)
     def dashboard(request: Request):
         return home(request)
 
     def auth_page(request: Request):
-        return html("auth.html", request.state.nonce)
+        path = request.url.path
+        page = html("auth.html", request.state.nonce, canonical=path if path in ("/login", "/signup") else "")
+        if path not in ("/login", "/signup"):
+            page.headers["X-Robots-Tag"] = "noindex"  # one-time links: reset, verify, forgot
+        return page
+
+    LEGAL = {"/privacy": ("Privacy policy", "What Propelo collects, why, who it is shared with, how long it is kept and how to delete it."),
+             "/terms": ("Terms of service", "The terms for using Propelo, including plans, business accounts, guarantees and acceptable use."),
+             "/refunds": ("Refunds and cancellation", "How to cancel a Propelo plan, when payments are refunded and how guarantees pay out."),
+             "/contact": ("Contact", "How to reach the people behind Propelo for support, privacy requests, security reports and billing.")}
 
     def legal_page(request: Request):
+        title, desc = LEGAL.get(request.url.path, LEGAL["/privacy"])
         text = (STATIC / "legal.html").read_text(encoding="utf-8").replace("<script>", f'<script nonce="{request.state.nonce}">')
+        text = text.replace("<title>Propelo · Privacy, terms and refunds</title>",
+                            f'<title>{title} · Propelo</title>\n<meta name="description" content="{desc}">\n'
+                            f'<link rel="canonical" href="{cfg.public_url}{request.url.path}">', 1)
         support = html_escape(cfg.support_email)
         if support:
             text = text.replace("{{SUPPORT_EMAIL}}", support)
@@ -358,7 +408,8 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
             extras = ('<section class="addons"><h2>Guarantees for Pro and Ultra members</h2><p class="note">Not part of any plan. Apply in the app; '
                       'a person on our team reviews every application. <a href="/terms#guarantees">Guarantee terms</a></p>' + extras + '</section>')
         text = (STATIC / "pricing.html").read_text(encoding="utf-8").replace("<!--PLANS-->", "".join(cards)).replace("<!--ADDONS-->", extras) \
-            .replace('<body data-cur="INR">', f'<body data-cur="{cur}">', 1).replace("<script>", f'<script nonce="{request.state.nonce}">')
+            .replace('<body data-cur="INR">', f'<body data-cur="{cur}">', 1).replace("<script>", f'<script nonce="{request.state.nonce}">') \
+            .replace("</title>", f'</title>\n<link rel="canonical" href="{cfg.public_url}/pricing">', 1)
         return HTMLResponse(text)
 
     @app.get("/.well-known/security.txt", include_in_schema=False)
@@ -495,8 +546,32 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
         with db.tx() as c:
             if security.needs_rehash(user["password_hash"], cfg.password_iterations):
                 c.execute("UPDATE users SET password_hash = ? WHERE id = ?", (security.hash_password(password, cfg.password_iterations), user["id"]))
+            if mfa.enabled(user):
+                # Two-step sign-in: no session until the code from the authenticator app is checked.
+                return {"ok": False, "mfa": True, "ticket": mfa.ticket(cfg, user["id"], "password")}
             token = repo.create_session(c, user["id"], cfg.session_ttl_days, ip, request.headers.get("user-agent", ""))
             repo.audit(c, user["id"], "login", ip)
+        set_session_cookie(response, token)
+        return {"ok": True, "user": repo.public_user(user)}
+
+    @app.post("/api/auth/mfa", dependencies=[Depends(csrf)])
+    def login_mfa(request: Request, response: Response, body: dict = Body(default={})):
+        got = mfa.read_ticket(cfg, str(body.get("ticket") or "")[:400])
+        if not got:
+            raise err(401, "That sign-in took too long. Start again.", "mfa_expired")
+        uid, via = got
+        ip = client_ip(request)
+        with db.tx() as c:  # its own transaction, so a wrong code still counts toward the limit
+            limited(c, "mfa:" + uid, 8, 900)
+        with db.tx() as c:
+            user = repo.user_by_id(c, uid)
+            if not user or user["disabled_at"] or not mfa.enabled(user):
+                raise err(401, "That sign-in took too long. Start again.", "mfa_expired")
+            if not mfa.verify(c, cfg, user, str(body.get("code") or "")[:20]):
+                repo.audit(c, uid, "login-mfa-failed", ip)
+                raise err(401, "That code didn't work. Use the newest code in your authenticator app, or a recovery code.", "bad_code")
+            token = repo.create_session(c, uid, cfg.session_ttl_days, ip, request.headers.get("user-agent", ""))
+            repo.audit(c, uid, "login-" + via if via != "password" else "login", ip, {"mfa": True})
         set_session_cookie(response, token)
         return {"ok": True, "user": repo.public_user(user)}
 
@@ -555,6 +630,10 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
             else:
                 uid = user["id"]
             c.execute("UPDATE users SET email_verified_at = COALESCE(email_verified_at, ?), updated_at = ? WHERE id = ?", (now_iso(), now_iso(), uid))
+            if user and mfa.enabled(user):
+                resp = RedirectResponse(f"/login#mfa={mfa.ticket(cfg, uid, 'linkedin')}", status_code=303)
+                resp.delete_cookie(LI_STATE, path="/api/auth/linkedin")
+                return resp
             token = repo.create_session(c, uid, cfg.session_ttl_days, ip, request.headers.get("user-agent", ""))
             repo.audit(c, uid, "login-linkedin", ip)
         resp = RedirectResponse("/app", status_code=303)
@@ -639,6 +718,63 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
         name = str(body.get("name", p.user["name"])).strip()[:80]
         with db.tx() as c:
             c.execute("UPDATE users SET name = ?, updated_at = ? WHERE id = ?", (name, now_iso(), p.uid))
+        return {"ok": True}
+
+    @app.get("/api/me/mfa")
+    def mfa_status(p: Principal = Depends(session_only)):
+        return {"enabled": mfa.enabled(p.user), "recoveryLeft": mfa.recovery_left(p.user), "required": bool(p.user["is_admin"] or p.user.get("is_staff"))}
+
+    @app.post("/api/me/mfa/setup")
+    def mfa_setup(request: Request, body: dict = Body(default={}), p: Principal = Depends(session_only)):
+        has_password = not str(p.user["password_hash"]).startswith("!")
+        if has_password and not security.verify_password(str(body.get("password") or ""), p.user["password_hash"]):
+            raise err(403, "Your password is incorrect.", "bad_credentials")
+        with db.tx() as c:
+            limited(c, "mfa-setup:" + p.uid, 10, 3600)
+            got = mfa.begin(c, cfg, p.user)
+            repo.audit(c, p.uid, "mfa-setup", client_ip(request))
+        return got
+
+    @app.post("/api/me/mfa/enable")
+    def mfa_enable(request: Request, body: dict = Body(default={}), p: Principal = Depends(session_only)):
+        with db.tx() as c:
+            limited(c, "mfa-enable:" + p.uid, 10, 900)
+        with db.tx() as c:
+            user = repo.user_by_id(c, p.uid)
+            codes = mfa.confirm(c, cfg, user, str(body.get("code") or ""))
+            if not codes:
+                raise err(400, "That code didn't work. Check the time on your phone and try the newest code.", "bad_code")
+            repo.audit(c, p.uid, "mfa-enabled", client_ip(request))
+        return {"enabled": True, "recoveryCodes": codes}
+
+    @app.post("/api/me/mfa/disable")
+    def mfa_disable(request: Request, body: dict = Body(default={}), p: Principal = Depends(session_only)):
+        if p.user["is_admin"] or p.user.get("is_staff"):
+            if cfg.is_production:
+                raise err(403, "Staff and admin accounts must keep two-step sign-in on.", "mfa_required")
+        with db.tx() as c:
+            limited(c, "mfa-disable:" + p.uid, 8, 900)
+        with db.tx() as c:
+            user = repo.user_by_id(c, p.uid)
+            has_password = not str(user["password_hash"]).startswith("!")
+            if has_password and not security.verify_password(str(body.get("password") or ""), user["password_hash"]):
+                raise err(403, "Your password is incorrect.", "bad_credentials")
+            if not mfa.verify(c, cfg, user, str(body.get("code") or "")):
+                raise err(400, "That code didn't work.", "bad_code")
+            mfa.disable(c, user)
+            repo.audit(c, p.uid, "mfa-disabled", client_ip(request))
+        return {"enabled": False}
+
+    @app.post("/api/admin/mfa-reset")
+    def admin_mfa_reset(request: Request, body: dict = Body(...), p: Principal = Depends(admin_only)):
+        """For someone who lost their phone and recovery codes, after you have checked who they are."""
+        email = security.normalize_email(str(body.get("email") or ""))
+        with db.tx() as c:
+            u = repo.user_by_email(c, email)
+            if not u:
+                raise err(404, "No account with that email.")
+            mfa.disable(c, u)
+            repo.audit(c, u["id"], "mfa-reset-by-admin", client_ip(request), {"by": p.uid})
         return {"ok": True}
 
     @app.post("/api/me/password")
@@ -1662,7 +1798,7 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
 
     @app.get("/business", include_in_schema=False)
     def business_page(request: Request):
-        return html("business.html", request.state.nonce)
+        return html("business.html", request.state.nonce, canonical="/business")
 
     @app.get("/api/business/plans")
     def business_plans(request: Request):

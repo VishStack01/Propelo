@@ -133,6 +133,69 @@ def _rss(jobs: list[dict], base_url: str, now: datetime) -> str:
             f"<lastBuildDate>{format_datetime(now)}</lastBuildDate>" + "".join(items) + "</channel></rss>\n")
 
 
+PAGES = ("index.html", "jobs.html", "docs.html", "check.html")
+NOT_FOUND = """<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Page not found · Propelo</title><meta name="robots" content="noindex"><link rel="icon" href="{base}assets/favicon.svg" type="image/svg+xml">
+<style>:root{{--page:#FAF3E6;--card:#FFFCF7;--ink:#151515;--muted:#5E574E}}@media (prefers-color-scheme:dark){{:root{{--page:#141311;--card:#1C1A17;--ink:#F3ECE0;--muted:#B3AB9F}}}}
+body{{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px 16px;background:var(--page);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}}
+main{{max-width:460px;background:var(--card);border-radius:22px;padding:28px 26px}}h1{{font-size:24px;margin:0 0 8px}}p{{color:var(--muted);margin:0 0 16px}}
+a{{display:inline-flex;align-items:center;min-height:44px;padding:0 18px;margin:0 8px 8px 0;border-radius:999px;border:1px solid var(--ink);color:var(--ink);font-weight:600;text-decoration:none}}</style></head>
+<body><main><h1>We couldn't find that page</h1><p>The role may have closed or the link may be mistyped.</p>
+<a href="{base}">Home</a><a href="{base}jobs.html">Browse jobs</a><a href="{base}docs.html">Docs</a></main></body></html>
+"""
+
+
+def seo(out: Path, base_url: str) -> None:
+    """Canonical and social tags with absolute URLs, structured data on the home page, robots.txt, sitemap.xml and a
+    404 page. The site's address is `base_url` (https://propelo.org/ once the custom domain is live)."""
+    base = base_url if base_url.endswith("/") else base_url + "/"
+    for name in PAGES:
+        f = out / name
+        if not f.is_file():
+            continue
+        t = f.read_text(encoding="utf-8")
+        url = base if name == "index.html" else base + name
+        m = re.search(r"<title>([^<]*)</title>", t)
+        d = re.search(r'<meta name="description" content="([^"]*)"', t)
+        title, desc = (m.group(1) if m else "Propelo"), (d.group(1) if d else "")
+        t = t.replace('content="assets/og.png"', f'content="{base}assets/og.png"')
+        head = [f'<link rel="canonical" href="{url}">']
+        if 'property="og:url"' not in t:
+            head.append(f'<meta property="og:url" content="{url}">')
+        if 'property="og:title"' not in t:
+            safe_title = escape(title, {'"': "&quot;"})
+            head.append(f'<meta property="og:title" content="{safe_title}">')
+        if desc and 'property="og:description"' not in t:
+            head.append(f'<meta property="og:description" content="{desc}">')
+        if 'property="og:image"' not in t:
+            head.append(f'<meta property="og:image" content="{base}assets/og.png">')
+        if 'property="og:type"' not in t:
+            head.append('<meta property="og:type" content="website">')
+        if 'name="twitter:card"' not in t:
+            head.append('<meta name="twitter:card" content="summary_large_image">')
+        if name == "index.html":
+            ld = {"@context": "https://schema.org", "@graph": [
+                {"@type": "Organization", "name": "Propelo", "url": base, "logo": f"{base}assets/og.png",
+                 "sameAs": ["https://github.com/VishStack01/Propelo"]},
+                {"@type": "WebSite", "name": "Propelo", "url": base}]}
+            head.append(f'<script type="application/ld+json">{json.dumps(ld, separators=(",", ":"))}</script>')
+        if "rel=\"canonical\"" not in t:
+            t = t.replace("</title>", "</title>\n" + "\n".join(head), 1)
+        f.write_text(t, encoding="utf-8")
+    demo = out / "demo" / "index.html"
+    if demo.is_file():  # fictional data: keep it out of search results
+        t = demo.read_text(encoding="utf-8")
+        if 'name="robots"' not in t:
+            demo.write_text(t.replace("<head>", '<head>\n<meta name="robots" content="noindex">', 1), encoding="utf-8")
+    (out / "robots.txt").write_text(f"User-agent: *\nAllow: /\nDisallow: /data/\nDisallow: /demo/\nSitemap: {base}sitemap.xml\n", encoding="utf-8")
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    urls = "".join(f"<url><loc>{base if n == 'index.html' else base + n}</loc><lastmod>{today}</lastmod></url>" for n in PAGES if (out / n).is_file())
+    (out / "sitemap.xml").write_text(f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>\n',
+                                     encoding="utf-8")
+    (out / "404.html").write_text(NOT_FOUND.format(base=base), encoding="utf-8")
+
+
 def build(feed_dir: str | Path, out_dir: str | Path, demo: str | Path | None = None, base_url: str = "", log=print,
           website: str | Path | None = None, logos_dir: str | Path | None = None) -> dict:
     feed_dir, out = Path(feed_dir), Path(out_dir)
@@ -228,5 +291,7 @@ def build(feed_dir: str | Path, out_dir: str | Path, demo: str | Path | None = N
     if demo and Path(demo).exists():
         (out / "demo").mkdir()
         shutil.copy(demo, out / "demo" / "index.html")
+    if base_url:
+        seo(out, base_url)
     log(f"Job board: {len(records)} roles, {len(companies)} companies ({len(used)} logos), {pages} API pages -> {out}")
     return meta

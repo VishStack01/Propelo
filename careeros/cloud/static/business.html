@@ -57,7 +57,7 @@ label.chk input{width:18px;min-height:18px;margin-top:3px}
 <main>
   <section class="hero">
     <h1>Help your students get hired by employers who can sponsor them.</h1>
-    <p>A job portal under your name for your students, and a daily list of open roles for recruiting agencies. Roles come from employers' own career pages, checked every hour.</p>
+    <p>A job portal under your name for your students, and a daily list of open roles for recruiting agencies. Roles come from employers' own career pages, checked several times a day.</p>
   </section>
 
   <h2 id="consultancies">For study-abroad consultancies and placement cells</h2>
@@ -111,7 +111,7 @@ label.chk input{width:18px;min-height:18px;margin-top:3px}
   function card(p){
     const what = p.kind === 'consultancy'
       ? `<ul class="small"><li>${p.seats} student seats with Pro</li><li>Branded portal and invite link</li><li>Progress view and CSV export</li></ul>`
-      : `<ul class="small"><li>One filtered roles feed, CSV and JSON</li><li>Updated every hour</li><li>Days open, sponsorship, UK sponsor register</li></ul>`;
+      : `<ul class="small"><li>One filtered roles feed, CSV and JSON</li><li>Updated several times a day</li><li>Days open, sponsorship, UK sponsor register</li></ul>`;
     return `<div class="card"><h3>${esc(p.name)}</h3><p class="price">${money(p.price, cat.currency)} <small>for 30 days</small></p>${what}
       <div class="row"><button class="btn" data-plan="${esc(p.id)}" data-mode="buy"${p.payable ? '' : ' disabled title="Online payment in this currency isn\'t set up yet. Ask for a pilot and we\'ll send a payment link."'}>Buy 30 days</button>
       <button class="btn ghost" data-plan="${esc(p.id)}" data-mode="pilot">Free pilot</button></div></div>`;

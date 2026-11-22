@@ -43,7 +43,7 @@ def user_by_id(c: Conn, uid: str) -> dict | None:
 
 def public_user(u: dict) -> dict:
     return {"id": u["id"], "email": u["email"], "name": u["name"], "emailVerified": bool(u["email_verified_at"]),
-            "isAdmin": bool(u["is_admin"]), "createdAt": u["created_at"]}
+            "isAdmin": bool(u["is_admin"]), "isStaff": bool(u.get("is_staff") or u["is_admin"]), "mfa": bool(u.get("mfa_enabled_at")), "createdAt": u["created_at"]}
 
 
 def audit(c: Conn, user_id: str | None, kind: str, ip: str = "", detail: dict | None = None) -> None:

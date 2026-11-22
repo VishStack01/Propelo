@@ -80,13 +80,13 @@ Most job bots optimise the weakest variable: volume. They read job cards instead
 - **One submit per role, ever.** An idempotent state machine, receipts with screenshots, and a kill switch.
 - **Platform-safe.** No LinkedIn, Naukri, Indeed or Wellfound automation, no account creation, no captcha solving. Outreach is drafted for you to send, or, if you turn it on in Propelo Cloud, recruiter emails go from your own Gmail with limits and an opt-out.
 - **Scam-aware.** Postings that ask for fees, deposits or ID numbers up front are flagged with the words that triggered it, and never auto-applied.
-- **Where the openings are first.** About 1,400 product companies' career pages, read straight from their hiring systems every hour, before roles reach the big boards.
+- **Where the openings are first.** About 1,400 product companies' career pages, read straight from their hiring systems several times a day, before roles reach the big boards.
 
 ## Coverage
 
 | Source | How many | How |
 |---|---|---|
-| Company career pages | 1,396 product companies: Indian product companies, India engineering centres, the [moreThanFAANGM](https://github.com/Kaustubh-Natuskar/moreThanFAANGM) list, and YC companies in India or hiring remotely | Public feeds of 8 hiring systems (Greenhouse, Lever, Ashby, Workable, SmartRecruiters, Recruitee, Breezy, Personio), scanned every hour on GitHub Actions. [docs/feed.md](docs/feed.md) |
+| Company career pages | 1,396 product companies: Indian product companies, India engineering centres, the [moreThanFAANGM](https://github.com/Kaustubh-Natuskar/moreThanFAANGM) list, and YC companies in India or hiring remotely | Public feeds of 8 hiring systems (Greenhouse, Lever, Ashby, Workable, SmartRecruiters, Recruitee, Breezy, Personio), scanned several times a day on GitHub Actions. [docs/feed.md](docs/feed.md) |
 | Remote job boards with feeds | 9 | Remote OK, Remotive, Himalayas, Jobicy, Working Nomads, We Work Remotely, HN jobs, HN "Who is hiring?", Arbeitnow |
 | Other platforms | 96 in the registry, 50 low-competition | 26 VC portfolio boards, Indian startup and fresher boards, 11 x-ray searches that find career pages on Keka, Zoho Recruit, Darwinbox and others. [docs/platforms.md](docs/platforms.md) |
 | Big boards | LinkedIn, Naukri, Indeed, Wellfound, foundit, Glassdoor, Shine | Their own email alerts only; never automated |
@@ -139,7 +139,7 @@ Matching works for every field and every level (software and business roles, eng
 
 ## Propelo Cloud: for many job seekers
 
-The same product as a multi-user service: people sign up with their email, set their filters, upload their resume and get matched against the shared hourly inventory, each with a private pipeline. Auto-apply still runs on each person's own computer, in the Claude desktop app, with a computer key that can only read their pipeline and report results; the server never fills employer forms or holds job-site logins.
+The same product as a multi-user service: people sign up with their email, set their filters, upload their resume and get matched against the shared inventory, each with a private pipeline. Auto-apply still runs on each person's own computer, in the Claude desktop app, with a computer key that can only read their pipeline and report results; the server never fills employer forms or holds job-site logins.
 
 - Accounts with email verification, password reset, sign-out everywhere, export and self-service deletion
 - PostgreSQL with versioned migrations, a worker with a durable task queue, fail-closed feed ingestion
@@ -158,7 +158,7 @@ Architecture, deployment and operations: **[docs/cloud.md](docs/cloud.md)**. Bef
 | Stage | What happens | How |
 |---|---|---|
 | Brain | Interviews you and turns your career into claims with evidence | `career-brain` skill, `careeros brain-check` |
-| Discover | Scans ~2,000 career pages and 9 remote boards every hour, sweeps ~20,000 more startup boards (open ats-scrapers inventory) for developer roles open to India, adds companies the hiring radar sees on Indeed and Naukri (via JobSpy), reads published pay ranges (Ashby, Lever, Greenhouse) and tags roles that state 20 LPA+; the agent covers the rest of the 96 platforms | `careeros discover`, `deep`, `radar`, `scan`, `filter-feed`, `job-scout` skill |
+| Discover | Scans ~2,000 career pages and 9 remote boards several times a day, sweeps ~20,000 more startup boards (open ats-scrapers inventory) for developer roles open to India, adds companies the hiring radar sees on Indeed and Naukri (via JobSpy), reads published pay ranges (Ashby, Lever, Greenhouse) and tags roles that state 20 LPA+; the agent covers the rest of the 96 platforms | `careeros discover`, `deep`, `radar`, `scan`, `filter-feed`, `job-scout` skill |
 | Gate | Role, seniority, experience, freshness, open, location, pay, dealbreakers, company; each with a quote | `careeros/gates.py` |
 | Check | Still open? A real opening? Re-listed? Work authorization you can meet? | `careeros liveness`, `careeros/signals.py` |
 | Research | Company brief, the three problems the team needs solved | `company-research` skill |

@@ -24,6 +24,7 @@ import json
 import os
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import TimeoutError as FuturesTimeout
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -266,8 +267,32 @@ def _save_pay_cache(path: Path, cache: dict) -> None:
         json.dump(keep, f)
 
 
+def _previous(out_dir: Path, names: set[str]) -> list[dict]:
+    """Last run's roles for these companies (with their text), so a board the scan ran out of time for
+    keeps its roles for one more run instead of vanishing from everyone's matches."""
+    want = {company_names.display(n) for n in names}
+    try:
+        with gzip.open(out_dir / "india.jsonl.gz", "rt", encoding="utf-8") as f:
+            old = [r for r in (json.loads(x) for x in f if x.strip()) if r.get("company") in want]
+    except (OSError, ValueError):
+        return []
+    if not old:
+        return []
+    ids = {r["id"] for r in old}
+    texts: dict[str, str] = {}
+    try:
+        with gzip.open(out_dir / "full.jsonl.gz", "rt", encoding="utf-8") as f:
+            for x in f:
+                d = json.loads(x)
+                if d.get("id") in ids:
+                    texts[d["id"]] = d.get("text", "")
+    except (OSError, ValueError):
+        pass
+    return [{**r, "text": texts.get(r["id"], r.get("summary", "")), "facts": dict(r.get("facts") or {})} for r in old]
+
+
 def run(boards_path: str | Path, out_dir: str | Path, workers: int = 16, detail_cap: int = 400,
-        aggregators: bool = True, log=print, pay_cap: int = 200) -> dict:
+        aggregators: bool = True, log=print, pay_cap: int = 200, deadline_min: float = 0) -> dict:
     boards = json.loads(Path(boards_path).read_text())
     companies = boards.get("companies", {})
     mapped = {n: e for n, e in companies.items() if e.get("status") == "mapped"}
@@ -281,19 +306,36 @@ def run(boards_path: str | Path, out_dir: str | Path, workers: int = 16, detail_
     pay_cache, pay_budget = _load_pay_cache(pay_path), [pay_cap]
     pay_cache["_seen"] = set()
     log(f"Scanning {len(mapped)} company boards…")
-    with ThreadPoolExecutor(max_workers=workers) as pool:
-        futs = {pool.submit(scan_board, n, e, budget, pay_cache, pay_budget): n for n, e in mapped.items()}
-        for fut in as_completed(futs):
-            try:
-                recs, err = fut.result()
-            except Exception as e:
-                recs, err = [], f"{futs[fut]}: {type(e).__name__}: {e}"[:300]
-            records += recs
-            if err:
-                errors.append(err)
-                companies[futs[fut]]["stale"] = True  # re-discover next time
-            else:
-                companies[futs[fut]].pop("stale", None)
+    pool = ThreadPoolExecutor(max_workers=workers)
+    futs = {pool.submit(scan_board, n, e, budget, pay_cache, pay_budget): n for n, e in mapped.items()}
+    done: set = set()
+
+    def take(fut) -> None:
+        done.add(fut)
+        try:
+            recs, err = fut.result()
+        except Exception as e:
+            recs, err = [], f"{futs[fut]}: {type(e).__name__}: {e}"[:300]
+        records.extend(recs)
+        if err:
+            errors.append(err)
+            companies[futs[fut]]["stale"] = True  # re-discover next time
+        else:
+            companies[futs[fut]].pop("stale", None)
+    late: list[str] = []
+    try:
+        for fut in as_completed(futs, timeout=deadline_min * 60 if deadline_min else None):
+            take(fut)
+    except FuturesTimeout:
+        for fut in [f for f in futs if f.done() and f not in done]:
+            take(fut)
+        late = sorted(futs[f] for f in futs if f not in done)
+        kept = _previous(out_dir, set(late))
+        records.extend(kept)
+        errors.append(f"{len(late)} boards not finished within {deadline_min:g} minutes; kept their {len(kept)} roles from the last run")
+        log(errors[-1])
+    finally:
+        pool.shutdown(wait=not late, cancel_futures=True)
     looked_up = pay_cap - pay_budget[0]
     stated = sum(1 for k in pay_cache["_seen"] if pay_cache.get(k))
     _save_pay_cache(pay_path, pay_cache)
@@ -366,7 +408,7 @@ def run(boards_path: str | Path, out_dir: str | Path, workers: int = 16, detail_
         "deepSweep": {"checked": sum(1 for e in companies.values() if e.get("category") == "deep" and e.get("checkedAt")),
                       "kept": sum(1 for e in companies.values() if e.get("category") == "deep" and e.get("status") == "mapped")},
         "greenhousePay": {"lookedUp": looked_up, "withPay": stated},
-        "remoteBoards": board_counts, "trimmed": trimmed, "byAts": {}, "byGeo": {}, "errors": len(errors), "errorSamples": errors[:20],
+        "remoteBoards": board_counts, "trimmed": trimmed, "byAts": {}, "byGeo": {}, "errors": len(errors), "errorSamples": errors[:20], "lateBoards": len(late),
         "erroredCompanies": sorted(n for n, e in companies.items() if e.get("stale")),
     }
     for r in unique:

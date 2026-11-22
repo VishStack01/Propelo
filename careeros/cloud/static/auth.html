@@ -148,7 +148,7 @@ input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 45%,transparent) 
     <a class="brand" href="/login">propelo<span class="dot" aria-hidden="true"></span></a>
     <div class="pitch">
       <h1>Fresh roles, checked against your rules.</h1>
-      <p>Propelo reads about 1,400 company career pages every hour, keeps the roles that fit you, and shows the sentence from each posting that decided it.</p>
+      <p>Propelo reads about 1,800 company career pages several times a day, keeps the roles that fit you, and shows the sentence from each posting that decided it.</p>
     </div>
     <ul class="promises">
       <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span><b>Straight from company sites,</b> often before the big boards list them.</span></li>
@@ -171,6 +171,18 @@ input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 45%,transparent) 
         </form>
         <a class="btn li-btn" href="/api/auth/linkedin/start" hidden>Continue with LinkedIn</a>
         <p class="alt">New here? <a href="/signup">Create an account</a></p>
+      </section>
+
+      <!-- two-step sign-in -->
+      <section data-mode="mfa" hidden>
+        <h1>Enter your code</h1>
+        <p class="lede">Open your authenticator app and type the 6-digit code for Propelo. Lost your phone? Use one of your recovery codes.</p>
+        <form id="f-mfa" novalidate>
+          <div class="msg" role="alert" hidden></div>
+          <label>Code<input type="text" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="20" required></label>
+          <button class="btn" type="submit">Continue</button>
+        </form>
+        <p class="alt"><a href="/login">Start again</a></p>
       </section>
 
       <!-- sign up -->
@@ -240,7 +252,8 @@ input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 45%,transparent) 
   const params = new URLSearchParams(location.search);
   const frag = new URLSearchParams(location.hash.slice(1));
   const token = frag.get('token') || '', afterVerify = frag.get('next') || '';
-  if (token) history.replaceState(null, '', location.pathname + location.search); // keep the link out of history
+  let mfaTicket = frag.get('mfa') || '';
+  if (token || mfaTicket) history.replaceState(null, '', location.pathname + location.search); // keep the link out of history
   let mode = location.pathname.replace(/^\/+|\/+$/g, '') || 'login';
   let lastEmail = '';
   // Sign in with LinkedIn, when this server has it set up (name and email only; nothing is posted or sent).
@@ -253,7 +266,7 @@ input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 45%,transparent) 
   function show(m){
     mode = m;
     document.querySelectorAll('[data-mode]').forEach(s => { s.hidden = s.dataset.mode !== m; });
-    document.title = 'Propelo · ' + ({login:'Sign in', signup:'Create account', sent:'Check your inbox', forgot:'Reset password', reset:'New password', verify:'Confirm email'}[m] || 'Sign in');
+    document.title = 'Propelo · ' + ({login:'Sign in', mfa:'Two-step sign-in', signup:'Create account', sent:'Check your inbox', forgot:'Reset password', reset:'New password', verify:'Confirm email'}[m] || 'Sign in');
     const first = $('[data-mode="' + m + '"] input');
     if (first && matchMedia('(min-width: 861px)').matches) first.focus();
   }
@@ -296,9 +309,22 @@ input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 45%,transparent) 
     busy(f, true, 'Signing in…');
     const r = await post('/api/auth/login', {email, password});
     busy(f, false);
+    if (r.ok && r.data.mfa){ mfaTicket = r.data.ticket; show('mfa'); return; }
     if (r.ok){ location.replace(next()); return; }
     if (r.data.code === 'unverified'){ lastEmail = email; $('#sent-text').textContent = 'Confirm your email to sign in. We can send the link again.'; show('sent'); return; }
     msg(f, r.data.error || 'Sign-in failed. Try again.');
+  });
+
+  $('#f-mfa').addEventListener('submit', async e => {
+    e.preventDefault(); const f = e.target; msg(f, '');
+    const code = f.code.value.trim();
+    if (!code){ msg(f, 'Enter the code from your authenticator app.'); return; }
+    busy(f, true, 'Checking…');
+    const r = await post('/api/auth/mfa', {ticket: mfaTicket, code});
+    busy(f, false);
+    if (r.ok){ location.replace(next()); return; }
+    if (r.data.code === 'mfa_expired'){ msg(f, r.data.error); setTimeout(() => location.replace('/login'), 1500); return; }
+    msg(f, r.data.error || "That code didn't work."); f.code.select();
   });
 
   $('#f-signup').addEventListener('submit', async e => {
@@ -364,6 +390,7 @@ input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 45%,transparent) 
   }).catch(() => {});
 
   if (!['login', 'signup', 'forgot', 'reset', 'verify'].includes(mode)) mode = 'login';
+  if (mfaTicket && mode === 'login') mode = 'mfa';
   show(mode);
   if (liErr){ msg($('#f-login'), liErr); history.replaceState(null, '', location.pathname); }
   if (mode === 'verify') verify();

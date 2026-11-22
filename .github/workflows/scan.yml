@@ -110,6 +110,8 @@ jobs:
         # On-site and hybrid roles in every country, for people searching outside India.
         env:
           CAREEROS_SCAN_ONSITE: world
+          # A few boards sometimes hang for an hour; stop waiting after 60 minutes and keep their last roles.
+          CAREEROS_SCAN_DEADLINE_MIN: "60"
           # Country-wide job APIs (see careeros/sources/national.py). Each stays off until its secret is added.
           ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}
           ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}

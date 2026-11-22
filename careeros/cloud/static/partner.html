@@ -128,7 +128,7 @@ input,select,textarea{font:15px var(--f);color:var(--ink);background:var(--card)
     const opts = COUNTRIES.map(([c, n]) => `<label class="row small"><input type="checkbox" class="f-c-${esc(p.id)}" value="${c}"${(f.countries || []).includes(c) ? ' checked' : ''} style="width:auto;min-height:0"> ${esc(n)}</label>`).join('');
     return `<section class="card"><div class="brand">${mark(p)}<div><h1>${esc(p.name)}</h1><div class="row">${status(p)}</div></div></div></section>
     ${billing(p)}
-    <section class="card"><h2>Your daily roles feed</h2><p class="small muted">Open roles from employers' own career pages, refreshed every hour, filtered by the settings below. Open it in a spreadsheet, or pull it into your CRM or n8n with the key. Roles only: no personal data.</p>
+    <section class="card"><h2>Your daily roles feed</h2><p class="small muted">Open roles from employers' own career pages, refreshed several times a day, filtered by the settings below. Open it in a spreadsheet, or pull it into your CRM or n8n with the key. Roles only: no personal data.</p>
       <div class="copy"><input readonly value="${esc(p.feedUrl)}" aria-label="CSV feed"><button class="btn sm" data-act="copy" data-v="${esc(p.feedUrl)}">Copy</button></div>
       <div class="copy" style="margin-top:8px"><input readonly value="${esc(p.feedJsonUrl)}" aria-label="JSON feed"><button class="btn sm" data-act="copy" data-v="${esc(p.feedJsonUrl)}">Copy</button></div>
       <p class="small muted" style="margin-top:8px">Send the key as <code>Authorization: Bearer &lt;key&gt;</code>, or add <code>?key=&lt;key&gt;</code> to the URL.</p>
@@ -185,7 +185,9 @@ input,select,textarea{font:15px var(--f);color:var(--ink);background:var(--card)
   async function load(){
     const d = await api('/api/partner');
     state.partners = d.partners;
-    try { state.staff = (await api('/api/staff/partners')).partners; } catch (e) { state.staff = null; }
+    let me = {}; try { me = await api('/api/me'); } catch (e) {}
+    state.staff = null;
+    if (me.isStaff) { try { state.staff = (await api('/api/staff/partners')).partners; } catch (e) { state.staff = null; } }
     render();
   }
 

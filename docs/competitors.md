@@ -6,7 +6,7 @@ Four products shaped the 2.0 feature set: Simplify, Teal, Jobright and Salvo. Th
 
 | | Simplify | Teal | Jobright | Salvo | Propelo |
 |---|---|---|---|---|---|
-| Where roles come from | Job boards and its own list | Any board you save from | Its own index plus boards | A live index of employer ATS pages | ~1,400 company career pages, scanned hourly, matched every 15 minutes on Ultra |
+| Where roles come from | Job boards and its own list | Any board you save from | Its own index plus boards | A live index of employer ATS pages | ~1,800 company career pages, scanned several times a day, matched within 15 minutes of each scan on Ultra |
 | Why a role was kept | Match score | Keyword match | Match score | Fit summary | A quote from the posting for every check, and every skip logged with its reason |
 | Resume tailoring | AI rewrite | AI writing tools | Tailored resume | Tailored per role | Only facts from your profile; a claims checker flags anything it can't trace |
 | Applying | Autofill extension; paid autopilot | Manual | Autofill; AI agent | Auto-apply on employer ATS | Autofill extension, and auto-apply from your own computer above a 4.0 fit line |

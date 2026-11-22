@@ -429,3 +429,23 @@ def test_dashboard_title_exclusions():
     from careeros.models import Job
     assert gate_role(Job(company="X", title="Backend Engineer", url="", source="t"), s).passed
     assert not gate_role(Job(company="X", title="Sales Engineer", url="", source="t"), s).passed
+
+
+def test_scan_deadline_keeps_late_boards_roles(boards, tmp_path, monkeypatch):
+    import time
+    out = tmp_path / "feed"
+    scan.run(boards, out, workers=4, log=lambda *_: None)
+    before = {r["title"] for r in read_feed(out / "india.jsonl.gz") if r["company"] == "Example Labs"}
+    assert before
+    real = scan.scan_board
+
+    def slow(name, *a, **k):
+        if name == "Example Labs":
+            time.sleep(2.5)
+        return real(name, *a, **k)
+    monkeypatch.setattr(scan, "scan_board", slow)
+    summary = scan.run(boards, out, workers=4, log=lambda *_: None, deadline_min=0.02)
+    assert summary["lateBoards"] == 1
+    after = {r["title"] for r in read_feed(out / "india.jsonl.gz") if r["company"] == "Example Labs"}
+    assert after == before  # kept from the last run, not dropped
+    assert not json.loads(boards.read_text())["companies"]["Example Labs"].get("stale")

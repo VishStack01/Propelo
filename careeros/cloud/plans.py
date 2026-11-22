@@ -5,7 +5,7 @@ Three plans:
   Free   everything that runs without a model (fresh matched roles, quoted checks, the pipeline,
          auto-apply from your own computer), daily matching, a small monthly allowance of AI
          actions on the service's model, and unlimited AI on your own key.
-  Pro    hourly matching, a larger AI allowance, a higher auto-apply cap and more storage.
+  Pro    matching within an hour of each scan, a larger AI allowance, a higher auto-apply cap and more storage.
   Ultra  matching within 15 minutes of each scan, the largest AI allowance, the highest
          auto-apply cap, the most copilot questions and mock interviews (a stated fair-use limit, none
          on your own key), and LinkedIn review.
@@ -100,7 +100,7 @@ def catalog(cfg: Config) -> list[dict]:
          "matchEveryMinutes": 60, "matchEveryHours": 1, "autoApplyPerDay": 25, "autoApplyPerMonth": 500, "storageMb": cfg.user_storage_mb,
          "copilotPerDay": 60, "mockInterviews": 20, "autoEmailsPerDay": 10, "linkedinReview": False,
          "features": ["Everything in Free",
-                      "Matching every hour, so you see roles first",
+                      "New roles matched within an hour of each scan",
                       f"{cfg.pro_ai_credits} AI actions a month: tailored resumes, cover letters, fit scores",
                       "Auto-apply up to 500 a month (25 a day), with a receipt for each",
                       "Ask Propelo, the copilot, 60 questions a day, and 20 mock interviews a month",

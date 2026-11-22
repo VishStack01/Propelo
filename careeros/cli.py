@@ -45,6 +45,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import sys
 from datetime import datetime, timezone
@@ -217,7 +218,13 @@ def cmd_discover(a):
 
 def cmd_scan(a):
     from . import scan
-    scan.run(a.boards, a.out, workers=a.workers, detail_cap=a.detail_cap, aggregators=not a.no_remote_boards)
+    summary = scan.run(a.boards, a.out, workers=a.workers, detail_cap=a.detail_cap, aggregators=not a.no_remote_boards,
+                       deadline_min=a.deadline_min)
+    if summary.get("lateBoards"):
+        # Requests still hanging on slow boards would keep the process alive; the files are written.
+        sys.stdout.flush()
+        sys.stderr.flush()
+        os._exit(0)
 
 
 def cmd_filter_feed(a):
@@ -456,6 +463,8 @@ def main(argv: list[str] | None = None) -> None:
     sp.add_argument("--workers", type=int, default=16)
     sp.add_argument("--detail-cap", type=int, default=400, help="Max SmartRecruiters detail requests per scan")
     sp.add_argument("--no-remote-boards", action="store_true", help="Company boards only")
+    sp.add_argument("--deadline-min", type=float, default=float(os.environ.get("CAREEROS_SCAN_DEADLINE_MIN") or 0),
+                    help="Stop waiting for company boards after this many minutes; late boards keep last run's roles")
     sp.set_defaults(fn=cmd_scan)
 
     sp = sub.add_parser("filter-feed", help="Apply your filters to the India feed")

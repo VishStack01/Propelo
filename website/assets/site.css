@@ -232,7 +232,7 @@ section{position:relative;padding-block:128px 0}
 .ev span{color:var(--muted)}
 .ev.y{background:var(--lav);color:#151515} .ev.y b{color:#151515} .ev.y span{color:#4F4A44}
 .caption{margin-top:12px;font-size:13px;color:var(--muted)}
-.caption a{color:var(--pink-ink)}
+.caption a{color:var(--pink-ink);text-decoration:underline;text-underline-offset:2px}
 .tools{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:48px}
 .tool{display:flex;flex-direction:column;padding:24px;border-radius:var(--r-card);background:var(--sand);transition:transform 180ms var(--ease)}
 .tool:hover{transform:translateY(-2px)}

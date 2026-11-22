@@ -694,7 +694,7 @@ input[type="color"]{height:42px;padding:4px;width:100%}
   --pink-deep:#E58FC0; --on-pastel:#151515; --side-bg:#151515; --side-ink:#E9E2D4; --side-muted:#8F897F;
   --canvas:var(--cream); --page:var(--cream); --panel:var(--sand); --panel-2:var(--sand-2); --line:#DDD2C1; --field:#FFFDF8;
   --ink:#151515; --ink-2:#47433D; --muted:#6A645A; --btn:#151515; --btn-ink:#FAF3E6; --btn-soft:var(--sand-2);
-  --good:#5E7A1F; --good-soft:#E2EAC6; --gold:var(--yellow);
+  --good:#4A6118; --good-soft:#E2EAC6; --gold:var(--yellow);
   --f:"Figtree","TT Commons",system-ui,-apple-system,"Segoe UI",sans-serif;
   --serif:"Bricolage Grotesque","Acorn",ui-rounded,system-ui,sans-serif;
   /* Shape rule: actions and chips are pills; inputs and small controls 12; rows and inner tiles 18;
@@ -1124,7 +1124,7 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
 .tiles4 .ctile{box-shadow:inset 0 0 0 1.5px #151515;color:#151515}
 .tiles4 .ctile:nth-child(1){background:var(--yellow)} .tiles4 .ctile:nth-child(2){background:var(--pink)}
 .tiles4 .ctile:nth-child(3){background:#FFFCF7} .tiles4 .ctile:nth-child(4){background:var(--orange)}
-.tiles4 .ctile .k,.tiles4 .ctile small{color:rgba(21,21,21,.72)}
+.tiles4 .ctile .k,.tiles4 .ctile small{color:rgba(21,21,21,.86)}
 .tiles4 .ctile:hover{background-color:inherit;filter:brightness(.97);box-shadow:inset 0 0 0 1.5px #151515}
 .tiles4 .ctile:nth-child(1):hover{background:var(--yellow)} .tiles4 .ctile:nth-child(2):hover{background:var(--pink)} .tiles4 .ctile:nth-child(3):hover{background:#FFFCF7} .tiles4 .ctile:nth-child(4):hover{background:var(--orange)}
 /* page heads on the work pages: quiet, with the page's colour as a small dot */
@@ -2179,7 +2179,9 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
     <button class="tab" role="tab" id="t-skipped" aria-controls="p-skipped" aria-selected="false" data-act="tab" data-tab="skipped"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M7 17L17 7"/></svg>Skipped <span class="ct" id="c-skipped">0</span></button>
   </nav>
   <div class="bottom">
+    <div role="tablist" aria-label="Settings" style="display:contents">
     <button class="tab" role="tab" id="t-setup" aria-controls="p-setup" aria-selected="false" data-act="tab" data-tab="setup"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>Settings</button>
+    </div>
     <button class="tab plain" id="theme-btn" data-act="theme" type="button">Dark mode</button>
     <div class="who" id="who"></div>
   </div>
@@ -3537,6 +3539,12 @@ function renderCloud(){
       ${msg}
       ${me.partner ? `<p class="small">Your account is provided by <b>${esc(me.partner.name)}</b>. They see how many roles were matched to you, your applications, interviews and offers, never your resume, answers or messages.${me.partner.contactEmail ? ` Contact: ${esc(me.partner.contactEmail)}.` : ''}</p><div class="btns"><button class="btn sm ghost" data-act="partner-leave">Leave ${esc(me.partner.name)}</button></div>` : ''}
       <div class="btns"><a class="btn sm" href="api/me/export" download>Export my data</a><button class="btn sm" data-act="signout">Sign out</button><button class="btn sm ghost" data-act="signout-all">Sign out everywhere</button></div>
+      <details${state.mfaSetup || state.mfaCodes ? ' open' : ''}><summary>Two-step sign-in${me.mfa ? ' (on)' : ''}</summary><div class="acct-form">
+        ${state.mfaCodes ? `<p class="small"><b>Two-step sign-in is on.</b> Save these recovery codes somewhere safe. Each works once if you lose your phone; they won't be shown again.</p><pre class="small" style="white-space:pre-wrap;user-select:all">${esc(state.mfaCodes.join('\n'))}</pre><div><button class="btn sm" data-act="mfa-done" type="button">I've saved them</button></div>`
+          : me.mfa ? `<p class="small">On. Signing in asks for a code from your authenticator app.${me.isStaff ? ' Staff and admin accounts must keep it on.' : ''}</p>${me.isStaff ? '' : `<form id="mfa-off-form" class="acct-form" novalidate><input type="password" name="password" autocomplete="current-password" placeholder="Your password" aria-label="Your password"><input type="text" class="plain" name="code" inputmode="numeric" autocomplete="one-time-code" placeholder="Code from the app" aria-label="Code from your authenticator app" required><div><button class="btn sm" type="submit">Turn off</button></div></form>`}`
+          : state.mfaSetup ? `<p class="small">1. In your authenticator app (Google Authenticator, Microsoft Authenticator, 1Password and others), add an account with this key, or <a href="${esc(state.mfaSetup.uri)}">open it in the app</a> on this phone.</p><p class="small" style="font-family:ui-monospace,Menlo,monospace;word-break:break-all;user-select:all">${esc(state.mfaSetup.secret.replace(/(.{4})/g, '$1 ').trim())}</p><form id="mfa-on-form" class="acct-form" novalidate><input type="text" class="plain" name="code" inputmode="numeric" autocomplete="one-time-code" placeholder="2. Type the 6-digit code it shows" aria-label="Code from your authenticator app" required><div><button class="btn sm solid" type="submit">Turn on</button></div></form>`
+          : `<p class="small">Ask for a code from an authenticator app as well as your password when you sign in.${me.isStaff ? ' <b>Staff and admin pages need this.</b>' : ''}</p><form id="mfa-setup-form" class="acct-form" novalidate><input type="password" name="password" autocomplete="current-password" placeholder="Your password" aria-label="Your password"><div><button class="btn sm solid" type="submit">Set up</button></div></form>`}
+      </div></details>
       <details><summary>Change password</summary><form id="pw-form" class="acct-form" novalidate>
         <input type="password" name="current" autocomplete="current-password" placeholder="Current password" aria-label="Current password" required>
         <input type="password" name="new" autocomplete="new-password" placeholder="New password, at least 10 characters" aria-label="New password" minlength="10" required>
@@ -4474,7 +4482,7 @@ function firstRunBlock(){
   const steps = [
     ['s-heart', 'var(--pink)', 'Set your filters', 'Roles, experience, places and pay', 'setup', filtersOk],
     ['s-flower', 'var(--bgreen)', 'Add your resume', 'Every application starts from it', 'profile', resumeOk],
-    ['s-star', 'var(--bblue)', 'Get your first matches', cloud() ? 'They arrive after the next hourly scan' : 'Run careeros scan, or wait for the hourly feed', 'today', false]
+    ['s-star', 'var(--bblue)', 'Get your first matches', cloud() ? 'They arrive after the next scan (several times a day)' : 'Run careeros scan, or wait for the next feed', 'today', false]
   ];
   const left = steps.filter(x => !x[5]).length, nm = firstName() ? esc(firstName()) : '';
   return `<div class="today">
@@ -5310,9 +5318,9 @@ function renderNow(){
   $('#c-skipped').textContent = all.filter(j => j.stage === 'skipped').length;
   $('#cta-batch').textContent = ready ? `Review batch (${ready})` : 'Review batch';
   const f = filterSummary();
-  $('#notice-text').innerHTML = state.status === 'nodb' ? 'Open this page as its owner, signed in to Claude, to see your pipeline.' : state.status === 'demo' ? 'Demo with fictional companies. Run <b>careeros serve</b> to see your own pipeline.' : cloud() ? `Every hour: roles for <b>${esc(f.exp)}</b><span class="long"> ${esc(f.locs)}</span>, from ${esc(Number(obj(state.me && state.me.feed).companies || 1400).toLocaleString('en-IN'))} company career pages, posted in the last ${esc(f.days)} days.` : `Every 6 hours: roles for <b>${esc(f.exp)}</b><span class="long">${esc(f.pay)} ${esc(f.locs)}</span>, posted in the last ${esc(f.days)} ${f.days === 1 ? 'day' : 'days'}.`;
+  $('#notice-text').innerHTML = state.status === 'nodb' ? 'Open this page as its owner, signed in to Claude, to see your pipeline.' : state.status === 'demo' ? 'Demo with fictional companies. Run <b>careeros serve</b> to see your own pipeline.' : cloud() ? `Each scan: roles for <b>${esc(f.exp)}</b><span class="long"> ${esc(f.locs)}</span>, from ${esc(Number(obj(state.me && state.me.feed).companies || 1400).toLocaleString('en-IN'))} company career pages, posted in the last ${esc(f.days)} days.` : `Every 6 hours: roles for <b>${esc(f.exp)}</b><span class="long">${esc(f.pay)} ${esc(f.locs)}</span>, posted in the last ${esc(f.days)} ${f.days === 1 ? 'day' : 'days'}.`;
   const navTab = state.tab === 'app' ? 'pipeline' : state.tab;
-  document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', String(t.dataset.tab === navTab)));
+  document.querySelectorAll('.tab[role="tab"]').forEach(t => t.setAttribute('aria-selected', String(t.dataset.tab === navTab)));
   const dockOn = ['home','today','pipeline'].includes(navTab) ? navTab : 'more';
   document.querySelectorAll('.dock [data-dock]').forEach(b => b.setAttribute('aria-current', String(b.dataset.dock === dockOn)));
   const dkT = $('#dk-today'); if (dkT) dkT.hidden = !ready;
@@ -5518,6 +5526,7 @@ document.addEventListener('click', e => {
   else if (act === 'conn-remove'){ const doc = {rows: [], count: 0, removedAt: nowIso()}; enqueue('profile/connections', () => state.db.doc('profile/connections').set(doc)).then(() => { state.connections = doc; toast('Connections removed from your dashboard.'); render(); }).catch(() => {}); }
   else if (act === 'signout'){ api('api/auth/logout', {method: 'POST'}).catch(() => {}).finally(() => { location.href = 'login'; }); }
   else if (act === 'partner-leave'){ if (confirm('Leave ' + ((state.me.partner || {}).name || 'your consultancy') + '? They stop seeing your progress and your account goes back to your own plan.')) api('api/partner/leave', {method: 'POST'}).then(() => location.reload()).catch(e => toast(e.message || 'Could not leave. Try again.')); }
+  else if (act === 'mfa-done'){ state.mfaCodes = null; render(); }
   else if (act === 'signout-all'){ api('api/me/logout-all', {method: 'POST'}).catch(() => {}).finally(() => { location.href = 'login'; }); }
   else if (act === 'key-hide'){ state.newKey = null; render(); }
   else if (act === 'upgrade'){ el.disabled = true; const b = obj(state.billing), cs = arr(b.currencies); const cur = cs.includes(state.planCur) ? state.planCur : (cs.includes(guessCur()) ? guessCur() : cs[0]); cloudPost('api/billing/checkout', {plan: el.dataset.plan || 'pro', currency: cur}).then(d => { location.href = d.url; }).catch(d => { el.disabled = false; acctSay(d.error || 'Could not start the payment.', true, 'plan'); }); }
@@ -5657,6 +5666,24 @@ document.addEventListener('submit', e => {
     api('api/me/ai-key', {method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({provider: f.provider.value, key: f.key.value, model: f.model.value, baseUrl: f.baseUrl.value})})
       .then(async r => { const d = await r.json().catch(() => ({})); if (!r.ok) throw d; f.reset(); acctSay('Key saved. AI actions now use it.', false, 'ai'); refreshBilling(); })
       .catch(d => acctSay(d.error || 'Could not save the key.', true, 'ai'));
+    return;
+  }
+  if (e.target.id === 'mfa-setup-form'){
+    e.preventDefault(); const f = e.target;
+    cloudPost('api/me/mfa/setup', {password: f.password.value}).then(d => { state.mfaSetup = d; acctSay(''); })
+      .catch(d => acctSay(d.error || 'Could not start setup.', true));
+    return;
+  }
+  if (e.target.id === 'mfa-on-form'){
+    e.preventDefault(); const f = e.target;
+    cloudPost('api/me/mfa/enable', {code: f.code.value}).then(d => { state.mfaSetup = null; state.mfaCodes = d.recoveryCodes; state.me.mfa = true; acctSay('Two-step sign-in is on.'); })
+      .catch(d => acctSay(d.error || "That code didn't work.", true));
+    return;
+  }
+  if (e.target.id === 'mfa-off-form'){
+    e.preventDefault(); const f = e.target;
+    cloudPost('api/me/mfa/disable', {password: f.password.value, code: f.code.value}).then(() => { state.me.mfa = false; acctSay('Two-step sign-in is off.'); })
+      .catch(d => acctSay(d.error || 'Could not turn it off.', true));
     return;
   }
   if (e.target.id === 'pw-form'){
