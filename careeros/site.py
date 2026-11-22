@@ -27,7 +27,7 @@ from email.utils import format_datetime
 from pathlib import Path
 from xml.sax.saxutils import escape
 
-from . import logos, showcase
+from . import countries, logos, showcase, sponsors
 from . import tags as tagger
 from .models import iso
 
@@ -62,6 +62,24 @@ def _slug(s: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", (s or "").lower()).strip("-")[:80]
 
 
+def _visa_codes(v: dict) -> list[str]:
+    """Short codes for the job board's visa filter. A posting that says no is never listed as sponsoring."""
+    if v.get("status") == "no" or v.get("opt") == "no":
+        return ["no"]
+    out = []
+    if v.get("status") == "offers":
+        out.append("sponsors")
+    if (v.get("ukRegister") or {}).get("listed"):
+        out.append("uk")
+    if (v.get("nlRegister") or {}).get("listed"):
+        out.append("nl")
+    if v.get("opt") == "yes":
+        out.append("opt")
+    if v.get("eVerify"):
+        out.append("everify")
+    return out
+
+
 def compact(r: dict) -> dict:
     f = r.get("facts") or {}
     t = r.get("tags") or tagger.tag(r.get("title", ""), r.get("summary", ""), f)  # feeds written before tags existed
@@ -74,6 +92,7 @@ def compact(r: dict) -> dict:
         "ar": t.get("archetype", ""), "lg": (f.get("legit") or {}).get("tier", ""), "rp": (f.get("reposts") or {}).get("count", 0),
         "pt": t.get("payTier", tagger.pay_tier(f)), "ph": f.get("salaryHigh"),
         "src": r.get("source", ""), "via": r.get("via", ""), "u": r["url"],
+        "co": r.get("countries") if "countries" in r else sorted(countries.resolve(r.get("location", ""))), "vs": _visa_codes(f.get("visa") or {}),
         **({"tp": 1} if showcase.top_name(r.get("company", "")) else {}),
     }
 
@@ -95,6 +114,9 @@ def detail(r: dict, text: str) -> dict:
         facts.append({"k": "Status", "v": "The posting says it's closed", "q": f["closedQuote"]})
     if f.get("applicants"):
         facts.append({"k": "Applicants", "v": str(f["applicants"]), "q": ""})
+    visa = f.get("visa") or {}
+    if visa:
+        facts.append({"k": "Visa", "v": sponsors.label(visa), "q": visa.get("quote") or visa.get("optQuote") or ""})
     wa = f.get("workAuth") or {}
     if wa:
         need = {"citizenship": f"{wa.get('country') or 'Local'} citizenship required", "clearance": "Security clearance required",

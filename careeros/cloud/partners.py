@@ -401,7 +401,7 @@ def match_record(rec: dict, f: dict, today: datetime, first_seen_at: str = "") -
     if (f.get("remote") == "exclude" and remote) or (f.get("remote") == "only" and not remote):
         return None
     cs, cities = set(f.get("countries") or []), f.get("cities") or []
-    if cs and not (countries.named(loc) & cs):
+    if cs and not (countries.resolve(loc) & cs):
         return None
     if cities and not any(x in loc.lower() for x in cities):
         return None

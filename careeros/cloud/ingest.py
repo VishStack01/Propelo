@@ -8,7 +8,9 @@ company's board was read successfully and no longer lists it.
 from __future__ import annotations
 
 import gzip
+import hashlib
 import json
+import tempfile
 import urllib.request
 from pathlib import Path
 
@@ -22,6 +24,7 @@ class IngestError(RuntimeError):
 
 
 def _fetch(base: str, name: str) -> bytes | None:
+    """A small feed file, whole (summary.json)."""
     src = base.rstrip("/") + "/" + name
     try:
         if src.startswith(("http://", "https://")):
@@ -37,74 +40,146 @@ def _fetch(base: str, name: str) -> bytes | None:
     return raw
 
 
-def _jsonl(raw: bytes | None) -> list[dict]:
-    if not raw:
-        return []
-    if raw[:2] == b"\x1f\x8b":
-        raw = gzip.decompress(raw)
-    out = []
-    for line in raw.decode("utf-8").splitlines():
-        if line.strip():
-            try:
-                out.append(json.loads(line))
-            except json.JSONDecodeError:
-                continue
-    return out
+def _local(base: str, name: str, tmp: Path) -> Path | None:
+    """A big feed file as a path on disk: the file itself for a local feed, a download for a URL. It is
+    never held in memory, so the worker's memory use doesn't grow with the feed."""
+    src = base.rstrip("/") + "/" + name
+    if not src.startswith(("http://", "https://")):
+        return Path(src) if Path(src).exists() else None
+    dest, size = tmp / name, 0
+    try:
+        req = urllib.request.Request(src, headers={"User-Agent": "careeros-cloud"})
+        with urllib.request.urlopen(req, timeout=300) as r, open(dest, "wb") as f:
+            while True:
+                chunk = r.read(1024 * 1024)
+                if not chunk:
+                    break
+                size += len(chunk)
+                if size > MAX_BYTES:
+                    raise IngestError(f"{name} is larger than {MAX_BYTES // 1024 // 1024} MB")
+                f.write(chunk)
+    except (OSError, ValueError):
+        return None
+    return dest
 
 
-def load(base: str) -> tuple[list[dict], dict[str, str], dict]:
-    records = _jsonl(_fetch(base, "india.jsonl.gz"))
-    texts = {t["id"]: t.get("text", "") for t in _jsonl(_fetch(base, "full.jsonl.gz")) if t.get("id")}
+def _lines(path: Path | None):
+    """Parsed lines of a .jsonl or .jsonl.gz file, one at a time. Unreadable lines are skipped."""
+    if path is None:
+        return
+    try:
+        with open(path, "rb") as probe:
+            gz = probe.read(2) == b"\x1f\x8b"
+        with (gzip.open(path, "rt", encoding="utf-8") if gz else open(path, encoding="utf-8")) as f:
+            for line in f:
+                if line.strip():
+                    try:
+                        yield json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+    except (OSError, EOFError, UnicodeDecodeError):
+        return
+
+
+def _ok(r: dict) -> bool:
+    return bool(r.get("id") and r.get("company") and r.get("title") and r.get("url") and "loc" in (r.get("facts") or {}))
+
+
+def _with_text(records: Path, texts: Path | None):
+    """(record, text) pairs. The scan writes both files in the same order, so they are read side by side;
+    if a feed's order ever differs, the texts are indexed instead."""
+    it = _lines(texts)
+    index: dict[str, str] | None = None
+    for r in _lines(records):
+        text = ""
+        if index is None:
+            t = next(it, None)
+            if t is not None and t.get("id") == r.get("id"):
+                text = t.get("text", "")
+            elif t is not None:  # out of step: fall back to an index of everything that's left
+                index = {t["id"]: t.get("text", "")} if t.get("id") else {}
+                index.update({x["id"]: x.get("text", "") for x in it if x.get("id")})
+        if index is not None:
+            text = index.get(r.get("id"), "")
+        yield r, text
+
+
+def _summary(base: str) -> dict:
     raw = _fetch(base, "summary.json")
     try:
-        summary = json.loads(raw) if raw else {}
+        return json.loads(raw) if raw else {}
     except json.JSONDecodeError:
-        summary = {}
-    return records, texts, summary
+        return {}
+
+
+BATCH = 500
 
 
 def ingest(db: Database, feed_url: str, log=print, force: bool = False) -> dict:
-    records, texts, summary = load(feed_url)
-    records = [r for r in records if r.get("id") and r.get("company") and r.get("title") and r.get("url") and "loc" in (r.get("facts") or {})]
-    if not records:
-        raise IngestError("The feed is empty or unreadable; keeping the current inventory.")
-    if not summary.get("generatedAt"):
-        raise IngestError("The feed has no summary.json; keeping the current inventory.")
-    now = now_iso()
+    # The summary is a few kilobytes: when it shows the feed we already have, nothing else is downloaded.
+    summary = _summary(feed_url)
     with db.tx() as c:
         prev = c.one("SELECT value FROM feed_state WHERE key = 'feed'")
-        prev = json.loads(prev["value"]) if prev else {}
-        if prev.get("generatedAt") == summary["generatedAt"] and not force:
-            return {"status": "unchanged", "generatedAt": summary["generatedAt"]}
-        active = c.all("SELECT id, company FROM jobs WHERE active = 1")
-        if not force and len(active) > 200 and len(records) < 0.5 * len(active):
-            raise IngestError(f"The feed shrank from {len(active)} to {len(records)} roles; keeping the current inventory until a scan confirms it.")
-        rows = []
-        for r in records:
-            text = texts.get(r["id"], "")[:20000]
-            rec = {k: v for k, v in r.items() if k != "text"}
-            facts = dict(rec.get("facts") or {})
-            if (facts.get("salaryHigh") or 0) > 450:  # no fresher role pays 450+ LPA: a funding or revenue figure misread as pay
-                for k in ("salaryLow", "salaryHigh", "salaryQuote"):
-                    facts.pop(k, None)
-                rec["facts"] = facts
-            rows.append((r["id"], r["company"][:200], r["title"][:300], r["url"][:2000], str(r.get("source", ""))[:100],
-                         r.get("postedAt") or "", json.dumps(rec, ensure_ascii=False, separators=(",", ":")), text, now, now))
-        c.many("INSERT INTO jobs(id, company, title, url, source, posted_at, record, text, active, first_seen_at, last_seen_at) "
-               "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?) ON CONFLICT (id) DO UPDATE SET company = excluded.company, title = excluded.title, "
-               "url = excluded.url, source = excluded.source, posted_at = excluded.posted_at, record = excluded.record, text = excluded.text, "
-               "active = 1, last_seen_at = excluded.last_seen_at, closed_at = NULL", rows)
-        seen = {r["id"] for r in records}
-        errored = set(summary.get("erroredCompanies") or [])
-        closing = [(now, a["id"]) for a in active if a["id"] not in seen and a["company"] not in errored]
-        c.many("UPDATE jobs SET active = 0, closed_at = ? WHERE id = ?", closing)
-        state = {k: summary.get(k) for k in ("generatedAt", "companies", "boards", "openings", "remoteBoards", "erroredCompanies")}
-        state.update(records=len(records), closed=len(closing), ingestedAt=now)
-        c.execute("INSERT INTO feed_state(key, value, updated_at) VALUES ('feed', ?, ?) "
-                  "ON CONFLICT (key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at",
-                  (json.dumps(state), now))
-    log(f"ingested {len(records)} roles ({len(closing)} closed) from feed generated {summary['generatedAt']}")
-    return {"status": "ingested", "records": len(records), "closed": len(closing), "generatedAt": summary["generatedAt"]}
+    prev = json.loads(prev["value"]) if prev else {}
+    if summary.get("generatedAt") and prev.get("generatedAt") == summary["generatedAt"] and not force:
+        return {"status": "unchanged", "generatedAt": summary["generatedAt"]}
+    with tempfile.TemporaryDirectory(prefix="propelo-feed-") as tmp:
+        rec_path = _local(feed_url, "india.jsonl.gz", Path(tmp))
+        total = sum(1 for r in _lines(rec_path) if _ok(r))
+        if not total:
+            raise IngestError("The feed is empty or unreadable; keeping the current inventory.")
+        if not summary.get("generatedAt"):
+            raise IngestError("The feed has no summary.json; keeping the current inventory.")
+        text_path = _local(feed_url, "full.jsonl.gz", Path(tmp))
+        now = now_iso()
+        with db.tx() as c:
+            known = {a["id"]: a for a in c.all("SELECT id, company, rev, active FROM jobs")}
+            active = [a for a in known.values() if a["active"]]
+            if not force and len(active) > 200 and total < 0.5 * len(active):
+                raise IngestError(f"The feed shrank from {len(active)} to {total} roles; keeping the current inventory until a scan confirms it.")
+            seen: set[str] = set()
+            rows: list[tuple] = []
+            written = 0
+
+            def flush() -> None:
+                c.many("INSERT INTO jobs(id, company, title, url, source, posted_at, record, text, rev, active, first_seen_at, last_seen_at) "
+                       "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?) ON CONFLICT (id) DO UPDATE SET company = excluded.company, title = excluded.title, "
+                       "url = excluded.url, source = excluded.source, posted_at = excluded.posted_at, record = excluded.record, text = excluded.text, "
+                       "rev = excluded.rev, active = 1, last_seen_at = excluded.last_seen_at, closed_at = NULL", rows)
+                rows.clear()
+            for r, text in _with_text(rec_path, text_path):
+                if not _ok(r) or r["id"] in seen:
+                    continue
+                seen.add(r["id"])
+                text = text[:20000]
+                rec = {k: v for k, v in r.items() if k != "text"}
+                facts = dict(rec.get("facts") or {})
+                if (facts.get("salaryHigh") or 0) > 450:  # no fresher role pays 450+ LPA: a funding or revenue figure misread as pay
+                    for k in ("salaryLow", "salaryHigh", "salaryQuote"):
+                        facts.pop(k, None)
+                    rec["facts"] = facts
+                record = json.dumps(rec, ensure_ascii=False, separators=(",", ":"))
+                rev = hashlib.sha1((record + "\x00" + text).encode("utf-8")).hexdigest()[:20]
+                old = known.get(r["id"])
+                if old and old["active"] and old["rev"] == rev:
+                    continue  # nothing about this role changed since the last feed: no write at all
+                rows.append((r["id"], r["company"][:200], r["title"][:300], r["url"][:2000], str(r.get("source", ""))[:100],
+                             r.get("postedAt") or "", record, text, rev, now, now))
+                written += 1
+                if len(rows) >= BATCH:
+                    flush()
+            if rows:
+                flush()
+            errored = set(summary.get("erroredCompanies") or [])
+            closing = [(now, a["id"]) for a in active if a["id"] not in seen and a["company"] not in errored]
+            c.many("UPDATE jobs SET active = 0, closed_at = ? WHERE id = ?", closing)
+            state = {k: summary.get(k) for k in ("generatedAt", "companies", "boards", "openings", "remoteBoards", "erroredCompanies")}
+            state.update(records=len(seen), closed=len(closing), changed=written, ingestedAt=now)
+            c.execute("INSERT INTO feed_state(key, value, updated_at) VALUES ('feed', ?, ?) "
+                      "ON CONFLICT (key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at",
+                      (json.dumps(state), now))
+    log(f"ingested {len(seen)} roles ({written} new or changed, {len(closing)} closed) from feed generated {summary['generatedAt']}")
+    return {"status": "ingested", "records": len(seen), "changed": written, "closed": len(closing), "generatedAt": summary["generatedAt"]}
 
 
 def feed_state(c) -> dict:

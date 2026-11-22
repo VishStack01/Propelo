@@ -219,7 +219,7 @@ def cmd_discover(a):
 def cmd_scan(a):
     from . import scan
     summary = scan.run(a.boards, a.out, workers=a.workers, detail_cap=a.detail_cap, aggregators=not a.no_remote_boards,
-                       deadline_min=a.deadline_min)
+                       deadline_min=a.deadline_min, max_boards=a.max_boards)
     if summary.get("lateBoards"):
         # Requests still hanging on slow boards would keep the process alive; the files are written.
         sys.stdout.flush()
@@ -428,6 +428,9 @@ def main(argv: list[str] | None = None) -> None:
     sp = sub.add_parser("uk-sponsors", help="Download the Home Office register of licensed sponsors (Skilled Worker)")
     sp.add_argument("--out", default="feed/uk-sponsors.csv")
     sp.set_defaults(fn=cmd_uk_sponsors)
+    sp = sub.add_parser("nl-sponsors", help="Download the Dutch (IND) public register of recognised sponsors for work")
+    sp.add_argument("--out", default="feed/nl-sponsors.csv")
+    sp.set_defaults(fn=cmd_nl_sponsors)
 
     sp = sub.add_parser("payers", help="Early-career pay by company from real offers (leetcode-compensation, MIT)")
     sp.add_argument("--out", default="config/pay/offers-pay.csv")
@@ -465,6 +468,8 @@ def main(argv: list[str] | None = None) -> None:
     sp.add_argument("--no-remote-boards", action="store_true", help="Company boards only")
     sp.add_argument("--deadline-min", type=float, default=float(os.environ.get("CAREEROS_SCAN_DEADLINE_MIN") or 0),
                     help="Stop waiting for company boards after this many minutes; late boards keep last run's roles")
+    sp.add_argument("--max-boards", type=int, default=int(os.environ.get("CAREEROS_SCAN_MAX_BOARDS") or 0),
+                    help="Read at most this many boards per run, the most overdue first; the others keep last run's roles (0 = all)")
     sp.set_defaults(fn=cmd_scan)
 
     sp = sub.add_parser("filter-feed", help="Apply your filters to the India feed")
@@ -976,6 +981,17 @@ def cmd_sample_roles(a) -> int:
         print(f"Open {min(days) if days else '?'}-{max(days) if days else '?'} days; sponsoring per posting: "
               f"{sum(1 for r in rows if r['sponsorship'] == 'says it sponsors')}; on the UK register: {sum(1 for r in rows if r['uk_sponsor_register'] == 'listed')}")
         print("Most roles: " + ", ".join(f"{c} ({n})" for c, n in top))
+    return 0
+
+
+def cmd_nl_sponsors(a) -> int:
+    from . import sponsors
+    try:
+        n = sponsors.fetch_nl_register(a.out)
+    except OSError as e:
+        print(f"Dutch sponsor register not updated: {e}")
+        return 1
+    print(f"Dutch sponsor register: {n} recognised sponsors -> {a.out}")
     return 0
 
 

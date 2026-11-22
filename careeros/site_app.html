@@ -445,9 +445,14 @@ function host(u){ try { return new URL(u).hostname.replace(/^www\./, ''); } catc
 const POSTED = [['', 'Any time'], ['1', 'Last 24 hours'], ['3', 'Last 3 days'], ['7', 'Last 7 days'], ['25', 'Last 25 days']];
 const TYPES = ['Full-time','Internship','Contract','Part-time'];
 const QLABEL = {'20+': '20 LPA+'};
+// Where most Indian students study and then look for work, plus India. Picking a country shows on-site roles there too.
+const COUNTRIES = [['US','United States'],['GB','United Kingdom'],['CA','Canada'],['AU','Australia'],['DE','Germany'],['IE','Ireland'],['NL','Netherlands'],['FR','France'],['NZ','New Zealand'],['SG','Singapore'],['AE','UAE'],['IN','India']];
+const COUNTRY_NAME = Object.fromEntries(COUNTRIES);
+const VISA = [['sponsors','Says it sponsors visas'],['uk','On the UK sponsor register'],['nl','Dutch recognised sponsor'],['opt','Takes OPT or CPT (US)'],['everify','Uses E-Verify (US)']];
+const VISA_NAME = Object.fromEntries(VISA);
 const QUICK = [['AI & ML','cat'],['Backend','cat'],['Frontend','cat'],['Full stack','cat'],['Data','cat'],['Design','cat'],['DevOps & Cloud','cat'],['Python','sk'],['React','sk'],['Visa sponsorship','pk']];
 let ALL = [], META = {}, COMPANIES = [], shown = 40;
-let F = {q:'', fm:'', list:'', city:'', minpay:'', nl:false, where:'any', lv:new Set(), posted:'', ty:new Set(), cat:new Set(), sk:new Set(), pk:new Set(), ar:new Set(), lg:new Set(), pt:new Set(), all:false, company:'', sort:'new'};
+let F = {q:'', fm:'', list:'', city:'', minpay:'', nl:false, where:'any', lv:new Set(), posted:'', ty:new Set(), cat:new Set(), sk:new Set(), pk:new Set(), ar:new Set(), lg:new Set(), pt:new Set(), co:new Set(), vs:new Set(), all:false, company:'', sort:'new'};
 
 function logo(name, src){ const ini = (name || '?').replace(/[^A-Za-z0-9]/g, '').slice(0, 1).toUpperCase() || '?';
   const img = src && /^logos\/[a-f0-9]{16}\.(png|jpg|gif|webp|ico|svg)$/.test(src) ? `<img src="${esc(src)}" alt="" loading="lazy" decoding="async" width="44" height="44">` : '';
@@ -459,13 +464,13 @@ function ago(p){ const h = hoursAgo(p); if (h == null) return ''; if (h < 1) ret
 function readState(){
   const u = new URLSearchParams(location.search);
   F.q = u.get('q') || ''; F.city = CITIES[u.get('city')] ? u.get('city') : ''; F.minpay = /^\d+(\.\d)?$/.test(u.get('minpay') || '') ? u.get('minpay') : ''; F.fm = FAMILIES.includes(u.get('fm')) ? u.get('fm') : ''; F.list = LISTS[u.get('list')] ? u.get('list') : ''; F.where = WHERE_SETS[u.get('where')] ? u.get('where') : 'any'; F.posted = u.get('posted') || ''; F.sort = ['rel', 'pay'].includes(u.get('sort')) ? u.get('sort') : 'new';
-  for (const k of ['lv','ty','cat','sk','pk','ar','lg','pt']) F[k] = new Set((u.get(k) || '').split('|').filter(Boolean));
+  for (const k of ['lv','ty','cat','sk','pk','ar','lg','pt','co','vs']) F[k] = new Set((u.get(k) || '').split('|').filter(Boolean));
   F.all = u.get('all') === '1';
 }
 function writeState(){
   const u = new URLSearchParams();
   if (F.q) u.set('q', F.q); if (F.city) u.set('city', F.city); if (F.minpay) u.set('minpay', F.minpay); if (F.fm) u.set('fm', F.fm); if (F.list) u.set('list', F.list); if (F.where !== 'any') u.set('where', F.where); if (F.posted) u.set('posted', F.posted); if (F.sort !== 'new') u.set('sort', F.sort);
-  for (const k of ['lv','ty','cat','sk','pk','ar','lg','pt']) if (F[k].size) u.set(k, [...F[k]].join('|'));
+  for (const k of ['lv','ty','cat','sk','pk','ar','lg','pt','co','vs']) if (F[k].size) u.set(k, [...F[k]].join('|'));
   if (F.all) u.set('all', '1');
   const qs = u.toString();
   history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
@@ -481,7 +486,9 @@ function pass(j, skip){
   if (skip !== 'city' && F.city && !cityHit(j, F.city)) return false;
   if (skip !== 'minpay' && F.minpay && !((j.ph ?? -1) >= Number(F.minpay))) return false;
   if (skip !== 'list' && F.list && !LISTS[F.list].test(j)) return false;
-  if (skip !== 'where'){ const set = WHERE_SETS[F.where]; if (!(set.includes(j.w) || (F.all && (j.w === 'rx' || j.w === 'a')))) return false; }
+  if (skip !== 'co' && F.co.size && !j.co.some(c => F.co.has(c))) return false;
+  if (skip !== 'vs' && F.vs.size && !j.vs.some(c => F.vs.has(c))) return false;
+  if (skip !== 'where' && !F.co.size){ const set = WHERE_SETS[F.where]; if (!(set.includes(j.w) || (F.all && (j.w === 'rx' || j.w === 'a')))) return false; }
   if (skip !== 'lv' && F.lv.size && !F.lv.has(j.lv)) return false;
   if (skip !== 'ty' && F.ty.size && !F.ty.has(j.ty)) return false;
   if (skip !== 'cat' && F.cat.size && !j.cat.some(c => F.cat.has(c))) return false;
@@ -504,6 +511,8 @@ function tagsFor(j, max){
   if (j.ty && j.ty !== 'Full-time' && j.ty !== 'Internship') out.push(`<span class="tag">${esc(j.ty)}</span>`);
   if (j.pt === '20+') out.push('<span class="tag pay">20 LPA+</span>');
   j.pk.forEach(p => out.push(`<span class="tag perk">${esc(p)}</span>`));
+  const VS_TAG = {sponsors: 'Sponsors visas', uk: 'UK licensed sponsor', nl: 'Dutch recognised sponsor', opt: 'Takes OPT / CPT', no: 'No sponsorship'};
+  (j.vs || []).forEach(v => { if (VS_TAG[v] && !(v === 'sponsors' && j.pk.includes('Visa sponsorship'))) out.push(`<span class="tag${v === 'no' ? '' : ' perk'}">${VS_TAG[v]}</span>`); });
   if (j.lg === 'suspicious') out.push('<span class="tag warn">Suspicious</span>');
   else if (j.lg === 'caution') out.push('<span class="tag warn soft">Check first</span>');
   if (j.rp) out.push(`<span class="tag warn soft">Re-listed${j.rp > 1 ? ' ' + j.rp + '×' : ''}</span>`);
@@ -535,10 +544,12 @@ function renderFilters(){
   const skCount = {}; ALL.forEach(j => j.sk.forEach(s => skCount[s] = (skCount[s] || 0) + 1));
   const skVals = Object.entries(skCount).sort((a, b) => b[1] - a[1]).slice(0, 14).map(x => x[0]);
   const arVals = [...new Set(ALL.map(j => j.ar).filter(Boolean))].sort();
-  const any = F.fm || F.list || F.city || F.minpay || F.where !== 'any' || F.posted || F.lv.size || F.ty.size || F.cat.size || F.sk.size || F.pk.size || F.ar.size || F.lg.size || F.pt.size || F.all;
+  const any = F.fm || F.list || F.city || F.minpay || F.where !== 'any' || F.posted || F.lv.size || F.ty.size || F.cat.size || F.sk.size || F.pk.size || F.ar.size || F.lg.size || F.pt.size || F.co.size || F.vs.size || F.all;
   $('#filters').innerHTML = `
     ${any ? '<button class="fclear" type="button" data-act="clear">Clear filters</button>' : ''}
     <div class="fgroup"><h3>Where</h3>${whereOpts}<label class="opt"><input type="checkbox" data-f="all" ${F.all ? 'checked' : ''}><span>Also show roles not open to India</span></label></div>
+    ${facet('Country', 'co', COUNTRIES.map(x => x[0]), v => COUNTRY_NAME[v])}
+    ${facet('Visa and sponsorship', 'vs', VISA.map(x => x[0]), v => VISA_NAME[v])}
     ${facet('Experience', 'lv', LEVELS, v => v === 'Entry' ? 'Entry (0–2 years)' : v)}
     <div class="fgroup"><h3>Posted</h3>${postedOpts}</div>
     ${facet('Contract', 'ty', TYPES)}
@@ -682,7 +693,7 @@ document.addEventListener('click', e => {
   if (t.dataset.q){ const k = t.dataset.q, v = t.dataset.v; F[k].has(v) ? F[k].delete(v) : F[k].add(v); shown = 40; renderBoard(); return; }
   const a = t.dataset.act;
   if (a === 'more'){ shown += 40; renderList(); }
-  else if (a === 'clear'){ F = Object.assign(F, {fm:'', list:'', city:'', minpay:'', nl:false, where:'any', posted:'', lv:new Set(), ty:new Set(), cat:new Set(), sk:new Set(), pk:new Set(), ar:new Set(), lg:new Set(), pt:new Set(), all:false}); shown = 40; renderBoard(); }
+  else if (a === 'clear'){ F = Object.assign(F, {fm:'', list:'', city:'', minpay:'', nl:false, where:'any', posted:'', lv:new Set(), ty:new Set(), cat:new Set(), sk:new Set(), pk:new Set(), ar:new Set(), lg:new Set(), pt:new Set(), co:new Set(), vs:new Set(), all:false}); shown = 40; renderBoard(); }
   else if (a === 'close'){ history.length > 1 && /^#\/job\//.test(location.hash) ? history.back() : (location.hash = F.company ? '#/company/' + F.company : '#/'); }
   else if (a === 'copy'){ navigator.clipboard?.writeText(location.href).then(() => { t.textContent = 'Copied'; }, () => { t.textContent = 'Copy failed'; }); }
   else if (a === 'closef'){ $('#filters').classList.remove('on'); }
@@ -714,7 +725,7 @@ window.addEventListener('hashchange', route);
     const [jr, cr] = await Promise.all([fetch('data/jobs.json'), fetch('data/companies.json')]);
     const data = await jr.json(); ALL = data.jobs || []; META = data.meta || {}; COMPANIES = await cr.json();
   } catch(e) { $('#count').textContent = 'The role list could not load. Refresh the page to try again.'; return; }
-  ALL.forEach(j => { j.fm = j.fm || 'Other'; j.cat = j.cat || []; j.sk = j.sk || []; j.pk = j.pk || []; j.ar = j.ar || ''; j.lg = j.lg || ''; j.rp = j.rp || 0; });
+  ALL.forEach(j => { j.fm = j.fm || 'Other'; j.cat = j.cat || []; j.sk = j.sk || []; j.pk = j.pk || []; j.co = j.co || []; j.vs = j.vs || []; j.ar = j.ar || ''; j.lg = j.lg || ''; j.rp = j.rp || 0; });
   const upd = META.feedAt ? ago(META.feedAt) : '';
   $('#h1').textContent = `${fmt(ALL.length)} open roles in India and around the world`;
   $('#sub').textContent = `Read straight from ${fmt(META.companyBoards || 0)} company career pages and ${fmt(META.remoteBoards || 0)} remote job boards${upd ? ', updated ' + upd : ''}. Every role links to the company's own application page.`;

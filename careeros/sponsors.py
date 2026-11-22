@@ -43,6 +43,43 @@ _OFFERS = re.compile(
     re.I)
 
 
+# Roles a person on a student or work visa can't take whatever the sponsorship line says.
+_CITIZENS = re.compile(
+    r"\b(?:u\.?s\.? citizenship (?:is )?required|must be (?:a |an )?(?:u\.?s\.?|united states|american|british|uk|canadian|australian) citizens?\b"
+    r"|(?:u\.?s\.?|united states) citizens? only|citizens? (?:or|and) (?:lawful )?permanent residents? only"
+    r"|(?:active|current|secret|top[- ]secret|ts/sci|dod|government) (?:security )?clearance(?: (?:is )?(?:required|needed))?"
+    r"|(?:obtain|hold|maintain|possess) (?:and maintain )?(?:a |an )?(?:u\.?s\.? )?(?:government |federal |dod )?security clearance"
+    r"|(?:sc|dv) clearance|itar[- ](?:restricted|controlled|regulated)|u\.?s\.? persons? (?:only|as defined))\b", re.I)
+
+# US student work permission. OPT and CPT in capitals only, so "opt in" and "opt for" never match.
+_OPT_NO = re.compile(
+    r"\b(?:not|no|unable to|cannot|can't|do not|does not|don't) (?:accept|consider|hire|support|eligible for|sponsor)[^.]{0,40}?\b(?-i:OPT|CPT)\b"
+    r"|\b(?-i:OPT|CPT)(?:/(?-i:OPT|CPT))? (?:candidates |students )?(?:are |is )?not (?:accepted|eligible|considered|supported)"
+    r"|\bno (?-i:OPT|CPT)\b", re.I)
+_OPT_YES = re.compile(
+    r"\b(?:(?-i:STEM[- ]OPT|OPT|CPT)(?:[/, ]+(?:and |or )?(?-i:STEM[- ]OPT|OPT|CPT))*) (?:candidates |students |holders )?(?:are )?(?:welcome|accepted|eligible|considered|encouraged|ok|okay)"
+    r"|\b(?:accept|welcome|consider|open to|hire|hiring|support)s? (?:candidates |students )?(?:on |with )?(?-i:F-?1 )?(?-i:STEM[- ]OPT|OPT|CPT)\b"
+    r"|\beligible for (?-i:STEM[- ]OPT|OPT|CPT)\b", re.I)
+_EVERIFY = re.compile(r"\bE-?Verify\b")
+
+
+def student_work(text: str) -> dict:
+    """What a US posting says about F-1 students: {"opt": "yes"|"no", "optQuote"} and {"eVerify": True} when the
+    employer says it uses E-Verify (the STEM OPT extension is only possible at E-Verify employers)."""
+    text = text or ""
+    out: dict = {}
+    m = _OPT_NO.search(text)
+    if m:
+        out.update(opt="no", optQuote=quote_around(text, *m.span()))
+    else:
+        m = _OPT_YES.search(text)
+        if m:
+            out.update(opt="yes", optQuote=quote_around(text, *m.span()))
+    if _EVERIFY.search(text):
+        out["eVerify"] = True
+    return out
+
+
 def sponsorship(text: str) -> dict:
     """{"status": "offers"|"no", "quote"} from the posting's own words, or {} when it says nothing.
     A clear "no" wins over a hopeful line elsewhere: being wrong in that direction costs an applicant
@@ -51,6 +88,9 @@ def sponsorship(text: str) -> dict:
     m = _NO.search(text)
     if m:
         return {"status": "no", "quote": quote_around(text, *m.span())}
+    m = _CITIZENS.search(text)
+    if m:
+        return {"status": "no", "why": "citizens", "quote": quote_around(text, *m.span())}
     m = _OFFERS.search(text)
     if m:
         return {"status": "offers", "quote": quote_around(text, *m.span())}
@@ -76,40 +116,31 @@ def name_key(name: str) -> str:
     return re.sub(r"\s+", " ", s).strip()
 
 
-class UkRegister:
-    """Skilled Worker sponsors from the Home Office CSV, keyed by `name_key`."""
+class Register:
+    """Employers on a government sponsor list, keyed by `name_key`."""
 
-    def __init__(self, rows: list[dict] | None = None):
+    def __init__(self) -> None:
         self.by_key: dict[str, dict] = {}
         self.by_first: dict[str, list[str]] = {}
-        for r in rows or []:
-            route = (r.get("Route") or "").strip()
-            if route and "skilled worker" not in route.lower():
-                continue
-            name = (r.get("Organisation Name") or "").strip()
-            k = name_key(name)
-            if not k:
-                continue
-            self.by_key.setdefault(k, {"name": name, "town": (r.get("Town/City") or "").strip(),
-                                       "rating": (r.get("Type & Rating") or "").strip()})
+
+    def add(self, name: str, **more) -> None:
+        k = self.key(name)
+        if k and k not in self.by_key:
+            self.by_key[k] = {"name": name, **more}
             self.by_first.setdefault(k.split()[0], []).append(k)
+
+    @staticmethod
+    def key(name: str) -> str:
+        return name_key(name)
 
     def __len__(self) -> int:
         return len(self.by_key)
-
-    @classmethod
-    def from_csv(cls, path: str | Path) -> "UkRegister":
-        p = Path(path)
-        if not p.exists():
-            return cls()
-        text = p.read_bytes().decode("utf-8-sig", errors="replace")
-        return cls(list(csv.DictReader(io.StringIO(text))))
 
     def match(self, company: str) -> dict | None:
         """The register entry for an employer, or None. Exact match on the cleaned name first; then a
         register name that is the company's name plus extra words ("Wise" -> "Wise Payments"), only when
         exactly one register entry starts that way, so a common word never matches a stranger."""
-        k = name_key(company)
+        k = self.key(company)
         if not k:
             return None
         if k in self.by_key:
@@ -120,6 +151,27 @@ class UkRegister:
         if len(starts) == 1:
             return {**self.by_key[starts[0]], "match": "prefix"}
         return None
+
+
+class UkRegister(Register):
+    """Skilled Worker sponsors from the Home Office CSV."""
+
+    def __init__(self, rows: list[dict] | None = None):
+        super().__init__()
+        for r in rows or []:
+            route = (r.get("Route") or "").strip()
+            if route and "skilled worker" not in route.lower():
+                continue
+            name = (r.get("Organisation Name") or "").strip()
+            self.add(name, town=(r.get("Town/City") or "").strip(), rating=(r.get("Type & Rating") or "").strip())
+
+    @classmethod
+    def from_csv(cls, path: str | Path) -> "UkRegister":
+        p = Path(path)
+        if not p.exists():
+            return cls()
+        text = p.read_bytes().decode("utf-8-sig", errors="replace")
+        return cls(list(csv.DictReader(io.StringIO(text))))
 
 
 def fetch_register(dest: str | Path, timeout: int = 60) -> int:
@@ -139,6 +191,63 @@ def fetch_register(dest: str | Path, timeout: int = 60) -> int:
         raise OSError(f"The register looks wrong ({len(reg)} sponsors); keeping the old file")
     Path(dest).write_bytes(raw)
     return len(reg)
+
+
+# ---------------------------------------------------------------- Dutch register of recognised sponsors
+
+NL_REGISTER_PAGE = "https://ind.nl/en/public-register-recognised-sponsors/public-register-work"
+_NL_LEGAL = re.compile(r"\b(?:b\.?\s?v\.?|n\.?\s?v\.?|c\.?\s?v\.?|v\.?o\.?f\.?|stichting|holding|nederland|netherlands|europe|benelux)(?![a-z])", re.I)
+_NL_ROW = re.compile(r"<tr[^>]*>\s*<t[dh][^>]*>([^<]*(?:<(?!/?t[rdh]\b)[^<]*)*)</t[dh]>\s*<t[dh][^>]*>\s*(\d{8})\s*</t[dh]>", re.I)
+_NL_LINE = re.compile(r"^\s*(.{2,160}?)\s+(\d{8})\s*$")
+
+
+class NlRegister(Register):
+    """Employers the Dutch immigration service (IND) recognises as sponsors for work, including the highly
+    skilled migrant route. Published monthly as a public list of organisation names and KVK numbers."""
+
+    @staticmethod
+    def key(name: str) -> str:
+        return name_key(_NL_LEGAL.sub(" ", name or ""))
+
+    @classmethod
+    def from_csv(cls, path: str | Path) -> "NlRegister":
+        reg, p = cls(), Path(path)
+        if p.exists():
+            for r in csv.DictReader(io.StringIO(p.read_bytes().decode("utf-8-sig", errors="replace"))):
+                reg.add((r.get("name") or "").strip(), kvk=(r.get("kvk") or "").strip())
+        return reg
+
+
+def parse_nl_register(page: str) -> list[tuple[str, str]]:
+    """(organisation, KVK number) pairs from the register page, whether it is a table or plain lines."""
+    import html as _html
+    rows = [(re.sub(r"<[^>]+>", " ", n), k) for n, k in _NL_ROW.findall(page)]
+    if len(rows) < 100:
+        plain = re.sub(r"<(?:br|/p|/li|/tr|/div)[^>]*>", "\n", page, flags=re.I)
+        plain = re.sub(r"<[^>]+>", " ", plain)
+        rows = [m.groups() for m in (_NL_LINE.match(x) for x in plain.splitlines()) if m]
+    out, seen = [], set()
+    for name, kvk in rows:
+        name = re.sub(r"\s+", " ", _html.unescape(name)).strip()
+        if name and kvk not in seen and not name.lower().startswith("organisation"):
+            seen.add(kvk)
+            out.append((name, kvk))
+    return out
+
+
+def fetch_nl_register(dest: str | Path, timeout: int = 90) -> int:
+    """Download the IND register to `dest` as name,kvk. Returns the number of sponsors, or raises OSError."""
+    req = urllib.request.Request(NL_REGISTER_PAGE, headers={"User-Agent": "careeros (+https://github.com/VishStack01/Propelo)"})
+    with urllib.request.urlopen(req, timeout=timeout) as r:
+        page = r.read(40 * 1024 * 1024).decode("utf-8", errors="replace")
+    rows = parse_nl_register(page)
+    if len(rows) < 2000:
+        raise OSError(f"The Dutch register looks wrong ({len(rows)} sponsors); keeping the old file")
+    with open(dest, "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["name", "kvk"])
+        w.writerows(rows)
+    return len(rows)
 
 
 # ---------------------------------------------------------------- UK salary floors
@@ -174,14 +283,21 @@ def uk_salary_line(text: str) -> dict:
 
 # ---------------------------------------------------------------- one record
 
-def visa_facts(company: str, location: str, text: str, salary_text: str = "", register: UkRegister | None = None) -> dict:
-    """Everything above for one role. UK checks only for roles located in the UK."""
+def visa_facts(company: str, location: str, text: str, salary_text: str = "", register: UkRegister | None = None,
+               nl_register: "NlRegister | None" = None) -> dict:
+    """Everything above for one role. Each country's checks run only for roles located there."""
     from . import countries
     out: dict = {}
     sp = sponsorship(text)
     if sp:
         out.update(sp)
-    if "GB" in countries.named(location or ""):
+    where = countries.resolve(location or "")
+    if "US" in where:
+        out.update(student_work(text))
+    if "NL" in where and nl_register is not None and len(nl_register):
+        hit = nl_register.match(company)
+        out["nlRegister"] = {"listed": bool(hit), **({"name": hit["name"], "match": hit["match"]} if hit else {})}
+    if "GB" in where:
         out["uk"] = True
         if register is not None and len(register):
             hit = register.match(company)
@@ -203,9 +319,18 @@ def label(v: dict) -> str:
         parts.append("Says it cannot sponsor")
     else:
         parts.append("Sponsorship not stated")
+    if v.get("status") == "no" and v.get("why") == "citizens":
+        parts[-1] = "Citizens or cleared staff only"
+    if v.get("opt"):
+        parts.append("accepts OPT/CPT" if v["opt"] == "yes" else "does not take OPT/CPT")
+    if v.get("eVerify"):
+        parts.append("uses E-Verify")
     reg = v.get("ukRegister")
     if reg is not None:
         parts.append("on the UK sponsor register" if reg.get("listed") else "not on the UK sponsor register")
+    nl = v.get("nlRegister")
+    if nl is not None:
+        parts.append("a recognised sponsor in the Netherlands" if nl.get("listed") else "not on the Dutch register of recognised sponsors")
     sal = v.get("ukSalary")
     if sal:
         parts.append({"general": f"£{sal['amount']:,} meets the Skilled Worker floor",

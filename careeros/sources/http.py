@@ -12,6 +12,9 @@ from urllib.parse import urlparse
 
 USER_AGENT = "careeros/0.2 (+https://github.com/VishStack01/careeros; job-search scout)"
 MIN_INTERVAL = 1.0  # seconds between requests to the same host; discovery lowers it
+# Shared job-board APIs that serve thousands of employers from one host and are built for it: two requests a
+# second is still gentle, and it halves the time the scan spends waiting its turn as the board list grows.
+HOST_INTERVAL = {"boards-api.greenhouse.io": 0.5, "api.lever.co": 0.5, "api.ashbyhq.com": 0.5, "api.smartrecruiters.com": 0.5}
 
 _locks: dict[str, threading.Lock] = {}
 _last: dict[str, float] = {}
@@ -42,7 +45,7 @@ def get_bytes(url: str, timeout: float = 20.0, retries: int = 2, interval: float
     last: Exception | None = None
     status = None
     for attempt in range(retries + 1):
-        _wait_turn(host, MIN_INTERVAL if interval is None else interval)
+        _wait_turn(host, min(MIN_INTERVAL, HOST_INTERVAL.get(host, MIN_INTERVAL)) if interval is None else interval)
         req = urllib.request.Request(url, data=data, headers={"User-Agent": USER_AGENT, "Accept": accept,
                                                                **({"Content-Type": "application/json"} if data else {}), **(headers or {})})
         try:

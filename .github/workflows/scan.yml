@@ -18,9 +18,14 @@ on:
         description: "Re-check every company's job board from scratch"
         type: boolean
         default: false
+      chain:
+        description: "Started by the previous scan (keeps scans back to back; not for manual runs)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
+  actions: write
   pages: write
   id-token: write
 
@@ -37,6 +42,9 @@ jobs:
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v5
+
+      - name: Note the start time
+        run: echo "SCAN_T0=$(date +%s)" >> "$GITHUB_ENV"
 
       - uses: actions/setup-python@v6
         with:
@@ -63,7 +71,7 @@ jobs:
         # Only employer board links and company names are kept; see careeros/sources/radar.py.
         continue-on-error: true
         run: |
-          if [ $(( 10#$(date -u +%H) % 3 )) -eq 0 ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          if [ $(( 10#$(date -u +%H) % 3 )) -eq 0 ] || { [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.chain }}" != "true" ]; }; then
             pip install "python-jobspy>=1.4" >/dev/null 2>&1 || true
             careeros radar --config config/radar.toml --boards feed/boards.json --out feed/radar-companies.csv 2>&1 | tee feed/radar.log
           fi
@@ -80,7 +88,7 @@ jobs:
         # that list developer roles in India or open to it.
         continue-on-error: true
         run: |
-          if [ ! -f feed/deep-companies.csv ] || [ $(( 10#$(date -u +%H) )) -eq 4 ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          if [ ! -f feed/deep-companies.csv ] || [ $(( 10#$(date -u +%H) )) -eq 4 ] || { [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.chain }}" != "true" ]; }; then
             careeros deep --boards feed/boards.json --out feed/deep-companies.csv 2>&1 | tee feed/deep.log
             careeros yc-companies --out feed/yc-companies.csv 2>&1 | tee -a feed/deep.log
           fi
@@ -90,13 +98,22 @@ jobs:
         # roles can say whether the employer can sponsor at all. Kept with the feed between runs.
         continue-on-error: true
         run: |
-          if [ ! -f feed/uk-sponsors.csv ] || [ $(( 10#$(date -u +%H) )) -eq 5 ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          if [ ! -f feed/uk-sponsors.csv ] || [ $(( 10#$(date -u +%H) )) -eq 5 ] || { [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.chain }}" != "true" ]; }; then
             careeros uk-sponsors --out feed/uk-sponsors.csv
+          fi
+
+      - name: Dutch sponsor register (daily)
+        # The Dutch immigration service's public list of employers recognised as sponsors for work (the highly
+        # skilled migrant route needs one), so roles in the Netherlands can say whether the employer is on it.
+        continue-on-error: true
+        run: |
+          if [ ! -f feed/nl-sponsors.csv ] || [ $(( 10#$(date -u +%H) )) -eq 6 ] || { [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.chain }}" != "true" ]; }; then
+            careeros nl-sponsors --out feed/nl-sponsors.csv
           fi
 
       - name: Discover job boards
         # New companies, boards that errored last scan, and unmapped companies
-        # every 14 days (swept boards every 21). At most 800 per run and 18 minutes,
+        # every 14 days (swept boards every 21). At most 800 per run and 12 minutes,
         # curated and radar companies first, so the first deep pass takes a day or
         # two and stays gentle on each hiring system. Boards with roles in India or a
         # developed country are kept (discover.FOCUS), not only India.
@@ -104,14 +121,17 @@ jobs:
           CAREEROS_SCAN_ONSITE: world
         run: |
           set -o pipefail
-          careeros discover --companies config/companies/companies.csv --extra feed/radar-companies.csv --extra feed/yc-companies.csv --extra feed/deep-companies.csv --cache feed/boards.json --refresh-days 14 --limit 800 --max-minutes 18 2>&1 | tee feed/discover.log
+          careeros discover --companies config/companies/companies.csv --extra feed/radar-companies.csv --extra feed/yc-companies.csv --extra feed/deep-companies.csv --cache feed/boards.json --refresh-days 14 --limit 800 --max-minutes 12 2>&1 | tee feed/discover.log
 
       - name: Scan boards
         # On-site and hybrid roles in every country, for people searching outside India.
         env:
           CAREEROS_SCAN_ONSITE: world
           # A few boards sometimes hang for an hour; stop waiting after 60 minutes and keep their last roles.
-          CAREEROS_SCAN_DEADLINE_MIN: "60"
+          CAREEROS_SCAN_DEADLINE_MIN: "50"
+          # As the board list grows, each run reads the curated boards plus the most overdue of the rest
+          # (deep-sweep boards every four hours); boards not read keep their roles from the last run.
+          CAREEROS_SCAN_MAX_BOARDS: "2400"
           # Country-wide job APIs (see careeros/sources/national.py). Each stays off until its secret is added.
           ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}
           ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}
@@ -213,3 +233,18 @@ jobs:
       - id: deploy
         if: always()
         uses: actions/deploy-pages@v4
+
+      - name: Start the next scan
+        # GitHub runs scheduled workflows late or not at all on quiet repositories (this one was getting about
+        # four scans a day from an hourly schedule). Each finished scan starts the next one instead, so roles
+        # are re-read about once an hour. Only one scan runs at a time (see `concurrency`); a run that ended
+        # in under 20 minutes failed early and doesn't start another, so a broken scan can't loop.
+        if: always() && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ $(( $(date +%s) - ${SCAN_T0:-0} )) -ge 1200 ]; then
+            gh workflow run scan.yml --ref main -f chain=true
+          else
+            echo "Short run: leaving the next scan to the schedule."
+          fi

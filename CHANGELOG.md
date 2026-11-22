@@ -2,6 +2,24 @@
 
 All notable changes to CareerOS. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [semantic versioning](https://semver.org/).
 
+## [2.10.0] - 2026-11-22
+
+Built for people studying or working abroad, most of all Indian students after a master's in the US, UK, Canada, Australia, Germany, Ireland and the Netherlands. No paid data sources were added: everything below reads public pages and public lists.
+
+### Added
+- **Country on every role.** The scan now works out the country a location only implies ("Austin, TX", "Toronto, ON", "Melbourne, VIC", "Eindhoven", Indian cities and states). On the 22 Nov feed this cut roles with no known country from 23,003 to 7,036. Members abroad who list a country now match on-site roles there that never name it.
+- **Job board filters for Country and for Visa and sponsorship**, a Visa line on each role page and visa tags on the cards. Choosing a country shows on-site roles there.
+- **US student signals from the posting's own words:** takes or refuses OPT/CPT, says it uses E-Verify (needed for the STEM OPT extension), and citizens-only or security-clearance roles, which are marked as not open to visa holders.
+- **Dutch register of recognised sponsors** (the immigration service's public list), read daily like the UK register: roles in the Netherlands say whether the employer is on it. `careeros nl-sponsors`.
+- `countries` on each feed record and `byCountry` in `summary.json`.
+
+### Changed
+- **Scans run back to back** instead of waiting for GitHub's schedule, which was delivering about four runs a day. Each finished scan starts the next; a scan that fails in under 20 minutes doesn't.
+- **The scan fits its time as the board list grows.** Curated boards are read every run, deep-sweep boards every four hours and empty ones daily (`CAREEROS_SCAN_MAX_BOARDS`); boards not read keep their roles. The shared Greenhouse, Lever, Ashby and SmartRecruiters APIs are read at two requests a second instead of one.
+- **Deep sweep keeps boards hiring in study countries.** About 21,000 inventory boards rejected in October under the India-only rule are being looked at again; boards with roles in a study country are kept.
+- When the feed has to be trimmed, India and remote roles stay first, then junior and mid-level roles in study countries, then senior roles there, then the rest of the world.
+- **Feed intake uses about 100 MB instead of about 3.2 GB.** It reads the small summary first and downloads nothing when the feed hasn't changed, streams the files from disk, and writes only roles that changed (migration `0012_job_rev.sql`).
+
 ## [2.9.1] - 2026-11-22
 
 ### Changed

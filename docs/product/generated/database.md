@@ -38,7 +38,7 @@ Generated from `careeros/cloud/migrations/*.sql`. Do not edit by hand.
 
 ## jobs
 
-`id`, `company`, `title`, `url`, `source`, `posted_at`, `record`, `text`, `active`, `first_seen_at`, `last_seen_at`, `closed_at`
+`id`, `company`, `title`, `url`, `source`, `posted_at`, `record`, `text`, `active`, `first_seen_at`, `last_seen_at`, `closed_at`, `rev (0012_job_rev)`
 
 ## feed_state
 

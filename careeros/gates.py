@@ -134,7 +134,7 @@ def _gate_location_elsewhere(job: Job, s: Settings) -> tuple[Check, str]:
     if job.work_mode == "remote":
         if not p.remote_ok:
             return Check("Location", False, "Remote roles are switched off."), ""
-        said = countries.named(f"{job.title or ''} | {job.location or ''}")
+        said = countries.named(job.title or "") | countries.resolve(job.location or "")
         if said:
             if home in said:
                 return Check("Location", True, f"Remote, {name}", job.location or job.title), "remote-local"
@@ -158,7 +158,7 @@ def _gate_location_elsewhere(job: Job, s: Settings) -> tuple[Check, str]:
     loc = job.location or ""
     hit = next((pl for pl in p.places if re.search(r"(?<![A-Za-z])" + re.escape(pl) + r"(?![A-Za-z])", loc, re.I)), None)
     if hit is None:
-        hit = next((pl for pl in p.places if countries.named(pl) & countries.named(loc)), None)
+        hit = next((pl for pl in p.places if countries.resolve(pl) & countries.resolve(loc)), None)
     if hit:
         return Check("Location", True, f"{mode_txt}, {loc}", loc), "local"
     if not loc.strip():
@@ -187,7 +187,7 @@ def gate_location(job: Job, s: Settings) -> tuple[Check, str]:
             scope = extract.remote_scope(job.location, job.description)
         # "Remote - Berlin", "Kyiv, Ukraine", "Poland": a remote role placed in one country is almost always
         # hired in that country (payroll and employment law), unless the posting says otherwise.
-        named = countries.named(job.location or "")
+        named = countries.resolve(job.location or "")
         if named and "IN" not in named and not where["india"] and scope.scope != "worldwide" and not (scope.india_eligible and scope.scope != "india"):
             return Check("Location", False, f"Remote, but placed in {job.location.strip()}; the posting doesn't say people in India can apply.", job.location), ""
         if scope.scope == "worldwide":

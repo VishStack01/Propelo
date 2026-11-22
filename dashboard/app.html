@@ -1608,10 +1608,15 @@ function payPill(j){
 }
 function visaPill(j){
   const v = obj(j.visa); if (!Object.keys(v).length) return '';
-  const reg = v.ukRegister, quote = v.quote ? ` "${v.quote}"` : '';
+  const reg = v.ukRegister, nl = v.nlRegister, quote = v.quote ? ` "${v.quote}"` : '';
+  if (v.status === 'no' && v.why === 'citizens') return `<span class="pill due" title="The posting says:${esc(quote)}">Citizens or cleared staff only</span>`;
+  if (v.opt === 'no') return `<span class="pill due" title="The posting says: &quot;${esc(v.optQuote || '')}&quot;">No OPT or CPT</span>`;
   if (v.status === 'no') return `<span class="pill due" title="The posting says:${esc(quote)}">No visa sponsorship</span>`;
   if (reg && reg.listed === false) return '<span class="pill due" title="This employer is not on the Home Office register of licensed sponsors, so it cannot sponsor a Skilled Worker visa.">Not a UK sponsor</span>';
   if (v.status === 'offers') return `<span class="pill strong" title="The posting says:${esc(quote)}${reg && reg.listed ? ' On the UK sponsor register as ' + esc(reg.name) + '.' : ''}">Sponsors visas</span>`;
+  if (v.opt === 'yes') return `<span class="pill strong" title="The posting says: &quot;${esc(v.optQuote || '')}&quot;${v.eVerify ? ' It also says the employer uses E-Verify, which the STEM OPT extension needs.' : ''}">Takes OPT / CPT</span>`;
+  if (nl && nl.listed) return `<span class="pill" title="On the Dutch immigration service's public register of recognised sponsors as ${esc(nl.name)}. The posting doesn't say whether this role is sponsored: ask before applying.">Dutch recognised sponsor</span>`;
+  if (v.eVerify) return '<span class="pill" title="The posting says the employer uses E-Verify, which the STEM OPT extension needs. It does not say whether it sponsors visas.">Uses E-Verify</span>';
   if (reg && reg.listed) return `<span class="pill" title="On the Home Office register of licensed sponsors as ${esc(reg.name)}. The posting doesn't say whether this role is sponsored: ask before applying.">UK licensed sponsor</span>`;
   return '';
 }

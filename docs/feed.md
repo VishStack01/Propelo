@@ -81,6 +81,18 @@ Output, published as assets of the `feed-latest` release by `.github/workflows/s
 
 The feed is a public list of openings. It holds nothing about you.
 
+### Rotation, countries and visa lines
+
+- **Back to back.** Each scan starts the next one when it finishes, so boards are re-read about once an hour whatever GitHub's
+  schedule does. `CAREEROS_SCAN_MAX_BOARDS` caps the boards read per run: curated boards every run, deep-sweep boards every
+  four hours, empty ones daily, most overdue first. Boards not read keep their roles from the last run.
+- **`countries`** on each record lists ISO codes for where the role is, including places that never name the country
+  ("Austin, TX", "Toronto, ON", "Eindhoven"). `summary.json` has `byCountry`.
+- **`facts.visa`** holds what is known about sponsorship: the posting's own words (`status`, `quote`; `why: "citizens"` for
+  citizens-only or cleared roles), for US roles `opt` and `eVerify`, for UK roles `ukRegister` and `ukSalary`, and for roles in
+  the Netherlands `nlRegister` (the immigration service's public register of recognised sponsors, `careeros nl-sponsors`).
+  Being on a register means the employer can sponsor, not that this role is sponsored.
+
 ## 4. Your filters
 
 `careeros filter-feed` runs the same gates as everything else, using your

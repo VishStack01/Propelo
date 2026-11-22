@@ -161,7 +161,7 @@ def _in_scope(loc: str) -> bool:
     from .scan import ONSITE_WORLD
     if geo.classify(loc)["india"] or _OPEN_TO_INDIA.search(loc):
         return True
-    return ONSITE_WORLD and bool(countries.named(loc) & FOCUS)
+    return ONSITE_WORLD and bool(countries.resolve(loc) & FOCUS)
 
 
 def deep_fit(found: dict) -> int:

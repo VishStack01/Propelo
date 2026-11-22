@@ -28,7 +28,7 @@ from concurrent.futures import TimeoutError as FuturesTimeout
 from datetime import datetime, timezone
 from pathlib import Path
 
-from . import company_names, extract, geo, paydata, signals, sponsors, tags
+from . import company_names, countries, extract, geo, paydata, signals, sponsors, tags
 from .dedupe import canonical_url, fingerprint, job_id
 from .models import Job, iso
 from .sources import SCOUTS, greenhouse, smartrecruiters
@@ -69,9 +69,17 @@ def cap_feed(records: list[dict], limit: int | None = None) -> tuple[list[dict],
     limit = FEED_MAX if limit is None else limit
     if len(records) <= limit:
         return records, 0
-    first = [r for r in records if r.get("geo") in ("south", "india") or r.get("workMode") == "remote"]
-    rest = [r for r in records if not (r.get("geo") in ("south", "india") or r.get("workMode") == "remote")]
-    keep = (first + rest)[:limit]
+    # India and remote first; then the countries Indian students study and work in (junior and mid-level roles
+    # ahead of senior ones there); then the rest of the world. Each group newest first.
+    study = set(countries.STUDY)
+
+    def rank(r: dict) -> int:
+        if r.get("geo") in ("south", "india") or r.get("workMode") == "remote":
+            return 0
+        if study & set(r.get("countries") or ()):
+            return 2 if (r.get("facts") or {}).get("senior") else 1
+        return 3
+    keep = sorted(records, key=rank)[:limit]  # the sort is stable, so each group stays newest first
     keep.sort(key=lambda r: -_ts(r.get("postedAt")))
     return keep, len(records) - len(keep)
 
@@ -167,6 +175,7 @@ def to_feed(job: Job, company: dict, via: str = "careers") -> dict:
         "salary": job.salary_text, "experienceHeader": str(job.raw.get("experience_header", "")),
         "category": company.get("category", ""), "hq": company.get("city", ""),
         "geo": "south" if where["south"] else "india" if where["india"] else "abroad" if where["abroad"] else "",
+        "countries": sorted(countries.resolve(job.location)),  # ISO codes, including ones the location only implies ("Austin, TX")
         "facts": f, "summary": summary, "via": via,
         "tags": tags.tag(job.title, text, f),
         "text": text,  # full posting; kept out of india.jsonl.gz, published for the job board
@@ -291,8 +300,36 @@ def _previous(out_dir: Path, names: set[str]) -> list[dict]:
     return [{**r, "text": texts.get(r["id"], r.get("summary", "")), "facts": dict(r.get("facts") or {})} for r in old]
 
 
+def scan_every_hours(entry: dict) -> float:
+    """How often a board is worth reading. Curated and radar boards (mostly India hiring) every run; boards
+    from the deep sweep every four hours; deep boards that had nothing we list last time once a day."""
+    if not entry.get("scannedAt") or entry.get("category") != "deep":
+        return 0.0
+    return 24.0 if not entry.get("roles") else 4.0
+
+
+def pick_boards(mapped: dict, max_boards: int, now: datetime) -> tuple[dict, list[str]]:
+    """(boards to read this run, boards whose last roles are kept instead). With no limit, or fewer boards
+    than the limit, every board is read. Otherwise boards that are never skipped go first, then the most
+    overdue of the rest, so no board waits forever and the run always fits its time."""
+    if not max_boards or len(mapped) <= max_boards:
+        return mapped, []
+
+    def overdue(e: dict) -> float:
+        try:
+            age = (now - datetime.fromisoformat(str(e.get("scannedAt")).replace("Z", "+00:00"))).total_seconds() / 3600
+        except ValueError:
+            return float("inf")
+        every = scan_every_hours(e)
+        return float("inf") if not every else age / every
+    ranked = sorted(mapped, key=lambda n: -overdue(mapped[n]))
+    take = [n for n in ranked if overdue(mapped[n]) >= 1][:max_boards]
+    chosen = set(take)
+    return {n: mapped[n] for n in take}, sorted(n for n in mapped if n not in chosen)
+
+
 def run(boards_path: str | Path, out_dir: str | Path, workers: int = 16, detail_cap: int = 400,
-        aggregators: bool = True, log=print, pay_cap: int = 200, deadline_min: float = 0) -> dict:
+        aggregators: bool = True, log=print, pay_cap: int = 200, deadline_min: float = 0, max_boards: int = 0) -> dict:
     boards = json.loads(Path(boards_path).read_text())
     companies = boards.get("companies", {})
     mapped = {n: e for n, e in companies.items() if e.get("status") == "mapped"}
@@ -305,9 +342,16 @@ def run(boards_path: str | Path, out_dir: str | Path, workers: int = 16, detail_
     pay_path = out_dir / "greenhouse-pay.json.gz"
     pay_cache, pay_budget = _load_pay_cache(pay_path), [pay_cap]
     pay_cache["_seen"] = set()
-    log(f"Scanning {len(mapped)} company boards…")
+    started = datetime.now(timezone.utc)
+    todo, carried = pick_boards(mapped, max_boards, started)
+    if carried:
+        kept = _previous(out_dir, set(carried))
+        records.extend(kept)
+        log(f"Scanning {len(todo)} of {len(mapped)} company boards this run; {len(carried)} read recently keep their {len(kept)} roles…")
+    else:
+        log(f"Scanning {len(mapped)} company boards…")
     pool = ThreadPoolExecutor(max_workers=workers)
-    futs = {pool.submit(scan_board, n, e, budget, pay_cache, pay_budget): n for n, e in mapped.items()}
+    futs = {pool.submit(scan_board, n, e, budget, pay_cache, pay_budget): n for n, e in todo.items()}
     done: set = set()
 
     def take(fut) -> None:
@@ -322,6 +366,7 @@ def run(boards_path: str | Path, out_dir: str | Path, workers: int = 16, detail_
             companies[futs[fut]]["stale"] = True  # re-discover next time
         else:
             companies[futs[fut]].pop("stale", None)
+            companies[futs[fut]].update(scannedAt=iso(started), roles=len(recs))
     late: list[str] = []
     try:
         for fut in as_completed(futs, timeout=deadline_min * 60 if deadline_min else None):
@@ -374,12 +419,13 @@ def run(boards_path: str | Path, out_dir: str | Path, workers: int = 16, detail_
     # How long each listing has been open, and what we know about visa sponsorship (the posting's own
     # words; for UK roles also the Home Office sponsor register and the Skilled Worker salary floors).
     register = sponsors.UkRegister.from_csv(out_dir / "uk-sponsors.csv")
+    nl_register = sponsors.NlRegister.from_csv(out_dir / "nl-sponsors.csv")
     today = datetime.now(timezone.utc).date()
     for r in unique:
         first = history.first_seen(r["company"], r["title"], r["url"])
         r["facts"]["firstSeen"] = first
         r["facts"]["daysOpen"] = days_open(r.get("postedAt"), first, today)
-        v = sponsors.visa_facts(r["company"], r.get("location") or "", r.get("text") or r.get("summary") or "", r.get("salary") or "", register)
+        v = sponsors.visa_facts(r["company"], r.get("location") or "", r.get("text") or r.get("summary") or "", r.get("salary") or "", register, nl_register)
         if v:
             r["facts"]["visa"] = v
     with gzip.open(out_dir / "india.jsonl.gz", "wt", encoding="utf-8") as f, \
@@ -402,18 +448,29 @@ def run(boards_path: str | Path, out_dir: str | Path, workers: int = 16, detail_
                  "no": sum(1 for r in unique if (r["facts"].get("visa") or {}).get("status") == "no"),
                  "ukRoles": sum(1 for r in unique if (r["facts"].get("visa") or {}).get("uk")),
                  "ukOnRegister": sum(1 for r in unique if ((r["facts"].get("visa") or {}).get("ukRegister") or {}).get("listed")),
-                 "registerSize": len(register)},
+                 "registerSize": len(register),
+                 "nlRoles": sum(1 for r in unique if "nlRegister" in (r["facts"].get("visa") or {})),
+                 "nlOnRegister": sum(1 for r in unique if ((r["facts"].get("visa") or {}).get("nlRegister") or {}).get("listed")),
+                 "nlRegisterSize": len(nl_register),
+                 "optYes": sum(1 for r in unique if (r["facts"].get("visa") or {}).get("opt") == "yes"),
+                 "optNo": sum(1 for r in unique if (r["facts"].get("visa") or {}).get("opt") == "no"),
+                 "eVerify": sum(1 for r in unique if (r["facts"].get("visa") or {}).get("eVerify")),
+                 "citizensOnly": sum(1 for r in unique if (r["facts"].get("visa") or {}).get("why") == "citizens")},
         "companies": sum(1 for e in companies.values() if e.get("category") != "deep" or e.get("status") == "mapped"),
         "boards": len(mapped), "openings": len(unique),
         "deepSweep": {"checked": sum(1 for e in companies.values() if e.get("category") == "deep" and e.get("checkedAt")),
                       "kept": sum(1 for e in companies.values() if e.get("category") == "deep" and e.get("status") == "mapped")},
         "greenhousePay": {"lookedUp": looked_up, "withPay": stated},
-        "remoteBoards": board_counts, "trimmed": trimmed, "byAts": {}, "byGeo": {}, "errors": len(errors), "errorSamples": errors[:20], "lateBoards": len(late),
+        "remoteBoards": board_counts, "trimmed": trimmed, "byAts": {}, "byGeo": {}, "byCountry": {}, "errors": len(errors), "errorSamples": errors[:20], "lateBoards": len(late),
+        "boardsRead": len(todo) - len(late), "boardsKept": len(carried),
         "erroredCompanies": sorted(n for n, e in companies.items() if e.get("stale")),
     }
     for r in unique:
         summary["byAts"][r["source"]] = summary["byAts"].get(r["source"], 0) + 1
         summary["byGeo"][r["geo"] or "remote/unknown"] = summary["byGeo"].get(r["geo"] or "remote/unknown", 0) + 1
+        for cc in r.get("countries") or ():
+            summary["byCountry"][cc] = summary["byCountry"].get(cc, 0) + 1
+    summary["byCountry"] = dict(sorted(summary["byCountry"].items(), key=lambda kv: -kv[1]))
     (out_dir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     Path(boards_path).write_text(json.dumps(boards, indent=1, ensure_ascii=False), encoding="utf-8")
     log(f"Feed: {len(unique)} open roles ({trimmed} older ones left out to keep the files small) from {len(mapped)} company boards "
