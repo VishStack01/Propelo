@@ -412,7 +412,7 @@ def main(argv: list[str] | None = None) -> None:
     sp.set_defaults(fn=cmd_yc_companies)
 
     sp = sub.add_parser("sample-roles", help="A free sample of the agency feed (CSV) for one niche, to send in outreach")
-    sp.add_argument("--feed", default="https://github.com/VishStack01/careeros/releases/download/feed-latest/",
+    sp.add_argument("--feed", default="https://github.com/VishStack01/Propelo/releases/download/feed-latest/",
                     help="Folder or URL holding india.jsonl.gz")
     sp.add_argument("--keywords", default="", help="Title words, comma separated (any of)")
     sp.add_argument("--exclude", default="")
@@ -477,7 +477,7 @@ def main(argv: list[str] | None = None) -> None:
     sp.set_defaults(fn=cmd_scan)
 
     sp = sub.add_parser("filter-feed", help="Apply your filters to the India feed")
-    sp.add_argument("--feed", default="https://github.com/VishStack01/careeros/releases/download/feed-latest/india.jsonl.gz")
+    sp.add_argument("--feed", default="https://github.com/VishStack01/Propelo/releases/download/feed-latest/india.jsonl.gz")
     sp.add_argument("--settings-json", help="The dashboard's settings/profile document (JSON)")
     sp.add_argument("--settings", default="config/settings.toml")
     sp.add_argument("--known", help="Folder or file of roles already on the dashboard")
@@ -1100,7 +1100,12 @@ def cmd_cloud(a) -> None:
         import uvicorn
 
         from .cloud.app import create_app
-        uvicorn.run(create_app(cfg), host=a.host, port=a.port, proxy_headers=cfg.trust_proxy, forwarded_allow_ips="*" if cfg.trust_proxy else None)
+        if not cfg.all_in_one:
+            uvicorn.run(create_app(cfg), host=a.host, port=a.port, proxy_headers=cfg.trust_proxy, forwarded_allow_ips="*" if cfg.trust_proxy else None)
+            return
+        # One small server: bring the database up to date, run the worker beside the web app, stop both together.
+        from .cloud.allinone import serve
+        serve(cfg, a.host, a.port)
         return
     if a.action == "worker":
         from .cloud.worker import main as worker_main

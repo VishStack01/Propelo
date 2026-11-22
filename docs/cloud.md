@@ -183,6 +183,8 @@ Every setting is an environment variable; see `.env.example`. In `staging` and
 | `SIGNUP_MODE`, `SIGNUP_ALLOWLIST` | `open` | `allowlist` with emails or `@domains` for a private beta; `closed` to stop sign-ups |
 | `BOOTSTRAP_ADMIN_EMAIL` | | That account can read `/api/admin/overview` |
 | `TRUST_PROXY` | `0` | `1` only behind your own reverse proxy, so client IPs come from `X-Forwarded-For` |
+| `ALL_IN_ONE` | `off` | `on` makes `careeros cloud serve` also apply migrations and run the worker as a child process: one small server instead of three services. One instance only |
+| `STORAGE` | `disk` | `db` keeps uploaded files in the database instead of `UPLOAD_DIR`, for a host where the service has no disk |
 | `MAX_UPLOAD_MB`, `USER_STORAGE_MB` | 5, 25 | Per file and per account |
 | `FEED_URL`, `INGEST_EVERY_MINUTES` | upstream feed, 15 | |
 | `DB_POOL_MIN`, `DB_POOL_MAX` | 1, 10 | Per process. Keep `processes × DB_POOL_MAX` under the database's connection limit |

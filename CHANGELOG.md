@@ -2,6 +2,18 @@
 
 All notable changes to CareerOS. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [semantic versioning](https://semver.org/).
 
+## [2.13.0] - 2026-11-23
+
+### Added
+- **One-server mode for a free or single-instance host (`ALL_IN_ONE=on`).** `careeros cloud serve` then brings the database up to date, runs the worker as a child process beside the web app, starts it again if it stops, and stops it when the web app stops. Measured on the live feed: 97,547 roles taken in, about 80 MB for the web app and 90 MB for the worker.
+- **Uploads in the database (`STORAGE=db`).** Resumes are kept in a `blobs` table instead of on a disk, for hosts where a service has no disk of its own. The file and its listing are saved in one transaction.
+- **`render.free.yaml`:** a Render blueprint with one free web service and a free database. Its header lists the limits: the service sleeps after 15 minutes without visitors, the free database is deleted after 30 days unless upgraded, and email needs the provider's alternative port.
+- On Render the app uses the address Render gives the service until `PUBLIC_URL` names the real domain, and the image listens on the port the host names in `PORT`.
+
+### Fixed
+- **A hand-made Render service crashed at start with `PermissionError: 'data'`.** With no `DATABASE_URL` the app fell back to a local file it was not allowed to create. The free blueprint connects the database for you.
+- The feed address pointed at the repository's old name (it worked only through GitHub's redirect).
+
 ## [2.12.1] - 2026-11-22
 
 ### Fixed

@@ -22,6 +22,7 @@ The code is ready. What's left needs accounts, money or a signature that only yo
 
 ## 1. Deploy on Render
 
+0. **Trying it for free first:** choose **New > Blueprint**, pick this repository and set the Blueprint file path to `render.free.yaml`. That makes one free web service (it also runs the worker) and a free database, and asks for four values: `SMTP_URL`, `MAIL_FROM`, `SUPPORT_EMAIL` and `BOOTSTRAP_ADMIN_EMAIL`. Read the limits at the top of that file: the service sleeps when nobody visits, the free database is deleted after 30 days unless you upgrade it, and email must use the provider's alternative port (Resend: `2465`). Before taking payments, change the web service and the database to paid plans in the dashboard; nothing else changes.
 1. In Render, choose **New > Blueprint** and pick this repository. It creates `careeros-web`, `careeros-worker` and `careeros-db`. The free tier isn't enough (workers and disks aren't free, and free databases expire); check prices at render.com/pricing before you confirm.
 2. On `careeros-web`, set `PUBLIC_URL`, `SMTP_URL`, `MAIL_FROM`, `SUPPORT_EMAIL`, `BOOTSTRAP_ADMIN_EMAIL` (your own email: it becomes the operator) and `COMPANY_NAME`. `SECRETS_KEY` is generated for you. **Never change it** after users save keys or connect Gmail: everything encrypted with it becomes unreadable.
 3. The worker copies most values from the web service. Set `PUBLIC_URL`, `SMTP_URL`, `MAIL_FROM`, `SUPPORT_EMAIL` and `BOOTSTRAP_ADMIN_EMAIL` on it too.

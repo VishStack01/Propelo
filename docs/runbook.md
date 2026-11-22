@@ -45,7 +45,7 @@ For S1 and S2:
 
 - Daily backups and point-in-time recovery come from the database host. Check they are on.
 - **Restore drill (every quarter):** restore the latest backup into a new database, point a staging copy of the app at it with the same `SECRETS_KEY`, sign in as a test user and open their pipeline. Write down how long it took.
-- Uploaded files live on the web service's disk (`UPLOAD_DIR`). Back that disk up too, or move uploads to object storage before you have many users.
+- Uploaded files live on the web service's disk (`UPLOAD_DIR`), or in the database's `blobs` table when `STORAGE=db` (then the database backup covers them). Back that disk up too, or move uploads to object storage before you have many users.
 - **`SECRETS_KEY`** decrypts users' own AI keys and Gmail permissions. Store a copy in a password manager. If it leaks: set a new one, then ask everyone to save their AI key again and reconnect Gmail (the old values can't be read any more).
 
 ## Deploys and rollbacks

@@ -48,7 +48,7 @@ from .config import Config
 from .db import Database, now_iso
 from .ingest import feed_state
 from .mailer import Mailer
-from .storage import LocalStorage
+from .storage import make_storage
 
 log = logging.getLogger("careeros.api")
 STATIC = Path(__file__).resolve().parent / "static"
@@ -152,7 +152,7 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
         raise RuntimeError("Database migrations are pending. Run `careeros cloud migrate` before starting the app.")
     if not cfg.is_production:
         db.migrate(log=log.info)
-    storage = LocalStorage(cfg.upload_dir)
+    storage = make_storage(cfg, db)
     mailer = Mailer(cfg.smtp_url, cfg.mail_from)
     _init_error_reporting(cfg)
     app = FastAPI(title="Propelo Cloud", version=__version__, docs_url=None, redoc_url=None, openapi_url=None)
@@ -962,7 +962,7 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
                 if repo.storage_used(c, p.uid) + len(data) > cfg.user_storage_mb * 1024 * 1024:
                     raise err(413, "Your storage is full. Remove an old file first.", "quota")
                 aid = security.new_id()
-                key = storage.put(p.uid, aid, "pdf", data)
+                key = storage.put(p.uid, aid, "pdf", data, conn=c)
                 c.execute("INSERT INTO assets(id, user_id, name, content_type, size_bytes, sha256, storage_key, text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                           (aid, p.uid, name, "application/pdf", len(data), hashlib.sha256(data).hexdigest(), key, pdf_text(data), now_iso()))
                 return {"id": aid, "url": f"/_blob/{aid}", "sizeBytes": len(data), "contentType": "application/pdf", "name": name}
@@ -1006,7 +1006,11 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
         if not a:
             raise err(404, "Not found.")
         safe = re.sub(r'[^\w .()-]', "_", a["name"])
-        return Response(storage.get(a["storage_key"]), media_type=a["content_type"],
+        try:
+            data = storage.get(a["storage_key"])
+        except FileNotFoundError:
+            raise err(404, "This file is no longer stored. Please upload it again.") from None
+        return Response(data, media_type=a["content_type"],
                         headers={"Content-Disposition": f'inline; filename="{safe}"', "Cache-Control": "private, no-store"})
 
     # ------------------------------------------------------------ the user's apply agent

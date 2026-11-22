@@ -1,0 +1,58 @@
+# Propelo on Render's free tier: one web service that also migrates and runs the worker, and a free database.
+# In Render: New > Blueprint, pick this repository and set the Blueprint file path to render.free.yaml.
+#
+# Good for trying the app and for a first pilot. Know the limits before you invite people:
+#   - A free web service sleeps after 15 minutes without visitors; the next visitor waits about a minute,
+#     and nothing is scanned or emailed while it sleeps.
+#   - A free database is deleted 30 days after it is created unless you move it to a paid plan, has no
+#     backups and holds 1 GB (the job data alone is about half of that).
+#   - Free web services cannot use the usual email ports. Use your provider's alternative port
+#     (Resend: smtps://resend:<key>@smtp.resend.com:2465).
+# Before you take payments, change the web service and the database to paid plans in the dashboard
+# (nothing else changes), or use render.yaml, which runs the worker as its own service.
+databases:
+  - name: propelo-db
+    plan: free
+    databaseName: careeros
+    user: careeros
+
+services:
+  - type: web
+    name: propelo
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: propelo-db
+          property: connectionString
+      - key: APP_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "1"
+      - key: ALL_IN_ONE
+        value: "on"
+      - key: STORAGE
+        value: db
+      # PUBLIC_URL is left out on purpose: the app uses the onrender.com address Render gives it.
+      # Add PUBLIC_URL=https://app.yourdomain once the custom domain is connected.
+      - key: SMTP_URL
+        sync: false
+      - key: MAIL_FROM
+        sync: false
+      - key: SUPPORT_EMAIL
+        sync: false
+      - key: BOOTSTRAP_ADMIN_EMAIL
+        sync: false
+      - key: SECRETS_KEY
+        generateValue: true
+      - key: SIGNUP_MODE
+        value: open
+      - key: GUARANTEE
+        value: "on"
+      - key: CONCIERGE
+        value: "off"
+      - key: DODO_MODE
+        value: test

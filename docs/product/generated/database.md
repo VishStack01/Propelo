@@ -2,7 +2,7 @@
 
 Generated from `careeros/cloud/migrations/*.sql`. Do not edit by hand.
 
-31 tables.
+32 tables.
 
 ## users
 
@@ -127,3 +127,7 @@ Generated from `careeros/cloud/migrations/*.sql`. Do not edit by hand.
 ## passes
 
 `id`, `user_id`, `plan`, `days`, `price`, `currency`, `provider`, `pay_ref`, `status`, `created_at`, `paid_at`, `ends_at`
+
+## blobs
+
+`key`, `user_id`, `data`, `created_at`, `key`, `user_id`, `data`, `created_at`

@@ -9,7 +9,7 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
-DEFAULT_FEED = "https://github.com/VishStack01/careeros/releases/download/feed-latest/"
+DEFAULT_FEED = "https://github.com/VishStack01/Propelo/releases/download/feed-latest/"
 
 
 def _int(name: str, default: int) -> int:
@@ -38,6 +38,8 @@ class Config:
     public_url: str = "http://127.0.0.1:8000"
     jobs_site_url: str = "https://propelo.org/"  # the public job board; the app shows its company logos
     upload_dir: Path = Path("data/uploads")
+    storage: str = "disk"       # STORAGE=db keeps uploaded files in the database, for a server with no disk of its own
+    all_in_one: bool = False    # ALL_IN_ONE=on: `careeros cloud serve` also migrates and runs the worker (one small server)
     max_upload_mb: int = 5
     user_storage_mb: int = 25
     session_ttl_days: int = 14
@@ -123,9 +125,12 @@ class Config:
         return cls(
             app_env=e("APP_ENV", "development").lower(),
             database_url=e("DATABASE_URL", "sqlite:///data/cloud.db"),
-            public_url=e("PUBLIC_URL", "http://127.0.0.1:8000").rstrip("/"),
+            # Render tells a web service its own address; it is used until PUBLIC_URL names the real domain.
+            public_url=(e("PUBLIC_URL", "").strip() or e("RENDER_EXTERNAL_URL", "").strip() or "http://127.0.0.1:8000").rstrip("/"),
             jobs_site_url=_site_url(e("JOBS_SITE_URL", "https://propelo.org/")),
             upload_dir=Path(e("UPLOAD_DIR", "data/uploads")),
+            storage=e("STORAGE", "disk").strip().lower() or "disk",
+            all_in_one=e("ALL_IN_ONE", "off").strip().lower() in ("on", "1", "true", "yes"),
             max_upload_mb=_int("MAX_UPLOAD_MB", 5),
             user_storage_mb=_int("USER_STORAGE_MB", 25),
             session_ttl_days=_int("SESSION_TTL_DAYS", 14),
@@ -239,6 +244,8 @@ class Config:
             problems.append("SMTP_URL must start with smtp://, smtps:// or console:// (for example smtps://user:password@smtp.example.com:465).")
         elif self.smtp_url.startswith("console://") and self.app_env == "production":
             problems.append("SMTP_URL is console:// in production: emails would only be printed to the log, so nobody could confirm their account.")
+        if self.storage not in ("disk", "db"):
+            problems.append("STORAGE must be disk or db.")
         if self.password_iterations < 310_000:
             problems.append("PASSWORD_ITERATIONS must be at least 310000.")
         if self.signup_mode not in ("open", "allowlist", "closed"):
