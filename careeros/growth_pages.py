@@ -26,12 +26,12 @@ MAX_AGE_DAYS = 30
 # (page slug, ISO code, name in a sentence, what counts as a signal there)
 COUNTRIES = [
     ("uk", "GB", "the UK", "The employer is on the Home Office register of licensed sponsors (Skilled Worker route)."),
-    ("usa", "US", "the United States", "The posting says it sponsors visas, takes OPT or CPT, or uses E-Verify (needed for the STEM OPT extension)."),
-    ("canada", "CA", "Canada", "The posting itself says the employer sponsors visas or work permits."),
+    ("usa", "US", "the United States", "The employer has certified H-1B applications in the latest US Department of Labor data, or the posting says it sponsors, takes OPT or CPT, or uses E-Verify."),
+    ("canada", "CA", "Canada", "The employer was issued a positive Labour Market Impact Assessment in the last year, or the posting says it sponsors."),
     ("australia", "AU", "Australia", "The posting itself says the employer sponsors visas."),
     ("germany", "DE", "Germany", "The posting itself says the employer sponsors visas or supports relocation with a visa."),
     ("netherlands", "NL", "the Netherlands", "The employer is on the Dutch immigration service's register of recognised sponsors, or the posting says it sponsors."),
-    ("ireland", "IE", "Ireland", "The posting itself says the employer sponsors work permits or visas."),
+    ("ireland", "IE", "Ireland", "The employer was issued employment permits this year, or the posting says it sponsors."),
 ]
 TITLE = {"uk": "UK", "usa": "US", "canada": "Canada", "australia": "Australia", "germany": "Germany", "netherlands": "Netherlands", "ireland": "Ireland"}
 
@@ -54,6 +54,15 @@ def sponsor_data(feed_dir: Path, out: Path) -> dict:
         if len(lines) >= 1000:
             (data / "sponsors-uk.txt").write_text("\n".join(sorted(lines, key=str.lower)) + "\n", encoding="utf-8")
             counts["uk"] = len(lines)
+    for code, fname in (("us", "us-sponsors.csv"), ("ca", "ca-sponsors.csv"), ("ie", "ie-sponsors.csv")):
+        counts[code] = 0
+        src = feed_dir / fname
+        if src.exists():
+            rows = [(re.sub(r"[\t\r\n]+", " ", (r.get("name") or "").strip()), r.get("n") or "") for r in csv.DictReader(io.StringIO(src.read_bytes().decode("utf-8-sig", errors="replace")))]
+            rows = [x for x in rows if x[0]]
+            if len(rows) >= 300:
+                (data / f"sponsors-{code}.txt").write_text("\n".join(f"{n}\t\t{c}" for n, c in rows) + "\n", encoding="utf-8")
+                counts[code] = len(rows)
     nl = feed_dir / "nl-sponsors.csv"
     if nl.exists():
         lines = sorted({re.sub(r"[\t\r\n]+", " ", (r.get("name") or "").strip()) for r in csv.DictReader(io.StringIO(nl.read_bytes().decode("utf-8-sig", errors="replace")))} - {""},
@@ -75,6 +84,12 @@ def signal(r: dict, code: str) -> str:
         return "UK licensed sponsor"
     if code == "NL" and (v.get("nlRegister") or {}).get("listed"):
         return "Dutch recognised sponsor"
+    if code == "US" and v.get("usLca"):
+        return "Has sponsored H-1B"
+    if code == "CA" and v.get("caLmia"):
+        return "Positive LMIA employer"
+    if code == "IE" and v.get("iePermits"):
+        return "Issued work permits this year"
     if code == "US" and v.get("opt") == "yes":
         return "Takes OPT / CPT"
     if code == "US" and v.get("eVerify"):
@@ -207,7 +222,7 @@ def visa_pages(records: list[dict], out: Path, site_dir: Path, scan_at: datetime
                 f'<p class="meta">{len(rows)} roles · updated {when} · a signal means the employer can sponsor, not that this role is sponsored: ask before you apply.</p>'
                 f'<div class="acts"><a class="btn" data-app="/signup?src=visa-{slug}" href="https://app.propelo.org/signup?src=visa-{slug}">Match these to my resume, free<svg><use href="#i-right"/></svg></a>'
                 f'<a class="btn light" href="jobs.html?co={code}">All {TITLE[slug]} roles</a>'
-                + ('<a class="btn light" href="sponsor-check.html">Check one employer</a>' if code in ("GB", "NL") else "") + "</div>"
+                + (f'<a class="btn light" href="sponsor-check.html?country={ {"GB": "uk", "NL": "nl", "US": "us", "CA": "ca", "IE": "ie"}[code] }">Check one employer</a>' if code in ("GB", "NL", "US", "CA", "IE") else "") + "</div>"
                 f'{tabs(slug)}<div class="vj-list">{items}</div></div></main>\n{footer}\n'
                 f'<script type="application/ld+json">{json.dumps(ld, separators=(",", ":"))}</script>')
         fname = f"visa-jobs-{slug}.html"

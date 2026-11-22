@@ -64,6 +64,8 @@ jobs:
             git archive FETCH_HEAD feed | tar -x
           fi
           mkdir -p feed
+          # Lists of employers that have sponsored in the US, Canada and Ireland, refreshed weekly by registers.yml.
+          gh release download feed-latest -p us-sponsors.csv -p ca-sponsors.csv -p ie-sponsors.csv -D feed --clobber 2>/dev/null || true
           if [ "${{ inputs.rediscover }}" = "true" ]; then rm -f feed/boards.json; fi
 
       - name: Hiring radar (every third run)
@@ -175,7 +177,8 @@ jobs:
             gh release create feed-latest --prerelease --title "Job feed (latest)" \
               --notes "Open roles from company career pages, replaced by every scan. See docs/feed.md."
           fi
-          files=$(find feed -maxdepth 1 -type f ! -name summary.json)
+          # The US, Canadian and Irish lists belong to registers.yml: never overwrite a newer copy with this run's older one.
+          files=$(find feed -maxdepth 1 -type f ! -name summary.json ! -name us-sponsors.csv ! -name ca-sponsors.csv ! -name ie-sponsors.csv)
           gh release upload feed-latest $files "$RUNNER_TEMP/feed-state.tar.gz" --clobber
           # summary.json last: readers treat a new generatedAt as "the rest is ready".
           [ -f feed/summary.json ] && gh release upload feed-latest feed/summary.json --clobber

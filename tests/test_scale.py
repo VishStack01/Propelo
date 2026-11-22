@@ -181,7 +181,7 @@ def test_sponsor_check_data_and_visa_pages(tmp_path):
     (feed / "uk-sponsors.csv").write_text("\n".join(rows), encoding="utf-8")
     counts = growth_pages.sponsor_data(feed, out)
     text = (out / "data" / "sponsors-uk.txt").read_text(encoding="utf-8")
-    assert counts == {"uk": 1201, "nl": 0} and "Monzo Bank Ltd\tLondon\tA rating" in text and "Circus" not in text
+    assert counts["uk"] == 1201 and counts["nl"] == 0 and counts["us"] == 0 and "Monzo Bank Ltd\tLondon\tA rating" in text and "Circus" not in text
     (site / "check.html").write_text('<html><head><title>x</title><meta name="description" content="d"><meta property="og:title" content="t">'
                                      '<meta property="og:description" content="d"><style></style></head><body><a class="skip" href="#main">s</a><nav></nav>'
                                      '<main id="main"></main><footer>f</footer></body></html>', encoding="utf-8")
@@ -198,3 +198,71 @@ def test_sponsor_check_data_and_visa_pages(tmp_path):
     us = (out / "lists" / "usa.md").read_text(encoding="utf-8")
     assert "Engineer 6" in us and "Takes OPT / CPT" in us and "Engineer 7" not in us
     assert "src=visa-uk" in uk and "not that this role is sponsored" in uk
+
+
+# ---------------------------------------------------------------- lists of employers that have sponsored
+
+def test_register_links_are_found_on_the_official_pages():
+    from careeros import registers
+    page = ('<a href="/sites/dolgov/files/ETA/oflc/pdfs/LCA_Disclosure_Data_FY2026_Q2.xlsx">Q2</a>'
+            '<a href="/sites/dolgov/files/ETA/oflc/pdfs/LCA_Disclosure_Data_FY2026_Q3.xlsx">Q3</a>'
+            '<a href="/sites/dolgov/files/ETA/oflc/pdfs/LCA_Disclosure_Data_FY2025_Q4.xlsx">old</a><a href="/x/PERM_Disclosure_Data_FY2026_Q3.xlsx">perm</a>')
+    assert [u[-14:] for u in registers.us_links(page)] == ["FY2026_Q3.xlsx", "FY2026_Q2.xlsx", "FY2025_Q4.xlsx"]
+    api = json.dumps({"result": {"resources": [
+        {"url": "https://open.canada.ca/x/download/tfwp_2026q1_pos_en.xlsx"}, {"url": "https://open.canada.ca/x/download/tfwp_2026q2_pos_en.xlsx"},
+        {"url": "https://open.canada.ca/x/download/tfwp_2026q2_pos_fr.xlsx"}, {"url": "https://open.canada.ca/x/download/tfwp_2025q4_positive_en.csv"}]}})
+    assert [u.rsplit("/", 1)[1] for u in registers.ca_links(api)] == ["tfwp_2026q2_pos_en.xlsx", "tfwp_2026q1_pos_en.xlsx", "tfwp_2025q4_positive_en.csv"]
+    ie = ('<h3>Employment permits by nationality 2026</h3><a href="https://assets.gov.ie/static/documents/aaa.xlsx">Download</a>'
+          + "x" * 900 + '<h3>Employment permits issued to companies 2026</h3><a href="https://assets.gov.ie/static/documents/bbb.xlsx">Download</a>')
+    assert registers.ie_link(ie, "https://www.gov.ie/x/") == "https://assets.gov.ie/static/documents/bbb.xlsx"
+
+
+def test_register_spreadsheets_are_tallied_and_used(tmp_path):
+    openpyxl = pytest.importorskip("openpyxl")
+    from careeros import registers
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.append(["CASE_NUMBER", "CASE_STATUS", "VISA_CLASS", "EMPLOYER_NAME"])
+    for row in (["1", "Certified", "H-1B", "Acme Robotics Inc"], ["2", "Certified - Withdrawn", "H-1B", "Acme Robotics Inc"], ["3", "Denied", "H-1B", "Acme Robotics Inc"],
+                ["4", "Certified", "E-3 Australian", "Koala LLC"], ["5", "Certified", "H-1B", "Globex Corporation"]):
+        ws.append(row)
+    us = tmp_path / "lca.xlsx"
+    wb.save(us)
+    got = registers.tally(registers.rows_of(us), (r"employer_name",), keep=lambda r: r.get("case_status", "").lower().startswith("certified")
+                          and r.get("visa_class", "").upper().startswith("H-1B"), need=("case_status", "visa_class"))
+    assert got == {"Acme Robotics Inc": 2, "Globex Corporation": 1}
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.append(["Employers who were issued a positive LMIA, 2026Q2"])
+    ws.append([])
+    ws.append(["Province/Territory", "Program Stream", "Employer", "Address", "Occupation", "Approved LMIAs", "Approved Positions"])
+    ws.append(["Ontario", "High Wage", "Maple Software Ltd.", "Toronto", "21231", "2", "5"])
+    ws.append(["Ontario", "High Wage", "Maple Software Ltd.", "Toronto", "21232", "1", "1"])
+    ca = tmp_path / "lmia.xlsx"
+    wb.save(ca)
+    assert registers.tally(registers.rows_of(ca), (r"^employer$", r"employer"), (r"approved positions", r"positions")) == {"Maple Software Ltd.": 6}
+    ie = tmp_path / "ie.csv"
+    ie.write_text("Employer Name,Jan,Feb,Total\nShamrock Tech Ltd,2,3,5\nTotal,2,3,5\n", encoding="utf-8")
+    assert registers.tally(registers.rows_of(ie), (r"employer", r"company"), (r"total",)) == {"Shamrock Tech Ltd": 5}
+    with pytest.raises(OSError):
+        registers._write(tmp_path / "us.csv", got, "us")  # far too few employers: the old file is kept
+    (tmp_path / "us-sponsors.csv").write_text("name,n\nAcme Robotics Inc,2\n", encoding="utf-8")
+    (tmp_path / "ca-sponsors.csv").write_text("name,n\nMaple Software Ltd.,6\n", encoding="utf-8")
+    counts = sponsors.load_count_registers(tmp_path)
+    v = sponsors.visa_facts("Acme Robotics", "Austin, TX", "Great team.", counts=counts)
+    assert v["usLca"] == {"listed": True, "name": "Acme Robotics Inc", "n": 2, "match": "exact"} and "has sponsored H-1B workers" in sponsors.label(v)
+    assert "usLca" not in sponsors.visa_facts("Acme Robotics", "London", "Great team.", counts=counts)  # a US list, used for US roles only
+    assert "usLca" not in sponsors.visa_facts("Initech", "Austin, TX", "Great team.", counts=counts)  # no match is never reported as a "no"
+    assert sponsors.visa_facts("Maple Software", "Toronto, ON", "x", counts=counts)["caLmia"]["n"] == 6
+
+
+def test_pricing_page_goes_straight_to_checkout_when_payments_are_on(cloud):
+    c = cloud.client()
+    assert "buy%3Dpro" not in c.get("/pricing").text  # payments off: every card starts free
+    for k, v in dict(razorpay_key_id="rzp_test", razorpay_key_secret="s", razorpay_webhook_secret="w", razorpay_plan_pro="plan_x", pass_enabled=True).items():
+        object.__setattr__(cloud.cfg, k, v)
+    page = c.get("/pricing").text
+    assert 'href="/signup?next=%2Fapp%3Fbuy%3Dpro">Get Pro</a>' in page and "Get the pass" in page and "buy%3Dpass" in page
+    # The sign-up form carries that destination through the confirm link.
+    r = c.post("/api/auth/signup", json={"name": "Asha", "email": "buyer@example.com", "password": "correct horse 42 staple", "next": "/app?buy=pro"})
+    assert r.status_code == 202 and "next=%2Fapp%3Fbuy%3Dpro" in json.dumps(cloud.outbox[-1])

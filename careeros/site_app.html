@@ -450,7 +450,7 @@ const QLABEL = {'20+': '20 LPA+'};
 // Where most Indian students study and then look for work, plus India. Picking a country shows on-site roles there too.
 const COUNTRIES = [['US','United States'],['GB','United Kingdom'],['CA','Canada'],['AU','Australia'],['DE','Germany'],['IE','Ireland'],['NL','Netherlands'],['FR','France'],['NZ','New Zealand'],['SG','Singapore'],['AE','UAE'],['IN','India']];
 const COUNTRY_NAME = Object.fromEntries(COUNTRIES);
-const VISA = [['sponsors','Says it sponsors visas'],['uk','On the UK sponsor register'],['nl','Dutch recognised sponsor'],['opt','Takes OPT or CPT (US)'],['everify','Uses E-Verify (US)']];
+const VISA = [['sponsors','Says it sponsors visas'],['uk','On the UK sponsor register'],['nl','Dutch recognised sponsor'],['us','Has sponsored H-1B (US)'],['ca','Approved to hire foreign workers (Canada)'],['ie','Issued work permits this year (Ireland)'],['opt','Takes OPT or CPT (US)'],['everify','Uses E-Verify (US)']];
 const VISA_NAME = Object.fromEntries(VISA);
 // Sign-up links carry a short label for where the visitor came from (the label on the link that brought them, else
 // the part of the board they clicked), so each channel's sign-ups can be counted. No cookie, nothing about the person.
@@ -521,7 +521,7 @@ function tagsFor(j, max){
   if (j.ty && j.ty !== 'Full-time' && j.ty !== 'Internship') out.push(`<span class="tag">${esc(j.ty)}</span>`);
   if (j.pt === '20+') out.push('<span class="tag pay">20 LPA+</span>');
   j.pk.forEach(p => out.push(`<span class="tag perk">${esc(p)}</span>`));
-  const VS_TAG = {sponsors: 'Sponsors visas', uk: 'UK licensed sponsor', nl: 'Dutch recognised sponsor', opt: 'Takes OPT / CPT', no: 'No sponsorship'};
+  const VS_TAG = {sponsors: 'Sponsors visas', uk: 'UK licensed sponsor', nl: 'Dutch recognised sponsor', us: 'Has sponsored H-1B', ca: 'Positive LMIA employer', ie: 'Issued Irish work permits', opt: 'Takes OPT / CPT', no: 'No sponsorship'};
   (j.vs || []).forEach(v => { if (VS_TAG[v] && !(v === 'sponsors' && j.pk.includes('Visa sponsorship'))) out.push(`<span class="tag${v === 'no' ? '' : ' perk'}">${VS_TAG[v]}</span>`); });
   if (j.lg === 'suspicious') out.push('<span class="tag warn">Suspicious</span>');
   else if (j.lg === 'caution') out.push('<span class="tag warn soft">Check first</span>');

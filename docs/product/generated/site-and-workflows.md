@@ -16,6 +16,7 @@
 - `extension.yml`: extension: push, workflow_dispatch
 - `mobile.yml`: mobile: workflow_dispatch
 - `pages.yml`: pages: push, workflow_dispatch
+- `registers.yml`: registers: schedule 17 3 * * 1, workflow_dispatch
 - `scan.yml`: scan: schedule 23 * * * *, workflow_dispatch
 - `security.yml`: security: schedule 41 2 * * *, push, pull_request
 - `tests.yml`: tests: push, pull_request

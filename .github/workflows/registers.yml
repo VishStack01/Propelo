@@ -1,0 +1,53 @@
+name: registers
+
+# Weekly: download the public lists of employers that have sponsored work visas in the United States (Department of
+# Labor LCA data), Canada (positive LMIA employers) and Ireland (employment permits issued to companies), and keep
+# them next to the feed as release assets. The scan picks them up on its next run. These are large spreadsheets, so
+# they are read here rather than in every scan. Each list fails closed: a list that can't be read keeps its old file.
+
+on:
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
+    inputs:
+      only:
+        description: "Comma-separated lists to refresh (us,ca,ie); empty for all"
+        type: string
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: registers
+  cancel-in-progress: false
+
+jobs:
+  registers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: pip install -e . openpyxl
+
+      - name: Download and read the lists
+        run: |
+          mkdir -p registers
+          careeros registers --out registers --only "${{ inputs.only }}" 2>&1 | tee registers/registers.log
+          for f in registers/*.csv; do [ -f "$f" ] && { echo "== $f: $(wc -l < "$f") lines"; head -6 "$f"; }; done || true
+
+      - name: Publish next to the feed
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          files=$(ls registers/*.csv 2>/dev/null || true)
+          if [ -z "$files" ]; then echo "::warning::No list was refreshed"; exit 0; fi
+          gh release view feed-latest >/dev/null 2>&1 || gh release create feed-latest --prerelease --title "Job feed (latest)" --notes "Open roles from company career pages, replaced by every scan. See docs/feed.md."
+          gh release upload feed-latest $files registers/registers.log --clobber
+          echo "Refreshed: $files" >> "$GITHUB_STEP_SUMMARY"

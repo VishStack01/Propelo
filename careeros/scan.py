@@ -420,12 +420,13 @@ def run(boards_path: str | Path, out_dir: str | Path, workers: int = 16, detail_
     # words; for UK roles also the Home Office sponsor register and the Skilled Worker salary floors).
     register = sponsors.UkRegister.from_csv(out_dir / "uk-sponsors.csv")
     nl_register = sponsors.NlRegister.from_csv(out_dir / "nl-sponsors.csv")
+    counts = sponsors.load_count_registers(out_dir)  # US, Canada, Ireland: employers that have sponsored (registers.py)
     today = datetime.now(timezone.utc).date()
     for r in unique:
         first = history.first_seen(r["company"], r["title"], r["url"])
         r["facts"]["firstSeen"] = first
         r["facts"]["daysOpen"] = days_open(r.get("postedAt"), first, today)
-        v = sponsors.visa_facts(r["company"], r.get("location") or "", r.get("text") or r.get("summary") or "", r.get("salary") or "", register, nl_register)
+        v = sponsors.visa_facts(r["company"], r.get("location") or "", r.get("text") or r.get("summary") or "", r.get("salary") or "", register, nl_register, counts)
         if v:
             r["facts"]["visa"] = v
     with gzip.open(out_dir / "india.jsonl.gz", "wt", encoding="utf-8") as f, \
@@ -452,6 +453,9 @@ def run(boards_path: str | Path, out_dir: str | Path, workers: int = 16, detail_
                  "nlRoles": sum(1 for r in unique if "nlRegister" in (r["facts"].get("visa") or {})),
                  "nlOnRegister": sum(1 for r in unique if ((r["facts"].get("visa") or {}).get("nlRegister") or {}).get("listed")),
                  "nlRegisterSize": len(nl_register),
+                 "usSponsors": len(counts["usLca"]), "usMatched": sum(1 for r in unique if (r["facts"].get("visa") or {}).get("usLca")),
+                 "caSponsors": len(counts["caLmia"]), "caMatched": sum(1 for r in unique if (r["facts"].get("visa") or {}).get("caLmia")),
+                 "ieSponsors": len(counts["iePermits"]), "ieMatched": sum(1 for r in unique if (r["facts"].get("visa") or {}).get("iePermits")),
                  "optYes": sum(1 for r in unique if (r["facts"].get("visa") or {}).get("opt") == "yes"),
                  "optNo": sum(1 for r in unique if (r["facts"].get("visa") or {}).get("opt") == "no"),
                  "eVerify": sum(1 for r in unique if (r["facts"].get("visa") or {}).get("eVerify")),

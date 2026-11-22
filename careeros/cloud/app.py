@@ -394,8 +394,18 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
                      f'<span class="usd">${pl["priceUsd"] if pl["priceInr"] else "0"}{per}</span>')
             items = "".join(f"<li>{html_escape(f)}</li>" for f in pl["features"])
             cls = "btn" if pl["id"] != "free" else "btn light"
+            # A paid card goes straight to checkout: create the account, confirm the email, and the payment page opens.
+            buy = pl["id"] != "free" and cfg.billing_enabled
+            go = f'/signup?next=%2Fapp%3Fbuy%3D{pl["id"]}' if buy else "/signup"
+            label = f'Get {html_escape(pl["name"])}' if buy else "Start free"
             cards.append(f'<article class="plan {pl["id"]}"><h2>{html_escape(pl["name"])}</h2>'
-                         f'<div class="price">{price}</div><ul>{items}</ul><a class="{cls}" href="/signup">Start free</a></article>')
+                         f'<div class="price">{price}</div><ul>{items}</ul><a class="{cls}" href="{go}">{label}</a></article>')
+        offer = passes.offer(cfg)
+        if offer and offer["currencies"]:
+            cards.append('<article class="plan pass"><h2>Pro pass</h2>'
+                         f'<div class="price"><span class="inr">₹{offer["priceInr"]:,}<small> once</small></span><span class="usd">${offer["priceUsd"]}<small> once</small></span></div>'
+                         f'<ul><li>Everything in Pro for {offer["days"]} days</li><li>Pay once by UPI or card</li><li>Nothing renews, nothing to cancel</li></ul>'
+                         '<a class="btn" href="/signup?next=%2Fapp%3Fbuy%3Dpass">Get the pass</a></article>')
         extras = ""
         for ad in plans.addons(cfg):
             if ad["priceInr"]:

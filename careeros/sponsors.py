@@ -250,6 +250,33 @@ def fetch_nl_register(dest: str | Path, timeout: int = 90) -> int:
     return len(rows)
 
 
+# ---------------------------------------------------------------- lists of employers that have sponsored (US, Canada, Ireland)
+
+class CountRegister(Register):
+    """Employers on a government list of visa approvals, with how many the list shows (see registers.py). Unlike a
+    licence register, a missing name proves nothing, so only matches are ever reported."""
+
+    @classmethod
+    def from_csv(cls, path: str | Path) -> "CountRegister":
+        reg, p = cls(), Path(path)
+        if p.exists():
+            for r in csv.DictReader(io.StringIO(p.read_bytes().decode("utf-8-sig", errors="replace"))):
+                try:
+                    n = int(r.get("n") or 0)
+                except ValueError:
+                    n = 0
+                reg.add((r.get("name") or "").strip(), n=n)
+        return reg
+
+
+# (country code, key in a role's visa facts, file next to the feed)
+COUNT_REGISTERS = (("US", "usLca", "us-sponsors.csv"), ("CA", "caLmia", "ca-sponsors.csv"), ("IE", "iePermits", "ie-sponsors.csv"))
+
+
+def load_count_registers(feed_dir: str | Path) -> dict:
+    return {key: CountRegister.from_csv(Path(feed_dir) / fname) for _, key, fname in COUNT_REGISTERS}
+
+
 # ---------------------------------------------------------------- UK salary floors
 
 # Skilled Worker minimums from 22 July 2025 (GOV.UK, "Skilled Worker visa: your job"). Check them
@@ -284,7 +311,7 @@ def uk_salary_line(text: str) -> dict:
 # ---------------------------------------------------------------- one record
 
 def visa_facts(company: str, location: str, text: str, salary_text: str = "", register: UkRegister | None = None,
-               nl_register: "NlRegister | None" = None) -> dict:
+               nl_register: "NlRegister | None" = None, counts: dict | None = None) -> dict:
     """Everything above for one role. Each country's checks run only for roles located there."""
     from . import countries
     out: dict = {}
@@ -294,6 +321,12 @@ def visa_facts(company: str, location: str, text: str, salary_text: str = "", re
     where = countries.resolve(location or "")
     if "US" in where:
         out.update(student_work(text))
+    for code, key, _ in COUNT_REGISTERS:
+        reg = (counts or {}).get(key)
+        if code in where and reg is not None and len(reg):
+            hit = reg.match(company)
+            if hit:  # a match only: not being on these lists proves nothing
+                out[key] = {"listed": True, "name": hit["name"], "n": hit.get("n", 0), "match": hit["match"]}
     if "NL" in where and nl_register is not None and len(nl_register):
         hit = nl_register.match(company)
         out["nlRegister"] = {"listed": bool(hit), **({"name": hit["name"], "match": hit["match"]} if hit else {})}
@@ -328,6 +361,12 @@ def label(v: dict) -> str:
     reg = v.get("ukRegister")
     if reg is not None:
         parts.append("on the UK sponsor register" if reg.get("listed") else "not on the UK sponsor register")
+    if v.get("usLca"):
+        parts.append(f"has sponsored H-1B workers ({v['usLca'].get('n', 0):,} certified applications in the latest US Department of Labor data)")
+    if v.get("caLmia"):
+        parts.append(f"was approved to hire foreign workers in Canada in the last year ({v['caLmia'].get('n', 0):,} positions with a positive LMIA)")
+    if v.get("iePermits"):
+        parts.append(f"was issued {v['iePermits'].get('n', 0):,} Irish employment permits this year")
     nl = v.get("nlRegister")
     if nl is not None:
         parts.append("a recognised sponsor in the Netherlands" if nl.get("listed") else "not on the Dutch register of recognised sponsors")

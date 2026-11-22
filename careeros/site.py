@@ -73,6 +73,9 @@ def _visa_codes(v: dict) -> list[str]:
         out.append("uk")
     if (v.get("nlRegister") or {}).get("listed"):
         out.append("nl")
+    for key, code in (("usLca", "us"), ("caLmia", "ca"), ("iePermits", "ie")):
+        if v.get(key):
+            out.append(code)
     if v.get("opt") == "yes":
         out.append("opt")
     if v.get("eVerify"):

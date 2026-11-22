@@ -1629,6 +1629,8 @@ function visaPill(j){
   if (reg && reg.listed === false) return '<span class="pill due" title="This employer is not on the Home Office register of licensed sponsors, so it cannot sponsor a Skilled Worker visa.">Not a UK sponsor</span>';
   if (v.status === 'offers') return `<span class="pill strong" title="The posting says:${esc(quote)}${reg && reg.listed ? ' On the UK sponsor register as ' + esc(reg.name) + '.' : ''}">Sponsors visas</span>`;
   if (v.opt === 'yes') return `<span class="pill strong" title="The posting says: &quot;${esc(v.optQuote || '')}&quot;${v.eVerify ? ' It also says the employer uses E-Verify, which the STEM OPT extension needs.' : ''}">Takes OPT / CPT</span>`;
+  const rec = v.usLca ? ['Has sponsored H-1B', `${Number(v.usLca.n || 0).toLocaleString('en-IN')} certified H-1B applications in the latest US Department of Labor data, as ${v.usLca.name}.`] : v.caLmia ? ['Positive LMIA employer', `Approved to hire foreign workers in Canada in the last year (${Number(v.caLmia.n || 0).toLocaleString('en-IN')} positions), as ${v.caLmia.name}.`] : v.iePermits ? ['Issued Irish work permits', `${Number(v.iePermits.n || 0).toLocaleString('en-IN')} employment permits issued this year, as ${v.iePermits.name}.`] : null;
+  if (rec) return `<span class="pill" title="${esc(rec[1])} That is the employer's record, not a promise for this role: ask before applying.">${rec[0]}</span>`;
   if (nl && nl.listed) return `<span class="pill" title="On the Dutch immigration service's public register of recognised sponsors as ${esc(nl.name)}. The posting doesn't say whether this role is sponsored: ask before applying.">Dutch recognised sponsor</span>`;
   if (v.eVerify) return '<span class="pill" title="The posting says the employer uses E-Verify, which the STEM OPT extension needs. It does not say whether it sponsors visas.">Uses E-Verify</span>';
   if (reg && reg.listed) return `<span class="pill" title="On the Home Office register of licensed sponsors as ${esc(reg.name)}. The posting doesn't say whether this role is sponsored: ask before applying.">UK licensed sponsor</span>`;
@@ -5113,7 +5115,29 @@ async function bootStandalone(){
   state.db = db;
   subscribe(db, () => {});
   render();
-  if (state.status === 'cloud'){ loadLogos(); loadGuarantee(); partnerChrome(); }
+  if (state.status === 'cloud'){ loadLogos(); loadGuarantee(); partnerChrome(); buyIntent(); }
+}
+function buyIntent(){
+  // Arrived from a "Get Pro" button (?buy=pro, ultra or pass): go straight to the provider's secure checkout, once.
+  // The plan itself only starts when the provider confirms the payment.
+  let want = '';
+  try {
+    const q = new URLSearchParams(location.search); want = q.get('buy') || '';
+    if (want){ q.delete('buy'); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash); }
+  } catch (e) { want = ''; }
+  if (!['pro', 'ultra', 'pass'].includes(want) || buyIntent.done) return;
+  buyIntent.done = true;
+  const stay = msg => { location.hash = '#setup'; toast(msg); };
+  api('api/billing').then(r => r.json()).then(b => {
+    state.billing = b;
+    const ps = obj(b.pass), cs = want === 'pass' ? arr(ps.currencies) : arr(b.currencies);
+    const cur = cs.includes(guessCur()) ? guessCur() : cs[0];
+    if (!cur || (want === 'pass' ? !(ps.onSale && !ps.blocked) : !b.checkoutEnabled)) return stay('Paid plans open soon. You are on the Free plan meanwhile.');
+    if (want !== 'pass' && b.plan === want) return;
+    toast('Taking you to secure checkout…');
+    cloudPost(want === 'pass' ? 'api/billing/pass' : 'api/billing/checkout', want === 'pass' ? {currency: cur} : {plan: want, currency: cur})
+      .then(d => { location.href = d.url; }).catch(d => stay(d.error || 'Could not start the payment. Try again from Settings.'));
+  }).catch(() => {});
 }
 function partnerChrome(){
   // A student of a consultancy sees who provides their account; a consultancy or agency admin gets a link to their business page.

@@ -2,6 +2,12 @@
 
 All notable changes to CareerOS. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [semantic versioning](https://semver.org/).
 
+## [2.12.0] - 2026-11-22
+
+### Added
+- **Sponsor lists for the United States, Canada and Ireland.** A weekly workflow (`registers.yml`, `careeros registers`) reads the US Department of Labor's H-1B labor condition data, Canada's list of employers with a positive LMIA and Ireland's employment permits issued to companies. Roles in those countries show when the employer has sponsored, the job board can filter on it, the visa-jobs pages use it, and the free sponsor check now covers five countries. A missing name is never reported as "cannot sponsor": only the UK and Dutch licence registers can say that. Australia, New Zealand, Singapore, Sweden and Germany publish no list that can be searched in bulk, so for those the posting's own words are used.
+- **Straight to checkout.** "Get Pro" and "Get Ultra" on the site and on `/pricing` now lead through sign-up and email confirmation directly to the payment page (`/app?buy=pro`). Cards, UPI, Apple Pay and Google Pay are handled on Razorpay's and Dodo's own pages, as before. When the Pro pass is on, `/pricing` shows it too.
+
 ## [2.11.0] - 2026-11-22
 
 Built to bring people in without ad spend and to make each channel measurable.

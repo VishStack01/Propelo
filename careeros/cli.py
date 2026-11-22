@@ -428,6 +428,10 @@ def main(argv: list[str] | None = None) -> None:
     sp = sub.add_parser("uk-sponsors", help="Download the Home Office register of licensed sponsors (Skilled Worker)")
     sp.add_argument("--out", default="feed/uk-sponsors.csv")
     sp.set_defaults(fn=cmd_uk_sponsors)
+    sp = sub.add_parser("registers", help="Download the US, Canadian and Irish lists of employers that have sponsored (weekly)")
+    sp.add_argument("--out", default="feed")
+    sp.add_argument("--only", default="", help="Comma-separated: us,ca,ie")
+    sp.set_defaults(fn=cmd_registers)
     sp = sub.add_parser("nl-sponsors", help="Download the Dutch (IND) public register of recognised sponsors for work")
     sp.add_argument("--out", default="feed/nl-sponsors.csv")
     sp.set_defaults(fn=cmd_nl_sponsors)
@@ -982,6 +986,12 @@ def cmd_sample_roles(a) -> int:
               f"{sum(1 for r in rows if r['sponsorship'] == 'says it sponsors')}; on the UK register: {sum(1 for r in rows if r['uk_sponsor_register'] == 'listed')}")
         print("Most roles: " + ", ".join(f"{c} ({n})" for c, n in top))
     return 0
+
+
+def cmd_registers(a) -> int:
+    from . import registers
+    result = registers.run(a.out, [x.strip() for x in a.only.split(",") if x.strip()] or None)
+    return 0 if any(isinstance(v, int) for v in result.values()) else 1
 
 
 def cmd_nl_sponsors(a) -> int:
