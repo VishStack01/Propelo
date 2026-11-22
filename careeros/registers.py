@@ -85,7 +85,7 @@ def rows_of(path: Path) -> Iterator[list[str]]:
 
 
 def tally(rows: Iterator[list[str]], name_keys: tuple[str, ...], count_keys: tuple[str, ...] = (),
-          keep: Callable[[dict], bool] | None = None, need: tuple[str, ...] = ()) -> dict[str, int]:
+          keep: Callable[[dict], bool] | None = None, need: tuple[str, ...] = (), log=None) -> dict[str, int]:
     """{employer: total} from rows with a header somewhere near the top. The header is the first row with a cell
     matching one of `name_keys`; `count_keys` names a column to add up (else each row counts one); `keep` filters
     rows given as {header: value}; `need` lists other headers `keep` uses."""
@@ -100,6 +100,9 @@ def tally(rows: Iterator[list[str]], name_keys: tuple[str, ...], count_keys: tup
                 cols = {c: i for i, c in enumerate(low) if c}
                 name_i = hit
                 count_i = next((i for i, c in enumerate(low) if any(re.search(k, c) for k in count_keys)), None) if count_keys else None
+                if log:
+                    log(f"    header (row {n + 1}): {[c for c in row if c][:20]}; employer column {name_i + 1}, "
+                        f"count column {count_i + 1 if count_i is not None else 'none (each row counts one)'}")
             elif n > 40:
                 raise OSError("No header row with an employer column in the first 40 rows")
             continue
@@ -180,7 +183,7 @@ def fetch_ca(dest: str | Path, quarters: int = 4, log=print) -> int:
         for i, url in enumerate(links):
             log(f"  reading {url}")
             path = _download(url, Path(tmp) / f"lmia{i}")
-            for k, v in tally(rows_of(path), (r"^employer$", r"employer"), (r"approved positions", r"positions")).items():
+            for k, v in tally(rows_of(path), (r"^employer$", r"employer"), (r"approved positions", r"positions"), log=log if i == 0 else None).items():
                 counts[k] = counts.get(k, 0) + v
     return _write(Path(dest), counts, "ca")
 
@@ -214,7 +217,7 @@ def fetch_ie(dest: str | Path, year: int | None = None, log=print) -> int:
                 log(f"  reading {link}")
                 with tempfile.TemporaryDirectory(prefix="propelo-ie-") as tmp:
                     path = _download(link, Path(tmp) / "ie")
-                    counts = tally(rows_of(path), (r"employer", r"company", r"^name$"), (r"total", r"issued", r"permits", r"^" + str(y) + r"$"))
+                    counts = tally(rows_of(path), (r"employer", r"company", r"^name$"), (r"total", r"issued", r"permits", r"^" + str(y) + r"$"), log=log)
                 return _write(Path(dest), counts, "ie")
             except (OSError, ValueError) as e:
                 last = e
