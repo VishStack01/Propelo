@@ -20,17 +20,21 @@ OUTBOX: list[dict] = []  # development and tests read sent mail here
 
 
 class Mailer:
-    def __init__(self, smtp_url: str, mail_from: str):
+    def __init__(self, smtp_url: str, mail_from: str, reply_to: str = ""):
         self.url, self.mail_from = smtp_url or "console://", mail_from
+        # Replies go to the support inbox: the sending address is often one nobody reads.
+        self.reply_to = reply_to.strip() if "@" in reply_to and reply_to.strip() not in mail_from else ""
 
     def send(self, to: str, subject: str, text: str) -> None:
         msg = EmailMessage()
         msg["From"], msg["To"], msg["Subject"] = self.mail_from, to, subject
+        if self.reply_to:
+            msg["Reply-To"] = self.reply_to
         msg["Message-ID"] = make_msgid(domain=(self.mail_from.rsplit("@", 1)[-1].strip("> ") or "localhost"))
         msg.set_content(text)
         u = urlparse(self.url)
         if u.scheme == "console":
-            OUTBOX.append({"to": to, "subject": subject, "text": text})
+            OUTBOX.append({"to": to, "subject": subject, "text": text, "replyTo": msg["Reply-To"] or ""})
             log.warning("console mail (development only, not sent) to=%s subject=%r\n%s", to, subject, text)
             return
         ctx = ssl.create_default_context()

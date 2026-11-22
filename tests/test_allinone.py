@@ -176,3 +176,13 @@ def test_the_free_blueprint_is_one_free_service():
 def test_the_image_listens_on_the_port_the_host_names():
     text = (ROOT / "Dockerfile").read_text()
     assert "--port ${PORT:-8000}" in text and "exec careeros cloud serve" in text
+
+
+def test_replies_go_to_the_support_inbox():
+    from careeros.cloud.mailer import OUTBOX, Mailer
+    OUTBOX.clear()
+    Mailer("console://", "Propelo <hello@propelo.org>", "help@example.com").send("a@example.com", "Hi", "Body")
+    Mailer("console://", "Propelo <hello@propelo.org>").send("a@example.com", "Hi", "Body")
+    Mailer("console://", "Propelo <hello@propelo.org>", "hello@propelo.org").send("a@example.com", "Hi", "Body")   # same inbox: no header
+    Mailer("console://", "Propelo <hello@propelo.org>", "not an address").send("a@example.com", "Hi", "Body")
+    assert [m["replyTo"] for m in OUTBOX] == ["help@example.com", "", "", ""]

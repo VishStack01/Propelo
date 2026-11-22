@@ -153,7 +153,7 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
     if not cfg.is_production:
         db.migrate(log=log.info)
     storage = make_storage(cfg, db)
-    mailer = Mailer(cfg.smtp_url, cfg.mail_from)
+    mailer = Mailer(cfg.smtp_url, cfg.mail_from, cfg.support_email)
     _init_error_reporting(cfg)
     app = FastAPI(title="Propelo Cloud", version=__version__, docs_url=None, redoc_url=None, openapi_url=None)
     app.state.cfg, app.state.db, app.state.storage, app.state.mailer = cfg, db, storage, mailer

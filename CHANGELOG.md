@@ -8,6 +8,7 @@ All notable changes to CareerOS. The format follows [Keep a Changelog](https://k
 - **One-server mode for a free or single-instance host (`ALL_IN_ONE=on`).** `careeros cloud serve` then brings the database up to date, runs the worker as a child process beside the web app, starts it again if it stops, and stops it when the web app stops. Measured on the live feed: 97,547 roles taken in, about 80 MB for the web app and 90 MB for the worker.
 - **Uploads in the database (`STORAGE=db`).** Resumes are kept in a `blobs` table instead of on a disk, for hosts where a service has no disk of its own. The file and its listing are saved in one transaction.
 - **`render.free.yaml`:** a Render blueprint with one free web service and a free database. Its header lists the limits: the service sleeps after 15 minutes without visitors, the free database is deleted after 30 days unless upgraded, and email needs the provider's alternative port.
+- Emails carry `Reply-To: SUPPORT_EMAIL`, so replies reach the support inbox even when the sending address is one nobody reads.
 - On Render the app uses the address Render gives the service until `PUBLIC_URL` names the real domain, and the image listens on the port the host names in `PORT`.
 
 ### Fixed

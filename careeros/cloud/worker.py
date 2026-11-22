@@ -40,7 +40,7 @@ log = logging.getLogger("careeros.worker")
 class Worker:
     def __init__(self, cfg: Config, db: Database, mailer: Mailer | None = None, worker_id: str | None = None):
         self.cfg, self.db = cfg, db
-        self.mailer = mailer or Mailer(cfg.smtp_url, cfg.mail_from)
+        self.mailer = mailer or Mailer(cfg.smtp_url, cfg.mail_from, cfg.support_email)
         self.id = worker_id or f"{socket.gethostname()}:{os.getpid()}"
 
     # ------------------------------------------------------------ scheduling
