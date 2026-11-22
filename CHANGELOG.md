@@ -2,6 +2,13 @@
 
 All notable changes to CareerOS. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [semantic versioning](https://semver.org/).
 
+## [2.12.1] - 2026-11-22
+
+### Fixed
+- **The deep sweep was never reached.** Discovery took due companies in list order, so curated companies that never map used up every run and the 21,000 inventory boards waited behind them. A quarter of each run now goes to the curated and radar lists and the rest to the sweep (one request per board, 3,000 companies a run), taken in turn.
+- Irish permits list counted January instead of the year's total.
+- Site deployments wait for the uploaded artifact and try once more; the `pages` workflow builds from the release feed instead of the retired `feed` branch.
+
 ## [2.12.0] - 2026-11-22
 
 ### Added

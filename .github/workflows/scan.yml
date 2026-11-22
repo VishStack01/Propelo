@@ -115,15 +115,15 @@ jobs:
 
       - name: Discover job boards
         # New companies, boards that errored last scan, and unmapped companies
-        # every 14 days (swept boards every 21). At most 800 per run and 12 minutes,
-        # curated and radar companies first, so the first deep pass takes a day or
-        # two and stays gentle on each hiring system. Boards with roles in India or a
+        # every 14 days (swept boards every 21). At most 3,000 per run and 12 minutes:
+        # a quarter from the curated and radar lists, the rest from the deep sweep (one
+        # request per board), so a full pass of the sweep takes a day or two. Boards with roles in India or a
         # developed country are kept (discover.FOCUS), not only India.
         env:
           CAREEROS_SCAN_ONSITE: world
         run: |
           set -o pipefail
-          careeros discover --companies config/companies/companies.csv --extra feed/radar-companies.csv --extra feed/yc-companies.csv --extra feed/deep-companies.csv --cache feed/boards.json --refresh-days 14 --limit 800 --max-minutes 12 2>&1 | tee feed/discover.log
+          careeros discover --companies config/companies/companies.csv --extra feed/radar-companies.csv --extra feed/yc-companies.csv --extra feed/deep-companies.csv --cache feed/boards.json --refresh-days 14 --limit 3000 --max-minutes 12 2>&1 | tee feed/discover.log
 
       - name: Scan boards
         # On-site and hybrid roles in every country, for people searching outside India.

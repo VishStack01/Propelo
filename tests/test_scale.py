@@ -266,3 +266,13 @@ def test_pricing_page_goes_straight_to_checkout_when_payments_are_on(cloud):
     # The sign-up form carries that destination through the confirm link.
     r = c.post("/api/auth/signup", json={"name": "Asha", "email": "buyer@example.com", "password": "correct horse 42 staple", "next": "/app?buy=pro"})
     assert r.status_code == 202 and "next=%2Fapp%3Fbuy%3Dpro" in json.dumps(cloud.outbox[-1])
+
+
+def test_discovery_gives_the_deep_sweep_most_of_each_run():
+    from careeros import discover
+    rest = [{"name": f"curated {i}", "category": "ai-native"} for i in range(50)]
+    deep = [{"name": f"deep {i}", "category": "deep"} for i in range(500)]
+    got = discover.share_out(rest + deep, 40)
+    assert len(got) == 40 and sum(1 for c in got if c["category"] == "deep") == 30 and got[0]["category"] == "deep" and got[3]["category"] != "deep"
+    assert len(discover.share_out(rest + deep[:5], 40)) == 40  # few deep boards due: the curated lists take the room
+    assert [c["name"] for c in discover.share_out(rest[:2], 40)] == ["curated 0", "curated 1"]

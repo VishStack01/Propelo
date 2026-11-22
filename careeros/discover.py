@@ -256,6 +256,26 @@ def load_companies(path: str | Path) -> list[dict]:
     return rows
 
 
+def share_out(todo: list[dict], limit: int) -> list[dict]:
+    """Which due companies a run checks, and in what order. Deep-sweep boards need one request each and are where
+    new boards come from, but they sit at the end of the list: left to list order, the curated companies that never
+    map (own career sites) used up every run and the sweep was never reached. So a quarter of each run goes to the
+    curated and radar lists and the rest to the sweep, taken in turn so neither waits for the other."""
+    deep = [c for c in todo if c.get("category") == "deep"]
+    rest = [c for c in todo if c.get("category") != "deep"]
+    n_rest = min(len(rest), max(limit // 4, limit - len(deep)))
+    rest, deep = rest[:n_rest], deep[:limit - n_rest]
+    out: list[dict] = []
+    i = j = 0
+    while i < len(deep) or j < len(rest):
+        out += deep[i:i + 3]
+        i += 3
+        if j < len(rest):
+            out.append(rest[j])
+            j += 1
+    return out
+
+
 def run(companies_csv: str | Path, cache_path: str | Path, refresh_days: int = 14, workers: int = 32,
         limit: int | None = None, max_minutes: float | None = None, log=print, extra: list[str | Path] | None = None) -> dict:
     companies = load_companies(companies_csv)
@@ -290,7 +310,7 @@ def run(companies_csv: str | Path, cache_path: str | Path, refresh_days: int = 1
 
     todo = [c for c in companies if due(c)]
     if limit:
-        todo = todo[:limit]
+        todo = share_out(todo, limit)
     log(f"Discovering boards for {len(todo)} of {len(companies)} companies…")
     _deadline[0] = time.monotonic() + max_minutes * 60 if max_minutes else float("inf")
     skipped = 0
