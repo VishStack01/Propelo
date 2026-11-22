@@ -68,20 +68,21 @@ class Config:
     concierge_tax_rate: float = 0.0
     concierge_instalments: int = 3
     concierge_attribution_days: int = 180
-    # Money-back guarantees (see guarantee.py): an interview within GUARANTEE_DAYS on Pro or Ultra, and a job
+    # Money-back guarantees (see guarantee.py): GUARANTEE_MIN_INTERVIEWS interviews or a second round within GUARANTEE_DAYS on Pro or Ultra, and a job
     # within JOB_GUARANTEE_DAYS with Concierge, or the plan fees paid in that time are refunded.
     guarantee_enabled: bool = False
     guarantee_days: int = 45
     guarantee_min_apps: int = 25
     guarantee_min_weeks: int = 3
     guarantee_min_matches: int = 40
+    guarantee_min_interviews: int = 3
     guarantee_claim_days: int = 30
     job_guarantee_days: int = 180
     # Pro and Ultra members apply for the Interview Guarantee; once the team accepts them they pay its price once,
-    # and get it back if there's no interview in GUARANTEE_DAYS. The Job Guarantee has no upfront price: it is a
+    # and get it back if that doesn't happen in GUARANTEE_DAYS. The Job Guarantee has no upfront price: it is a
     # reviewed Concierge application, paid by the placement fee after joining (guarantee_job_inr is unused).
-    guarantee_interview_inr: int = 2999
-    guarantee_interview_usd_cents: int = 3400
+    guarantee_interview_inr: int = 4999
+    guarantee_interview_usd_cents: int = 5900
     guarantee_job_inr: int = 2999
     dodo_product_guarantee: str = ""   # a one-time Dodo product priced at the Interview Guarantee's dollar price
     security_email: str = ""  # shown in /.well-known/security.txt; falls back to SUPPORT_EMAIL
@@ -153,10 +154,11 @@ class Config:
             guarantee_min_apps=_int("GUARANTEE_MIN_APPLICATIONS", 25),
             guarantee_min_weeks=_int("GUARANTEE_MIN_WEEKS", 3),
             guarantee_min_matches=_int("GUARANTEE_MIN_MATCHES", 40),
+            guarantee_min_interviews=_int("GUARANTEE_MIN_INTERVIEWS", 3),
             guarantee_claim_days=_int("GUARANTEE_CLAIM_DAYS", 30),
             job_guarantee_days=_int("JOB_GUARANTEE_DAYS", 180),
-            guarantee_interview_inr=_int("GUARANTEE_INTERVIEW_PRICE_INR", 2999),
-            guarantee_interview_usd_cents=_int("GUARANTEE_INTERVIEW_PRICE_USD_CENTS", 3400),
+            guarantee_interview_inr=_int("GUARANTEE_INTERVIEW_PRICE_INR", 4999),
+            guarantee_interview_usd_cents=_int("GUARANTEE_INTERVIEW_PRICE_USD_CENTS", 5900),
             guarantee_job_inr=_int("JOB_GUARANTEE_PRICE_INR", 2999),
             dodo_product_guarantee=e("DODO_PRODUCT_GUARANTEE", "").strip(),
             security_email=e("SECURITY_EMAIL", "").strip(),
@@ -243,7 +245,7 @@ class Config:
         if self.concierge_enabled and not (0 < self.concierge_rate_high <= self.concierge_rate_low <= 8):
             problems.append("CONCIERGE_RATE_LOW and CONCIERGE_RATE_HIGH must be between 0 and 8, with the rate above the band no higher than below it.")
         if self.guarantee_enabled and not (30 <= self.guarantee_days <= 180 and 1 <= self.guarantee_min_weeks <= self.guarantee_days // 7
-                                           and self.guarantee_min_apps >= 1 and 90 <= self.job_guarantee_days <= 365):
+                                           and self.guarantee_min_apps >= 1 and 1 <= self.guarantee_min_interviews <= 10 and 90 <= self.job_guarantee_days <= 365):
             problems.append("Guarantee settings look wrong: GUARANTEE_DAYS 30 to 180, GUARANTEE_MIN_WEEKS within it, JOB_GUARANTEE_DAYS 90 to 365.")
         if self.concierge_enabled and any(cc in ("GB", "UK") for cc in self.concierge_countries):
             problems.append("Concierge can't run in the UK: charging job seekers a fee for finding work is prohibited there.")

@@ -33,7 +33,7 @@ sponsorship and, for UK roles, whether the employer is on the Home Office sponso
 
 | customer | what they buy | status |
 | --- | --- | --- |
-| Job seekers in India (freshers, early-career) | Free; Pro ₹499 / Ultra ₹1,199 a month; Interview Guarantee ₹2,999; Job Guarantee (8% of salary after joining) | Built |
+| Job seekers in India (freshers, early-career) | Free; Pro ₹499 / Ultra ₹1,199 a month; Interview Guarantee ₹4,999; Job Guarantee (8% of salary after joining) | Built |
 | Job seekers abroad (incl. Indian graduates on post-study visas) | Same plans in dollars ($22.50 / $48.50) | Built |
 | Study-abroad consultancies and college placement cells | Branded portal with student seats: Starter ₹14,999 (25), Growth ₹29,999 (50), Plus ₹44,999 (100) per 30 days | Built in 2.8; no customers yet |
 | Recruiting agencies | Filtered roles feed (CSV/JSON, key) ₹4,999 / $99 per 30 days | Built in 2.8; no customers yet |
@@ -49,7 +49,7 @@ decision, nothing invented, nothing submitted below the person's apply line.
 
 1. Visitor → site → sign up → confirm email → resume and settings → first matches → apply (kit, extension or agent).
 2. Visitor → pricing → checkout (Razorpay / Dodo) → plan on → faster matching and more AI.
-3. Member → Interview Guarantee application → staff review → pay → 45 days → interview or refund.
+3. Member → Interview Guarantee application → staff review → pay → 45 days → 3 interviews or a second round, or refund.
 4. Member → Job Guarantee request → staff partner proposes roles → member approves → placed → fee instalments.
 5. Business → `/business` → free pilot request or buy → staff approves / payment → invite students or set feed.
 6. Student → consultancy invite link → sign up → consent → seat with Pro.

@@ -72,7 +72,7 @@ def addons(cfg: Config) -> list[dict]:
         return []
     out = [{"id": "interview", "name": "Interview Guarantee", "priceInr": cfg.guarantee_interview_inr, "priceUsd": usd(cfg.guarantee_interview_usd_cents),
             "for": ["pro", "ultra"], "days": cfg.guarantee_days, "when": f"once, for {cfg.guarantee_days} days, after we accept you",
-            "line": f"Apply, and once we accept you, pay once. An interview within {cfg.guarantee_days} days, or the full price back."}]
+            "line": f"Apply, and once we accept you, pay once. {cfg.guarantee_min_interviews} interviews or a second round within {cfg.guarantee_days} days, or the full price back."}]
     if cfg.concierge_enabled:
         out.append({"id": "job", "name": "Job Guarantee", "priceInr": 0, "priceUsd": None, "for": ["pro", "ultra"], "days": None,
                     "when": "nothing upfront",

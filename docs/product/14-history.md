@@ -2,6 +2,7 @@
 
 | version | date | product version | change | why |
 | --- | --- | --- | --- | --- |
+| 1.1 | 22 Nov 2026 | 2.9.1 | Interview Guarantee now ₹4,999 for 3 interviews or a second round; simpler site menu | Founder's decision |
 | 1.0 | 22 Nov 2026 | 2.9.0 | Repository created: 01-15, register (44 items), QA log (35 tests), generated routes/database/workflows, sync test | Launch audit requested by the founder |
 
 ## Decisions recorded

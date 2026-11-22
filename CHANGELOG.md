@@ -2,6 +2,12 @@
 
 All notable changes to CareerOS. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [semantic versioning](https://semver.org/).
 
+## [2.9.1] - 2026-11-22
+
+### Changed
+- **Interview Guarantee: ₹4,999 (or $59) and a bigger promise.** Shortlisted for at least 3 interviews, or a second round for one role, within 45 days, or the full price back. `GUARANTEE_MIN_INTERVIEWS` (default 3) sets the number. Guarantees agreed under the earlier terms keep their one-interview promise and price. Terms version 2026-11-22.
+- **Home page menu:** six links (Product, Job board, Guarantees, Pricing, For consultancies, Docs) with Sign in and Start free, the same on the docs and scam check pages. The rest stay in the footer.
+
 ## [2.9.0] - 2026-11-22
 
 ### Added

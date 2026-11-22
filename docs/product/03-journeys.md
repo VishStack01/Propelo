@@ -44,10 +44,10 @@ flowchart LR
 ```mermaid
 flowchart LR
   A[Guarantees tab: check eligibility] --> B[Apply] --> C[Staff review in /staff]
-  C -->|approved| D[Pay ₹2,999] --> E[45-day window, applications tracked]
+  C -->|approved| D[Pay ₹4,999] --> E[45-day window, applications tracked]
   C -->|declined| F[Reason shown, no charge]
-  E -->|interview logged| G[Done]
-  E -->|no interview, rules met| H[Claim refund] --> I[Staff checks] --> J[Refund]
+  E -->|3 interviews or a second round| G[Done]
+  E -->|short of that, rules met| H[Claim refund] --> I[Staff checks] --> J[Refund]
 ```
 
 ## J4 · Job Guarantee (Implemented, API tests; terms need legal review)

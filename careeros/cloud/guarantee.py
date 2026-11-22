@@ -1,4 +1,5 @@
-"""The Interview Guarantee: applied for, reviewed by the team, then paid for, with the price back if there's no interview.
+"""The Interview Guarantee: applied for, reviewed by the team, then paid for, with the price back if the member isn't
+shortlisted for GUARANTEE_MIN_INTERVIEWS interviews (3) or a second round with one employer.
 
 Who and how
   - Only Pro and Ultra members can apply. Nobody is enrolled directly: the member applies (target roles, a note,
@@ -12,7 +13,10 @@ Who and how
   - An interview is a live conversation (phone, video or in person) with someone at the employer or its
     recruiter about a role you applied to, recruiter screens included. Online tests and recorded one-way videos
     don't count. Interviews from any source count, and an invitation you declined counts as an interview.
-  - No interview by the end, with the activity done: claim within GUARANTEE_CLAIM_DAYS. A person checks it and
+  - The guarantee is met by interviews for GUARANTEE_MIN_INTERVIEWS different roles, or by a second round for
+    any one role (a further live interview after the first, or an offer). Guarantees agreed under terms before
+    2026-11-22 keep their promise of one interview.
+  - Short of that by the end, with the activity done: claim within GUARANTEE_CLAIM_DAYS. A person checks it and
     the price paid is refunded to the original payment method. Once per account.
 
 The Job Guarantee has no upfront price and isn't handled here: it is a Concierge application (concierge.py)
@@ -32,7 +36,8 @@ from . import plans, repo
 from .config import Config
 from .db import Conn, now_iso
 
-TERMS_VERSION = "2026-11-16b"
+TERMS_VERSION = "2026-11-22"
+THREE_INTERVIEW_TERMS = "2026-11-22"  # terms from this version on promise several interviews or a second round
 KINDS = ("interview",)
 PLANS_WITH_GUARANTEE = ("pro", "ultra")
 INTERVIEW_STAGES = ("screen", "interview", "offer")
@@ -131,7 +136,7 @@ def eligibility(c: Conn, cfg: Config, user: dict, kind: str = "interview", now: 
 def progress(c: Conn, cfg: Config, g: dict, now: datetime | None = None) -> dict:
     now = now or datetime.now(timezone.utc)
     start, end = _dt(g["starts_at"]), _dt(g["ends_at"])
-    apps, weeks, unsafe, interviews = 0, set(), 0, []
+    apps, weeks, unsafe, interviews, second = 0, set(), 0, [], None
     for j in _jobs(c, g["user_id"]):
         at = _dt(j.get("appliedAt"))
         if at and start <= at <= end:
@@ -143,10 +148,32 @@ def progress(c: Conn, cfg: Config, g: dict, now: datetime | None = None) -> dict
                 weeks.add(f"{iso[0]}-{iso[1]}")
         hit = [_dt(j.get(k)) for k in ("screenAt", "interviewStartedAt", "offerAt")]
         if any(h and start <= h for h in hit) or (j.get("stage") in INTERVIEW_STAGES and at and at >= start):
-            interviews.append({"company": str(j.get("company") or "")[:80], "title": str(j.get("title") or "")[:120]})
+            role = {"company": str(j.get("company") or "")[:80], "title": str(j.get("title") or "")[:120]}
+            interviews.append(role)
+            if not second and _second_round(j, start):
+                second = role
     return {"applications": apps, "needApplications": cfg.guarantee_min_apps, "weeks": len(weeks), "needWeeks": cfg.guarantee_min_weeks,
             "unsafeSkipped": unsafe, "interviews": len(interviews), "interviewRoles": interviews[:5],
+            "needInterviews": need_interviews(cfg, g), "secondRound": bool(second), "secondRoundRole": second,
             "daysLeft": max(0, math.ceil(((end or now) - now).total_seconds() / 86400))}
+
+
+def need_interviews(cfg: Config, g: dict) -> int:
+    """Interviews that meet the guarantee: the configured number, or one for guarantees agreed under the earlier terms."""
+    return cfg.guarantee_min_interviews if str(g.get("terms_version") or "") >= THREE_INTERVIEW_TERMS else 1
+
+
+def _second_round(j: dict, start: datetime) -> bool:
+    """A further live interview after the first for the same role: screen then interview, two logged rounds, or an offer."""
+    def at(k):
+        d = _dt(j.get(k))
+        return bool(d and d >= start)
+    rounds = j.get("interviews")
+    return at("offerAt") or j.get("stage") == "offer" or (bool(j.get("screenAt")) and at("interviewStartedAt")) or (isinstance(rounds, list) and len(rounds) >= 2)
+
+
+def outcome_met(p: dict) -> bool:
+    return p.get("interviews", 0) >= max(1, int(p.get("needInterviews") or 1)) or (bool(p.get("secondRound")) and int(p.get("needInterviews") or 1) > 1)
 
 
 def activity_done(cfg: Config, p: dict) -> bool:
@@ -177,7 +204,7 @@ def view(c: Conn, cfg: Config, user: dict) -> dict:
     live = g and g["status"] in LIVE
     return {"enabled": cfg.guarantee_enabled, "termsVersion": TERMS_VERSION, "planAllows": plans.plan_of(c, user) in PLANS_WITH_GUARANTEE,
             "rules": {"days": cfg.guarantee_days, "minApplications": cfg.guarantee_min_apps, "minWeeks": cfg.guarantee_min_weeks,
-                      "minMatches": cfg.guarantee_min_matches, "claimDays": cfg.guarantee_claim_days, "payWithinDays": PAY_WITHIN_DAYS},
+                      "minMatches": cfg.guarantee_min_matches, "minInterviews": cfg.guarantee_min_interviews, "claimDays": cfg.guarantee_claim_days, "payWithinDays": PAY_WITHIN_DAYS},
             "interview": {"current": _view_row(c, cfg, g), "eligibility": None if live else eligibility(c, cfg, user),
                           "currency": cur, "price": price, "canPay": bool(_payer(cfg, cur))},
             "job": {"concierge": cfg.concierge_enabled, "rateLow": cfg.concierge_rate_low, "rateHigh": cfg.concierge_rate_high,
@@ -351,14 +378,16 @@ def _refresh_one(c: Conn, cfg: Config, g: dict, now: datetime | None = None) -> 
         p = progress(c, cfg, g, now)
         c.execute("UPDATE guarantees SET progress = ?, updated_at = ? WHERE id = ?", (json.dumps(p), now_iso(), g["id"]))
         g = dict(g, progress=json.dumps(p))
-        if p.get("interviews"):
-            return _set(c, g, "met", "Done: you got an interview.", met_at=now_iso()), "met"
+        if outcome_met(p):
+            how = ("you reached a second round." if p.get("secondRound") and p.get("interviews", 0) < p.get("needInterviews", 1)
+                   else "you got an interview." if p.get("needInterviews", 1) == 1 else f"you got {p.get('interviews')} interviews.")
+            return _set(c, g, "met", "Done: " + how, met_at=now_iso()), "met"
         ended = now >= _dt(g["ends_at"])
         if not ended and plans.plan_of(c, user) not in PLANS_WITH_GUARANTEE:
             return _set(c, g, "void", "Your plan ended before the guarantee window did."), "void"
         if ended:
             if activity_done(cfg, p):
-                return _set(c, g, "claimable", "The window ended with no interview. You can claim your refund."), "claimable"
+                return _set(c, g, "claimable", "The window ended short of the promise. You can claim your refund."), "claimable"
             return _set(c, g, "ended", f"The window ended with {p.get('applications', 0)} applications in {p.get('weeks', 0)} weeks; "
                                        f"the guarantee needs {cfg.guarantee_min_apps} in {cfg.guarantee_min_weeks}."), "ended"
     elif g["status"] == "claimable" and now >= _dt(g["ends_at"]) + timedelta(days=cfg.guarantee_claim_days):
@@ -387,7 +416,7 @@ def claim(c: Conn, cfg: Config, uid: str, kind: str, attest: bool, note: str, ip
     if not g or g["status"] != "claimable":
         raise GuaranteeError("There's nothing to claim yet." if not g or g["status"] == "active" else "This guarantee can't be claimed.")
     if attest is not True:
-        raise GuaranteeError("Confirm that you had no interview or interview invitation in the window.")
+        raise GuaranteeError("Confirm how many interviews and invitations you had in the window.")
     g = _set(c, g, "claimed", "Claim received. A person on the team checks it within 5 working days.", claimed_at=now_iso(),
              claim_note=" ".join(str(note or "").split())[:2000])
     repo.audit(c, uid, "guarantee-interview-claimed", ip, {"progress": json.loads(g["progress"] or "{}")})

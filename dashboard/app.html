@@ -2302,18 +2302,20 @@ function renderConcierge(){
 /* ---------- Guarantees: by application, reviewed by the team. Interview: pay once after acceptance, money back if
    no interview. Job: Concierge, nothing upfront, a placement fee only after joining. ---------- */
 function loadGuarantee(){ if (!cloud()) return Promise.resolve(); return api('api/guarantee').then(r => r.ok ? r.json() : null).then(v => { if (v){ state.guarantee = v; maybeOfferGuarantee(); render(); } }).catch(() => {}); }
-const GU_STATUS = {applied: 'Application under review', accepted: 'Accepted: pay to start', pending: 'Waiting for your payment', active: 'In progress', met: 'Done: you got an interview', claimable: 'Refund can be claimed', claimed: 'Claim being checked', approved: 'Refund approved', refunded: 'Refunded', rejected: 'Claim not approved', declined: 'Not accepted', ended: 'Ended', void: 'Stopped'};
+const GU_STATUS = {applied: 'Application under review', accepted: 'Accepted: pay to start', pending: 'Waiting for your payment', active: 'In progress', met: 'Done: promise met', claimable: 'Refund can be claimed', claimed: 'Claim being checked', approved: 'Refund approved', refunded: 'Refunded', rejected: 'Claim not approved', declined: 'Not accepted', ended: 'Ended', void: 'Stopped'};
 function money(minor, cur){ return cur === 'USD' ? '$' + (Number(minor || 0) / 100).toFixed(0) : inr(Math.round(Number(minor || 0) / 100)); }
 function guBar(label, n, need){ const pct = need ? Math.min(100, Math.round(n / need * 100)) : 0; return `<div class="gubar"><div class="gubar-t"><span>${esc(label)}</span><b>${esc(n)}${need ? ' / ' + esc(need) : ''}</b></div>${need ? `<div class="gubar-track"><i style="width:${pct}%"></i></div>` : ''}</div>`; }
 const fDay = s => s ? new Date(s).toLocaleDateString('en-IN', {day: 'numeric', month: 'short', year: 'numeric'}) : '';
 function guInterview(v){
   const R = obj(v.rules), k = obj(v.interview), cur = k.current, ro = wr(), price = money(k.price, k.currency);
+  const NI = (cur && obj(cur.progress).needInterviews) || R.minInterviews || 3, promise = NI > 1 ? `${NI} interviews or a second round` : 'An interview';
   const say = state.acctMsg && state.acctMsgWhere === 'gu-interview' ? `<p class="acctmsg${state.acctMsgErr ? ' err' : ''}" role="status">${esc(state.acctMsg)}</p>` : '';
   const rules = ['Apply below. A person on our team reviews it within 2 working days. Applying is free.',
     `If we accept you, pay ${price} once within ${R.payWithinDays} days. Your ${R.days} days start when the payment goes through.`,
     `Your part: keep Pro or Ultra, and send at least ${R.minApplications} applications in at least ${R.minWeeks} different weeks. Auto-apply counts; postings the scam check marks unsafe don't.`,
-    'An interview is a live conversation (phone, video or in person) with the employer or its recruiter about a role, recruiter screens included. Online tests and recorded one-way videos don\'t count. Interviews from anywhere count, and so does an invitation you decline.',
-    `No interview by day ${R.days}: claim here within ${R.claimDays} days and get the full ${price} back. Plan fees aren't part of the refund.`];
+    `Our part: you're shortlisted for interviews for at least ${NI} different roles, or you reach a second round for one role.`,
+    'An interview is a live conversation (phone, video or in person) with the employer or its recruiter about a role, recruiter screens included. Online tests and recorded one-way videos don\'t count. Interviews from anywhere count, and so does an invitation you decline. A second round is a further live interview for the same role, or an offer.',
+    `Fewer than ${NI} interviews and no second round by day ${R.days}: claim here within ${R.claimDays} days and get the full ${price} back. Plan fees aren't part of the refund.`];
   let body = '';
   const st = cur && cur.status;
   if (st === 'applied') body = `<div class="gustate"><span class="pill">${GU_STATUS.applied}</span><p class="small">Sent ${esc(fDay(cur.agreedAt))}. We'll email you within 2 working days. Roles you're aiming for: ${esc(obj(cur.application).roles || '')}</p></div>`;
@@ -2323,13 +2325,13 @@ function guInterview(v){
   else if (st === 'active' || st === 'met'){
     const pr = obj(cur.progress);
     body = `<div class="gustate"><span class="pill ${st === 'met' ? 'strong' : ''}">${GU_STATUS[st]}</span>${cur.reason ? `<p class="small">${esc(cur.reason)}</p>` : ''}</div>
-      <div class="gubars">${guBar('Applications', pr.applications || 0, R.minApplications)}${guBar('Different weeks', pr.weeks || 0, R.minWeeks)}${guBar('Interviews', pr.interviews || 0, 0)}</div>
+      <div class="gubars">${guBar('Applications', pr.applications || 0, R.minApplications)}${guBar('Different weeks', pr.weeks || 0, R.minWeeks)}${guBar('Interviews', pr.interviews || 0, NI > 1 ? NI : 0)}${NI > 1 ? guBar('Second round', pr.secondRound ? 'Yes' : 'Not yet', 0) : ''}</div>
       ${st === 'active' ? `<p class="small">${esc(pr.daysLeft ?? R.days)} days left · ends ${esc(fDay(cur.endsAt))}</p>` : ''}`;
   }
   else if (st === 'claimable') body = `<form id="gu-claim-interview" class="formgrid gu-claim" novalidate data-kind="interview">
-      <p class="full">You did your part and the window ended without an interview. Claim your <b>${esc(money(cur.price, cur.currency))}</b> back by ${esc(fDay(cur.claimBy))}.</p>
+      <p class="full">You did your part and the window ended short of what we promised. Claim your <b>${esc(money(cur.price, cur.currency))}</b> back by ${esc(fDay(cur.claimBy))}.</p>
       <label class="f full" for="gu-note">Anything we should know (optional)<textarea id="gu-note" name="note" rows="2"${ro}></textarea></label>
-      <label class="full cccheck"><input type="checkbox" name="attest"${ro}> I confirm I had no interview or interview invitation in this window, from Propelo or anywhere else.</label>
+      <label class="full cccheck"><input type="checkbox" name="attest"${ro}> I confirm I had ${NI > 1 ? `fewer than ${NI} interviews or interview invitations and no second round` : 'no interview or interview invitation'} in this window, from Propelo or anywhere else.</label>
       <div class="full"><button class="btn solid" type="submit"${ro}>Claim my refund</button></div></form>`;
   else if (['claimed', 'approved', 'refunded', 'rejected'].includes(st)) body = `<div class="gustate"><span class="pill ${st !== 'rejected' ? 'strong' : ''}">${GU_STATUS[st]}</span>${cur.reason ? `<p class="small">${esc(cur.reason)}</p>` : ''}${cur.refund ? `<p>Refund: <b>${esc(money(cur.refund, cur.currency))}</b></p>` : ''}</div>`;
   if (!body){
@@ -2346,7 +2348,7 @@ function guInterview(v){
         <div class="full"><button class="btn solid" type="submit"${ro}${el.ok ? '' : ' disabled'}>Apply for the Interview Guarantee</button></div></form>`}`;
   }
   return `<section class="panel gucard" id="gu-interview"><div class="guhead"><span class="gushield">${I.shield}</span><div><div class="gutitle"><h2>Interview Guarantee</h2><span class="guprice">${esc(price)}<small> once, ${esc(R.days)} days</small></span></div>
-      <p>An interview within ${esc(R.days)} days, or the full ${esc(price)} back.</p></div></div>${say}${body}
+      <p>${esc(promise)} within ${esc(R.days)} days, or the full ${esc(price)} back.</p></div></div>${say}${body}
     <details class="gudetails"><summary>The rules</summary><ul class="gurules">${rules.map(r => `<li>${esc(r)}</li>`).join('')}</ul></details></section>`;
 }
 function guJob(v){
@@ -2361,7 +2363,7 @@ function guJob(v){
     <details class="gudetails"><summary>How it works</summary><ul class="gurules"><li>Apply with the roles, cities and pay you want. We review every application and take on people we believe we can place, and tell you why if we can't.</li><li>Your partner proposes companies; nothing is sent until you approve each one.</li><li>The fee is split into three instalments from 30 days after you join, and cancelled if the employer ends the job within 90 days.</li></ul></details></section>`;
 }
 function renderGuarantee(){
-  const head = `<div class="hero" style="padding-bottom:6px"><div><h1>Guarantees</h1><p class="sub">For Pro and Ultra members, by application, and not part of any plan. No interview, your money back. Not placed, no fee.</p></div></div>`;
+  const head = `<div class="hero" style="padding-bottom:6px"><div><h1>Guarantees</h1><p class="sub">For Pro and Ultra members, by application, and not part of any plan. Not enough interviews, your money back. Not placed, no fee.</p></div></div>`;
   if (!cloud()) return head + `<div class="panel"><p class="small">Guarantees are for Pro and Ultra members on Propelo Cloud.</p></div>`;
   const v = state.guarantee;
   if (!v){ if (!state.guLoading){ state.guLoading = true; loadGuarantee(); } return head + '<div class="panel"><p class="small">Loading…</p></div>'; }
@@ -2374,7 +2376,7 @@ function guHomeCard(){
   const v = state.guarantee; if (!v || !v.enabled || !v.planAllows) return '';
   const cur = obj(v.interview).current, cc = obj(obj(state.concierge).case);
   if ((cur && !['declined', 'ended', 'void'].includes(cur.status)) || (cc.status && cc.status !== 'closed')) return '';
-  return `<section class="card guhome"><div class="chead"><div><h2>Want us to stand behind your search?</h2><p class="muted">Interview Guarantee: ${esc(money(obj(v.interview).price, obj(v.interview).currency))} once, an interview in ${esc(obj(v.rules).days)} days or your money back. Job Guarantee: nothing upfront, a fee only after you join. Both by application.</p></div><button class="btn solid" data-act="gu-offer">See both</button></div></section>`;
+  return `<section class="card guhome"><div class="chead"><div><h2>Want us to stand behind your search?</h2><p class="muted">Interview Guarantee: ${esc(money(obj(v.interview).price, obj(v.interview).currency))} once, ${esc(obj(v.rules).minInterviews || 3)} interviews or a second round in ${esc(obj(v.rules).days)} days or your money back. Job Guarantee: nothing upfront, a fee only after you join. Both by application.</p></div><button class="btn solid" data-act="gu-offer">See both</button></div></section>`;
 }
 /* The offer, once, for Pro and Ultra members who haven't applied: a pop-up with both options. */
 /* Company logos: the same ones the public job board shows (fetched from each company's own website). */
@@ -2483,7 +2485,7 @@ function openGuOffer(){
     <span class="pill">For Pro and Ultra members</span><h2 id="guo-h">Want us to stand behind your search?</h2>
     <p class="muted">Apply for either guarantee. A person on our team reviews every application.</p>
     <div class="guo-grid">
-      <div class="guo-card"><b>Interview Guarantee</b><span class="guo-price">${esc(money(k.price, k.currency))}<small> once, ${esc(days)} days</small></span><p>An interview within ${esc(days)} days, or the full price back. You pay only if we accept you.</p><button class="btn solid" value="interview">Apply</button></div>
+      <div class="guo-card"><b>Interview Guarantee</b><span class="guo-price">${esc(money(k.price, k.currency))}<small> once, ${esc(days)} days</small></span><p>${esc(obj(v.rules).minInterviews || 3)} interviews or a second round within ${esc(days)} days, or the full price back. You pay only if we accept you.</p><button class="btn solid" value="interview">Apply</button></div>
       ${j.concierge ? `<div class="guo-card"><b>Job Guarantee</b><span class="guo-price">₹0<small> upfront</small></span><p>A talent partner works with you until you're hired. ${esc(j.rateLow)}% of fixed pay (${esc(j.rateHigh)}% above ${esc(lakh(j.band))}) only after you join.</p><button class="btn solid" value="job">Apply</button></div>` : ''}
     </div><button class="btn ghost" value="close">Not now</button></form>`;
   document.body.appendChild(d);

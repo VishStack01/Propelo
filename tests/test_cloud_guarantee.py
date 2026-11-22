@@ -96,10 +96,10 @@ def _age(cloud, uid, kind="interview", days=46):
 def test_prices_and_refunds():
     cfg = Config()
     assert cfg.guarantee_days == 45 and cfg.guarantee_min_apps == 25 and cfg.guarantee_min_weeks == 3
-    assert guarantee.price_for(cfg, "interview", "INR") == 299_900 and guarantee.price_for(cfg, "interview", "USD") == 3_400
+    assert guarantee.price_for(cfg, "interview", "INR") == 499_900 and guarantee.price_for(cfg, "interview", "USD") == 5_900
     # money back: exactly the price paid for the guarantee, never the plan fees
-    assert guarantee.refund_estimate(cfg, "pro", "INR", 45, 299_900) == 299_900
-    assert guarantee.refund_estimate(cfg, "ultra", "USD", 45, 3_400) == 3_400
+    assert guarantee.refund_estimate(cfg, "pro", "INR", 45, 499_900) == 499_900
+    assert guarantee.refund_estimate(cfg, "ultra", "USD", 45, 5_900) == 5_900
 
 
 def test_not_part_of_any_plan():
@@ -107,7 +107,7 @@ def test_not_part_of_any_plan():
     cfg = Config(guarantee_enabled=True, concierge_enabled=True)
     assert not any("Guarantee" in f for p in plans.catalog(cfg) for f in p["features"])
     ads = plans.addons(cfg)
-    assert [a["id"] for a in ads] == ["interview", "job"] and ads[0]["priceInr"] == 2999 and ads[0]["for"] == ["pro", "ultra"]
+    assert [a["id"] for a in ads] == ["interview", "job"] and ads[0]["priceInr"] == 4999 and ads[0]["for"] == ["pro", "ultra"]
     assert ads[1]["priceInr"] == 0  # the Job Guarantee: nothing upfront, a fee only after joining
     assert [a["id"] for a in plans.addons(Config(guarantee_enabled=True))] == ["interview"]
     assert plans.addons(Config()) == []
@@ -153,16 +153,16 @@ def test_accepted_then_paid_starts_the_window(g):
     _accept(admin)
     assert any(m["subject"] == "Your Interview Guarantee is accepted" for m in cloud.outbox)
     v = c.get("/api/guarantee").json()["interview"]
-    assert v["current"]["status"] == "accepted" and v["current"]["payBy"] and v["price"] == 299_900
+    assert v["current"]["status"] == "accepted" and v["current"]["payBy"] and v["price"] == 499_900
     v = c.post("/api/guarantee/interview/buy", json=T).json()
-    assert v["interview"]["current"]["status"] == "pending" and cloud.links[0]["amount"] == 299_900 and cloud.links[0]["currency"] == "INR"
+    assert v["interview"]["current"]["status"] == "pending" and cloud.links[0]["amount"] == 499_900 and cloud.links[0]["currency"] == "INR"
     assert not any("has started" in m["subject"] for m in cloud.outbox)  # nothing starts before payment
     again = c.post("/api/guarantee/interview/buy", json=T).json()
     assert again["payUrl"] == v["payUrl"] and len(cloud.links) == 1  # an open checkout is reused
     assert _paid(cloud, "plink_G1", 50_000)["result"] == "short"  # underpaid: doesn't start
-    assert _paid(cloud, "plink_G1", 299_900)["result"] == "paid"
+    assert _paid(cloud, "plink_G1", 499_900)["result"] == "paid"
     cur = c.get("/api/guarantee").json()["interview"]["current"]
-    assert cur["status"] == "active" and cur["price"] == 299_900 and cur["estimate"] == 299_900
+    assert cur["status"] == "active" and cur["price"] == 499_900 and cur["estimate"] == 499_900
     days = (datetime.fromisoformat(cur["endsAt"].replace("Z", "+00:00")) - datetime.fromisoformat(cur["startsAt"].replace("Z", "+00:00"))).days
     assert days == 45
     assert c.post("/api/guarantee/interview/buy", json=T).status_code == 400
@@ -176,7 +176,37 @@ def test_an_interview_completes_the_guarantee(g):
     now = datetime.now(timezone.utc) + timedelta(seconds=5)
     c.put("/api/d/jobs/win", json={"company": "Northwind", "title": "Backend Engineer", "stage": "screen", "appliedAt": iso(now), "screenAt": iso(now)})
     cur = c.get("/api/guarantee").json()["interview"]["current"]
-    assert cur["status"] == "met" and cur["progress"]["interviews"] == 1
+    assert cur["status"] == "active" and cur["progress"]["interviews"] == 1 and cur["progress"]["needInterviews"] == 3  # one isn't enough
+    c.put("/api/d/jobs/two", json={"company": "Tailspin", "title": "API Engineer", "stage": "screen", "appliedAt": iso(now), "screenAt": iso(now)})
+    assert c.get("/api/guarantee").json()["interview"]["current"]["status"] == "active"
+    c.put("/api/d/jobs/three", json={"company": "Contoso", "title": "Platform Engineer", "stage": "interview", "appliedAt": iso(now), "interviewStartedAt": iso(now)})
+    cur = c.get("/api/guarantee").json()["interview"]["current"]
+    assert cur["status"] == "met" and cur["progress"]["interviews"] == 3 and not cur["progress"]["secondRound"]
+
+
+def test_a_second_round_completes_the_guarantee(g):
+    cloud, c, admin = g
+    admin.post("/api/admin/grant", json={"email": "asha@example.com", "plan": "pro"})
+    _ready(c)
+    _buy(cloud, c, admin)
+    now = datetime.now(timezone.utc) + timedelta(seconds=5)
+    c.put("/api/d/jobs/win", json={"company": "Northwind", "title": "Backend Engineer", "stage": "interview", "appliedAt": iso(now), "screenAt": iso(now),
+                                   "interviewStartedAt": iso(now + timedelta(seconds=1))})
+    cur = c.get("/api/guarantee").json()["interview"]["current"]
+    assert cur["status"] == "met" and cur["progress"]["interviews"] == 1 and cur["progress"]["secondRound"] and "second round" in cur["reason"]
+
+
+def test_earlier_terms_keep_the_one_interview_promise(g):
+    cloud, c, admin = g
+    admin.post("/api/admin/grant", json={"email": "asha@example.com", "plan": "pro"})
+    _ready(c)
+    _buy(cloud, c, admin)
+    with cloud.db.tx() as k:
+        k.execute("UPDATE guarantees SET terms_version = '2026-11-16b' WHERE user_id = ?", (c.uid,))
+    now = datetime.now(timezone.utc) + timedelta(seconds=5)
+    c.put("/api/d/jobs/win", json={"company": "Northwind", "title": "Backend Engineer", "stage": "screen", "appliedAt": iso(now), "screenAt": iso(now)})
+    cur = c.get("/api/guarantee").json()["interview"]["current"]
+    assert cur["status"] == "met" and cur["progress"]["needInterviews"] == 1
 
 
 def test_claim_after_the_window_with_the_activity_done(g):
@@ -197,10 +227,10 @@ def test_claim_after_the_window_with_the_activity_done(g):
     assert any(m["subject"] == "New guarantee claim" for m in cloud.outbox)
     claims = [x for x in admin.get("/api/staff/guarantees").json()["claims"] if x["status"] == "claimed"]
     gid = claims[0]["id"]
-    assert admin.post(f"/api/staff/guarantees/{gid}/approve", json={"amount": 300_000}).status_code == 400  # never more than the price
+    assert admin.post(f"/api/staff/guarantees/{gid}/approve", json={"amount": 500_000}).status_code == 400  # never more than the price
     assert admin.post(f"/api/staff/guarantees/{gid}/refunded").status_code == 400  # approve first
     admin.post(f"/api/staff/guarantees/{gid}/approve", json={})
-    assert c.get("/api/guarantee").json()["interview"]["current"]["refund"] == 299_900  # the full ₹2,999 back
+    assert c.get("/api/guarantee").json()["interview"]["current"]["refund"] == 499_900  # the full ₹4,999 back
     admin.post(f"/api/staff/guarantees/{gid}/refunded", json={"note": "Refunded in Razorpay."})
     assert c.get("/api/guarantee").json()["interview"]["current"]["status"] == "refunded"
     with cloud.db.tx() as x:
@@ -294,4 +324,4 @@ def test_dollar_checkout_through_dodo(g, monkeypatch):
     v = c.post("/api/guarantee/interview/buy", json=T).json()
     assert v["payUrl"] == "https://checkout.dodo.example/s1" and calls[0]["product_cart"][0]["product_id"] == "pdt_G"
     gid = v["interview"]["current"]["id"]
-    assert v["interview"]["current"]["price"] == 3_400 and calls[0]["metadata"]["guarantee_id"] == gid
+    assert v["interview"]["current"]["price"] == 5_900 and calls[0]["metadata"]["guarantee_id"] == gid
