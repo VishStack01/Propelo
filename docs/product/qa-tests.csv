@@ -1,0 +1,36 @@
+ID,Area,Test,Steps,Expected,Actual,Status,Severity,Evidence
+QA-001,Suite,Full automated test suite (SQLite),timeout 1500 python3 -m pytest -q,All pass,450 passed,Pass,,pytest output on the 2.9.0 commit
+QA-002,Suite,Cloud tests on PostgreSQL 16,CAREEROS_TEST_POSTGRES_URL=... pytest tests/test_cloud_*.py,All pass,226 passed,Pass,,pytest output on the 2.9.0 commit
+QA-003,Suite,Python 3.11 compile check (requires-python >=3.11),python3.11 -m py_compile on every module,No syntax errors,No errors after replacing one 3.12-only nested f-string,Fixed,Medium,site.py safe_title change
+QA-004,Security,Secrets in git history,gitleaks detect over full history with .gitleaks.toml,0 leaks,0 leaks (board slugs allowlisted as public),Pass,,gitleaks report 22 Nov
+QA-005,Security,IDOR: member B reads member A's resume; jobs; applications; documents,probe.py with two accounts,404 for every foreign id,404 for every foreign id,Pass,,probe.py output
+QA-006,Security,CSRF: write without X-CareerOS-CSRF header,PUT /api/me/settings without the header,403,403,Pass,,probe.py output
+QA-007,Security,Member calls staff and admin APIs,GET /api/admin/overview and /api/staff/* as member,403,403,Pass,,probe.py output
+QA-008,Security,Login throttling,11 wrong passwords for one email,429 after about 10,429 on attempt 11,Pass,,probe.py output
+QA-009,Security,Upload type and size limits,Upload .exe renamed; 20 MB PDF,Rejected with message,Rejected,Pass,,probe.py output
+QA-010,Security,Security headers on every page,Read response headers locally,CSP with nonce; X-Frame-Options DENY; nosniff; COOP; Referrer-Policy; Permissions-Policy,All present (HSTS only in production mode),Pass,,curl -I local
+QA-011,Security,Session cookie flags,Inspect Set-Cookie,HttpOnly; SameSite=Lax; Secure in production,As expected,Pass,,curl -I local and test_cloud_auth
+QA-012,Security,Open redirect via next=,Sign in with next=//evil.example and next=/\evil,Stays on site,Stays on /app,Pass,,auth.html regex and manual run
+QA-013,Security,Two-step: enable; sign in with code; recovery code once; wrong code throttled,e2e_mfa.py,6 checks pass,6/6,Pass,,e2e_mfa.py output; tests/test_cloud_mfa.py
+QA-014,Security,Two-step limit counter persisted across failed attempts,Repeated wrong codes,429,Counter rolled back with the error; fixed by a separate transaction; now 429,Fixed,High,test_mfa_bruteforce_is_throttled
+QA-015,Security,Staff/admin without two-step in production mode,Call staff API with is_production,403 mfa_required; page redirects to /app#setup,As expected,Pass,,test_staff_need_mfa_in_production
+QA-016,Admin,Admin lookup; grant; suspend; restore; cannot suspend self,test_admin_console,All behave; audited,As expected,Pass,,tests/test_cloud_mfa.py::test_admin_console
+QA-017,Admin,Suspended user cannot sign in and sessions end,Suspend then call /api/me with old cookie and log in,401 and login refused,As expected,Pass,,test_admin_console
+QA-018,Business,Business accounts end to end (pilot; buy; invite; join; consent; seats; feed; branding; expiry),e2e_business.py against the local server,29 checks pass,29/29,Pass,,e2e_business.py output
+QA-019,Business,Student join link after email confirm returns to the join page,Sign up from /join/code and click the verify link,Lands on /join/code,Lost next because the hash was cleared first; fixed,Fixed,Medium,auth.html afterVerify change; e2e_business
+QA-020,UX,No sideways scroll at 390/820/1280 on 23 pages,audit_pages.py,0 px overflow,0 on every page and width,Pass,,audit_pages.json 22 Nov
+QA-021,Accessibility,axe-core WCAG 2 A/AA on 23 pages,audit_pages.py and axe_one.py,0 violations,0 after fixes (tab roles; contrast; decorative numerals),Fixed,Medium,audit_pages.json and axe_one output 22 Nov
+QA-022,UX,Unknown page path,GET /does-not-exist,Branded 404 HTML; API paths keep JSON,As expected,Pass,,test_pages_404_robots_canonical
+QA-023,UX,Signed-out visit to /staff or /admin,Open the page signed out,Redirect to /login?next=,As expected,Pass,,test_pages_404_robots_canonical
+QA-024,SEO,robots.txt; sitemap.xml; canonical; Open Graph on site and app,Fetch and parse,Present and correct; private pages noindex,As expected,Pass,,test_site and test_cloud_mfa; audit meta
+QA-025,SEO,Distinct titles on legal pages,audit meta,Unique titles,Unique,Pass,,audit_pages.json
+QA-026,Feed,Live feed published and fresh,Download feed-latest release,Recent generatedAt,22 Nov 01:32 UTC; 95212 roles; UK register 120536 sponsors,Pass,,summary.json
+QA-027,Feed,Scan finishes when some boards hang,test_scan_deadline_keeps_late_boards_roles,Run ends at the deadline and keeps late boards' previous roles,As expected,Pass,,tests/test_feed.py
+QA-028,Payments,Razorpay and Dodo webhooks with valid and invalid signatures,Signed test events in tests,Valid turns plan on; invalid rejected,As expected,Pass,,tests/test_cloud_plans.py and test_cloud_partners.py
+QA-029,Payments,Live checkout with a real card,Buy Pro on production,Plan on; refund works,Not run: no live keys or network access,Not run,Critical,R-005
+QA-030,Email,Real delivery of confirm and reset emails,Sign up on production,Arrives in inbox,Not run: no SMTP here (dev mail printed to log instead),Not run,Critical,R-003
+QA-031,Browsers,Firefox; Safari; Edge,Run J1 and J2,Pass,Not run: only Chromium available,Not run,High,R-027
+QA-032,Production,Health; headers; DNS on app.propelo.org and propelo.org,curl from outside,200 with HSTS,Not run: production unreachable from the audit environment,Blocked,Critical,R-002 R-004 R-034
+QA-033,Mobile,Android/iOS shell builds,Build and run,Opens and signs in,Not run: no device,Not run,Medium,R-028
+QA-034,Extension,Autofill in a real Chrome profile,Load unpacked; fill forms,Fills; never submits,Not run here (unit tests only),Not run,High,R-029
+QA-035,Docs,Product docs match the code,python scripts/product_docs.py --check,Exit 0,Exit 0,Pass,,tests/test_product_docs.py

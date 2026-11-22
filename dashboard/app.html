@@ -5099,6 +5099,11 @@ function partnerChrome(){
     const t = document.createElement('span'); t.textContent = 'Provided by ' + me.partner.name; box.appendChild(t);
     side.querySelector('.brand').after(box);
   }
+  if (me.isAdmin || me.isStaff){
+    const a = document.createElement('a'); a.className = 'btn ghost partnerline'; a.href = me.isAdmin ? '/admin' : '/staff'; a.textContent = me.isAdmin ? 'Admin' : 'Staff';
+    a.style.cssText = 'margin:0 0 10px;justify-content:center';
+    side.querySelector('.newbtn').after(a);
+  }
   if (me.partnerAdmin){
     const a = document.createElement('a'); a.className = 'btn ghost partnerline'; a.href = '/partner'; a.textContent = 'Business account';
     a.style.cssText = 'margin:0 0 10px;justify-content:center';

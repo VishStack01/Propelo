@@ -88,6 +88,7 @@ nav.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:
 section{position:relative;padding-block:128px 0}
 .head{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:32px;align-items:start;margin-top:32px}
 .ghost{font:500 clamp(88px,10vw,152px)/.8 var(--font);letter-spacing:-.06em;color:var(--ghost);user-select:none;pointer-events:none}
+.ghost::before{content:attr(data-n)}
 .lede{font:400 clamp(30px,3.6vw,52px)/1.18 var(--font);letter-spacing:-.035em;color:var(--ink);max-width:24ch;text-indent:1.4em}
 .lede b{font-weight:500}
 .sub{font-size:clamp(17px,1.35vw,19px);line-height:1.6;color:var(--text)}

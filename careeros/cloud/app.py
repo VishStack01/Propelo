@@ -2334,6 +2334,43 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
             repo.audit(c, p.uid, "admin-audit-read", "", {"kind": kind[:40]})
         return {"events": [dict(r, detail=json.loads(r["detail"] or "{}")) for r in rows]}
 
+    @app.get("/admin", include_in_schema=False)
+    def admin_page(request: Request, p: Principal = Depends(admin_only)):
+        return html("admin.html", request.state.nonce)
+
+    @app.get("/api/admin/user")
+    def admin_user(email: str = "", p: Principal = Depends(admin_only)):
+        """One account, for support: plan, status and security settings. No resume, documents or messages."""
+        with db.tx() as c:
+            u = repo.user_by_email(c, security.normalize_email(email))
+            if not u:
+                raise err(404, "No account with that email.")
+            seat = partners.student_of(c, u["id"])
+            sessions = c.scalar("SELECT COUNT(*) AS n FROM sessions WHERE user_id = ? AND expires_at > ?", (u["id"], now_iso()))
+            repo.audit(c, p.uid, "admin-user-read", "", {"user": u["id"]})
+            return {"id": u["id"], "email": u["email"], "name": u["name"], "createdAt": u["created_at"], "lastLoginAt": u["last_login_at"],
+                    "verified": bool(u["email_verified_at"]), "disabled": bool(u["disabled_at"]), "isAdmin": bool(u["is_admin"]),
+                    "isStaff": bool(u.get("is_staff")), "mfa": mfa.enabled(u), "plan": plans.plan_of(c, u), "sessions": sessions,
+                    "partner": partners.branding(seat), "signIn": "LinkedIn only" if str(u["password_hash"]).startswith("!") else "password"}
+
+    @app.post("/api/admin/disable")
+    def admin_disable(request: Request, body: dict = Body(...), p: Principal = Depends(admin_only)):
+        """Suspend an account (signs it out everywhere) or switch it back on."""
+        email = security.normalize_email(str(body.get("email") or ""))
+        on = body.get("disabled", True) is not False
+        with db.tx() as c:
+            u = repo.user_by_email(c, email)
+            if not u:
+                raise err(404, "No account with that email.")
+            if u["id"] == p.uid:
+                raise err(400, "You can't suspend your own account.")
+            c.execute("UPDATE users SET disabled_at = ?, updated_at = ? WHERE id = ?", (now_iso() if on else None, now_iso(), u["id"]))
+            if on:
+                c.execute("DELETE FROM sessions WHERE user_id = ?", (u["id"],))
+                c.execute("DELETE FROM api_tokens WHERE user_id = ?", (u["id"],))
+            repo.audit(c, u["id"], "account-suspended" if on else "account-restored", client_ip(request), {"by": p.uid})
+        return {"ok": True, "disabled": on}
+
     @app.get("/api/admin/overview")
     def admin_overview(p: Principal = Depends(admin_only)):
         with db.tx() as c:

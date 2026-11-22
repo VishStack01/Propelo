@@ -2,6 +2,24 @@
 
 All notable changes to CareerOS. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [semantic versioning](https://semver.org/).
 
+## [2.9.0] - 2026-11-22
+
+### Added
+- **Two-step sign-in.** Authenticator-app codes with ten one-time recovery codes, in Settings > Account. Required for staff and admin accounts in production; an admin can reset it after checking who someone is. Migration `0011_mfa.sql`.
+- **Admin console at `/admin`:** overview, find an account, grant a plan, give or remove staff access, reset two-step sign-in, suspend or restore an account (ends every session and computer key), background jobs and the audit log.
+- **Product docs in `docs/product/`:** sitemap, journeys, page specs, permissions, UX, security, architecture, SEO, QA log, missing-items register, readiness scorecard and roadmap. `scripts/product_docs.py` generates the routes, tables and workflows from the code, and the test suite fails when a page is missing from the sitemap.
+- Branded 404 page; `robots.txt` and `sitemap.xml` on the app and the site; canonical links, Open Graph tags and structured data on public pages; private pages marked noindex.
+
+### Changed
+- **Scan time limit.** A board that hangs no longer cancels the whole scan: after 60 minutes the scan keeps that board's roles from the last run and publishes.
+- Copy says roles refresh **several times a day**, which is what the scan delivers, instead of hourly.
+- Signed-out visits to `/staff`, `/partner` and `/admin` go to sign-in and come back; staff without two-step sign-in are sent to turn it on.
+- Accessibility: tab roles, colour contrast and heading fixes; axe-core reports no violations on the audited pages.
+
+### Fixed
+- The confirm-email link now returns students to their consultancy's join page.
+- Wrong two-step codes are counted even though the attempt fails.
+
 ## [2.8.0] - 2026-11-17
 
 ### Added

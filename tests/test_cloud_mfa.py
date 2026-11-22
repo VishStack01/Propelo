@@ -119,3 +119,23 @@ def test_pages_404_and_robots(cloud):
     assert '<link rel="canonical"' in c.get("/privacy").text and "<title>Privacy policy" in c.get("/privacy").text
     assert "<title>Terms of service" in c.get("/terms").text
     assert c.get("/reset").headers.get("x-robots-tag") == "noindex"
+
+
+def test_admin_console_lookup_and_suspend(cloud):
+    admin = cloud.user("admin@example.com")
+    u = cloud.user("asha@example.com")
+    assert u.get("/api/admin/user", params={"email": "asha@example.com"}).status_code == 404
+    d = admin.get("/api/admin/user", params={"email": "Asha@example.com"}).json()
+    assert d["email"] == "asha@example.com" and d["plan"] == "free" and d["sessions"] >= 1 and not d["disabled"]
+    assert "password_hash" not in d and "mfa_secret" not in str(d)
+    assert admin.post("/api/admin/disable", json={"email": "admin@example.com"}).status_code == 400
+    assert admin.post("/api/admin/disable", json={"email": "asha@example.com"}).json()["disabled"] is True
+    assert u.get("/api/me").status_code == 401  # signed out everywhere
+    assert cloud.client().post("/api/auth/login", json={"email": "asha@example.com", "password": PW}).status_code == 401
+    admin.post("/api/admin/disable", json={"email": "asha@example.com", "disabled": False})
+    assert cloud.client().post("/api/auth/login", json={"email": "asha@example.com", "password": PW}).status_code == 200
+    kinds = [e["kind"] for e in admin.get("/api/admin/audit").json()["events"]]
+    assert "account-suspended" in kinds and "account-restored" in kinds
+    assert admin.get("/admin", headers={"accept": "text/html"}).status_code == 200
+    other = cloud.user("ravi@example.com")
+    assert other.get("/admin", headers={"accept": "text/html"}).status_code == 404
