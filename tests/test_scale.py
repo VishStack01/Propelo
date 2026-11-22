@@ -242,8 +242,8 @@ def test_register_spreadsheets_are_tallied_and_used(tmp_path):
     wb.save(ca)
     assert registers.tally(registers.rows_of(ca), (r"^employer$", r"employer"), (r"approved positions", r"positions")) == {"Maple Software Ltd.": 6}
     ie = tmp_path / "ie.csv"
-    ie.write_text("Employer Name,Jan,Feb,Total\nShamrock Tech Ltd,2,3,5\nTotal,2,3,5\n", encoding="utf-8")
-    assert registers.tally(registers.rows_of(ie), (r"employer", r"company"), (r"total",)) == {"Shamrock Tech Ltd": 5}
+    ie.write_text("Employer Name,Permits Issued Jan,Permits Issued Feb,Permits Issued Grand Total\nShamrock Tech Ltd,2,3,5\nGrand Total,2,3,5\n", encoding="utf-8")
+    assert registers.tally(registers.rows_of(ie), (r"employer", r"company"), (r"grand total", r"total")) == {"Shamrock Tech Ltd": 5}  # the total, not January
     with pytest.raises(OSError):
         registers._write(tmp_path / "us.csv", got, "us")  # far too few employers: the old file is kept
     (tmp_path / "us-sponsors.csv").write_text("name,n\nAcme Robotics Inc,2\n", encoding="utf-8")

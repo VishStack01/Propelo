@@ -99,7 +99,7 @@ def tally(rows: Iterator[list[str]], name_keys: tuple[str, ...], count_keys: tup
             if hit is not None and len([c for c in low if c]) >= 2:
                 cols = {c: i for i, c in enumerate(low) if c}
                 name_i = hit
-                count_i = next((i for i, c in enumerate(low) if any(re.search(k, c) for k in count_keys)), None) if count_keys else None
+                count_i = next((i for k in count_keys for i, c in enumerate(low) if re.search(k, c)), None) if count_keys else None  # keys in order of preference
                 if log:
                     log(f"    header (row {n + 1}): {[c for c in row if c][:20]}; employer column {name_i + 1}, "
                         f"count column {count_i + 1 if count_i is not None else 'none (each row counts one)'}")
@@ -217,7 +217,7 @@ def fetch_ie(dest: str | Path, year: int | None = None, log=print) -> int:
                 log(f"  reading {link}")
                 with tempfile.TemporaryDirectory(prefix="propelo-ie-") as tmp:
                     path = _download(link, Path(tmp) / "ie")
-                    counts = tally(rows_of(path), (r"employer", r"company", r"^name$"), (r"total", r"issued", r"permits", r"^" + str(y) + r"$"), log=log)
+                    counts = tally(rows_of(path), (r"employer", r"company", r"^name$"), (r"grand total", r"total", r"^" + str(y) + r"$"), log=log)
                 return _write(Path(dest), counts, "ie")
             except (OSError, ValueError) as e:
                 last = e
