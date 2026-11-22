@@ -92,6 +92,11 @@ The feed is a public list of openings. It holds nothing about you.
   citizens-only or cleared roles), for US roles `opt` and `eVerify`, for UK roles `ukRegister` and `ukSalary`, and for roles in
   the Netherlands `nlRegister` (the immigration service's public register of recognised sponsors, `careeros nl-sponsors`).
   Being on a register means the employer can sponsor, not that this role is sponsored.
+- **Lists of employers that have sponsored** (`registers.yml`, weekly; `careeros registers`): `us-sponsors.csv` from the US
+  Department of Labor's LCA disclosure data (certified H-1B applications), `ca-sponsors.csv` from Canada's positive LMIA
+  employers (Open Government Licence - Canada) and `ie-sponsors.csv` from Ireland's employment permits issued to companies.
+  Roles in those countries get `facts.visa.usLca`, `caLmia` or `iePermits` when the employer matches. A missing name is never
+  reported: unlike a licence register, these lists can't say an employer cannot sponsor.
 
 ## 4. Your filters
 
