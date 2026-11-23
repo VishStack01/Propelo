@@ -3761,7 +3761,7 @@ function renderProfile(){
   </div><aside class="pfside">
     <section class="card"><h2>Profile strength</h2><div class="strength"><b>${st.score}</b><span>/ 100</span></div>${meter}
       ${st.tips.length ? `<ul class="tips">${st.tips.slice(0, 5).map(t => `<li>${esc(t)}</li>`).join('')}</ul>` : '<p class="muted">Complete. Keep it current when you ship something new.</p>'}</section>
-    <section class="card"><h2>Fill it faster</h2><p class="muted" style="margin:6px 0 12px">Start from your existing resume. ${aiReady() ? 'Claude sorts it into sections. It copies, never improves.' : 'Without Claude only your name, contact, links and skills are filled in.'}</p>
+    <section class="card"><h2>Fill it faster</h2><p class="muted" style="margin:6px 0 12px">Start from your existing resume. ${aiReady() ? 'Claude sorts it into sections. It copies, never improves.' : 'It reads your contact details, skills, jobs, education and projects from the text as written. Check each section after.'}</p>
       <label class="btn sm filebtn" style="margin-bottom:10px">${state.reading ? 'Reading the file…' : 'Choose a PDF, Word or Markdown file'}<input type="file" class="pf-file" accept=".pdf,.docx,.md,.markdown,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/markdown,text/plain"${wr()}></label>
       <textarea id="pf-import" rows="5" placeholder="…or paste resume text here"${wr()}>${esc(state.importText || '')}</textarea>
       <div class="ract" style="justify-content:flex-start;margin-top:10px;flex-wrap:wrap"><button class="btn sm solid" data-act="pf-import"${wr()}>${state.importing ? 'Reading…' : aiReady() ? 'Import with Claude' : 'Import'}</button><button class="btn sm" data-act="pf-from-applicant"${wr()}>Copy my auto-apply details</button></div></section>
@@ -4401,25 +4401,105 @@ function localImport(text){
   // Designed resumes letter-space their headings ("S U M M A R Y", "T E C H N I C A L SKI L L S"): close them up.
   const closeUp = l => (/^(?:[A-Z&]{1,3}\s+){3,}[A-Z&]*/.test(l) && l.replace(/\s+/g, '').length <= 30 && !/[a-z]/.test(l)) ? l.replace(/\s+/g, '') : l;
   const lines = text.split(/\r?\n/).map(l => closeUp(l.trim())).filter(Boolean), out = {basics: {links: []}};
-  const ni = lines.findIndex(l => /^[A-Za-z][A-Za-z .'-]{2,60}$/.test(l) && l.split(' ').length <= 7);
+  const isHead = l => l.length <= 40 && SEC.some(([, rx]) => rx.test(l.replace(/\s*:$/, '')));
+  const ni = lines.findIndex(l => /^\p{L}[\p{L} .'-]{2,60}$/u.test(l) && l.split(' ').length <= 7 && !isHead(l));
   out.basics.name = ni >= 0 ? lines[ni].trim() : '';
   const hl = ni >= 0 ? lines[ni + 1] || '' : '';
   if (hl && hl.length <= 90 && !/@|\d{4}|https?:/.test(hl)) out.basics.headline = hl.replace(/\s*[·|•]\s*/g, ', ');
   const em = text.match(/[\w.+-]+@[\w-]+\.[\w.]+/); if (em) out.basics.email = em[0];
-  const ph = text.match(/(?:\+\d{1,3}[\s-]?)?\d[\d\s-]{8,13}\d/); if (ph) out.basics.phone = ph[0].trim();
+  const ph = (text.match(/(?:\+\d{1,3}[\s-]?)?\d[\d\s-]{8,13}\d/g) || []).find(x => x.replace(/\D/g, '').length >= 9 && !DATES.test(x) && !/^(?:19|20)\d{2}\s*-\s*(?:19|20)\d{2}$/.test(x.trim()));
+  if (ph) out.basics.phone = ph.trim();
   out.basics.links = Array.from(new Set((text.match(/(?:https?:\/\/)?(?:www\.)?(?:linkedin\.com\/in|github\.com|behance\.net|dribbble\.com)\/[\w\-./]+/gi) || []).map(u => /^https?:/i.test(u) ? u : 'https://' + u)));
   const idx = lines.findIndex(l => /^(technical\s*)?skills\b/i.test(l));
   if (idx >= 0){
     // "Languages Python, TypeScript" / "AI / LLM LLMs (GPT, Claude), RAG": drop the row label, keep "(…)" with its skill.
     const LABEL = /^(?:languages?|programming|ai\s*\/\s*llm|ai|ml|full[- ]stack|frontend|backend|data(?:\s*&\s*cloud)?|cloud|devops|databases?|frameworks?|libraries|tools?|platforms?|security(?:\s*&\s*testing)?|testing|ml\s*&\s*automation|automation|product(?:\s*&\s*design)?|design|others?|soft skills|technologies)\s*:?\s+(?=[A-Z0-9])/i;
-    const block = []; for (let i = idx + 1; i < lines.length && !/^[A-Z][A-Z &]{3,30}$/.test(lines[i]); i++) block.push(lines[i].replace(/^[A-Za-z /&-]{2,24}:\s*/, '').replace(LABEL, ''));
+    const block = [], same = lines[idx].replace(/^(?:technical\s*)?skills\s*:?\s*/i, '');   // "Skills: Go, Java" on one line
+    if (same) block.push(same);
+    for (let i = idx + 1; i < lines.length && !/^[A-Z][A-Z &]{3,30}$/.test(lines[i]) && !isHead(lines[i]); i++) block.push(lines[i].replace(/^[A-Za-z /&-]{2,24}:\s*/, '').replace(LABEL, ''));
     const items = []; let cur = '', depth = 0;
     for (const ch of block.join(', ')){ if (ch === '(') depth++; if (ch === ')') depth = Math.max(0, depth - 1); if (depth === 0 && /[,|•·]/.test(ch)){ items.push(cur); cur = ''; } else cur += ch; }
     items.push(cur);
     out.skills = Array.from(new Set(items.map(x => x.trim()).filter(x => x && x.length <= 60))).slice(0, 40);
   }
   const sIdx = lines.findIndex(l => /^(summary|profile|about( me)?|objective)\b/i.test(l));
-  if (sIdx >= 0){ const block = []; for (let i = sIdx + 1; i < lines.length && !/^[A-Z][A-Z &]{3,30}$/.test(lines[i]); i++) block.push(lines[i]); out.summary = block.join(' ').slice(0, 900); }
+  if (sIdx >= 0){ const block = []; for (let i = sIdx + 1; i < lines.length && !/^[A-Z][A-Z &]{3,30}$/.test(lines[i]) && !isHead(lines[i]); i++) block.push(lines[i]); out.summary = block.join(' ').slice(0, 900); }
+  // Where they live: a short "City, Country" piece on the contact line.
+  const contact = lines.slice(ni + 1, ni + 5).join(' | ').split(/\s*[|•·]\s*/).find(x => /^[A-Za-z .'-]+,\s*[A-Za-z .'-]+$/.test(x) && x.length <= 40);
+  if (contact) out.basics.location = contact;
+  if (out.basics.headline && (out.basics.headline === contact || isHead(out.basics.headline))) delete out.basics.headline;   // the line under the name was the address
+  Object.assign(out, localSections(lines));
+  return out;
+}
+/* Experience, education and projects from the resume's own sections, copied line by line: nothing is reworded or
+   added. It reads the common layouts (a line with a date range starts a job); the person checks it before it is used. */
+const SEC = [['experience', /^(?:work |professional |relevant )?(?:experience|employment(?: history)?|work history)$/i], ['education', /^(?:education|academic (?:background|qualifications)|qualifications)$/i],
+  ['projects', /^(?:(?:academic |personal |key |selected )?projects)$/i], ['other', /^(?:(?:technical |core |key )?skills|summary|profile|about(?: me)?|objective|certifications?|certificates|achievements|awards|languages|publications|interests|hobbies|references|volunteering|extra-?curriculars?|activities|courses|training)$/i]];
+const MON = '(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\\.?';
+const DATES = new RegExp('((?:' + MON + '\\s+)?(?:19|20)\\d{2})\\s*(?:-|–|—|to|until)\\s*((?:' + MON + '\\s+)?(?:19|20)\\d{2}|present|current|now|ongoing)', 'i');
+const BULLET = /^\s*(?:[-•*▪◦‣·●○■]|\d+[.)])\s+/;
+const ROLE_WORD = /\b(engineer|developer|analyst|manager|intern|internship|consultant|designer|scientist|associate|lead|officer|executive|specialist|assistant|architect|administrator|trainee|coordinator|director|head|founder|researcher|teacher|lecturer|tutor|accountant|auditor|nurse|technician|programmer|tester|writer|editor|strategist|advisor|representative|supervisor|apprentice|fellow|volunteer)\b/i;
+const DEGREE = /\b(b\.?\s?tech|m\.?\s?tech|b\.?\s?sc|m\.?\s?sc|b\.?\s?e\b|m\.?\s?e\b|b\.?\s?a\b|m\.?\s?a\b|m\.?\s?s\b|b\.?\s?s\b|mba|pgdm|bba|bca|mca|b\.?\s?com|m\.?\s?com|ll\.?b|ll\.?m|mbbs|ph\.?\s?d|bachelor|master|doctor(?:ate)?|diploma|degree|higher secondary|class x(?:ii)?|a-?levels?|gcse)/i;
+const SCHOOL = /\b(university|college|institute|school|academy|polytechnic|iit|nit|iiit|bits|vidyalaya|universit[aäé]t?|hochschule)\b/i;
+function localSections(lines){
+  const secs = {experience: [], education: [], projects: []}; let cur = '';
+  for (const raw of lines){
+    const l = raw.replace(/\s*:$/, '');
+    const hit = l.length <= 40 && SEC.find(([, rx]) => rx.test(l));
+    if (hit){ cur = hit[0]; continue; }
+    if (/^(?:technical |core |key )?skills\s*:/i.test(raw)){ cur = 'other'; continue; }
+    if (secs[cur]) secs[cur].push(raw);
+  }
+  // Split on commas, bars and dashes, but never inside brackets: "Systems Engineer (Analytics), Infosys".
+  const parts = l => { const out = []; let cur = '', depth = 0; const t = l.replace(/\s+(?:at|@)\s+/g, ' | ').replace(/\s[-–—]\s/g, ' | ');
+    for (const ch of t){ if (ch === '(') depth++; if (ch === ')') depth = Math.max(0, depth - 1); if (depth === 0 && /[,|•·]/.test(ch)){ out.push(cur); cur = ''; } else cur += ch; }
+    out.push(cur); return out.map(x => x.trim()).filter(Boolean); };
+  const out = {};
+  const exp = []; let e = null, pending = '';
+  for (const l of secs.experience){
+    const m = l.match(DATES);
+    if (m && !BULLET.test(l)){
+      const head = parts((l.slice(0, m.index) + ' ' + l.slice(m.index + m[0].length)).trim());
+      if (pending) head.unshift(...parts(pending));
+      pending = '';
+      const ti = head.findIndex(x => ROLE_WORD.test(x));
+      const title = ti >= 0 ? head.splice(ti, 1)[0] : (head.shift() || '');
+      e = {title, company: head.shift() || '', location: head.join(', '), start: m[1], end: m[2], bullets: [], skills: []};
+      exp.push(e);
+    } else if (BULLET.test(l)){ if (e) e.bullets.push(l.replace(BULLET, '').trim()); }
+    else if (e && !e.company && l.length <= 80 && !/[.!?]$/.test(l)){ const h = parts(l); e.company = h.shift() || ''; if (!e.location) e.location = h.join(', '); }
+    else if (e && e.bullets.length && l.length > 40) e.bullets[e.bullets.length - 1] += ' ' + l;   // a wrapped bullet
+    else if (l.length <= 80 && !/[.!?]$/.test(l)) pending = l;                                       // "Company, City" on the line above the dates
+    else if (e) e.bullets.push(l);
+  }
+  if (exp.length) out.experience = exp.slice(0, 12).map(x => Object.assign(x, {bullets: x.bullets.slice(0, 10)}));
+  const edu = [];
+  for (const l of secs.education){
+    if (BULLET.test(l) && edu.length){ edu[edu.length - 1].note = (edu[edu.length - 1].note + ' ' + l.replace(BULLET, '')).trim(); continue; }
+    const m = l.match(DATES), y = m ? null : l.match(/\b(?:19|20)\d{2}\b/);
+    const rest = m ? l.slice(0, m.index) + ' ' + l.slice(m.index + m[0].length) : y ? l.replace(y[0], ' ') : l;
+    const note = (rest.match(/\(([^)]{2,60})\)/) || [])[1] || '';
+    const ps = parts(rest.replace(/\([^)]*\)/g, ' '));
+    const di = ps.findIndex(x => DEGREE.test(x)), si = ps.findIndex((x, i) => i !== di && SCHOOL.test(x));
+    if (di < 0 && si < 0){ if (edu.length && l.length <= 120) edu[edu.length - 1].note = (edu[edu.length - 1].note + ' ' + l).trim(); continue; }
+    const last = edu[edu.length - 1];
+    if (last && ((di >= 0 && !last.degree && si < 0) || (si >= 0 && !last.school && di < 0))){ if (di >= 0) last.degree = ps[di]; else last.school = ps[si]; if (m){ last.start = m[1]; last.end = m[2]; } else if (y && !last.end) last.end = y[0]; continue; }
+    // No word like "University" to go by: the piece after the degree is the place ("B.Tech Computer Science, JNTU Hyderabad").
+    const school = si >= 0 ? ps[si] : (di >= 0 ? ps.filter((x, i) => i !== di)[0] || '' : '');
+    edu.push({degree: di >= 0 ? ps[di] : '', school, start: m ? m[1] : '', end: m ? m[2] : (y ? y[0] : ''), note});
+  }
+  if (edu.length) out.education = edu.slice(0, 8);
+  const proj = []; let pr = null;
+  for (const l of secs.projects){
+    if (BULLET.test(l) || (pr && l.length > 90)){ if (pr) pr.bullets.push(l.replace(BULLET, '').trim()); continue; }
+    const m = l.match(DATES), line = m ? (l.slice(0, m.index) + l.slice(m.index + m[0].length)).trim().replace(/[,|–-]\s*$/, '') : l;
+    const url = (line.match(/https?:\/\/\S+|(?:github\.com|gitlab\.com)\/\S+/i) || [''])[0];
+    const bare = line.replace(url, '').trim(), ps = parts(bare.replace(/:\s/, ' | '));
+    const name = (ps[0] || bare).replace(/[,:]$/, '');
+    pr = {name: name.slice(0, 120), url, when: m ? m[0] : '', bullets: ps.length > 1 && name.length >= 4 ? [ps.slice(1).join(', ')] : []};
+    proj.push(pr);
+  }
+  if (proj.length) out.projects = proj.slice(0, 10).map(x => Object.assign(x, {bullets: x.bullets.slice(0, 6)}));
   return out;
 }
 function mergeImport(out){
@@ -4432,7 +4512,19 @@ function mergeImport(out){
 function runImport(text){
   const cur = prof();
   if (hasProfile(cur) && !confirm('Fill your profile from this resume? Sections it finds replace yours; you can still discard before saving.')) return;
-  if (!aiReady()){ mergeImport(localImport(text)); state.profRender = true; render(); toast('Filled in your name, contact, links, summary and skills. Add experience by hand, or open this page in Claude to sort the rest.'); return; }
+  if (!aiReady()){
+    const got = localImport(text), first = !hasProfile(cur);
+    mergeImport(got);
+    const cnt = (xs, one, many) => arr(xs).length ? arr(xs).length + ' ' + (arr(xs).length === 1 ? one : (many || one + 's')) : '';
+    const found = listJoin([cnt(got.experience, 'job'), cnt(got.education, 'education entry', 'education entries'), cnt(got.projects, 'project'), cnt(got.skills, 'skill')].filter(Boolean));
+    // A first import has nothing to overwrite, so it is saved straight away: the next screen can use it.
+    if (first && state.db){
+      const d = draft(); state.importText = '';
+      saveProfile(d, 'Read your resume' + (found ? ': ' + found : '') + '. Saved. Check each section and fix anything misread.').then(ok => { if (ok){ state.profDraft = null; state.profDirty = false; } state.profRender = true; render(); });
+    }
+    else { state.profRender = true; render(); toast('Read your resume' + (found ? ': ' + found : '') + '. Check each section, then save.'); }
+    return;
+  }
   state.importing = true; state.profRender = true; render();
   aiImportProfile(text).then(out => { mergeImport(out); state.importText = ''; toast('Read your resume. Check each section, then save.'); })
     .catch(err => toast(aiError(err))).finally(() => { state.importing = false; state.profRender = true; render(); });

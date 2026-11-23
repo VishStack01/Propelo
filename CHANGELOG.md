@@ -2,6 +2,14 @@
 
 All notable changes to CareerOS. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [semantic versioning](https://semver.org/).
 
+## [2.15.1] - 2026-11-23
+
+Found by importing a resume and starting an application as a new member, with no AI key on the server.
+
+### Fixed
+- **Importing a resume filled in only the name, contact details and skills,** and nothing was saved until "Save profile" was pressed, so the next screen said "Your profile is empty". The import now reads jobs (title, employer, place, dates, bullet points), education and projects from the resume's own sections, copied as written, and a first import is saved straight away. Checked on three layouts and in the page: profile strength 62 of 100 from one upload, then a tailored resume, cover letter and email for a matched role.
+- A name with letters outside A to Z ("Anna Müller") was skipped and a section heading taken as the name; a date range ("2023 - 2025") was taken as a phone number; "Skills: Go, Java" on one line gave no skills.
+
 ## [2.15.0] - 2026-11-23
 
 ### Added
