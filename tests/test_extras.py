@@ -5,7 +5,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from careeros import doctor, funded, salary_gap
+from propelo import doctor, funded, salary_gap
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -66,5 +66,5 @@ def test_doctor(tmp_path):
     subprocess.run(["git", "-C", str(tmp_path), "add", "brain/brain.json"], check=True)
     res = doctor.checks(tmp_path, str(tmp_path / "x.db"))
     assert any(lvl == "FAIL" and "brain/brain.json" in w for lvl, w, _ in res)
-    r = subprocess.run([sys.executable, "-m", "careeros", "--db", str(tmp_path / "y.db"), "doctor"], capture_output=True, text=True, cwd=tmp_path)
+    r = subprocess.run([sys.executable, "-m", "propelo", "--db", str(tmp_path / "y.db"), "doctor"], capture_output=True, text=True, cwd=tmp_path)
     assert r.returncode == 1 and "Private files tracked by git" in r.stdout

@@ -7,8 +7,8 @@ import json
 
 import pytest
 
-from careeros import discover, sponsor_sweep
-from careeros.sponsors import CountRegister, NlRegister, UkRegister
+from propelo import discover, sponsor_sweep
+from propelo.sponsors import CountRegister, NlRegister, UkRegister
 
 
 def _books():
@@ -132,7 +132,7 @@ def test_only_so_many_register_employers_per_run(monkeypatch):
 
 
 def test_sponsor_boards_are_read_on_the_slower_schedule_and_not_counted_as_companies():
-    from careeros import scan
+    from propelo import scan
     assert scan.scan_every_hours({"category": "sponsor"}) == 0.0                                  # never read yet: now
     assert scan.scan_every_hours({"category": "sponsor", "scannedAt": "x", "roles": 3}) == 4.0
     assert scan.scan_every_hours({"category": "sponsor", "scannedAt": "x", "roles": 0}) == 24.0

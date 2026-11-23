@@ -4,9 +4,9 @@ import html
 import json
 from datetime import datetime, timezone
 
-from careeros import scan
-from careeros.cli import main
-from careeros.sources import yc
+from propelo import scan
+from propelo.cli import main
+from propelo.sources import yc
 
 NOW = datetime(2026, 10, 26, 12, 0, tzinfo=timezone.utc)
 

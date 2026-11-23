@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta, timezone
 
-from careeros.gates import evaluate
-from careeros.models import Job
-from careeros.settings import Settings
+from propelo.gates import evaluate
+from propelo.models import Job
+from propelo.settings import Settings
 
 NOW = datetime(2026, 10, 9, 6, 0, tzinfo=timezone.utc)
 S = Settings()  # defaults: <=1 year, 25 days, 7 LPA floor, south India any / rest remote / abroad remote
@@ -88,17 +88,17 @@ def test_non_target_role_skipped():
 
 
 def test_role_keywords_match_plurals():
-    from careeros.gates import gate_role
-    from careeros.models import Job
-    from careeros.settings import Settings
+    from propelo.gates import gate_role
+    from propelo.models import Job
+    from propelo.settings import Settings
     assert gate_role(Job(company="X", title="Full-stack Engineer - Creative Agents", url="", source="test"), Settings()).passed
     assert not gate_role(Job(company="X", title="Account Executive", url="", source="test"), Settings()).passed
 
 
 def test_remote_country_in_title():
-    from careeros.gates import gate_location
-    from careeros.models import Job
-    from careeros.settings import Settings
+    from propelo.gates import gate_location
+    from propelo.models import Job
+    from propelo.settings import Settings
     for title in ("Product Engineer (Remote/US)", "QA Analyst (Mexico, Remote)", "Product Engineers in Canada (Remote)"):
         c, region = gate_location(Job(company="X", title=title, url="", source="t", location="Remote", work_mode="remote"), Settings())
         assert not c.passed and region == "", title
@@ -107,7 +107,7 @@ def test_remote_country_in_title():
 
 
 def test_company_age_is_not_an_experience_ask():
-    from careeros import extract
+    from propelo import extract
     r = extract.extract_experience("PayPal has been revolutionizing commerce globally for more than 25 years. You need 2+ years of experience in Java.")
     assert r.min_years == 2
     assert extract.extract_experience("With 2200+ employees and continued investments over 25 years in India, ZEISS is growing.").min_years is None
@@ -115,7 +115,7 @@ def test_company_age_is_not_an_experience_ask():
 
 
 def test_engineering_managers_are_senior_but_product_managers_are_not():
-    from careeros import extract
+    from propelo import extract
     assert extract.title_seniority("Manager, Software Engineer") == "senior"
     assert extract.title_seniority("Engineering Manager - Payments") == "senior"
     assert extract.title_seniority("Associate Product Manager") == "junior"
@@ -123,9 +123,9 @@ def test_engineering_managers_are_senior_but_product_managers_are_not():
 
 
 def test_remote_role_placed_in_another_country_is_not_offered_in_india():
-    from careeros.gates import gate_location
-    from careeros.models import Job
-    from careeros.settings import Settings
+    from propelo.gates import gate_location
+    from propelo.models import Job
+    from propelo.settings import Settings
     s = Settings()
     for loc in ("Remote - Berlin", "Kyiv, Kyiv city, Ukraine", "Poland"):
         chk, _ = gate_location(Job(source="greenhouse", company="X", title="Software Engineer", url="https://x.example/1", location=loc, work_mode="remote", description="Join our team."), s)
@@ -137,6 +137,6 @@ def test_remote_role_placed_in_another_country_is_not_offered_in_india():
 
 
 def test_real_company_names():
-    from careeros.company_names import display
+    from propelo.company_names import display
     assert display("Hpe") == "HPE" and display("Cat (CaterpillarCareers)") == "Caterpillar" and display("Equifax (External)") == "Equifax"
     assert display("LSEG (London Stock Exchange Group)") == "LSEG (London Stock Exchange Group)" and display("UiPath") == "UiPath"

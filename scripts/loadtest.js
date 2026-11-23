@@ -23,7 +23,7 @@ export const options = {
   },
 };
 
-const H = { 'Content-Type': 'application/json', 'X-CareerOS-CSRF': '1' };
+const H = { 'Content-Type': 'application/json', 'X-Propelo-CSRF': '1' };
 
 export function setup() {
   const sessions = [];

@@ -4,7 +4,7 @@ QA-002,Suite,Cloud tests on PostgreSQL 16,CAREEROS_TEST_POSTGRES_URL=... pytest 
 QA-003,Suite,Python 3.11 compile check (requires-python >=3.11),python3.11 -m py_compile on every module,No syntax errors,No errors after replacing one 3.12-only nested f-string,Fixed,Medium,site.py safe_title change
 QA-004,Security,Secrets in git history,gitleaks detect over full history with .gitleaks.toml,0 leaks,0 leaks (board slugs allowlisted as public),Pass,,gitleaks report 22 Nov
 QA-005,Security,IDOR: member B reads member A's resume; jobs; applications; documents,probe.py with two accounts,404 for every foreign id,404 for every foreign id,Pass,,probe.py output
-QA-006,Security,CSRF: write without X-CareerOS-CSRF header,PUT /api/me/settings without the header,403,403,Pass,,probe.py output
+QA-006,Security,CSRF: write without X-Propelo-CSRF header,PUT /api/me/settings without the header,403,403,Pass,,probe.py output
 QA-007,Security,Member calls staff and admin APIs,GET /api/admin/overview and /api/staff/* as member,403,403,Pass,,probe.py output
 QA-008,Security,Login throttling,11 wrong passwords for one email,429 after about 10,429 on attempt 11,Pass,,probe.py output
 QA-009,Security,Upload type and size limits,Upload .exe renamed; 20 MB PDF,Rejected with message,Rejected,Pass,,probe.py output

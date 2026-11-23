@@ -1,8 +1,8 @@
 """Hacker News 'Who is hiring' posts: pay and the address each post gives for applying."""
 
-from careeros import scan
-from careeros.sources import aggregators
-from careeros.sources.aggregators import apply_address
+from propelo import scan
+from propelo.sources import aggregators
+from propelo.sources.aggregators import apply_address
 
 
 def test_apply_address_reads_emails_and_links():

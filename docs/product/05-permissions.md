@@ -1,6 +1,6 @@
 # 05 · Roles and permissions
 
-Enforced on the server in `careeros/cloud/app.py` by dependencies (`session_only`, `principal`, `staff_only`,
+Enforced on the server in `propelo/cloud/app.py` by dependencies (`session_only`, `principal`, `staff_only`,
 `admin_only`); the generated [routes list](generated/routes.md) shows which one guards every endpoint. The UI only
 hides what the server already refuses.
 

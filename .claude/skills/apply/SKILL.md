@@ -9,20 +9,20 @@ An application can't be taken back. This skill submits only when every rule
 below holds, and otherwise leaves the job in the batch with the exact reason.
 
 ## Before opening any page
-- `careeros` is not paused (`careeros resume` was the last kill-switch command).
+- `propelo` is not paused (`propelo resume` was the last kill-switch command).
 - The job is at stage `ready` with `review.json` verdict `pass` (or `approved` by the user).
 - Today's submissions are under the daily cap in `config/settings.toml`.
 - The company has no application in the last 180 days (the store enforces this).
 - The role is scored (`evaluate` skill) at 4.0 or more, or the user pressed
-  "Apply anyway" (`scoreOverride`). `careeros apply --submit` refuses otherwise.
+  "Apply anyway" (`scoreOverride`). `propelo apply --submit` refuses otherwise.
   A role the user chose that scores under 4.0 gets needsYou "Scored X, under the
   4.0 apply line" with needsYouKind "score", never a quiet skip.
 
 ## Greenhouse, Lever, Ashby (and simple forms)
 Dry run first, then submit if it comes back clean:
 ```bash
-careeros apply "<apply url>" --job-id <id> --package packages/<id>/package.json
-careeros apply "<apply url>" --job-id <id> --package packages/<id>/package.json --submit
+propelo apply "<apply url>" --job-id <id> --package packages/<id>/package.json
+propelo apply "<apply url>" --job-id <id> --package packages/<id>/package.json --submit
 ```
 The runner reads every field, resolves answers with a confidence, fills,
 screenshots, and submits only if every required field resolved. It stops on
@@ -33,7 +33,7 @@ makes a second submit impossible.
 Use the browser the user prefers (Claude in Chrome, Claude's built-in browser,
 or Antigravity's browser agent) and follow the same rules by hand:
 1. Open the company's own apply page.
-2. Answer each field with the rules in `careeros/apply/answers.py`: profile first, brain second, reviewed package answers third. Decline diversity questions unless the profile says otherwise.
+2. Answer each field with the rules in `propelo/apply/answers.py`: profile first, brain second, reviewed package answers third. Decline diversity questions unless the profile says otherwise.
 3. Stop and hand to the user for: captcha, account creation, passwords, OTPs, Aadhaar/PAN/passport/bank/date of birth, legal attestations, assessments, an essay with no reviewed answer, or any answer you'd have to guess.
 4. Before submit, check: right resume version uploaded, email and phone match the profile, no placeholder text, every required field filled. Screenshot it.
 5. Submit once. Wait for the confirmation page or email. Screenshot it.

@@ -1,8 +1,8 @@
 """More openings across countries: Adzuna and USAJOBS (when their keys are set), on-site Arbeitnow roles,
 company discovery beyond India when the scan covers the world, and a cap on the published feed."""
 
-from careeros import discover, scan
-from careeros.sources import national
+from propelo import discover, scan
+from propelo.sources import national
 
 
 def adzuna_page(cc, n=2):
@@ -51,7 +51,7 @@ def test_usajobs(monkeypatch):
 
 
 def test_registered_and_polled_once_a_day():
-    from careeros.sources.aggregators import AGGREGATORS, MIN_HOURS
+    from propelo.sources.aggregators import AGGREGATORS, MIN_HOURS
     assert "adzuna" in AGGREGATORS and "usajobs" in AGGREGATORS and MIN_HOURS["adzuna"] == 24
 
 

@@ -44,4 +44,4 @@ jobs:
       - run: pip install -e .
       - name: Private files stay untracked
         run: |
-          python -c "from careeros.doctor import PRIVATE; import subprocess, sys; t = subprocess.run(['git', 'ls-files', '--', *PRIVATE], capture_output=True, text=True).stdout.split(); print('tracked:', t or 'none'); sys.exit(1 if t else 0)"
+          python -c "from propelo.doctor import PRIVATE; import subprocess, sys; t = subprocess.run(['git', 'ls-files', '--', *PRIVATE], capture_output=True, text=True).stdout.split(); print('tracked:', t or 'none'); sys.exit(1 if t else 0)"

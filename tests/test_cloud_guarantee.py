@@ -11,8 +11,8 @@ import pytest
 
 pytest.importorskip("fastapi")
 
-from careeros.cloud import guarantee  # noqa: E402
-from careeros.cloud.config import Config  # noqa: E402
+from propelo.cloud import guarantee  # noqa: E402
+from propelo.cloud.config import Config  # noqa: E402
 
 T = {"agree": True, "termsVersion": guarantee.TERMS_VERSION}
 
@@ -30,7 +30,7 @@ def g(cloud, monkeypatch):
     def fake_post(url, body, key, secret):
         links.append(body)
         return {"id": f"plink_G{len(links)}", "short_url": f"https://rzp.io/i/g{len(links)}"}
-    from careeros.cloud import plans
+    from propelo.cloud import plans
     monkeypatch.setattr(plans, "_post", fake_post)
     c = cloud.user()
     admin = cloud.user("admin@example.com")
@@ -103,7 +103,7 @@ def test_prices_and_refunds():
 
 
 def test_not_part_of_any_plan():
-    from careeros.cloud import plans
+    from propelo.cloud import plans
     cfg = Config(guarantee_enabled=True, concierge_enabled=True)
     assert not any("Guarantee" in f for p in plans.catalog(cfg) for f in p["features"])
     ads = plans.addons(cfg)
@@ -274,7 +274,7 @@ def test_job_guarantee_applications_are_reviewed(g):
     cloud, c, admin = g
     cloud.cfg.concierge_enabled = True
     admin.post("/api/admin/grant", json={"email": "asha@example.com", "plan": "ultra"})
-    from careeros.cloud import concierge
+    from propelo.cloud import concierge
     r = c.post("/api/concierge/request", json={"agree": True, "termsVersion": concierge.TERMS_VERSION, "country": "IN",
                                                "intake": {"roles": "Backend", "locations": "Bengaluru", "currentCtc": 1, "expectedCtc": 2}})
     assert r.status_code == 200
@@ -311,7 +311,7 @@ def test_unpaid_acceptance_lapses_and_admin_can_grant(g):
 
 def test_dollar_checkout_through_dodo(g, monkeypatch):
     cloud, c, admin = g
-    from careeros.cloud import plans
+    from propelo.cloud import plans
     cloud.cfg.dodo_api_key, cloud.cfg.dodo_webhook_secret, cloud.cfg.dodo_product_pro, cloud.cfg.dodo_product_guarantee = "k", "whsec_dGVzdHNlY3JldA==", "pdt_P", "pdt_G"
     calls = []
     monkeypatch.setattr(plans, "_dodo_request", lambda m, u, b, k: calls.append(b) or {"checkout_url": "https://checkout.dodo.example/s1", "session_id": "cks_1"})

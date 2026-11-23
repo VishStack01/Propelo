@@ -63,7 +63,7 @@ def _open(browser, fixture: str, url: str):
 
 def test_fills_a_greenhouse_form_and_leaves_the_rest_to_you(browser):
     page = _open(browser, "greenhouse.html", "https://job-boards.greenhouse.io/acme/jobs/123")
-    r = page.evaluate("d => window.__careerosFill(d)", {"applicant": APPLICANT, "resume": RESUME})
+    r = page.evaluate("d => window.__propeloFill(d)", {"applicant": APPLICANT, "resume": RESUME})
     val = lambda sel: page.eval_on_selector(sel, "e => e.value")  # noqa: E731
     assert val("#first_name") == "Asha" and val("#last_name") == "Rao" and val("#email") == "asha@example.com"
     assert val("#phone") == "+91 90000 00000"  # what was already typed stays
@@ -82,16 +82,16 @@ def test_fills_a_greenhouse_form_and_leaves_the_rest_to_you(browser):
     needs = " | ".join(n["label"] for n in r["needs"])
     assert "Why do you want to work at Acme" in needs and "PAN" in needs and "privacy notice" in needs
     assert r["skippedSensitive"] >= 2
-    assert page.eval_on_selector("#first_name", "e => e.dataset.careeros") == "filled"
-    assert page.eval_on_selector("#q7", "e => e.dataset.careeros") == "needs"
-    info = page.evaluate("window.__careerosRead()")
+    assert page.eval_on_selector("#first_name", "e => e.dataset.propelo") == "filled"
+    assert page.eval_on_selector("#q7", "e => e.dataset.propelo") == "needs"
+    info = page.evaluate("window.__propeloRead()")
     assert info["title"] == "AI Engineer" and info["company"] == "Acme"
     page.close()
 
 
 def test_controlled_inputs_see_the_change(browser):
     page = _open(browser, "react.html", "https://jobs.ashbyhq.com/acme/1/application")
-    page.evaluate("d => window.__careerosFill(d)", {"applicant": APPLICANT, "resume": None})
+    page.evaluate("d => window.__propeloFill(d)", {"applicant": APPLICANT, "resume": None})
     assert page.evaluate("window.state") == {"fullName": "Asha Rao", "email": "asha@example.com", "city": "Bengaluru"}
     page.close()
 
@@ -100,7 +100,7 @@ def test_controlled_inputs_see_the_change(browser):
                                  "https://in.indeed.com/viewjob?jk=1", "https://wellfound.com/jobs/1"])
 def test_never_runs_on_big_job_boards(browser, url):
     page = _open(browser, "greenhouse.html", url)
-    r = page.evaluate("d => window.__careerosFill(d)", {"applicant": APPLICANT, "resume": RESUME})
+    r = page.evaluate("d => window.__propeloFill(d)", {"applicant": APPLICANT, "resume": RESUME})
     assert r["blocked"] and not r["filled"]
     assert page.eval_on_selector("#first_name", "e => e.value") == ""
     page.close()
@@ -115,7 +115,7 @@ def test_campus_fields_and_saved_answers(browser):
     page = _open(browser, "campus.html", "https://jobs.lever.co/acme/123/apply")
     data = {"applicant": {**APPLICANT, "cgpa": "8.2/10", "branch": "Computer Science", "state": "Karnataka", "pinCode": "560001"},
             "resume": None, "answers": ANSWERS, "company": "Acme"}
-    r = page.evaluate("d => window.__careerosFill(d)", data)
+    r = page.evaluate("d => window.__propeloFill(d)", data)
     val = lambda sel: page.eval_on_selector(sel, "e => e.value")  # noqa: E731
     assert val("#cg") == "8.2/10" and val("#br") == "Computer Science" and val("#st") == "Karnataka" and val("#pin") == "560001"
     assert val("#why") == "I want to build developer tools that people use daily."  # the Acme answer, not Globex's
@@ -127,7 +127,7 @@ def test_campus_fields_and_saved_answers(browser):
 
 def test_company_answers_stay_with_their_company(browser):
     page = _open(browser, "campus.html", "https://jobs.lever.co/initech/9/apply")
-    page.evaluate("d => window.__careerosFill(d)", {"applicant": APPLICANT, "resume": None, "answers": ANSWERS, "company": "Initech"})
+    page.evaluate("d => window.__propeloFill(d)", {"applicant": APPLICANT, "resume": None, "answers": ANSWERS, "company": "Initech"})
     assert page.eval_on_selector("#why", "e => e.value") == ""
     page.close()
 
@@ -147,8 +147,8 @@ def test_indian_hr_questions_dropdowns_and_late_questions(browser):
     a = {**APPLICANT, "servingNotice": "Yes", "lastWorkingDay": lwd.isoformat(), "noticeBuyout": "Yes, partly", "currentCtcLpa": 12.5,
          "expectedCtcLpa": 18, "fixedCtcLpa": 11, "bondOk": "Prefer not to say", "preferredCities": "Bengaluru, Hyderabad", "shiftsOk": "No",
          "gapReason": "Six months caring for a family member in 2024."}
-    page.evaluate("() => { window.more = []; window.__careerosOnMore = m => window.more.push(m); }")
-    r = page.evaluate("d => window.__careerosFill(d)", {"applicant": a, "resume": None})
+    page.evaluate("() => { window.more = []; window.__propeloOnMore = m => window.more.push(m); }")
+    r = page.evaluate("d => window.__propeloFill(d)", {"applicant": a, "resume": None})
     val = lambda sel: page.eval_on_selector(sel, "e => e.value")  # noqa: E731
     text = lambda sel: page.eval_on_selector(sel, "e => e.options[e.selectedIndex].text")  # noqa: E731
     assert text("#buy") == "Yes"
@@ -172,7 +172,7 @@ def test_indian_hr_questions_dropdowns_and_late_questions(browser):
 
 def test_past_last_working_day_is_not_used(browser):
     page = _open(browser, "india.html", "https://unstop.com/jobs/x")
-    page.evaluate("d => window.__careerosFill(d)", {"applicant": {**APPLICANT, "servingNotice": "Yes", "lastWorkingDay": "2020-01-31"}, "resume": None, "watch": False})
+    page.evaluate("d => window.__propeloFill(d)", {"applicant": {**APPLICANT, "servingNotice": "Yes", "lastWorkingDay": "2020-01-31"}, "resume": None, "watch": False})
     assert page.eval_on_selector("#lwd", "e => e.value") == "" and page.eval_on_selector("#lwd2", "e => e.value") == ""
     page.close()
 
@@ -188,11 +188,11 @@ def test_extension_lists_indian_portals_but_never_the_blocked_boards():
 
 def test_long_indian_names_and_questions_that_mention_a_field(browser):
     page = _open(browser, "greenhouse.html", "https://job-boards.greenhouse.io/acme/jobs/9")
-    page.evaluate("d => window.__careerosFill(d)", {"applicant": {**APPLICANT, "fullName": "Venkata Vishnu Vardhan Raju Chakravarthula"}, "resume": None, "watch": False})
+    page.evaluate("d => window.__propeloFill(d)", {"applicant": {**APPLICANT, "fullName": "Venkata Vishnu Vardhan Raju Chakravarthula"}, "resume": None, "watch": False})
     assert page.eval_on_selector("input[name=first_name], #first_name", "e => e.value") == "Venkata Vishnu Vardhan Raju"
     assert page.eval_on_selector("input[name=last_name], #last_name", "e => e.value") == "Chakravarthula"
     page.close()
     page = _open(browser, "campus.html", "https://internshala.com/application/form/2")
-    page.evaluate("d => window.__careerosFill(d)", {"applicant": {**APPLICANT, "currentTitle": "AI Product Designer"}, "resume": None, "watch": False})
+    page.evaluate("d => window.__propeloFill(d)", {"applicant": {**APPLICANT, "currentTitle": "AI Product Designer"}, "resume": None, "watch": False})
     assert page.eval_on_selector("#leave", "e => e.value") == ""  # a question about your role, not your role
     page.close()

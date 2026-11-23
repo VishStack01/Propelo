@@ -3,7 +3,7 @@
 For a recurring scheduled task that runs in the cloud (no computer needed), with
 the Gmail and Google Calendar connectors. A good schedule is every 3 hours from
 08:25 to 23:25 your time. Replace `{{DASHBOARD_URL}}` with your dashboard's link
-and `{{REPO}}` with your Propelo repository (for example `VishStack01/careeros`).
+and `{{REPO}}` with your Propelo repository (for example `VishStack01/Propelo`).
 
 It reads Gmail and never sends, drafts, deletes, labels or archives email. It
 writes employers' replies to the dashboard's `inbox` collection, moves each
@@ -33,7 +33,7 @@ SAFETY
 Ignore job alerts and newsletters (LinkedIn, Naukri, Indeed, Instahyre, Wellfound digests), marketing and anything that isn't about one of the user's applications or a recruiter contacting the user about a role.
 
 3. FOR EACH NEW THREAD (not already in "inbox"), read it with get_thread and take the newest message that isn't from the user.
-- Kind: confirmation | rejection | interview | assessment | recruiter-reply | offer | question | other. Use `careeros classify-reply` as a first pass when it installs (pip install --break-system-packages "git+https://github.com/{{REPO}}"; the file has the subject on the first line), then read the email yourself; "question" is an employer asking the user something (availability, notice period, expected pay, documents).
+- Kind: confirmation | rejection | interview | assessment | recruiter-reply | offer | question | other. Use `propelo classify-reply` as a first pass when it installs (pip install --break-system-packages "git+https://github.com/{{REPO}}"; the file has the subject on the first line), then read the email yourself; "question" is an employer asking the user something (availability, notice period, expected pay, documents).
 - Match a job: the sender's domain or the company name in the email against step 1, and the role title when the company has several. If unsure, leave jobId empty; the user links it on the Inbox page.
 - asks: what the email asks the user to do, in at most 4 short items, each {text, due} (due "YYYY-MM-DD" only when the email states a date, else "").
 - If it asks for availability or proposes an interview and Google Calendar tools are available: list the user's primary calendar events for the next 5 working days and pick 3 free 45-minute slots between 10:00 and 18:30 Asia/Kolkata, written like "Thu 30 Oct, 11:00–11:45". Save them as slots.

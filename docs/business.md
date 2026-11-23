@@ -34,7 +34,7 @@ dependable one; it counts from 21 Oct 2026, when the scan started keeping histor
 ## Free samples for outreach
 
 ```
-careeros sample-roles --keywords engineer,developer --countries GB --remote exclude --min-days 21 --out sample.csv
+propelo sample-roles --keywords engineer,developer --countries GB --remote exclude --min-days 21 --out sample.csv
 ```
 
 Reads the public feed (or `--feed <folder>`) and writes the same columns as the agency feed, longest
@@ -49,7 +49,7 @@ open first, plus a one-line summary to paste into an email.
 | Plus Pack | 100 | ₹44,999 ($479) |
 | Agency roles feed | n/a | ₹4,999 ($99) |
 
-Set in `BUSINESS_PLANS` (`careeros/cloud/partners.py`). Dollar checkout needs a Dodo product per plan:
+Set in `BUSINESS_PLANS` (`propelo/cloud/partners.py`). Dollar checkout needs a Dodo product per plan:
 `DODO_PRODUCT_CONSULTANCY_STARTER`, `DODO_PRODUCT_CONSULTANCY_GROWTH`, `DODO_PRODUCT_CONSULTANCY_PLUS`, `DODO_PRODUCT_AGENCY_FEED`.
 
 ## Billing
@@ -60,7 +60,7 @@ seats and end dates by hand at `/partner` for deals agreed outside the site.
 
 ## Visa sponsorship facts
 
-See `careeros/sponsors.py`. The posting's own words ("offers", "no", or nothing, shown as unclear and
+See `propelo/sponsors.py`. The posting's own words ("offers", "no", or nothing, shown as unclear and
 never guessed); for UK roles, the Home Office register of licensed sponsors (downloaded daily by the
 scan) and the Skilled Worker salary floors (£41,700 general, £33,400 new entrant, from 22 July 2025;
 the occupation's going rate is not checked). On the 31 Oct feed, 94% of UK postings said nothing about

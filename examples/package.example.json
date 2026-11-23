@@ -1,5 +1,5 @@
 {
-  "_note": "What `careeros apply --package` reads. Answers are written by the tailor skill and approved by the reviewer before use.",
+  "_note": "What `propelo apply --package` reads. Answers are written by the tailor skill and approved by the reviewer before use.",
   "resume": "packages/demo-co-applied-ai-engineer/resume.pdf",
   "cover_note": "Your support agent needs reliable routing before it needs more tools. I built TicketRouter, an open-source router that tags and prioritises 1,500 tickets a week at 94% accuracy, with an eval set I run on every change. I'd like to bring that habit of measuring first to your team.",
   "answers": {

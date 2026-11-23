@@ -97,7 +97,7 @@ def test_sign_in_forms_need_the_csrf_header(cloud):
     c = cloud.client()
     del c.headers["X-CareerOS-CSRF"]
     r = c.post("/api/auth/login", json={"email": "asha@example.com", "password": PW})
-    assert r.status_code == 403 and r.json()["code"] == "csrf" and "cos_session" not in r.cookies
+    assert r.status_code == 403 and r.json()["code"] == "csrf" and "propelo_session" not in r.cookies
     assert c.post("/api/auth/signup", json={"email": "z@example.com", "password": PW}).status_code == 403
 
 
@@ -146,8 +146,8 @@ def test_signup_modes(cloud):
 
 
 def test_production_refuses_unsafe_config(tmp_path):
-    from careeros.cloud.app import create_app
-    from careeros.cloud.config import Config
+    from propelo.cloud.app import create_app
+    from propelo.cloud.config import Config
     cfg = Config(app_env="production", database_url=f"sqlite:///{tmp_path}/x.db", public_url="http://example.com")
     with pytest.raises(RuntimeError) as e:
         create_app(cfg)

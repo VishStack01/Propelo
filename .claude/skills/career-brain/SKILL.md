@@ -26,7 +26,7 @@ quality is capped by how rich and honest this file is, so take your time.
 6. Build the skill graph: proficiency 1–5, years, last used, linked evidence. Years must add up against the roles.
 7. Collect 6–12 STAR stories (ownership, ambiguity, conflict, failure, speed, impact), each linked to claims.
 8. Capture the voice profile: 3 writing samples from the user, preferred verbs, banned words.
-9. Run `careeros brain-check brain/brain.json`. Fix every problem it lists, or mark the claim `retired` if there's no proof.
+9. Run `propelo brain-check brain/brain.json`. Fix every problem it lists, or mark the claim `retired` if there's no proof.
 10. Show the user a one-page summary and have them confirm each claim line by line.
 
 ## Rules

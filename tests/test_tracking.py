@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta, timezone
 
-from careeros import analytics, connections, followups, replies
+from propelo import analytics, connections, followups, replies
 
 NOW = datetime(2026, 10, 20, 9, 0, tzinfo=timezone.utc)
 

@@ -27,7 +27,7 @@ Business: `/business` visit → pilot request → approved → students joined �
 ## Growth levers already in the product
 - **Free scam check** (shareable, no sign-up) and the public **job board** with sponsorship data.
 - **Business seats**: one consultancy brings 25-100 students.
-- **Agency feed sample** (`careeros sample-roles`) for outreach.
+- **Agency feed sample** (`propelo sample-roles`) for outreach.
 - Honest positioning against spray-and-pray auto-apply tools (see `docs/competitors.md`).
 
 Missing: referral programme, email nurture beyond the welcome email, social proof (must come from real customers).

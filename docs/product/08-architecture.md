@@ -2,8 +2,8 @@
 
 ```mermaid
 flowchart LR
-  GH[GitHub Actions: scan.yml] -->|boards, 1,842| SC[careeros scan] --> REL[(Release feed-latest: summary.json, full.jsonl.gz)]
-  SC --> SITE[careeros site] --> PAGES[GitHub Pages: propelo.org]
+  GH[GitHub Actions: scan.yml] -->|boards, 1,842| SC[propelo scan] --> REL[(Release feed-latest: summary.json, full.jsonl.gz)]
+  SC --> SITE[propelo site] --> PAGES[GitHub Pages: propelo.org]
   REL --> W[Render worker: ingest every 15 min]
   W --> DB[(PostgreSQL)]
   WEB[Render web: FastAPI create_app] --> DB
@@ -19,10 +19,10 @@ flowchart LR
 | component | tech | notes |
 | --- | --- | --- |
 | Web app | Python 3.11+, FastAPI, one process, Docker on Render | Pages are static HTML with a nonce; JSON API under `/api/` |
-| Worker | same image, `careeros cloud worker` | Task table with retries: ingest, match_user, send_email, alerts, autosend, cleanup |
+| Worker | same image, `propelo cloud worker` | Task table with retries: ingest, match_user, send_email, alerts, autosend, cleanup |
 | Database | PostgreSQL 16 in production; SQLite for local and tests | 11 forward-only migrations; see [generated/database.md](generated/database.md) |
-| Scanner | `careeros scan` on GitHub Actions | Thread pool per board; 60-minute deadline keeps late boards' previous roles |
-| Site | `careeros site` static build | Landing, job board, docs, scam check, demo, robots, sitemap, RSS, JSON API |
+| Scanner | `propelo scan` on GitHub Actions | Thread pool per board; 60-minute deadline keeps late boards' previous roles |
+| Site | `propelo site` static build | Landing, job board, docs, scam check, demo, robots, sitemap, RSS, JSON API |
 | Extension | Manifest V3 | Autofills, never submits |
 | Mobile | Capacitor shell around the web app | Not built in this audit |
 

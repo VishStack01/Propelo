@@ -2,6 +2,23 @@
 
 All notable changes to CareerOS. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [semantic versioning](https://semver.org/).
 
+## [2.16.0] - 2026-11-23
+
+### Changed
+- **The name is Propelo everywhere people can see it.** The Python package is now `propelo` (`propelo/` in the repository, `pip install "propelo[cloud]"`), the command is `propelo`, settings can be written `PROPELO_*`, the computer key lives in `~/.propelo/key`, and the Render blueprint names its services `propelo-web`, `propelo-worker` and `propelo-db`. The session cookie, the request header pages send on writes, file names (`propelo-export.json`, `propelo.pyz`, `propelo-autofill-*.zip`) and the user agents changed too. What keeps working: the `careeros` command, `CAREEROS_*` settings, the old request header from a page loaded before the update, and the database names of an existing deployment. Signed-in members are asked to sign in once more, because the cookie has a new name.
+
+### Fixed (design)
+- Dropdowns on the job board showed the browser's own arrow pressed against the edge. They now have one chevron with room around it, the same height and rounding as the fields beside them, in light and dark mode.
+- The list chips (Top companies, Internships and the rest) wrapped onto a second line, leaving "Saved" alone below. They stay on one line and fade at the edge only while there is more to scroll.
+- On a phone the search field, the place picker and the Search button fill the width, and the sort menu sits beside Filters.
+- At tablet width the job board header broke onto two lines; the developer links (API, demo, GitHub) step aside there and stay in the footer.
+- Big headings on the home page and the pricing page started with an indent that read as a mistake, and long headings took up to two seconds to finish appearing. No indent, and every heading is readable in about half a second.
+- The footer had nine links under Product and two under Developers, and each page had its own version. One footer on every page: Product, Free tools, Developers, Legal.
+- The install commands on the home page were cut off at the right edge on phones; they wrap now.
+- The pricing page header wrapped "For consultancies and agencies" and the Sign in button onto two lines on phones.
+- In the app, the Fresh roles tab showed a summary, four pipeline cards and the auto-apply panel before the first role. The roles come first now.
+- The sign-in page said Propelo reads "about 1,800" career pages; it reads over 9,000. The job board no longer shows how many roles have a logo, and no longer calls every role a "tech" role.
+
 ## [2.15.1] - 2026-11-23
 
 Found by importing a resume and starting an application as a new member, with no AI key on the server.

@@ -11,12 +11,12 @@ from conftest import feed_record, write_feed  # noqa: E402
 
 
 def _worker(cloud, wid="w1"):
-    from careeros.cloud.worker import Worker
+    from propelo.cloud.worker import Worker
     return Worker(cloud.cfg, cloud.db, cloud.app.state.mailer, worker_id=wid)
 
 
 def test_ingest_then_match_each_user(cloud, tmp_path):
-    from careeros.cloud.ingest import feed_state
+    from propelo.cloud.ingest import feed_state
     write_feed(tmp_path / "feed", [feed_record(i) for i in range(30)]
                + [feed_record(100, exp=3)]  # asks for 3 years: a near-miss
                + [feed_record(101, title="Sales Manager")])  # not a target role
@@ -56,9 +56,9 @@ def test_closed_roles_leave_the_pipeline_but_not_when_a_board_errored(cloud, tmp
     # Next scan: role 1 is gone (its board was read), role 2's board errored, role 3 is gone but the user queued it.
     write_feed(tmp_path / "feed", [r for r in records if r["id"] not in ("co1-ai-engineer-1", "co2-ai-engineer-2", "co3-ai-engineer-3")],
                generated="2099-01-01T00:00:00Z", errored=["Company 2"])
-    from careeros.cloud.ingest import ingest
+    from propelo.cloud.ingest import ingest
     assert ingest(cloud.db, cloud.cfg.feed_url, log=lambda *_: None)["closed"] == 2
-    from careeros.cloud.matching import match_user
+    from propelo.cloud.matching import match_user
     match_user(cloud.db, a.uid, log=lambda *_: None)
     jobs = {d["id"]: d["data"] for d in a.get("/api/c/jobs").json()["docs"]}
     assert jobs["co1-ai-engineer-1"]["stage"] == "skipped" and jobs["co1-ai-engineer-1"]["skip"]["gate"] == "Closed"
@@ -67,7 +67,7 @@ def test_closed_roles_leave_the_pipeline_but_not_when_a_board_errored(cloud, tmp
 
 
 def test_ingest_fails_closed(cloud, tmp_path):
-    from careeros.cloud.ingest import IngestError, ingest
+    from propelo.cloud.ingest import IngestError, ingest
     with pytest.raises(IngestError):
         ingest(cloud.db, str(tmp_path / "missing"), log=lambda *_: None)
     write_feed(tmp_path / "feed", [feed_record(i) for i in range(300)])
@@ -84,8 +84,8 @@ def test_ingest_fails_closed(cloud, tmp_path):
 
 
 def test_queue_dedupe_retry_and_leases(cloud):
-    from careeros.cloud import repo
-    from careeros.cloud.db import now_iso
+    from propelo.cloud import repo
+    from propelo.cloud.db import now_iso
     w1, w2 = _worker(cloud, "w1"), _worker(cloud, "w2")
     with cloud.db.tx() as c:
         c.execute("DELETE FROM tasks")
@@ -120,8 +120,8 @@ def test_queue_dedupe_retry_and_leases(cloud):
 
 
 def test_failed_task_backs_off(cloud):
-    from careeros.cloud import repo
-    from careeros.cloud.db import now_iso
+    from propelo.cloud import repo
+    from propelo.cloud.db import now_iso
     w = _worker(cloud)
     with cloud.db.tx() as c:
         c.execute("DELETE FROM tasks")
@@ -135,7 +135,7 @@ def test_failed_task_backs_off(cloud):
 
 
 def test_scheduler_and_cleanup(cloud):
-    from careeros.cloud.worker import cleanup
+    from propelo.cloud.worker import cleanup
     w = _worker(cloud)
     with cloud.db.tx() as c:
         c.execute("DELETE FROM tasks")
@@ -152,7 +152,7 @@ def test_scheduler_and_cleanup(cloud):
 def test_concurrent_workers_claim_each_task_once(cloud):
     import threading
 
-    from careeros.cloud import repo
+    from propelo.cloud import repo
     with cloud.db.tx() as c:
         c.execute("DELETE FROM tasks")
         c.execute("INSERT INTO feed_state(key, value, updated_at) VALUES ('next_ingest_at', '2999-01-01', 'x'), ('next_cleanup_at', '2999-01-01', 'x'), ('next_alerts_at', '2999-01-01', 'x')")
@@ -179,7 +179,7 @@ def test_concurrent_workers_claim_each_task_once(cloud):
 def test_ingest_drops_implausible_pay(cloud, tmp_path):
     import json as _json
 
-    from careeros.cloud.ingest import ingest
+    from propelo.cloud.ingest import ingest
     r = feed_record(1)
     r["facts"].update(salaryLow=687280.0, salaryHigh=687280.0, salaryQuote="We've raised $781M")
     write_feed(tmp_path / "feed", [r, feed_record(2)])
@@ -191,7 +191,7 @@ def test_ingest_drops_implausible_pay(cloud, tmp_path):
 
 def test_job_alerts_are_opt_in_and_only_for_new_roles(cloud):
     from datetime import datetime, timedelta, timezone
-    from careeros.cloud import alerts, repo
+    from propelo.cloud import alerts, repo
     c = cloud.user()
     now = datetime.now(timezone.utc)
     stamp = (now - timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -215,12 +215,12 @@ def test_job_alerts_are_opt_in_and_only_for_new_roles(cloud):
 
 
 def _match(cloud, uid):
-    from careeros.cloud.matching import match_user
+    from propelo.cloud.matching import match_user
     return match_user(cloud.db, uid, log=lambda *_: None)
 
 
 def _ingest(cloud, tmp_path, records, generated):
-    from careeros.cloud.ingest import ingest
+    from propelo.cloud.ingest import ingest
     write_feed(tmp_path / "feed", records, generated=generated)
     return ingest(cloud.db, cloud.cfg.feed_url, log=lambda *_: None)
 
@@ -252,7 +252,7 @@ def test_a_repeat_match_reads_only_what_changed(cloud, tmp_path):
 
 
 def test_everything_is_read_again_when_it_has_to_be(cloud, tmp_path):
-    from careeros.cloud.db import now_iso
+    from propelo.cloud.db import now_iso
     records = [feed_record(i) for i in range(12)] + [feed_record(90, title="Data Analyst")]
     _ingest(cloud, tmp_path, records, "2099-01-01T00:00:00Z")
     a = cloud.user()
@@ -273,7 +273,7 @@ def test_everything_is_read_again_when_it_has_to_be(cloud, tmp_path):
 
 
 def test_more_fits_than_one_run_adds_means_another_full_pass(cloud, tmp_path):
-    from careeros.cloud import matching
+    from propelo.cloud import matching
     _ingest(cloud, tmp_path, [feed_record(i, company=f"Co {i}") for i in range(170)], "2099-01-01T00:00:00Z")
     a = cloud.user()
     r1 = _match(cloud, a.uid)
@@ -312,8 +312,8 @@ def test_changing_filters_takes_back_untouched_roles_that_no_longer_fit(cloud, t
 
 
 def test_filters_saved_during_a_match_are_matched_straight_after(cloud, tmp_path, monkeypatch):
-    from careeros import feed
-    from careeros.cloud import matching
+    from propelo import feed
+    from propelo.cloud import matching
     _ingest(cloud, tmp_path, [feed_record(i) for i in range(4)] + [feed_record(30, title="Data Analyst")], "2099-01-01T00:00:00Z")
     a = cloud.user()
     real = feed.match
@@ -334,7 +334,7 @@ def test_filters_saved_during_a_match_are_matched_straight_after(cloud, tmp_path
 
 
 def test_a_long_skip_list_never_blocks_new_matches(cloud, tmp_path, monkeypatch):
-    from careeros.cloud import matching
+    from propelo.cloud import matching
     monkeypatch.setattr(matching, "MAX_SKIPPED", 3)
     near = [feed_record(200 + i, exp=3, company=f"Near {i}") for i in range(10)]            # ask for 3 years: near misses
     _ingest(cloud, tmp_path, near + [feed_record(1)], "2099-01-01T00:00:00Z")

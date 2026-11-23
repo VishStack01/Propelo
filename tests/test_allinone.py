@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 def test_settings_from_the_environment(monkeypatch):
-    from careeros.cloud.config import Config
+    from propelo.cloud.config import Config
     for k in ("PUBLIC_URL", "RENDER_EXTERNAL_URL", "STORAGE", "ALL_IN_ONE"):
         monkeypatch.delenv(k, raising=False)
     cfg = Config.from_env()
@@ -30,7 +30,7 @@ def test_settings_from_the_environment(monkeypatch):
 
 
 def test_unknown_storage_is_refused_in_production():
-    from careeros.cloud.config import Config
+    from propelo.cloud.config import Config
     cfg = Config(app_env="production", database_url="postgresql://u:p@h/d", public_url="https://x.example", smtp_url="smtps://u:p@h:465",
                  secrets_key="k" * 40, storage="bucket")
     assert cfg.check() == ["STORAGE must be disk or db."]
@@ -39,7 +39,7 @@ def test_unknown_storage_is_refused_in_production():
 
 
 def test_uploads_live_in_the_database(cloud, tmp_path):
-    from careeros.cloud.storage import DbStorage, LocalStorage, make_storage
+    from propelo.cloud.storage import DbStorage, LocalStorage, make_storage
     assert isinstance(make_storage(cloud.cfg, cloud.db), LocalStorage)
     cloud.cfg.storage = "db"
     store = make_storage(cloud.cfg, cloud.db)
@@ -71,9 +71,9 @@ def test_the_app_serves_uploads_from_the_database(tmp_path):
     pytest.importorskip("fastapi")
     from fastapi.testclient import TestClient
 
-    from careeros.cloud.app import create_app
-    from careeros.cloud.config import Config
-    from careeros.cloud.mailer import OUTBOX
+    from propelo.cloud.app import create_app
+    from propelo.cloud.config import Config
+    from propelo.cloud.mailer import OUTBOX
     import re
 
     cfg = Config(database_url=f"sqlite:///{tmp_path}/c.db", upload_dir=tmp_path / "uploads", storage="db", password_iterations=1000,
@@ -107,8 +107,8 @@ def test_the_app_serves_uploads_from_the_database(tmp_path):
 
 
 def test_prepare_migrates_and_refuses_unsafe_settings(tmp_path, capsys):
-    from careeros.cloud.allinone import prepare
-    from careeros.cloud.config import Config
+    from propelo.cloud.allinone import prepare
+    from propelo.cloud.config import Config
     db = prepare(Config(database_url=f"sqlite:///{tmp_path}/one.db"))
     try:
         assert db.pending_migrations() == []
@@ -134,7 +134,7 @@ def _wait(cond, seconds=10.0):
 
 
 def test_the_worker_child_is_restarted_and_stopped():
-    from careeros.cloud.allinone import WorkerChild
+    from propelo.cloud.allinone import WorkerChild
     quick = WorkerChild([sys.executable, "-c", "raise SystemExit(3)"], base_delay=0.05)
     quick.start()
     assert _wait(lambda: quick.starts >= 3)          # it keeps coming back after a failure
@@ -175,11 +175,11 @@ def test_the_free_blueprint_is_one_free_service():
 
 def test_the_image_listens_on_the_port_the_host_names():
     text = (ROOT / "Dockerfile").read_text()
-    assert "--port ${PORT:-8000}" in text and "exec careeros cloud serve" in text
+    assert "--port ${PORT:-8000}" in text and "exec propelo cloud serve" in text
 
 
 def test_replies_go_to_the_support_inbox():
-    from careeros.cloud.mailer import OUTBOX, Mailer
+    from propelo.cloud.mailer import OUTBOX, Mailer
     OUTBOX.clear()
     Mailer("console://", "Propelo <hello@propelo.org>", "help@example.com").send("a@example.com", "Hi", "Body")
     Mailer("console://", "Propelo <hello@propelo.org>").send("a@example.com", "Hi", "Body")

@@ -10,8 +10,8 @@ import pytest
 
 pytest.importorskip("fastapi")
 
-from careeros.cloud import concierge  # noqa: E402
-from careeros.cloud.config import Config  # noqa: E402
+from propelo.cloud import concierge  # noqa: E402
+from propelo.cloud.config import Config  # noqa: E402
 
 INTAKE = {"roles": "Backend engineer", "locations": "Bengaluru, remote", "currentCtc": "18,00,000", "expectedCtc": 2500000, "noticeDays": 30}
 
@@ -61,7 +61,7 @@ def test_concierge_is_part_of_paid_plans_and_needs_the_terms(setup):
 
 
 def test_the_whole_journey(setup):
-    from careeros.cloud import mailer
+    from propelo.cloud import mailer
     cloud, c, admin, partner = setup
     admin.post("/api/admin/grant", json={"email": "asha@example.com", "plan": "ultra"})
     _ask(c)
@@ -130,7 +130,7 @@ def test_instalment_payment_link_and_webhook(setup):
 
     cloud.cfg.razorpay_key_id, cloud.cfg.razorpay_key_secret, cloud.cfg.razorpay_webhook_secret = "rzp_test_k", "s", "whs"
     sent = []
-    from careeros.cloud import plans
+    from propelo.cloud import plans
     orig = plans._post
     plans._post = lambda url, body, kid, ks: (sent.append((url, body)), {"id": "plink_ABC123", "short_url": "https://rzp.io/i/abc"})[1]
     try:

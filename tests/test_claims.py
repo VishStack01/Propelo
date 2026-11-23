@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from careeros import brain, claims
+from propelo import brain, claims
 
 BRAIN = json.loads((Path(__file__).parents[1] / "brain" / "brain.example.json").read_text())
 

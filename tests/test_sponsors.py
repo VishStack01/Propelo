@@ -2,11 +2,11 @@
 
 from datetime import date
 
-from careeros import sponsors
-from careeros.gates import evaluate
-from careeros.models import Job
-from careeros.scan import days_open
-from careeros.settings import Settings
+from propelo import sponsors
+from propelo.gates import evaluate
+from propelo.models import Job
+from propelo.scan import days_open
+from propelo.settings import Settings
 
 
 def test_posting_says_it_sponsors():

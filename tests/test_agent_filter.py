@@ -1,4 +1,4 @@
-"""The sandbox filter script (prompts/agent_filter.py) must decide exactly like `careeros filter-feed`."""
+"""The sandbox filter script (prompts/agent_filter.py) must decide exactly like `propelo filter-feed`."""
 
 import gzip
 import json
@@ -8,8 +8,8 @@ import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from careeros import extract, feed, scan
-from careeros.models import Job, iso
+from propelo import extract, feed, scan
+from propelo.models import Job, iso
 
 SCRIPT = Path(__file__).resolve().parents[1] / "prompts" / "agent_filter.py"
 

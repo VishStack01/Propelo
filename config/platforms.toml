@@ -1,7 +1,7 @@
 # Job platforms Propelo searches, beyond company career pages.
 #
 # access
-#   feed    public JSON/RSS; scanned automatically every 3 hours by `careeros scan`
+#   feed    public JSON/RSS; scanned automatically every 3 hours by `propelo scan`
 #   fetch   public pages; the agent reads them in its run (WebFetch / WebSearch)
 #   login   listings or applying need your account; the agent finds roles and
 #           prepares the application, you press submit (never automated logins)
@@ -294,7 +294,7 @@ access = "feed"
 competition = "medium"
 every_run = true
 states_pay = true
-notes = "Scanned every 6 hours (careeros/sources/yc.py): software roles in India, Bengaluru, Hyderabad, Chennai and remote, with the salary band and minimum experience YC shows. YC companies hiring in India or remotely are also mapped to their own boards (careeros yc-companies)."
+notes = "Scanned every 6 hours (propelo/sources/yc.py): software roles in India, Bengaluru, Hyderabad, Chennai and remote, with the salary band and minimum experience YC shows. YC companies hiring in India or remotely are also mapped to their own boards (propelo yc-companies)."
 
 [[platform]]
 name = "Work at a Startup (YC)"

@@ -8,10 +8,10 @@ from pathlib import Path
 
 import pytest
 
-from careeros import feed, scamcheck, tags
-from careeros.gates import evaluate
-from careeros.models import Job
-from careeros.scan import wanted_title
+from propelo import feed, scamcheck, tags
+from propelo.gates import evaluate
+from propelo.models import Job
+from propelo.scan import wanted_title
 
 ROOT = Path(__file__).resolve().parents[1]
 NOW = datetime(2026, 11, 16, tzinfo=timezone.utc)
@@ -39,7 +39,7 @@ def test_scan_keeps_every_named_role():
 
 
 def test_dashboard_lists_every_family():
-    for name in ("dashboard/app.html", "careeros/site_app.html"):
+    for name in ("dashboard/app.html", "propelo/site_app.html"):
         html = (ROOT / name).read_text(encoding="utf-8")
         js = json.loads(re.search(r"const FAMILIES = (\[.*?\]);", html).group(1).replace("'", '"'))
         assert set(js) == set(tags.FAMILIES), name
@@ -86,19 +86,19 @@ def test_common_indian_scams(text, rule):
 def test_website_check_uses_the_same_rules():
     html = (ROOT / "website" / "check.html").read_text(encoding="utf-8")
     page = json.loads(re.search(r'<script id="scam-rules" type="application/json">(.*?)</script>', html, re.S).group(1).replace("<\\/", "</"))
-    rules = json.loads((ROOT / "careeros" / "data" / "scam_rules.json").read_text(encoding="utf-8"))["rules"]
+    rules = json.loads((ROOT / "propelo" / "data" / "scam_rules.json").read_text(encoding="utf-8"))["rules"]
     assert page == rules
     assert "—" not in html  # no em dashes in website text
 
 
 def test_staff_nurse_is_not_a_senior_title():
-    from careeros.extract import title_seniority
+    from propelo.extract import title_seniority
     assert title_seniority("Staff Nurse") == "" and title_seniority("Staff Accountant") == ""
     assert title_seniority("Staff Software Engineer") == "senior"
 
 
 def test_match_score_from_a_real_resume_for_any_field():
-    from careeros import matchscore
+    from propelo import matchscore
     nurse = matchscore.resume_from_profile({"basics": {"headline": "Staff Nurse"}, "summary": "ICU nurse with BLS and ACLS.",
                                             "experience": [{"title": "Staff Nurse", "bullets": ["Patient care for 12 ICU beds", "Trained 6 new nurses"]}],
                                             "skills": ["Nursing", "Hindi"]})
@@ -120,7 +120,7 @@ def test_match_score_from_a_real_resume_for_any_field():
 
 
 def test_unmeasured_parts_are_left_out_not_guessed():
-    from careeros import matchscore
+    from propelo import matchscore
     res = matchscore.resume_from_profile({"summary": "Accountant using Tally, GST and TDS.", "experience": [{"bullets": ["Reconciled 40 vendor accounts monthly"]}]})
     jd = "Accounts Executive. Tally, GST and TDS filing, bank reconciliation."
     r = matchscore.score("Accounts Executive", jd, res, years=None)  # no years stated, no titles to compare

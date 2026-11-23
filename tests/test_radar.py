@@ -4,9 +4,9 @@ import csv
 import json
 from datetime import datetime, timedelta, timezone
 
-from careeros import discover, feed, site, tags
-from careeros.settings import Settings
-from careeros.sources import radar
+from propelo import discover, feed, site, tags
+from propelo.settings import Settings
+from propelo.sources import radar
 
 
 def test_board_from_url():

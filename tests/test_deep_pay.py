@@ -4,9 +4,9 @@ import csv
 import gzip
 import json
 
-from careeros import deep, discover, scan
-from careeros.models import Job
-from careeros.sources import greenhouse
+from propelo import deep, discover, scan
+from propelo.models import Job
+from propelo.sources import greenhouse
 
 
 # ------------------------------------------------------------------ Greenhouse pay ranges

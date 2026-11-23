@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from careeros import evaluation, scamcheck
-from careeros.cloud import plans as plans_mod
+from propelo import evaluation, scamcheck
+from propelo.cloud import plans as plans_mod
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def test_dashboard_uses_the_same_scam_rules():
     html = (ROOT / "dashboard" / "app.html").read_text(encoding="utf-8")
     js = json.loads(re.search(r"const SCAM_RULES = (\[.*?\]);\n", html).group(1))
-    rules = json.loads((ROOT / "careeros" / "data" / "scam_rules.json").read_text(encoding="utf-8"))["rules"]
+    rules = json.loads((ROOT / "propelo" / "data" / "scam_rules.json").read_text(encoding="utf-8"))["rules"]
     assert js == [{k: r[k] for k in ("id", "level", "pattern", "why")} for r in rules]
 
 
@@ -77,7 +77,7 @@ def test_receipts_keep_fields_but_never_sensitive_ones(cloud):
 
 
 def test_copilot_mock_and_linkedin_allowances(cloud, monkeypatch):
-    from careeros import llm
+    from propelo import llm
     monkeypatch.setenv("CAREEROS_LLM", "anthropic")
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-server-key-0000")
     monkeypatch.setattr(llm, "complete_json", lambda *a, **k: {"reply": "ok"})
@@ -108,7 +108,7 @@ def test_ultra_auto_apply_month_cap(cloud):
 
 
 def test_hosted_ai_falls_back_to_a_second_provider(cloud, monkeypatch):
-    from careeros import llm
+    from propelo import llm
     monkeypatch.setenv("CAREEROS_LLM", "anthropic")
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-server-key-0000")
     monkeypatch.setenv("CAREEROS_LLM_FALLBACK", "openai")
@@ -146,8 +146,8 @@ def test_privacy_page_covers_gmail_and_cookies(cloud):
 
 def test_website_plan_cards_match_the_catalog():
     import html as h
-    from careeros.cloud.config import Config
-    from careeros.cloud.plans import catalog
+    from propelo.cloud.config import Config
+    from propelo.cloud.plans import catalog
     page = (ROOT / "website" / "index.html").read_text(encoding="utf-8")
     for cls, plan in (("", "free"), (" pro", "pro"), (" ultra", "ultra")):
         block = re.search(r'<article class="price%s reveal">.*?<ul>(.*?)</ul>' % cls, page, re.S).group(1)
@@ -160,12 +160,12 @@ def test_app_version_shows_no_prices_or_outside_sign_ins():
     app = (ROOT / "dashboard" / "app.html").read_text(encoding="utf-8")
     assert ".in-app .curseg,.in-app .plan:not(.current),.in-app .plan .price,.in-app .web-only{display:none!important}" in app
     assert "class=\"btn solid web-only\" href=\"api/mailbox/google/start\"" in app
-    auth = (ROOT / "careeros" / "cloud" / "static" / "auth.html").read_text(encoding="utf-8")
+    auth = (ROOT / "propelo" / "cloud" / "static" / "auth.html").read_text(encoding="utf-8")
     assert "if (!inApp) fetch('/api/auth/providers')" in auth
 
 
 def test_failed_ai_calls_give_the_use_back(cloud, monkeypatch):
-    from careeros import llm
+    from propelo import llm
     monkeypatch.setenv("CAREEROS_LLM", "anthropic")
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-server-key-0000")
     monkeypatch.delenv("CAREEROS_LLM_FALLBACK", raising=False)

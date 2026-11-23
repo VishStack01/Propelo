@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Join your consultancy</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.ico" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&display=swap">
+<style>
+:root{--page:#F7F2E9;--card:#FFFCF7;--panel:#F2EADC;--ink:#151515;--ink-2:#4F4A44;--muted:#6E675D;--line:rgba(21,21,21,.09);--accent:#151515;--bad:#B42D6A;
+  --f:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif}
+@media (prefers-color-scheme:dark){:root{--page:#141311;--card:#1C1A17;--panel:#26231F;--ink:#F3ECE0;--ink-2:#D2CABE;--muted:#9E978B;--line:rgba(243,236,224,.09);--accent:#F3ECE0;--bad:#FF9CC8}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.55 var(--f);-webkit-font-smoothing:antialiased;min-height:100vh;display:grid;place-items:center;padding:24px 16px}
+main{width:100%;max-width:520px;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:28px 26px}
+.brand{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.brand img{width:56px;height:56px;border-radius:14px;object-fit:contain;background:#fff;border:1px solid var(--line)}
+.brand .tile{width:56px;height:56px;border-radius:14px;display:grid;place-items:center;font-weight:600;font-size:22px;background:var(--accent);color:var(--card)}
+h1{font-size:24px;font-weight:600;letter-spacing:-.02em;margin:0;line-height:1.2}
+p{margin:0 0 12px}.muted{color:var(--muted)}.small{font-size:14px}
+ul{margin:0 0 16px;padding-left:20px}li{margin:4px 0}
+.consent{background:var(--panel);border-radius:14px;padding:12px 14px;font-size:14.5px;margin:14px 0}
+label{display:flex;gap:10px;align-items:flex-start;margin:12px 0 18px;font-size:15px}
+input[type=checkbox]{margin-top:4px;width:18px;height:18px}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 20px;border-radius:999px;border:1px solid var(--accent);background:var(--accent);color:var(--card);font:600 15px var(--f);text-decoration:none;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--ink)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.err{color:var(--bad);font-size:14.5px;min-height:20px;margin-top:10px}
+.foot{margin-top:18px;font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+<main id="m" aria-live="polite"><p class="muted">Loading your invite…</p></main>
+<script>
+(function(){
+  'use strict';
+  const $ = s => document.querySelector(s);
+  const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+  const code = decodeURIComponent(location.pathname.split('/').pop() || '');
+  const here = '/join/' + encodeURIComponent(code);
+  async function get(path){ const r = await fetch(path, {credentials: 'same-origin'}); const d = await r.json().catch(() => ({})); return {ok: r.ok, status: r.status, d}; }
+  function head(p){
+    if (p.color) document.documentElement.style.setProperty('--accent', p.color);
+    const mark = p.logo ? `<img src="${esc(p.logo)}" alt="">` : `<span class="tile" aria-hidden="true">${esc((p.name || '?').slice(0, 1).toUpperCase())}</span>`;
+    return `<div class="brand">${mark}<div><h1>${esc(p.name)}</h1>${p.tagline ? `<p class="muted small" style="margin:2px 0 0">${esc(p.tagline)}</p>` : ''}</div></div>`;
+  }
+  const what = `<p>${'{name}'} gives you a job search account for free while you are their student:</p>
+    <ul><li>Fresh roles from employers' own career pages, checked against your resume</li>
+    <li>For each role, the line from the posting about visa sponsorship, and for UK roles whether the employer is on the Home Office sponsor register</li>
+    <li>A tailored, truthful resume and cover note for each role you keep</li></ul>`;
+  async function start(){
+    const info = await get('/api/join/' + encodeURIComponent(code));
+    if (!info.ok){ $('#m').innerHTML = `<h1>This invite link isn't valid</h1><p class="muted" style="margin-top:10px">Ask your consultancy for a new link.</p>`; return; }
+    const p = info.d;
+    document.title = 'Join ' + p.name;
+    if (!p.open){ $('#m').innerHTML = head(p) + `<p>This invite isn't open right now: the seats are used up or the programme has ended.</p><p class="muted">Ask ${esc(p.name)} to add seats.</p>`; return; }
+    const me = await get('/api/me');
+    const body = head(p) + what.replace('{name}', esc(p.name));
+    if (!me.ok){
+      $('#m').innerHTML = body + `<p>Create your account first, or sign in if you have one. You'll come back here to join.</p>
+        <div class="row"><a class="btn" href="/signup?next=${encodeURIComponent(here)}">Create an account</a><a class="btn ghost" href="/login?next=${encodeURIComponent(here)}">Sign in</a></div>
+        <p class="foot">Your account is yours: if you leave the programme, you keep it on the free plan.</p>`;
+      return;
+    }
+    if (me.d.partner && me.d.partner.slug === p.slug){ location.replace('/app'); return; }
+    $('#m').innerHTML = body + `<div class="consent"><b>What ${esc(p.name)} will see.</b> ${esc(p.consent)}</div>
+      <label><input type="checkbox" id="ok"> <span>I agree, and I want to join as ${esc(me.d.email || 'this account')}.</span></label>
+      <button class="btn" id="join" disabled>Join ${esc(p.name)}</button><div class="err" id="err" role="alert"></div>`;
+    $('#ok').addEventListener('change', e => { $('#join').disabled = !e.target.checked; });
+    $('#join').addEventListener('click', async () => {
+      $('#join').disabled = true; $('#err').textContent = '';
+      const r = await fetch('/api/partner/join', {method: 'POST', credentials: 'same-origin', headers: {'Content-Type': 'application/json', 'X-Propelo-CSRF': '1'}, body: JSON.stringify({code, consent: true})});
+      const d = await r.json().catch(() => ({}));
+      if (r.ok) location.replace('/app');
+      else { $('#err').textContent = d.error || 'Something went wrong. Try again.'; $('#join').disabled = false; }
+    });
+  }
+  start().catch(() => { $('#m').innerHTML = '<p>Something went wrong loading this page. Refresh to try again.</p>'; });
+})();
+</script>
+</body>
+</html>

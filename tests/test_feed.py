@@ -9,11 +9,11 @@ from pathlib import Path
 
 import pytest
 
-from careeros import discover, feed, scan
-from careeros.cli import main
-from careeros.gates import apply_decision
-from careeros.settings import Settings
-from careeros.sources import aggregators, breezy, greenhouse, http, lever, personio, recruitee, smartrecruiters, workable
+from propelo import discover, feed, scan
+from propelo.cli import main
+from propelo.gates import apply_decision
+from propelo.settings import Settings
+from propelo.sources import aggregators, breezy, greenhouse, http, lever, personio, recruitee, smartrecruiters, workable
 
 FIX = Path(__file__).parent / "fixtures"
 NOW = datetime(2026, 10, 9, 6, 0, tzinfo=timezone.utc)
@@ -405,7 +405,7 @@ def test_filter_feed_cli(boards, tmp_path, capsys):
 # ------------------------------------------------------------------ platform registry
 
 def test_platform_registry_is_valid_and_rotates():
-    from careeros import platforms
+    from propelo import platforms
     ps = platforms.load()
     assert len(ps) >= 80 and len({p["name"] for p in ps}) == len(ps)
     for p in ps:
@@ -427,8 +427,8 @@ def test_platforms_cli_json(capsys):
 
 def test_dashboard_title_exclusions():
     s = feed.settings_from_dashboard({"targetRoles": ["Engineer"], "titleExclude": ["Sales", "Mechanical"]})
-    from careeros.gates import gate_role
-    from careeros.models import Job
+    from propelo.gates import gate_role
+    from propelo.models import Job
     assert gate_role(Job(company="X", title="Backend Engineer", url="", source="t"), s).passed
     assert not gate_role(Job(company="X", title="Sales Engineer", url="", source="t"), s).passed
 

@@ -159,7 +159,7 @@
       // On the big boards Propelo reads nothing from the page: only the link and the tab's title.
       if (BLOCKED.test(hostOf(S.tab.url))) { S.page = { title: String(S.tab.title || "").split(/ [|\-–] /)[0].slice(0, 160), company: "" }; S.framesOk = true; return render(); }
       exec(S.tab.id, false, function () {
-        var r = window.__careerosRead();
+        var r = window.__propeloRead();
         r.frames = Array.prototype.slice.call(document.querySelectorAll("iframe[src]")).map(function (f) { return f.src; })
           .filter(function (s) { return /greenhouse\.io|lever\.co|ashbyhq\.com|myworkdayjobs\.com|smartrecruiters\.com|workable\.com|recruitee\.com|teamtailor\.com|icims\.com|jobvite\.com|breezy\.hr|zohorecruit/i.test(s); });
         return r;
@@ -188,7 +188,7 @@
           "workAuthIndia", "sponsorshipAbroad", "relocate", "howHeard", "servingNotice", "lastWorkingDay", "noticeBuyout",
         "fixedCtcLpa", "variableCtcLpa", "bondOk", "currentlyEmployed", "gapReason", "shiftsOk", "officeOk", "preferredCities"].forEach(function (k) { if (a[k] !== undefined && a[k] !== null && a[k] !== "") applicant[k] = a[k]; });
         var answers = (a.answers || []).filter(function (x) { return x && x.q && x.a; }).map(function (x) { return { q: x.q, a: x.a, company: x.company || "" }; });
-        return exec(S.tab.id, true, function (data) { return window.__careerosFill(data); }, [{ applicant: applicant, resume: resume, answers: answers, company: (S.page && S.page.company) || "" }]);
+        return exec(S.tab.id, true, function (data) { return window.__propeloFill(data); }, [{ applicant: applicant, resume: resume, answers: answers, company: (S.page && S.page.company) || "" }]);
       });
     }).then(function (results) {
       var merged = { filled: [], needs: [], skippedSensitive: 0, resume: "", blocked: false };

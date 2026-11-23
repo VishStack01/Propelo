@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from careeros import claims, jd, keywords, render, writing
-from careeros.sources.http import FetchError
+from propelo import claims, jd, keywords, render, writing
+from propelo.sources.http import FetchError
 
 ROOT = Path(__file__).resolve().parents[1]
 BRAIN = json.loads((ROOT / "brain" / "brain.example.json").read_text(encoding="utf-8"))

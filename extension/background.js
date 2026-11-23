@@ -77,7 +77,7 @@ function fillTab(tabId, company) {
   }).then(function (data) {
     var payload = { applicant: data.applicant, resume: data.resume, answers: data.answers, company: company || "" };
     return chrome.scripting.executeScript({ target: { tabId: tabId, allFrames: true }, files: ["fill.js"] })
-      .then(function () { return chrome.scripting.executeScript({ target: { tabId: tabId, allFrames: true }, func: function (d) { return window.__careerosFill(d); }, args: [payload] }); });
+      .then(function () { return chrome.scripting.executeScript({ target: { tabId: tabId, allFrames: true }, func: function (d) { return window.__propeloFill(d); }, args: [payload] }); });
   }).then(function (results) {
     var merged = { filled: [], needs: [], skippedSensitive: 0, resume: "", blocked: false, fromAnswers: 0 };
     (results || []).forEach(function (r) {

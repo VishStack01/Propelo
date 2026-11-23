@@ -1,5 +1,5 @@
-Contact: https://github.com/VishStack01/careeros/security/advisories/new
+Contact: https://github.com/VishStack01/Propelo/security/advisories/new
 Expires: 2027-11-14T00:00:00.000Z
 Preferred-Languages: en
-Policy: https://github.com/VishStack01/careeros/blob/main/SECURITY.md
+Policy: https://github.com/VishStack01/Propelo/blob/main/SECURITY.md
 Canonical: https://propelo.org/.well-known/security.txt

@@ -9,7 +9,7 @@ GitHub Actions history and the published feed. 22 Nov 2026.
 | --- | --- | --- |
 | Source code (app, worker, scanner, site, extension, mobile shell) | Yes | Read and run |
 | Web app (every page, every dashboard tab) | Yes, **local copy** | Ran `main` on PostgreSQL 16 with dev mail; drove it with a browser |
-| Public site (landing, jobs, docs, scam check, demo) | Yes, **local build** | Built with `careeros site` from the live feed release |
+| Public site (landing, jobs, docs, scam check, demo) | Yes, **local build** | Built with `propelo site` from the live feed release |
 | Live job feed | Yes | Downloaded `feed-latest` release assets (22 Nov 01:32 UTC: 95,212 roles) |
 | GitHub Actions (scan, tests, security, pages) | Yes | Run history and logs |
 | Production app (`app.propelo.org` / Render) | **No** | The audit environment's network can't reach it; health, env vars, DB plan, backups unknown |

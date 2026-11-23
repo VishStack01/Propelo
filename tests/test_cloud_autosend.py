@@ -17,7 +17,7 @@ def _iso(dt):
 
 @pytest.fixture
 def setup(cloud):
-    from careeros.cloud import autosend
+    from propelo.cloud import autosend
     cloud.cfg.google_client_id, cloud.cfg.google_client_secret, cloud.cfg.secrets_key = "gid", "gsecret", "test-secret-0123456789"
     c = cloud.user()
     admin = cloud.user("admin@example.com")
@@ -41,7 +41,7 @@ def _turn_on(c, follow=False):
 
 
 def _plan(cloud, uid, now=MONDAY_1030_IST):
-    from careeros.cloud import autosend
+    from propelo.cloud import autosend
     with cloud.db.tx() as t:
         u = t.one("SELECT id, name, email, is_admin FROM users WHERE id = ?", (uid,))
         return autosend.plan_user(t, cloud.cfg, u, now)
@@ -109,7 +109,7 @@ def test_daily_cap_and_one_first_email_per_person(setup):
 
 
 def test_delivery_threads_follow_ups_and_logs_the_role(setup):
-    from careeros.cloud import autosend
+    from propelo.cloud import autosend
     cloud, c = setup
     _turn_on(c, follow=True)
     _role(c, "r1", MONDAY_1030_IST - timedelta(hours=5))
@@ -143,7 +143,7 @@ def test_delivery_threads_follow_ups_and_logs_the_role(setup):
 
 
 def test_stop_cancel_and_opt_out(setup):
-    from careeros.cloud import autosend
+    from propelo.cloud import autosend
     cloud, c = setup
     _turn_on(c)
     _role(c, "r1", MONDAY_1030_IST - timedelta(hours=5))
@@ -168,7 +168,7 @@ def test_stop_cancel_and_opt_out(setup):
 
 
 def test_gmail_connect_and_disconnect(setup, monkeypatch):
-    from careeros.cloud import mailbox
+    from propelo.cloud import mailbox
     cloud, c = setup
     r = c.get("/api/mailbox/google/start", follow_redirects=False)
     assert r.status_code == 303 and "gmail.send" in r.headers["location"] and "access_type=offline" in r.headers["location"]
@@ -207,7 +207,7 @@ def test_odd_documents_never_break_planning(setup):
 
 
 def test_bad_subjects_and_addresses_never_jam_the_queue(setup):
-    from careeros.cloud import autosend
+    from propelo.cloud import autosend
     cloud, c = setup
     _turn_on(c)
     assert not autosend.EMAIL.match("priya@northwind.example\n")

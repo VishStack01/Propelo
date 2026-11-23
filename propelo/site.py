@@ -1,0 +1,327 @@
+"""Build the public job board from the feed: a static site for GitHub Pages.
+
+  propelo site --feed feed --out site [--demo dashboard/index.html] [--website website]
+
+Output:
+  index.html, docs.html    the project website, when a website folder is given
+  jobs.html                the board (search, filters, job pages, companies);
+                           also index.html when there is no website
+  data/jobs.json           every open role, compact, for the board
+  data/jobs/<id>.json      one role with the full posting and the quoted facts
+  api/jobs.json            public JSON API, 100 roles per page, Arbeitnow-style
+  api/jobs/page-<n>.json   further pages
+  feed.xml                 RSS of the 100 newest roles
+  demo/index.html          the dashboard demo (fictional data), if given
+
+The board holds only public job postings. Nothing about any job seeker is in it.
+"""
+
+from __future__ import annotations
+
+import gzip
+import json
+import re
+import shutil
+from datetime import datetime, timezone
+from email.utils import format_datetime
+from pathlib import Path
+from xml.sax.saxutils import escape
+
+from . import countries, growth_pages, logos, showcase, sponsors
+from . import tags as tagger
+from .models import iso
+
+HERE = Path(__file__).resolve().parent
+TEMPLATE = HERE / "site_app.html"
+PER_PAGE = 100
+MAX_AGE_DAYS = 60  # older listings are usually evergreen or forgotten; the board leaves them out
+# Where a role can be done from, as shown on the board (see scan.loc_class).
+WHERE = {"remote-worldwide": "ww", "remote-open": "ro", "remote-india": "ri", "remote-unclear": "ru",
+         "remote-excluded": "rx", "south": "s", "india": "i", "abroad": "a", "unknown": "u"}
+
+
+def _read_jsonl(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+    with gzip.open(path, "rt", encoding="utf-8") as f:
+        return [json.loads(line) for line in f if line.strip()]
+
+
+def _salary(r: dict) -> str:
+    if r.get("salary"):
+        return r["salary"]
+    f = r.get("facts") or {}
+    hi, lo = f.get("salaryHigh"), f.get("salaryLow")
+    if hi is None:
+        return ""
+    fmt = lambda x: f"{x:.1f}".rstrip("0").rstrip(".")
+    return f"{fmt(lo)}–{fmt(hi)} LPA" if lo and lo != hi else f"{fmt(hi)} LPA"
+
+
+def _slug(s: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", (s or "").lower()).strip("-")[:80]
+
+
+def _visa_codes(v: dict) -> list[str]:
+    """Short codes for the job board's visa filter. A posting that says no is never listed as sponsoring."""
+    if v.get("status") == "no" or v.get("opt") == "no":
+        return ["no"]
+    out = []
+    if v.get("status") == "offers":
+        out.append("sponsors")
+    if (v.get("ukRegister") or {}).get("listed"):
+        out.append("uk")
+    if (v.get("nlRegister") or {}).get("listed"):
+        out.append("nl")
+    for key, code in (("usLca", "us"), ("caLmia", "ca"), ("iePermits", "ie")):
+        if v.get(key):
+            out.append(code)
+    if v.get("opt") == "yes":
+        out.append("opt")
+    if v.get("eVerify"):
+        out.append("everify")
+    return out
+
+
+def compact(r: dict) -> dict:
+    f = r.get("facts") or {}
+    t = r.get("tags") or tagger.tag(r.get("title", ""), r.get("summary", ""), f)  # feeds written before tags existed
+    return {
+        "id": r["id"], "t": r["title"], "c": r["company"], "cs": _slug(r["company"]), "l": r.get("location", ""),
+        "m": r.get("workMode", ""), "w": WHERE.get(f.get("loc", ""), "u" if "loc" not in f else ""), "p": r.get("postedAt", ""),
+        "sal": _salary(r), "e": f.get("expMin"), "lv": t.get("level", ""), "ty": t.get("type", ""),
+        "fm": t.get("family") or tagger.family(r.get("title", "")),
+        "cat": t.get("categories", []), "sk": t.get("skills", []), "pk": t.get("perks", []),
+        "ar": t.get("archetype", ""), "lg": (f.get("legit") or {}).get("tier", ""), "rp": (f.get("reposts") or {}).get("count", 0),
+        "pt": t.get("payTier", tagger.pay_tier(f)), "ph": f.get("salaryHigh"),
+        "src": r.get("source", ""), "via": r.get("via", ""), "u": r["url"],
+        "co": r.get("countries") if "countries" in r else sorted(countries.resolve(r.get("location", ""))), "vs": _visa_codes(f.get("visa") or {}),
+        **({"tp": 1} if showcase.top_name(r.get("company", "")) else {}),
+    }
+
+
+def detail(r: dict, text: str) -> dict:
+    f = r.get("facts") or {}
+    facts = []
+    exp = f.get("expMin")
+    facts.append({"k": "Experience", "v": ("Fresher welcome" if f.get("fresherOk") else "Not stated") if exp is None
+                  else ("Fresher (0 years)" if exp == 0 else f"{exp:g}+ years"), "q": f.get("expQuote") or ""})
+    who = {"ww": "Remote, anywhere in the world", "ro": "Remote, open to India", "ri": "Remote within India",
+           "ru": "Remote; the posting doesn't say who can apply", "rx": "Remote, but not open to people in India",
+           "s": "On-site or hybrid in south India", "i": "On-site or hybrid in India", "a": "On-site or hybrid abroad",
+           "u": "Not stated"}.get(compact(r)["w"], "Not stated")
+    facts.append({"k": "Where", "v": who, "q": f.get("locQuote") or f.get("scopeQuote") or ""})
+    sal = _salary(r)
+    facts.append({"k": "Pay", "v": sal or "Not stated", "q": f.get("salaryQuote") or ""})
+    if f.get("closedQuote"):
+        facts.append({"k": "Status", "v": "The posting says it's closed", "q": f["closedQuote"]})
+    if f.get("applicants"):
+        facts.append({"k": "Applicants", "v": str(f["applicants"]), "q": ""})
+    visa = f.get("visa") or {}
+    if visa:
+        facts.append({"k": "Visa", "v": sponsors.label(visa), "q": visa.get("quote") or visa.get("optQuote") or ""})
+    wa = f.get("workAuth") or {}
+    if wa:
+        need = {"citizenship": f"{wa.get('country') or 'Local'} citizenship required", "clearance": "Security clearance required",
+                "local": f"Must be authorized to work in {wa.get('country')}", "no-sponsorship": "No visa sponsorship"}.get(wa.get("kind"), "")
+        facts.append({"k": "Work authorization", "v": need, "q": wa.get("quote", "")})
+    lg = f.get("legit") or {}
+    if lg:
+        notes = [x["note"] for x in lg.get("signals", []) if x.get("status") in ("concern", "mixed")]
+        facts.append({"k": "Real opening?", "v": lg.get("label", "") + (": " + " ".join(notes[:3]) if notes else ""), "q": ""})
+    return compact(r) | {"text": text, "facts": facts, "hq": r.get("hq", ""), "category": r.get("category", "")}
+
+
+def api_item(r: dict, text: str) -> dict:
+    c = compact(r)
+    return {"slug": r["id"], "company_name": r["company"], "title": r["title"], "description": text,
+            "remote": c["m"] == "remote", "url": r["url"], "category": c["fm"], "tags": c["cat"] + c["sk"], "job_types": [c["ty"]] if c["ty"] else [],
+            "level": c["lv"], "location": r.get("location", ""), "where": c["w"], "salary": c["sal"],
+            "experience_min_years": c["e"], "source": r.get("source", ""), "created_at": r.get("postedAt", ""),
+            "archetype": c["ar"], "legitimacy": c["lg"], "relisted": c["rp"], "pay_tier": c["pt"], "salary_max_lpa": c["ph"]}
+
+
+def _rss(jobs: list[dict], base_url: str, now: datetime) -> str:
+    items = []
+    for r in jobs[:100]:
+        try:
+            pub = format_datetime(datetime.fromisoformat(r["postedAt"].replace("Z", "+00:00")))
+        except (ValueError, KeyError, AttributeError, TypeError):
+            pub = format_datetime(now)
+        link = f"{base_url}#/job/{r['id']}" if base_url else r["url"]
+        desc = " · ".join(x for x in (r["company"], r.get("location", ""), _salary(r)) if x)
+        items.append(f"<item><title>{escape(r['title'] + ' at ' + r['company'])}</title><link>{escape(link)}</link>"
+                     f"<guid isPermaLink=\"false\">{escape(r['id'])}</guid><pubDate>{pub}</pubDate><description>{escape(desc)}</description></item>")
+    return ('<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0"><channel><title>Propelo Jobs</title>'
+            f"<link>{escape(base_url or 'https://github.com/VishStack01/Propelo')}</link>"
+            "<description>Open tech roles in India and remote, straight from company career pages.</description>"
+            f"<lastBuildDate>{format_datetime(now)}</lastBuildDate>" + "".join(items) + "</channel></rss>\n")
+
+
+PAGES = ("index.html", "jobs.html", "docs.html", "check.html", "sponsor-check.html")
+NOT_FOUND = """<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Page not found · Propelo</title><meta name="robots" content="noindex"><link rel="icon" href="{base}assets/favicon.svg" type="image/svg+xml">
+<style>:root{{--page:#FAF3E6;--card:#FFFCF7;--ink:#151515;--muted:#5E574E}}@media (prefers-color-scheme:dark){{:root{{--page:#141311;--card:#1C1A17;--ink:#F3ECE0;--muted:#B3AB9F}}}}
+body{{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px 16px;background:var(--page);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}}
+main{{max-width:460px;background:var(--card);border-radius:22px;padding:28px 26px}}h1{{font-size:24px;margin:0 0 8px}}p{{color:var(--muted);margin:0 0 16px}}
+a{{display:inline-flex;align-items:center;min-height:44px;padding:0 18px;margin:0 8px 8px 0;border-radius:999px;border:1px solid var(--ink);color:var(--ink);font-weight:600;text-decoration:none}}</style></head>
+<body><main><h1>We couldn't find that page</h1><p>The role may have closed or the link may be mistyped.</p>
+<a href="{base}">Home</a><a href="{base}jobs.html">Browse jobs</a><a href="{base}docs.html">Docs</a></main></body></html>
+"""
+
+
+def seo(out: Path, base_url: str, extra: tuple[str, ...] = ()) -> None:
+    """Canonical and social tags with absolute URLs, structured data on the home page, robots.txt, sitemap.xml and a
+    404 page. The site's address is `base_url` (https://propelo.org/ once the custom domain is live)."""
+    base = base_url if base_url.endswith("/") else base_url + "/"
+    pages = PAGES + tuple(extra)
+    for name in pages:
+        f = out / name
+        if not f.is_file():
+            continue
+        t = f.read_text(encoding="utf-8")
+        url = base if name == "index.html" else base + name
+        m = re.search(r"<title>([^<]*)</title>", t)
+        d = re.search(r'<meta name="description" content="([^"]*)"', t)
+        title, desc = (m.group(1) if m else "Propelo"), (d.group(1) if d else "")
+        t = t.replace('content="assets/og.png"', f'content="{base}assets/og.png"')
+        head = [f'<link rel="canonical" href="{url}">']
+        if 'property="og:url"' not in t:
+            head.append(f'<meta property="og:url" content="{url}">')
+        if 'property="og:title"' not in t:
+            safe_title = escape(title, {'"': "&quot;"})
+            head.append(f'<meta property="og:title" content="{safe_title}">')
+        if desc and 'property="og:description"' not in t:
+            head.append(f'<meta property="og:description" content="{desc}">')
+        if 'property="og:image"' not in t:
+            head.append(f'<meta property="og:image" content="{base}assets/og.png">')
+        if 'property="og:type"' not in t:
+            head.append('<meta property="og:type" content="website">')
+        if 'name="twitter:card"' not in t:
+            head.append('<meta name="twitter:card" content="summary_large_image">')
+        if name == "index.html":
+            ld = {"@context": "https://schema.org", "@graph": [
+                {"@type": "Organization", "name": "Propelo", "url": base, "logo": f"{base}assets/og.png",
+                 "sameAs": ["https://github.com/VishStack01/Propelo"]},
+                {"@type": "WebSite", "name": "Propelo", "url": base}]}
+            head.append(f'<script type="application/ld+json">{json.dumps(ld, separators=(",", ":"))}</script>')
+        if "rel=\"canonical\"" not in t:
+            t = t.replace("</title>", "</title>\n" + "\n".join(head), 1)
+        f.write_text(t, encoding="utf-8")
+    demo = out / "demo" / "index.html"
+    if demo.is_file():  # fictional data: keep it out of search results
+        t = demo.read_text(encoding="utf-8")
+        if 'name="robots"' not in t:
+            demo.write_text(t.replace("<head>", '<head>\n<meta name="robots" content="noindex">', 1), encoding="utf-8")
+    (out / "robots.txt").write_text(f"User-agent: *\nAllow: /\nDisallow: /data/\nDisallow: /demo/\nSitemap: {base}sitemap.xml\n", encoding="utf-8")
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    urls = "".join(f"<url><loc>{base if n == 'index.html' else base + n}</loc><lastmod>{today}</lastmod></url>" for n in pages if (out / n).is_file())
+    (out / "sitemap.xml").write_text(f'<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>\n',
+                                     encoding="utf-8")
+    (out / "404.html").write_text(NOT_FOUND.format(base=base), encoding="utf-8")
+
+
+def build(feed_dir: str | Path, out_dir: str | Path, demo: str | Path | None = None, base_url: str = "", log=print,
+          website: str | Path | None = None, logos_dir: str | Path | None = None) -> dict:
+    feed_dir, out = Path(feed_dir), Path(out_dir)
+    records = _read_jsonl(feed_dir / "india.jsonl.gz")
+    texts = {t["id"]: t.get("text", "") for t in _read_jsonl(feed_dir / "full.jsonl.gz")}
+    summary = json.loads((feed_dir / "summary.json").read_text()) if (feed_dir / "summary.json").exists() else {}
+    now = datetime.now(timezone.utc)
+    if out.exists():
+        shutil.rmtree(out)
+    (out / "data" / "jobs").mkdir(parents=True)
+    (out / "api" / "jobs").mkdir(parents=True)
+
+    def age_days(r):
+        try:
+            d = datetime.fromisoformat((r.get("postedAt") or "").replace("Z", "+00:00"))
+            return (now - (d if d.tzinfo else d.replace(tzinfo=timezone.utc))).days
+        except ValueError:
+            return 0
+    records = [r for r in records if age_days(r) <= MAX_AGE_DAYS and not (r.get("facts") or {}).get("closedQuote")]
+    records.sort(key=lambda r: r.get("postedAt") or "", reverse=True)
+    compacts = [compact(r) for r in records]
+    logo_files = logos.for_site(logos_dir)
+    used = set()
+    for c in compacts:
+        f = logo_files.get(c["cs"])
+        if f:
+            c["lo"] = "logos/" + f
+            used.add(f)
+    if used:
+        (out / "logos").mkdir()
+        for f in used:
+            shutil.copy(Path(logos_dir) / "files" / f, out / "logos" / f)
+        # Company slug -> logo, for the Propelo app's role lists (it shows the same logos as the board).
+        lmap = {c["cs"]: c["lo"][len("logos/"):] for c in compacts if c.get("lo")}
+        (out / "logos" / "map.json").write_text(json.dumps(lmap, separators=(",", ":"), sort_keys=True), encoding="utf-8")
+    companies: dict[str, dict] = {}
+    for c in compacts:
+        e = companies.setdefault(c["cs"], {"name": c["c"], "slug": c["cs"], "jobs": 0, **({"lo": c["lo"]} if c.get("lo") else {})})
+        e["jobs"] += 1
+    meta = {"generatedAt": iso(now), "feedAt": summary.get("generatedAt", ""), "jobs": len(compacts),
+            "companyBoards": summary.get("boards", 0), "companiesTracked": summary.get("companies", 0),
+            "remoteBoards": len(summary.get("remoteBoards") or {}), "companies": len(companies)}
+    by_ats = summary.get("byAts") or {}
+    total = sum(by_ats.values()) or 0
+    top = sorted(by_ats.items(), key=lambda kv: -kv[1])
+    shares = [{"label": f"{k} job boards" if k not in ("Workday",) else "Workday career sites", "share": round(v / total, 4)} for k, v in top[:4]] if total else []
+    if total and len(top) > 4:
+        rest = sum(v for _, v in top[4:])
+        others = len(top) - 5
+        shares.append({"label": f"{top[4][0]} and {others} more" if others else f"{top[4][0]} job boards", "share": round(rest / total, 4)})
+    stats = {"feedAt": summary.get("generatedAt", ""), "openings": summary.get("openings", 0), "companies": summary.get("companies", 0),
+             "boards": summary.get("boards", 0), "relisted": summary.get("relisted", 0), "byAts": shares}
+    (out / "data" / "stats.json").write_text(json.dumps(stats, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    (out / "data" / "jobs.json").write_text(json.dumps({"meta": meta, "jobs": compacts}, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    (out / "data" / "companies.json").write_text(json.dumps(sorted(companies.values(), key=lambda x: (-x["jobs"], x["name"].lower())),
+                                                            ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    for r in records:
+        text = texts.get(r["id"]) or r.get("summary", "")
+        (out / "data" / "jobs" / f"{r['id']}.json").write_text(json.dumps(detail(r, text), ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+
+    pages = max(1, -(-len(records) // PER_PAGE))
+    for n in range(1, pages + 1):
+        chunk = records[(n - 1) * PER_PAGE: n * PER_PAGE]
+        link = lambda k: f"{base_url}api/jobs/page-{k}.json" if 1 <= k <= pages else None
+        body = {"data": [api_item(r, texts.get(r["id"]) or r.get("summary", "")) for r in chunk],
+                "links": {"first": link(1), "last": link(pages), "prev": link(n - 1), "next": link(n + 1)},
+                "meta": {"current_page": n, "last_page": pages, "per_page": PER_PAGE, "total": len(records), "generated_at": meta["generatedAt"]}}
+        payload = json.dumps(body, ensure_ascii=False, separators=(",", ":"))
+        (out / "api" / "jobs" / f"page-{n}.json").write_text(payload, encoding="utf-8")
+        if n == 1:
+            (out / "api" / "jobs.json").write_text(payload, encoding="utf-8")
+    (out / "feed.xml").write_text(_rss(records, base_url, now), encoding="utf-8")
+    board = TEMPLATE.read_text(encoding="utf-8")
+    (out / "jobs.html").write_text(board, encoding="utf-8")
+    site_dir = Path(website) if website else None
+    if site_dir and (site_dir / "index.html").is_file():
+        for f in site_dir.rglob("*"):
+            if f.is_file():
+                dest = out / f.relative_to(site_dir)
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy(f, dest)
+        # The website's examples and logo strip, from this scan's real roles at top companies.
+        idx = out / "index.html"
+        logo_map = {c["cs"]: c["lo"] for c in compacts if c.get("lo")}
+        try:  # "posted 2 h ago" is counted from the scan, which is what the page describes
+            scan_at = datetime.fromisoformat(str(summary.get("generatedAt")).replace("Z", "+00:00"))
+        except ValueError:
+            scan_at = now
+        idx.write_text(showcase.render(idx.read_text(encoding="utf-8"), records, logo_map, summary.get("openings") or len(records), scan_at), encoding="utf-8")
+        # Free sponsor check (the registers as text) and the visa-jobs lists, from this scan.
+        growth = growth_pages.visa_pages(records, out, site_dir, scan_at)
+        meta["sponsorCheck"] = growth_pages.sponsor_data(feed_dir, out)
+    else:
+        (out / "index.html").write_text(board, encoding="utf-8")
+        growth = []
+    (out / ".nojekyll").write_text("")
+    if demo and Path(demo).exists():
+        (out / "demo").mkdir()
+        shutil.copy(demo, out / "demo" / "index.html")
+    if base_url:
+        seo(out, base_url, tuple(growth))
+    log(f"Job board: {len(records)} roles, {len(companies)} companies ({len(used)} logos), {pages} API pages -> {out}")
+    return meta

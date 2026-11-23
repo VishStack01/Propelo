@@ -20,7 +20,7 @@ what the code already does, so you can see where the remaining work is.
 
 ## Before inviting anyone (private beta)
 
-- [ ] Deploy to staging with `APP_ENV=staging`; `careeros cloud check` reports nothing.
+- [ ] Deploy to staging with `APP_ENV=staging`; `propelo cloud check` reports nothing.
 - [ ] HTTPS end to end; the database has no public address; `TRUST_PROXY=1` only behind your proxy.
 - [ ] SMTP from a domain with SPF, DKIM and DMARC; confirmation and reset emails arrive and aren't marked spam.
 - [ ] `SIGNUP_MODE=allowlist` for the beta; `BOOTSTRAP_ADMIN_EMAIL` set before the first sign-up.

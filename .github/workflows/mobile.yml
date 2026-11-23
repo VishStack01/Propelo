@@ -44,7 +44,7 @@ jobs:
       - run: npm ci
       - run: npm run set-url
         env:
-          CAREEROS_APP_URL: ${{ inputs.app_url }}
+          PROPELO_APP_URL: ${{ inputs.app_url }}
       - run: npx cap sync android
       - name: Build
         working-directory: mobile/android
@@ -64,7 +64,7 @@ jobs:
           rm upload.jks
       - uses: actions/upload-artifact@v4
         with:
-          name: careeros-android
+          name: propelo-android
           path: |
             mobile/android/app/build/outputs/apk/debug/app-debug.apk
             mobile/android/app/build/outputs/bundle/release/app-release.aab
@@ -84,7 +84,7 @@ jobs:
       - run: npm ci
       - run: npm run set-url
         env:
-          CAREEROS_APP_URL: ${{ inputs.app_url }}
+          PROPELO_APP_URL: ${{ inputs.app_url }}
       - run: npx cap sync ios
       - name: Build for the simulator (no signing)
         working-directory: mobile/ios/App

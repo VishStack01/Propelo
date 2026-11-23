@@ -6,8 +6,8 @@ import pytest
 
 pytest.importorskip("fastapi")
 
-from careeros.cloud import partners  # noqa: E402
-from careeros.cloud.db import now_iso  # noqa: E402
+from propelo.cloud import partners  # noqa: E402
+from propelo.cloud.db import now_iso  # noqa: E402
 
 
 def _consultancy(cloud, admin, owner_email="owner@consult.example", seats=2):
@@ -158,7 +158,7 @@ def pay(cloud, monkeypatch):
     def fake_post(url, body, key, secret):
         links.append(body)
         return {"id": f"plink_B{len(links)}", "short_url": f"https://rzp.io/i/b{len(links)}"}
-    from careeros.cloud import plans
+    from propelo.cloud import plans
     monkeypatch.setattr(plans, "_post", fake_post)
     cloud.links = links
     return cloud
@@ -237,7 +237,7 @@ def test_free_pilot_request_and_approval(pay):
 
 
 def test_reminders_once_per_end_date(cloud):
-    from careeros.cloud import partners
+    from propelo.cloud import partners
     admin = cloud.user("admin@example.com")
     cloud.user("owner@x.example")
     r = admin.post("/api/staff/partners", json={"kind": "consultancy", "name": "Soon Co", "adminEmail": "owner@x.example", "seats": 5, "status": "active",

@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from careeros import ai, llm
+from propelo import ai, llm
 
 ROOT = Path(__file__).resolve().parents[1]
 KEY = "sk-test-secret-123"
@@ -138,8 +138,8 @@ def test_evaluate_retries_with_the_check_errors_then_passes(monkeypatch):
 def test_server_ai_endpoint(monkeypatch, tmp_path):
     from http.server import ThreadingHTTPServer
 
-    from careeros.server import make_handler
-    from careeros.store import Store
+    from propelo.server import make_handler
+    from propelo.store import Store
 
     monkeypatch.setenv("CAREEROS_LLM", "ollama")
     monkeypatch.setattr(llm, "complete_json", lambda prompt, **k: {"echo": prompt})
@@ -167,7 +167,7 @@ def test_server_ai_endpoint(monkeypatch, tmp_path):
 
 
 def test_cli_llm_status(monkeypatch, capsys):
-    from careeros.cli import main
+    from propelo.cli import main
     monkeypatch.setenv("CAREEROS_LLM", "openai")
     monkeypatch.setenv("OPENAI_API_KEY", KEY)
     main(["llm"])

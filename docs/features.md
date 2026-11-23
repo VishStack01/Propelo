@@ -9,15 +9,15 @@ and why, is at the end.
 
 | Check | What it does | Where |
 |---|---|---|
-| Is it still open? | Asks the hiring system's own API first (Greenhouse, Lever, Ashby, SmartRecruiters, Workable), then reads the page for a closure notice or an Apply button. Anything else is "uncertain", never a guess. | `careeros liveness <url>`, `careeros/liveness.py` |
-| Is it a real opening? | Observations, not accusations: posting age, a closure notice, re-listing, how specific the posting is, contradictions (an "entry-level" title asking 5 years), whether pay is shown and whether a recruiter posted it for an unnamed client. Three tiers: Looks real, Check before applying, Suspicious. | `careeros/signals.py`, shown on the job board and in the dashboard |
-| Re-listed? | The same company and the same title words, posted again after the earlier listing disappeared, within 90 days. Parallel openings don't count. | `RepostHistory` in `careeros/signals.py`; history kept with the feed (feed-latest release) |
-| Can you legally take it? | "US citizens only", security clearances and "must be authorized to work in X" rule a role out unless X is India. "No visa sponsorship" doesn't, for remote work from India. | the Work authorization gate in `careeros/gates.py` |
-| Role family | Forward deployed, Agentic and automation, AI platform and LLMOps, Solutions architect, AI product, AI transformation, Applied AI and LLM engineering. A filter on the job board. | `careeros/signals.py` |
+| Is it still open? | Asks the hiring system's own API first (Greenhouse, Lever, Ashby, SmartRecruiters, Workable), then reads the page for a closure notice or an Apply button. Anything else is "uncertain", never a guess. | `propelo liveness <url>`, `propelo/liveness.py` |
+| Is it a real opening? | Observations, not accusations: posting age, a closure notice, re-listing, how specific the posting is, contradictions (an "entry-level" title asking 5 years), whether pay is shown and whether a recruiter posted it for an unnamed client. Three tiers: Looks real, Check before applying, Suspicious. | `propelo/signals.py`, shown on the job board and in the dashboard |
+| Re-listed? | The same company and the same title words, posted again after the earlier listing disappeared, within 90 days. Parallel openings don't count. | `RepostHistory` in `propelo/signals.py`; history kept with the feed (feed-latest release) |
+| Can you legally take it? | "US citizens only", security clearances and "must be authorized to work in X" rule a role out unless X is India. "No visa sponsorship" doesn't, for remote work from India. | the Work authorization gate in `propelo/gates.py` |
+| Role family | Forward deployed, Agentic and automation, AI platform and LLMOps, Solutions architect, AI product, AI transformation, Applied AI and LLM engineering. A filter on the job board. | `propelo/signals.py` |
 
 ## Scoring a role (1 to 5, apply line 4.0)
 
-The `evaluate` skill writes one JSON evaluation per role and `careeros eval-check`
+The `evaluate` skill writes one JSON evaluation per role and `propelo eval-check`
 checks it before it's saved:
 
 - **Requirements first, from the posting alone**, before the brain is opened, so
@@ -39,30 +39,30 @@ checks it before it's saved:
 - Also: level strategy, company type and how reliable its pay data is, resume
   changes, stories to prepare, draft answers (4.0+ only) and the posting's keywords.
 
-`careeros eval-check eval.json --jd jd.txt --md report.md` writes the A–H report,
+`propelo eval-check eval.json --jd jd.txt --md report.md` writes the A–H report,
 with the posting archived at the end.
 
 ## Documents
 
 | | |
 |---|---|
-| `careeros archive-jd <url>` | Saves the posting's full text verbatim before you apply. Postings disappear before interviews. |
-| `careeros render resume.json --out resume.pdf` | An ATS-safe PDF: one column, standard headings, real text, links written out. Refuses a resume that fails the claims check, then reads the PDF back. |
-| `careeros pdf-check resume.pdf --resume resume.json` | Blocks a PDF that drops a checked bullet or adds a number your brain, resume or profile doesn't have. |
-| `careeros keywords --jd jd.txt --resume resume.json` | Which of the posting's terms appear in your bullets, only in your skills list, or nowhere. A coverage list, never an "ATS score". |
-| `careeros writing-check note.txt` | Flags stock openers, unprovable adjectives, jargon and machine-sounding phrases in cover notes, answers and messages. |
+| `propelo archive-jd <url>` | Saves the posting's full text verbatim before you apply. Postings disappear before interviews. |
+| `propelo render resume.json --out resume.pdf` | An ATS-safe PDF: one column, standard headings, real text, links written out. Refuses a resume that fails the claims check, then reads the PDF back. |
+| `propelo pdf-check resume.pdf --resume resume.json` | Blocks a PDF that drops a checked bullet or adds a number your brain, resume or profile doesn't have. |
+| `propelo keywords --jd jd.txt --resume resume.json` | Which of the posting's terms appear in your bullets, only in your skills list, or nowhere. A coverage list, never an "ATS score". |
+| `propelo writing-check note.txt` | Flags stock openers, unprovable adjectives, jargon and machine-sounding phrases in cover notes, answers and messages. |
 
 ## After you apply
 
 | | |
 |---|---|
-| Follow-ups | Day 7 and day 14 after applying, then stop. A reply to a recruiter within a day. A thank-you the day after each interview. Unsent nudges close themselves when the company replies. `careeros followups` lists what's due. |
-| `careeros classify-reply email.txt` | Confirmation, rejection, assessment, recruiter reply, interview or offer, with the sentence that decided it. Unclear emails go to you. |
-| `careeros stats` | The funnel, reply rate, time to a reply, time from posting to applying, by region, source and role family. Small samples are labelled. |
-| `careeros calibrate` | Do roles scored 4.5+ get more replies than 4.0–4.4 ones? If not, the scoring needs a look. |
-| `careeros gaps` | Skills your kept roles keep asking for that your brain can't prove yet. |
-| Warm intros | Upload LinkedIn's own Connections.csv on the Outreach tab (or `careeros warm-intros`). Matches are tiered: works there, very likely, or a similar name to check. It stays in your private dashboard. |
-| Referral finder | Each role's card ranks who to ask: people you know there first, then alumni of your college, engineers on a similar team, engineering managers and recruiters (`careeros referrals`, or the outreach skill with public web search). The card has LinkedIn search links that open in your own signed-in browser, and a connection note under 300 characters drafted from your profile. You send it; Propelo never signs in to LinkedIn or sends anything there. |
+| Follow-ups | Day 7 and day 14 after applying, then stop. A reply to a recruiter within a day. A thank-you the day after each interview. Unsent nudges close themselves when the company replies. `propelo followups` lists what's due. |
+| `propelo classify-reply email.txt` | Confirmation, rejection, assessment, recruiter reply, interview or offer, with the sentence that decided it. Unclear emails go to you. |
+| `propelo stats` | The funnel, reply rate, time to a reply, time from posting to applying, by region, source and role family. Small samples are labelled. |
+| `propelo calibrate` | Do roles scored 4.5+ get more replies than 4.0–4.4 ones? If not, the scoring needs a look. |
+| `propelo gaps` | Skills your kept roles keep asking for that your brain can't prove yet. |
+| Warm intros | Upload LinkedIn's own Connections.csv on the Outreach tab (or `propelo warm-intros`). Matches are tiered: works there, very likely, or a similar name to check. It stays in your private dashboard. |
+| Referral finder | Each role's card ranks who to ask: people you know there first, then alumni of your college, engineers on a similar team, engineering managers and recruiters (`propelo referrals`, or the outreach skill with public web search). The card has LinkedIn search links that open in your own signed-in browser, and a connection note under 300 characters drafted from your profile. You send it; Propelo never signs in to LinkedIn or sends anything there. |
 
 ## Interviews and offers
 
@@ -71,12 +71,12 @@ questions scored one at a time, a debrief after each round, red flags across
 rounds (scope drift against the archived posting, questions an employer
 shouldn't ask), an offer-letter walk-through that describes each clause and
 lists questions for a lawyer (it is not legal advice), and a negotiation brief
-built on `careeros salary-gap`: the posting's range, your floor and ask, every
+built on `propelo salary-gap`: the posting's range, your floor and ask, every
 number you've stated, and the offer.
 
 ## Finding companies and checking your setup
 
-- `careeros funded` reads funding news (Inc42, Entrackr, TechCrunch India) and
+- `propelo funded` reads funding news (Inc42, Entrackr, TechCrunch India) and
   lists newly funded companies; nothing is added until you run `--add`. The
   hourly scan also writes `feed/funded.json` for review.
 - **High-pay reach.** Public pay data for freshers (`config/pay/entry-pay.csv`,
@@ -92,7 +92,7 @@ number you've stated, and the offer.
   `LINKEDIN_CLIENT_SECRET` from a LinkedIn app with "Sign in with LinkedIn using
   OpenID Connect". It shares name, email and photo only; LinkedIn doesn't let
   apps read connections or send messages, so referrals work from your export.
-- `careeros doctor` checks Python, your config, the brain, Playwright, the
+- `propelo doctor` checks Python, your config, the brain, Playwright, the
   database and the kill switch, and fails if any private file is tracked by git.
 
 ## The workspace (dashboard)
@@ -105,7 +105,7 @@ The dashboard is laid out as a personal job-search workspace: a sidebar with Das
 - **Duplicates**: one role, one record. The search drops a role it already has, even when a board reposts it under a new link, the company writes its legal name differently ("Tether" and "Tether Operations Limited"), the title adds a place or work mode ("- Worldwide", ", Galway, Ireland", "(100% Remote)") or uses an abbreviation ("SDE I" and "Software Development Engineer 1"). Adding a role by hand that you already have asks first.
 - **Find jobs**: the search's roles with Save, Dismiss and Start application on each, and filters for saved roles, startups (YC and Hacker News "Who is hiring", with the address each post gives for applying), and region.
 - **Applications**: a board (drag a card to change its stage, or press Auto-apply on a card) or the table. Each application opens as a page with Overview (the search's checks, score, brief, package and outreach), Resume, Cover letter, Email, Job posting with "how you match", and Notes.
-- **Tailoring**: one click writes a tailored resume, cover letter (warm, direct or formal) and email from your profile, in English or another language (headings and dates follow it). "Refine with AI" takes requests such as "make the summary shorter", or regenerates one part (the summary, one role's bullets, the skills order). The cover letter has its parts (sender, date, recipient, greeting, body, sign-off), each editable and regenerable. Edit the tailored resume's text directly. Every change is kept in history with undo. Any number in a draft that isn't in your profile or the posting is flagged before you send. Without Claude (the GitHub Pages demo, `careeros serve`) the same steps run as plain rules over your profile.
+- **Tailoring**: one click writes a tailored resume, cover letter (warm, direct or formal) and email from your profile, in English or another language (headings and dates follow it). "Refine with AI" takes requests such as "make the summary shorter", or regenerates one part (the summary, one role's bullets, the skills order). The cover letter has its parts (sender, date, recipient, greeting, body, sign-off), each editable and regenerable. Edit the tailored resume's text directly. Every change is kept in history with undo. Any number in a draft that isn't in your profile or the posting is flagged before you send. Without Claude (the GitHub Pages demo, `propelo serve`) the same steps run as plain rules over your profile.
 - **New application**: paste a posting you found yourself. The role's details and requirements are read, each requirement is checked against your profile ("+ Add to profile" for a gap you really have), and it joins Applications as "To apply", optionally queued for auto-apply.
 - **Auto-apply**: its own page with the switch, what it still needs (your details, resume and a linked computer, with the steps), the queue, what it sent and the run log. It applies from the Claude desktop app on your computer ([prompts/scheduled-apply.md](../prompts/scheduled-apply.md)).
 - **Inbox**: employers' replies from Gmail, matched to each application, with what they ask, free times from your calendar, and a reply drafted from your profile that you send from Gmail. A scheduled check reads Gmail every 3 hours (read-only), moves each role to its new stage and adds interviews to Google Calendar ([prompts/scheduled-inbox.md](../prompts/scheduled-inbox.md)).
@@ -126,20 +126,20 @@ For roles you apply to yourself on company sites. Connect it once with your Prop
 
 ## Getting shortlisted
 
-- **`careeros ats-check resume.pdf`** reads the PDF the way an
+- **`propelo ats-check resume.pdf`** reads the PDF the way an
   applicant-tracking system does and scores it: a real text layer, contact
   details and links as text, your name first, standard headings, one page under
   three years of experience, month-and-year dates on every role, results with
   numbers, a short summary, a sensible file name and, with `--terms`, how many of
   the skills well-paid roles ask for appear on it. Each failed check says what to
   change.
-- **`careeros market`** runs your filters over the live feed and shows the
+- **`propelo market`** runs your filters over the live feed and shows the
   funnel (openings → your roles → your experience → open to you → pay stated,
   estimated, below or unknown), the pay the postings state, the skills the roles
   at your floor ask for most and which of them your resume shows, and the
   companies with the most such roles. A missing skill is something to learn or
   to prove in a project, never a word to add without the work behind it.
-- **Real early-career pay** (`careeros payers`): median offers by company from
+- **Real early-career pay** (`propelo payers`): median offers by company from
   LeetCode offer posts (leetcode-compensation, MIT). A role that doesn't state
   pay passes your floor when that company's median base for up to 1.5 years
   meets it, and the check says it is an estimate.

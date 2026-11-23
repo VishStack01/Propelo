@@ -5,7 +5,7 @@
    numbers, bank details or dates of birth. The page's own text is only matched, never followed. */
 (function () {
   "use strict";
-  if (window.__careerosFill) return;
+  if (window.__propeloFill) return;
 
   var BLOCKED = /(^|\.)(linkedin\.com|naukri\.com|indeed\.[a-z.]+|wellfound\.com|angel\.co)$/i;
   var SENSITIVE = /pass(word|code)|one[- ]?time|\botp\b|verification code|aadhaa?r|\bpan\b|pan (card|number)|permanent account|bank|ifsc|account (number|no)|routing|passport|date of birth|\bdob\b|birth ?date|\bssn\b|social security|national id|credit card|card number|\bcvv\b|security question|mother'?s maiden/i;
@@ -169,10 +169,10 @@
     return "";
   }
   function mark(el, kind) {
-    el.setAttribute("data-careeros", kind);
-    if (!document.getElementById("careeros-marks")) {
-      var st = document.createElement("style"); st.id = "careeros-marks";
-      st.textContent = "[data-careeros=filled]{outline:2px solid #F5B8DB!important;outline-offset:1px}[data-careeros=needs]{outline:2px dashed #E49A3C!important;outline-offset:1px}";
+    el.setAttribute("data-propelo", kind);
+    if (!document.getElementById("propelo-marks")) {
+      var st = document.createElement("style"); st.id = "propelo-marks";
+      st.textContent = "[data-propelo=filled]{outline:2px solid #F5B8DB!important;outline-offset:1px}[data-propelo=needs]{outline:2px dashed #E49A3C!important;outline-offset:1px}";
       (document.head || document.documentElement).appendChild(st);
     }
   }
@@ -197,7 +197,7 @@
     return new File([u], r.name || "resume.pdf", { type: r.type || "application/pdf" });
   }
 
-  window.__careerosRead = function () {
+  window.__propeloRead = function () {
     var h1 = document.querySelector("h1, .posting-headline h2, [data-automation-id='jobPostingHeader'], .app-title");
     var og = document.querySelector('meta[property="og:site_name"]'), ogt = document.querySelector('meta[property="og:title"]');
     var co = document.querySelector(".company-name, .main-header-logo img[alt], [class*='companyName'], [data-automation-id='company']");
@@ -283,7 +283,7 @@
   }
   function fillCombo(el, data, out) {
     var a = data.applicant || {}, label = labelOf(el), hint = hints(el), key = matchKey(label, hint);
-    el.setAttribute("data-careeros-seen", "1");
+    el.setAttribute("data-propelo-seen", "1");
     if (key === "__sensitive") { out.skippedSensitive++; return Promise.resolve(); }
     if (comboHasValue(el)) return Promise.resolve();
     el.__combo = true;
@@ -310,16 +310,16 @@
     var fields = Array.prototype.slice.call(document.querySelectorAll("input, textarea, select"));
     Array.prototype.slice.call(document.querySelectorAll(COMBO)).forEach(function (c) { if (c.tagName !== "INPUT" && c.tagName !== "SELECT" && fields.indexOf(c) < 0) fields.push(c); });
     fields.forEach(function (el) {
-      if (onlyNew && el.getAttribute("data-careeros-seen")) return;
+      if (onlyNew && el.getAttribute("data-propelo-seen")) return;
       var type = (el.type || "").toLowerCase();
       if (el.tagName !== "INPUT" && el.tagName !== "TEXTAREA" && el.tagName !== "SELECT") { if (visible(el)) combos.push(el); return; }
       if (/^(submit|button|reset|image|hidden|password|checkbox|range|color|search)$/.test(type)) {
-        if (type === "checkbox" && !el.getAttribute("data-careeros-seen") && required(el, labelOf(el)) && !el.checked && visible(el)) { out.needs.push({ label: labelOf(el) || "A required checkbox", why: "Tick it yourself if it's true." }); mark(el, "needs"); }
-        if (type === "checkbox" && visible(el)) el.setAttribute("data-careeros-seen", "1");
+        if (type === "checkbox" && !el.getAttribute("data-propelo-seen") && required(el, labelOf(el)) && !el.checked && visible(el)) { out.needs.push({ label: labelOf(el) || "A required checkbox", why: "Tick it yourself if it's true." }); mark(el, "needs"); }
+        if (type === "checkbox" && visible(el)) el.setAttribute("data-propelo-seen", "1");
         return;
       }
       if (!visible(el)) return;
-      el.setAttribute("data-careeros-seen", "1");
+      el.setAttribute("data-propelo-seen", "1");
       if (el.tagName === "INPUT" && isCombo(el) && type !== "radio") { combos.push(el); return; }
       var label = labelOf(el), hint = hints(el), key = matchKey(label, hint);
       // "Reasons for leaving your current role" asks for an answer, not your current role.
@@ -339,7 +339,7 @@
       if (type === "radio") {
         if (seenRadio[el.name]) return; seenRadio[el.name] = 1;
         var group = Array.prototype.slice.call(document.querySelectorAll('input[type=radio][name="' + (window.CSS ? CSS.escape(el.name) : el.name) + '"]'));
-        group.forEach(function (r) { r.setAttribute("data-careeros-seen", "1"); });
+        group.forEach(function (r) { r.setAttribute("data-propelo-seen", "1"); });
         if (group.some(function (r) { return r.checked; })) return;
         var q = questionOf(el, group);
         var gkey = matchKey(q, el.name || "");
@@ -393,26 +393,26 @@
   }
   function refill() {
     if (watch.busy || !watch.data) return;
-    var fresh = Array.prototype.slice.call(document.querySelectorAll("input:not([data-careeros-seen]), textarea:not([data-careeros-seen]), select:not([data-careeros-seen])"))
+    var fresh = Array.prototype.slice.call(document.querySelectorAll("input:not([data-propelo-seen]), textarea:not([data-propelo-seen]), select:not([data-propelo-seen])"))
       .some(function (el) { return el.type !== "hidden" && visible(el); });
-    var freshCombo = Array.prototype.slice.call(document.querySelectorAll(COMBO)).some(function (el) { return !el.getAttribute("data-careeros-seen") && visible(el); });
+    var freshCombo = Array.prototype.slice.call(document.querySelectorAll(COMBO)).some(function (el) { return !el.getAttribute("data-propelo-seen") && visible(el); });
     if (!fresh && !freshCombo) return;
     watch.busy = true; watch.rounds++;
     var out = blank();
     pass(watch.data, out, true).then(function () {
       watch.busy = false;
-      if ((out.filled.length || out.needs.length) && typeof window.__careerosOnMore === "function") { try { window.__careerosOnMore(out); } catch (e) { /* the panel is gone */ } }
+      if ((out.filled.length || out.needs.length) && typeof window.__propeloOnMore === "function") { try { window.__propeloOnMore(out); } catch (e) { /* the panel is gone */ } }
     }, function () { watch.busy = false; });
   }
 
-  window.__careerosFill = function (data) {
+  window.__propeloFill = function (data) {
     var out = blank();
     if (BLOCKED.test(location.hostname)) { out.blocked = true; return Promise.resolve(out); }
     data = data || {};
     var a = data.applicant || {};
     if (/prefer not/i.test(a.backlogs || "")) delete a.backlogs;
     // A fresh fill looks at every field again (a field you cleared can be filled again); never overwrites.
-    Array.prototype.slice.call(document.querySelectorAll("[data-careeros-seen]")).forEach(function (el) { el.removeAttribute("data-careeros-seen"); });
+    Array.prototype.slice.call(document.querySelectorAll("[data-propelo-seen]")).forEach(function (el) { el.removeAttribute("data-propelo-seen"); });
     return pass(data, out, false).then(function () { if (data.watch !== false) startWatch(data); return out; });
   };
 })();

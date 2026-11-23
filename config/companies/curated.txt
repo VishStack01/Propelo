@@ -1,7 +1,7 @@
 # Curated list of product companies hiring engineers in India, plus remote-first
 # companies that hire from India. One per line:
 #   Name | extra board slugs (comma-separated, optional) | city (optional) | ats:token (optional, if known)
-# `careeros discover` finds each company's public job board from these names.
+# `propelo discover` finds each company's public job board from these names.
 # Pull requests welcome; please keep it to product companies.
 
 ## ai-native

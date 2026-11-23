@@ -1,6 +1,6 @@
 # Database tables (generated)
 
-Generated from `careeros/cloud/migrations/*.sql`. Do not edit by hand.
+Generated from `propelo/cloud/migrations/*.sql`. Do not edit by hand.
 
 32 tables.
 

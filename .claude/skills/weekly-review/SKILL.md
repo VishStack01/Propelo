@@ -5,7 +5,7 @@ description: Weekly funnel analysis and one-variable experiment for the job sear
 
 # Weekly review
 
-Start from the numbers: `careeros stats --days 7`, `careeros stats --days 30`, `careeros calibrate` and `careeros gaps` (add `--jobs <export dir>` for the dashboard's jobs).
+Start from the numbers: `propelo stats --days 7`, `propelo stats --days 30`, `propelo calibrate` and `propelo gaps` (add `--jobs <export dir>` for the dashboard's jobs).
 
 1. Funnel for the last 7 and 30 days: found → ready → applied → screen → interview → offer, split by region, source, positioning variant and whether a warm contact existed.
 2. Speed: median hours from posting to submission (target under 12 for Reach and Target roles).

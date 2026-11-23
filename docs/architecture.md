@@ -15,9 +15,9 @@ flowchart LR
     ATS["Company ATS feeds<br/>Greenhouse · Lever · Ashby"]
     Boards["Job boards<br/>Wellfound · Internshala · YC · HN · Cutshort"]
   end
-  ATS --> Scout["careeros scout"]
+  ATS --> Scout["propelo scout"]
   Boards --> AgentScout["job-scout skill"]
-  AgentScout -- "careeros evaluate" --> Gates
+  AgentScout -- "propelo evaluate" --> Gates
   Scout --> Gates["Gatekeeper<br/>9 gates, each with a quote"]
   Gates --> Store[("Store<br/>SQLite or artifact DB")]
   Brain[("Career Brain<br/>claims + evidence vault")] --> Tailor
@@ -27,7 +27,7 @@ flowchart LR
   Claims --> Reviewer["reviewer skill<br/>(second model)"]
   Reviewer -- pass --> Ready["stage: ready"]
   Ready --> Gate2{"Every required answer<br/>covered?"}
-  Gate2 -- yes --> Apply["careeros apply<br/>or browser agent"]
+  Gate2 -- yes --> Apply["propelo apply<br/>or browser agent"]
   Gate2 -- no --> You["Dashboard batch<br/>(you)"]
   Apply --> Receipts[("Receipts")]
   Apply --> Outreach["outreach drafts<br/>(you send)"]
@@ -40,16 +40,16 @@ flowchart LR
 
 | Layer | What it is | Where |
 |---|---|---|
-| Truth layer | Career Brain (claims, evidence, skills, stories, voice), validated by `brain-check` | `brain/`, `careeros/brain.py` |
-| Discovery | ~1,000 company career pages and 9 remote boards scanned every 3 hours on GitHub Actions into a public feed (code); 96 more platforms in rotation (agent) | `careeros/discover.py`, `scan.py`, `feed.py`, `sources/`, `config/platforms.toml`, `job-scout` skill. See [feed.md](feed.md) |
-| Gatekeeper | Role, seniority, experience, freshness, open, location, pay, dealbreakers, company | `careeros/gates.py`, `careeros/extract.py`, `careeros/geo.py` |
-| State | Documents, dedupe keys, submit state machine, audit log, kill switch | `careeros/store.py` |
+| Truth layer | Career Brain (claims, evidence, skills, stories, voice), validated by `brain-check` | `brain/`, `propelo/brain.py` |
+| Discovery | ~1,000 company career pages and 9 remote boards scanned every 3 hours on GitHub Actions into a public feed (code); 96 more platforms in rotation (agent) | `propelo/discover.py`, `scan.py`, `feed.py`, `sources/`, `config/platforms.toml`, `job-scout` skill. See [feed.md](feed.md) |
+| Gatekeeper | Role, seniority, experience, freshness, open, location, pay, dealbreakers, company | `propelo/gates.py`, `propelo/extract.py`, `propelo/geo.py` |
+| State | Documents, dedupe keys, submit state machine, audit log, kill switch | `propelo/store.py` |
 | Generation | Research, decision A–F, tailored package | `company-research`, `tailor` skills |
-| Verification | Deterministic claims gate + independent model review | `careeros/claims.py`, `reviewer` skill |
-| Execution | Answer resolver with confidence + Playwright form filler | `careeros/apply/` |
+| Verification | Deterministic claims gate + independent model review | `propelo/claims.py`, `reviewer` skill |
+| Execution | Answer resolver with confidence + Playwright form filler | `propelo/apply/` |
 | Outreach | Drafts only | `outreach` skill |
 | Tracking & learning | Inbox sync, funnel, experiments, gap map | `tracker`, `weekly-review` skills |
-| Control plane | Dashboard (approvals, skip log, checks with quotes) | `dashboard/app.html`, `careeros serve` |
+| Control plane | Dashboard (approvals, skip log, checks with quotes) | `dashboard/app.html`, `propelo serve` |
 | Scheduling | Claude scheduled tasks, cron or CI | `prompts/`, `docs/build-your-own.md` |
 
 ## Three deployments, one data model
@@ -60,8 +60,8 @@ The dashboard reads documents (`jobs/*`, `runs/*`, `settings/profile`,
 - **Hosted**: a Claude artifact with its own database. Scheduled tasks (cloud)
   run the search; a scheduled task on your computer runs the apply step in a
   real browser.
-- **Local**: `data/careeros.db` (SQLite). `careeros serve` exposes it to the
-  dashboard on `127.0.0.1`; cron runs `careeros scout`.
+- **Local**: `data/careeros.db` (SQLite). `propelo serve` exposes it to the
+  dashboard on `127.0.0.1`; cron runs `propelo scout`.
 
 - **Cloud (multi-user)**: Propelo Cloud, a FastAPI service on PostgreSQL. One shared
   job inventory read from the hourly feed, private documents per account, a worker
@@ -70,7 +70,7 @@ The dashboard reads documents (`jobs/*`, `runs/*`, `settings/profile`,
 
 The dashboard file detects where it is running: inside Claude it uses the
 artifact database; served by Propelo Cloud it signs the user in and uses their
-account; served by `careeros serve` it uses the local API; anywhere else (GitHub
+account; served by `propelo serve` it uses the local API; anywhere else (GitHub
 Pages) it shows fictional demo data.
 
 ## Role lifecycle

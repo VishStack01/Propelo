@@ -5,11 +5,11 @@ from datetime import datetime, timezone
 
 import pytest
 
-from careeros import discover, feed, paydata, referrals, scan
-from careeros.gates import gate_pay
-from careeros.models import Job
-from careeros.settings import Settings
-from careeros.sources import amazon, workday
+from propelo import discover, feed, paydata, referrals, scan
+from propelo.gates import gate_pay
+from propelo.models import Job
+from propelo.settings import Settings
+from propelo.sources import amazon, workday
 
 
 # ------------------------------------------------------------------ public pay data
@@ -158,7 +158,7 @@ def test_referral_links_and_drafts_stay_honest():
 
 
 def test_referrals_cli(tmp_path, capsys):
-    from careeros.cli import main
+    from propelo.cli import main
     (tmp_path / "Connections.csv").write_text("Notes:\n\nFirst Name,Last Name,URL,Email Address,Company,Position,Connected On\n"
                                               "Tara,E,https://linkedin.com/in/e,,Razorpay,Software Engineer,01 Jan 2026\n")
     (tmp_path / "me.json").write_text(json.dumps({"data": ME}))
@@ -171,7 +171,7 @@ def test_referrals_cli(tmp_path, capsys):
 # ------------------------------------------------------------------ Sign in with LinkedIn
 
 def test_linkedin_sign_in(cloud, monkeypatch):
-    from careeros.cloud import linkedin
+    from propelo.cloud import linkedin
     c = cloud.client()
     assert c.get("/api/auth/providers").json() == {"linkedin": False}
     assert c.get("/api/auth/linkedin/start", follow_redirects=False).status_code == 404

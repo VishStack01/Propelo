@@ -4,7 +4,7 @@ import json
 import struct
 import zlib
 
-from careeros import logos
+from propelo import logos
 
 
 def png(width: int) -> bytes:
@@ -72,7 +72,7 @@ def test_tiny_or_broken_icons_are_skipped():
 
 def test_site_publishes_logos(tmp_path):
     from conftest import feed_record, write_feed
-    from careeros import site
+    from propelo import site
     feed = tmp_path / "feed"
     write_feed(feed, [feed_record(1, company="Company 1"), feed_record(2, company="Company 2")])
     cache = tmp_path / "cache"

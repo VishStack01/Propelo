@@ -20,7 +20,7 @@
   function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
   function page() {
     var p = {};
-    try { p = window.__careerosRead ? window.__careerosRead() : {}; } catch (e) { p = {}; }
+    try { p = window.__propeloRead ? window.__propeloRead() : {}; } catch (e) { p = {}; }
     p.url = location.href;
     if (!p.jd) {
       var main = document.querySelector("main, [role=main], #content, .job, .posting, .job-description, [class*='description']") || document.body;
@@ -91,7 +91,7 @@
 
   // Questions that appear after a fill (the next page of a Workday form, a follow-up question) are filled by
   // fill.js on its own; it tells the panel here what it did.
-  window.__careerosOnMore = function (more) {
+  window.__propeloOnMore = function (more) {
     if (!S.report) S.report = { filled: [], needs: [] };
     S.report.filled = S.report.filled.concat(more.filled || []);
     S.report.needs = S.report.needs.concat(more.needs || []);

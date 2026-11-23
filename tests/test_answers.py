@@ -2,7 +2,7 @@ import json
 import tomllib
 from pathlib import Path
 
-from careeros.apply.answers import ESCALATE, HIGH, MEDIUM, SKIP, Context, Field, match_option, ready_to_submit, resolve
+from propelo.apply.answers import ESCALATE, HIGH, MEDIUM, SKIP, Context, Field, match_option, ready_to_submit, resolve
 
 ROOT = Path(__file__).parents[1]
 PROFILE = tomllib.loads((ROOT / "config" / "profile.example.toml").read_text())

@@ -7,7 +7,7 @@ import pytest
 
 pytest.importorskip("fastapi")
 
-from careeros.cloud import mfa  # noqa: E402
+from propelo.cloud import mfa  # noqa: E402
 
 PW = "correct horse battery"
 

@@ -2,7 +2,7 @@
 
 app.html is the single source of the dashboard. The same file is published as a
 Claude artifact (where it uses the artifact's own database), served locally by
-`careeros serve`, and hosted on GitHub Pages with the demo data inlined.
+`propelo serve`, and hosted on GitHub Pages with the demo data inlined.
 """
 from pathlib import Path
 
@@ -36,6 +36,6 @@ cloud = (
     + "\n<script>if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));</script>"
     + "\n</body>\n</html>\n"
 )
-target = root.parent / "careeros" / "cloud" / "static" / "dashboard.html"
+target = root.parent / "propelo" / "cloud" / "static" / "dashboard.html"
 target.write_text(cloud, encoding="utf-8")
 print(f"wrote {target} ({len(cloud):,} bytes)")

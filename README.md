@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/VishStack01/careeros/actions/workflows/tests.yml"><img alt="tests" src="https://github.com/VishStack01/careeros/actions/workflows/tests.yml/badge.svg"></a>
+  <a href="https://github.com/VishStack01/Propelo/actions/workflows/tests.yml"><img alt="tests" src="https://github.com/VishStack01/Propelo/actions/workflows/tests.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-FF7034"></a>
   <img alt="Python 3.11 to 3.13" src="https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-BDB6FC">
   <img alt="Bring your own key" src="https://img.shields.io/badge/LLM-Anthropic%20%7C%20OpenAI%20%7C%20Gemini%20%7C%20Ollama-FF85BA">
@@ -32,18 +32,18 @@
 ## Quick start
 
 ```bash
-git clone https://github.com/VishStack01/careeros.git && cd careeros
+git clone https://github.com/VishStack01/Propelo.git && cd Propelo
 pip install -e .
 
 cp .env.example .env            # pick a provider and paste your key
-careeros llm test               # one tiny request; never prints the key
+propelo llm test               # one tiny request; never prints the key
 
-careeros init                   # creates your private, git-ignored config
-careeros discover && careeros scan   # map company job boards, build the feed
-careeros serve                  # dashboard at http://127.0.0.1:8765
+propelo init                   # creates your private, git-ignored config
+propelo discover && propelo scan   # map company job boards, build the feed
+propelo serve                  # dashboard at http://127.0.0.1:8765
 ```
 
-The command is `careeros`; `propelo` is the same command under the new name (Propelo was called CareerOS until 1.3.0, and the repository and package keep that name).
+The command is `propelo`. (Propelo was called CareerOS until 1.3.0; the old `careeros` command and `CAREEROS_*` settings still work.)
 
 No key? Scanning, filtering, tracking and the dashboard all work without a model. A key, or a local Ollama model, adds the AI steps.
 
@@ -53,17 +53,17 @@ Propelo calls the provider you choose with your key, using only Python's standar
 
 | Provider | `.env` | Notes |
 |---|---|---|
-| Anthropic | `CAREEROS_LLM=anthropic`, `ANTHROPIC_API_KEY` | Claude models |
-| OpenAI | `CAREEROS_LLM=openai`, `OPENAI_API_KEY` | Set `OPENAI_BASE_URL` for any OpenAI-compatible API (OpenRouter, Groq, Together, vLLM) |
-| Google Gemini | `CAREEROS_LLM=gemini`, `GEMINI_API_KEY` | Gemini models |
-| Ollama | `CAREEROS_LLM=ollama`, `OLLAMA_HOST` (optional) | Free and fully local |
+| Anthropic | `PROPELO_LLM=anthropic`, `ANTHROPIC_API_KEY` | Claude models |
+| OpenAI | `PROPELO_LLM=openai`, `OPENAI_API_KEY` | Set `OPENAI_BASE_URL` for any OpenAI-compatible API (OpenRouter, Groq, Together, vLLM) |
+| Google Gemini | `PROPELO_LLM=gemini`, `GEMINI_API_KEY` | Gemini models |
+| Ollama | `PROPELO_LLM=ollama`, `OLLAMA_HOST` (optional) | Free and fully local |
 
-Pin models with `CAREEROS_MODEL` and `CAREEROS_MODEL_QUICK`. Your key is read at call time, sent only to your provider, and never printed, logged or stored. The local dashboard accepts AI requests only from its own page, so another website can't spend your key.
+Pin models with `PROPELO_MODEL` and `PROPELO_MODEL_QUICK`. Your key is read at call time, sent only to your provider, and never printed, logged or stored. The local dashboard accepts AI requests only from its own page, so another website can't spend your key.
 
 ```bash
-careeros ai profile resume.pdf -o profile.json        # resume to profile; unsupported values removed
-careeros ai posting posting.txt                       # requirements kept only with a verbatim quote
-careeros ai evaluate --jd posting.txt --resume resume.pdf -o eval.json   # 1 to 5 fit, code-checked
+propelo ai profile resume.pdf -o profile.json        # resume to profile; unsupported values removed
+propelo ai posting posting.txt                       # requirements kept only with a verbatim quote
+propelo ai evaluate --jd posting.txt --resume resume.pdf -o eval.json   # 1 to 5 fit, code-checked
 ```
 
 Every AI output passes a code check before you see it: quotes must appear in the posting, scores must stay inside their dimension ranges, and anything your resume doesn't contain is dropped and listed. A draft that fails gets the errors back once; if it fails again, nothing is written.
@@ -101,7 +101,7 @@ The hourly scan also publishes a public job board on GitHub Pages ([jobs.html](h
 | [`/feed.xml`](https://propelo.org/feed.xml) | RSS of the 100 newest roles |
 | `/data/jobs/<id>.json` | One role with its full text and facts |
 
-Build it yourself with `careeros site --feed feed --out site`. When a `website/` folder is present, the site's home page is the project website and the board lives at `jobs.html`.
+Build it yourself with `propelo site --feed feed --out site`. When a `website/` folder is present, the site's home page is the project website and the board lives at `jobs.html`.
 
 ## Auto-apply
 
@@ -147,8 +147,8 @@ The same product as a multi-user service: people sign up with their email, set t
 
 ```bash
 pip install -e ".[cloud]"
-careeros cloud serve      # http://127.0.0.1:8000, SQLite, emails printed to the terminal
-careeros cloud worker     # ingests the feed and matches every account
+propelo cloud serve      # http://127.0.0.1:8000, SQLite, emails printed to the terminal
+propelo cloud worker     # ingests the feed and matches every account
 ```
 
 Architecture, deployment and operations: **[docs/cloud.md](docs/cloud.md)**. Before inviting anyone: **[the release checklist](docs/cloud-release-checklist.md)**.
@@ -157,18 +157,18 @@ Architecture, deployment and operations: **[docs/cloud.md](docs/cloud.md)**. Bef
 
 | Stage | What happens | How |
 |---|---|---|
-| Brain | Interviews you and turns your career into claims with evidence | `career-brain` skill, `careeros brain-check` |
-| Discover | Scans ~2,000 career pages and 9 remote boards several times a day, sweeps ~20,000 more startup boards (open ats-scrapers inventory) for developer roles open to India, adds companies the hiring radar sees on Indeed and Naukri (via JobSpy), reads published pay ranges (Ashby, Lever, Greenhouse) and tags roles that state 20 LPA+; the agent covers the rest of the 96 platforms | `careeros discover`, `deep`, `radar`, `scan`, `filter-feed`, `job-scout` skill |
-| Gate | Role, seniority, experience, freshness, open, location, pay, dealbreakers, company; each with a quote | `careeros/gates.py` |
-| Check | Still open? A real opening? Re-listed? Work authorization you can meet? | `careeros liveness`, `careeros/signals.py` |
+| Brain | Interviews you and turns your career into claims with evidence | `career-brain` skill, `propelo brain-check` |
+| Discover | Scans ~2,000 career pages and 9 remote boards several times a day, sweeps ~20,000 more startup boards (open ats-scrapers inventory) for developer roles open to India, adds companies the hiring radar sees on Indeed and Naukri (via JobSpy), reads published pay ranges (Ashby, Lever, Greenhouse) and tags roles that state 20 LPA+; the agent covers the rest of the 96 platforms | `propelo discover`, `deep`, `radar`, `scan`, `filter-feed`, `job-scout` skill |
+| Gate | Role, seniority, experience, freshness, open, location, pay, dealbreakers, company; each with a quote | `propelo/gates.py` |
+| Check | Still open? A real opening? Re-listed? Work authorization you can meet? | `propelo liveness`, `propelo/signals.py` |
 | Research | Company brief, the three problems the team needs solved | `company-research` skill |
-| Score | 1–5 against your brain with evidence per requirement, gaps, confidence and a verdict; 4.0 is the apply line | `evaluate` skill, `careeros eval-check` |
-| Tailor | Resume where every bullet cites the brain, an ATS-safe PDF checked line by line, cover note, screening answers, keyword coverage, cliché check | `tailor` skill, `careeros claims-check`, `render`, `keywords`, `writing-check` |
+| Score | 1–5 against your brain with evidence per requirement, gaps, confidence and a verdict; 4.0 is the apply line | `evaluate` skill, `propelo eval-check` |
+| Tailor | Resume where every bullet cites the brain, an ATS-safe PDF checked line by line, cover note, screening answers, keyword coverage, cliché check | `tailor` skill, `propelo claims-check`, `render`, `keywords`, `writing-check` |
 | Review | Independent model checks claims, defensibility, 6-second scan, objections | `reviewer` skill |
-| Apply | Fills the company's form, submits only when every required answer is covered | `careeros apply`, `apply` skill |
-| Outreach | Referral asks to people you already know, hiring-manager, recruiter and LinkedIn notes, follow-ups on day 7 and 14 | `outreach` skill, `careeros warm-intros`, `followups` |
-| Track & learn | Inbox sync, funnel, score calibration, skills gap, weekly experiment | `tracker`, `weekly-review` skills, `careeros stats`, `calibrate`, `gaps` |
-| Interview & offer | Prep plan, practice, debriefs, red flags, offer-letter walk-through, negotiation brief | `coach` skill, `careeros salary-gap` |
+| Apply | Fills the company's form, submits only when every required answer is covered | `propelo apply`, `apply` skill |
+| Outreach | Referral asks to people you already know, hiring-manager, recruiter and LinkedIn notes, follow-ups on day 7 and 14 | `outreach` skill, `propelo warm-intros`, `followups` |
+| Track & learn | Inbox sync, funnel, score calibration, skills gap, weekly experiment | `tracker`, `weekly-review` skills, `propelo stats`, `calibrate`, `gaps` |
+| Interview & offer | Prep plan, practice, debriefs, red flags, offer-letter walk-through, negotiation brief | `coach` skill, `propelo salary-gap` |
 
 ![A role's package with its checks](docs/assets/dashboard-package.png)
 
@@ -179,7 +179,7 @@ Open the folder in Claude Code and say *"Use the career-brain skill"* with your 
 Try the gates on any posting:
 
 ```bash
-careeros evaluate --company "Demo Co" --title "Junior AI Engineer" --location "Remote, India" \
+propelo evaluate --company "Demo Co" --title "Junior AI Engineer" --location "Remote, India" \
   --mode remote --text-file posting.txt
 ```
 
@@ -203,7 +203,7 @@ Code handles everything with a right answer (dates, experience parsing, dedupe, 
 ## Repository map
 
 ```
-careeros/            Python package (standard library only; Playwright optional)
+propelo/            Python package (standard library only; Playwright optional)
   sources/           8 hiring-system scouts and 9 remote-board feeds
   discover.py        find each company's job board
   scan.py, feed.py   build the India feed; apply your filters to it

@@ -11,11 +11,11 @@ on:
     paths:
       - "website/**"
       - "dashboard/**"
-      - "careeros/site.py"
-      - "careeros/site_app.html"
-      - "careeros/tags.py"
-      - "careeros/logos.py"
-      - "careeros/growth_pages.py"
+      - "propelo/site.py"
+      - "propelo/site_app.html"
+      - "propelo/tags.py"
+      - "propelo/logos.py"
+      - "propelo/growth_pages.py"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 
@@ -64,13 +64,13 @@ jobs:
       - name: Fetch company logos (new or stale only)
         continue-on-error: true
         timeout-minutes: 12
-        run: careeros logos --feed feed --cache .logo-cache --limit 1500
+        run: propelo logos --feed feed --cache .logo-cache --limit 1500
 
       - name: Build the site
         run: |
           base="${{ vars.SITE_URL }}"
           [ -n "$base" ] || base="https://${GITHUB_REPOSITORY_OWNER,,}.github.io/${GITHUB_REPOSITORY#*/}/"
-          careeros site --feed feed --out site --demo dashboard/index.html --website website --base-url "$base" --logos .logo-cache
+          propelo site --feed feed --out site --demo dashboard/index.html --website website --base-url "$base" --logos .logo-cache
           ls site
 
       - uses: actions/configure-pages@v5

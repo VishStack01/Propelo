@@ -1,6 +1,6 @@
 from datetime import date, datetime, timedelta, timezone
 
-from careeros import extract
+from propelo import extract
 
 
 def years(text, header=""):

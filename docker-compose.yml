@@ -33,7 +33,7 @@ services:
 
   migrate:
     <<: *app
-    command: ["careeros", "cloud", "migrate"]
+    command: ["propelo", "cloud", "migrate"]
     healthcheck:
       disable: true
     depends_on:
@@ -53,7 +53,7 @@ services:
 
   worker:
     <<: *app
-    command: ["careeros", "cloud", "worker"]
+    command: ["propelo", "cloud", "worker"]
     healthcheck:
       disable: true
     depends_on:

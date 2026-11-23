@@ -3,8 +3,8 @@
 import gzip
 import json
 
-from careeros import ats, extract, market, paydata
-from careeros.cli import main
+from propelo import ats, extract, market, paydata
+from propelo.cli import main
 
 RESUME = """Asha Rao
 Bengaluru | +91 98765 43210 | asha@example.com | github.com/asha | linkedin.com/in/asha

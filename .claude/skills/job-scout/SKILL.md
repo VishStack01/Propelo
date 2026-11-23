@@ -10,10 +10,10 @@ backed by quotes from the posting. Every role you skip says why.
 
 ## 1. Company boards (deterministic)
 ```bash
-careeros scout --watchlist config/watchlist.toml --settings config/settings.toml
+propelo scout --watchlist config/watchlist.toml --settings config/settings.toml
 ```
 This polls the public Greenhouse, Lever and Ashby feeds, runs every gate in
-`careeros/gates.py` and stores results with quotes. Add companies to the
+`propelo/gates.py` and stores results with quotes. Add companies to the
 watchlist whenever you find one hiring for the user's roles.
 
 ## 2. Job boards without APIs (agent)
@@ -25,7 +25,7 @@ and similar. For each plausible role:
    the date is truthful).
 3. Save the posting text to a file and run the gates:
    ```bash
-   careeros evaluate --company "X" --title "Y" --location "Z" --mode remote \
+   propelo evaluate --company "X" --title "Y" --location "Z" --mode remote \
      --posted 2026-10-07 --experience-header "1 year(s)" --text-file posting.txt --save
    ```
    Use the result as is. If you disagree with a gate, say so to the user and

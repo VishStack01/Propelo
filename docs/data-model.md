@@ -75,5 +75,5 @@ The multi-user service keeps the same documents per account in a `docs` table
 keyed by `(user_id, collection, id)`, next to `users`, `sessions`, `api_tokens`
 (computer keys), `one_time_tokens`, `assets`, `applications` (the submit state
 machine per user), the shared `jobs` inventory, `tasks` (the worker queue) and
-`audit_events`. The schema is `careeros/cloud/migrations/0001_init.sql`; see
+`audit_events`. The schema is `propelo/cloud/migrations/0001_init.sql`; see
 [cloud.md](cloud.md).

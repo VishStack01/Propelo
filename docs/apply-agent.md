@@ -2,7 +2,7 @@
 
 ## When it may submit on its own
 All of these must hold:
-1. The kill switch is off (`careeros resume`).
+1. The kill switch is off (`propelo resume`).
 2. The role is `ready` with a passing review, or you approved it.
 3. Every **required** field resolved to `high` or `medium` confidence (set `allow_inferred_answers = false` in your profile to require `high`).
 4. No captcha, login wall or "already applied" notice on the page.
@@ -13,7 +13,7 @@ Otherwise the role stays in your batch with the exact reasons, for example:
 `'Why do you want to work at Demo Co?': Required: an essay question nobody has answered yet.`
 
 ## How answers are resolved
-`careeros/apply/answers.py`, in order:
+`propelo/apply/answers.py`, in order:
 
 1. **Never auto-filled**: Aadhaar, PAN, passport, bank details, date of birth, passwords. Always escalated.
 2. **Diversity questions**: "Decline to self-identify" (or your profile's answer).

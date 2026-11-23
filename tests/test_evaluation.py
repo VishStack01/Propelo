@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from careeros import evaluation as E
+from propelo import evaluation as E
 
 ROOT = Path(__file__).resolve().parents[1]
 EV = json.loads((ROOT / "examples" / "evaluation.example.json").read_text(encoding="utf-8"))
@@ -121,12 +121,12 @@ def test_report():
 
 def test_cli_eval_check(tmp_path):
     out = tmp_path / "r.md"
-    r = subprocess.run([sys.executable, "-m", "careeros", "eval-check", str(ROOT / "examples" / "evaluation.example.json"),
+    r = subprocess.run([sys.executable, "-m", "propelo", "eval-check", str(ROOT / "examples" / "evaluation.example.json"),
                         "--jd", str(ROOT / "examples" / "jd.example.txt"), "--brain", str(ROOT / "brain" / "brain.example.json"), "--md", str(out)],
                        capture_output=True, text=True, cwd=tmp_path)
     assert r.returncode == 0, r.stdout + r.stderr
     assert "Score 4.2/5" in r.stdout and out.exists()
     bad = tmp_path / "bad.json"
     bad.write_text(json.dumps(ev(score=9)), encoding="utf-8")
-    r = subprocess.run([sys.executable, "-m", "careeros", "eval-check", str(bad), "--brain", ""], capture_output=True, text=True, cwd=tmp_path)
+    r = subprocess.run([sys.executable, "-m", "propelo", "eval-check", str(bad), "--brain", ""], capture_output=True, text=True, cwd=tmp_path)
     assert r.returncode != 0 and "ERROR" in r.stdout

@@ -5,8 +5,8 @@ import json
 import xml.etree.ElementTree as ET
 from datetime import datetime, timedelta, timezone
 
-from careeros import site, tags
-from careeros.cli import main
+from propelo import site, tags
+from propelo.cli import main
 
 
 def rec(i, title, company, posted_days=1, loc="remote-worldwide", text="We use Python and React. 0-1 years.", closed=""):
@@ -34,7 +34,7 @@ def test_site_build(tmp_path):
     write_feed(tmp_path / "feed")
     demo = tmp_path / "demo.html"
     demo.write_text("<html>demo</html>")
-    meta = site.build(tmp_path / "feed", tmp_path / "site", demo=demo, base_url="https://example.github.io/careeros/", log=lambda *_: None)
+    meta = site.build(tmp_path / "feed", tmp_path / "site", demo=demo, base_url="https://example.github.io/propelo/", log=lambda *_: None)
     out = tmp_path / "site"
     assert meta["jobs"] == 250  # the 90-day-old and the closed listing are left out
     data = json.loads((out / "data" / "jobs.json").read_text())
@@ -44,7 +44,7 @@ def test_site_build(tmp_path):
     assert one["text"].startswith("We use Python") and one["facts"][0]["k"] == "Experience"
     p1 = json.loads((out / "api" / "jobs.json").read_text())
     assert p1["meta"]["total"] == 250 and p1["meta"]["last_page"] == 3 and len(p1["data"]) == 100
-    assert p1["links"]["next"] == "https://example.github.io/careeros/api/jobs/page-2.json" and p1["links"]["prev"] is None
+    assert p1["links"]["next"] == "https://example.github.io/propelo/api/jobs/page-2.json" and p1["links"]["prev"] is None
     assert p1["data"][0]["description"] and p1["data"][0]["url"].startswith("https://")
     assert len(json.loads((out / "api" / "jobs" / "page-3.json").read_text())["data"]) == 50
     rss = ET.fromstring((out / "feed.xml").read_text())

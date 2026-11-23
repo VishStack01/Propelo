@@ -57,57 +57,57 @@
       <h2 id="install">Install</h2>
       <p>You need Python 3.11 or newer and git.</p>
 <pre class="code"><span class="c"># get the code</span>
-git clone https://github.com/VishStack01/careeros.git
-cd careeros
+git clone https://github.com/VishStack01/Propelo.git
+cd Propelo
 
 <span class="c"># install (add [browser] for the apply agent, [dev] for tests)</span>
 pip install -e .
-careeros --version</pre>
+propelo --version</pre>
       <p>Optional extras: <code>pip install -e ".[browser]"</code> then <code>python -m playwright install chromium</code> for the apply agent, and <code>pip install pypdf</code> to read resume PDFs.</p>
 
       <h2 id="key">Bring your own key</h2>
       <p>Copy <code>.env.example</code> to <code>.env</code> and fill in one provider. Propelo reads <code>.env</code> from the folder you run it in; values already set in your shell win. The file is git-ignored.</p>
 <pre class="code">cp .env.example .env
 <span class="c"># then edit .env, for example:</span>
-<span class="k">CAREEROS_LLM</span>=anthropic
+<span class="k">PROPELO_LLM</span>=anthropic
 <span class="k">ANTHROPIC_API_KEY</span>=<span class="g">sk-ant-...</span>
 
-careeros llm          <span class="c"># shows provider and model, never the key</span>
-careeros llm test     <span class="c"># one tiny request to check it works</span></pre>
+propelo llm          <span class="c"># shows provider and model, never the key</span>
+propelo llm test     <span class="c"># one tiny request to check it works</span></pre>
       <table class="t">
         <thead><tr><th>Provider</th><th>Set</th><th>Notes</th></tr></thead>
         <tbody>
-          <tr><td>Anthropic</td><td><code>CAREEROS_LLM=anthropic</code><br><code>ANTHROPIC_API_KEY</code></td><td>Claude models</td></tr>
-          <tr><td>OpenAI</td><td><code>CAREEROS_LLM=openai</code><br><code>OPENAI_API_KEY</code></td><td>Add <code>OPENAI_BASE_URL</code> for any OpenAI-compatible API: OpenRouter, Groq, Together, vLLM</td></tr>
-          <tr><td>Google Gemini</td><td><code>CAREEROS_LLM=gemini</code><br><code>GEMINI_API_KEY</code></td><td>Gemini models</td></tr>
-          <tr><td>Ollama</td><td><code>CAREEROS_LLM=ollama</code><br><code>OLLAMA_HOST</code> (optional)</td><td>Free and fully local. No key, nothing leaves your machine</td></tr>
+          <tr><td>Anthropic</td><td><code>PROPELO_LLM=anthropic</code><br><code>ANTHROPIC_API_KEY</code></td><td>Claude models</td></tr>
+          <tr><td>OpenAI</td><td><code>PROPELO_LLM=openai</code><br><code>OPENAI_API_KEY</code></td><td>Add <code>OPENAI_BASE_URL</code> for any OpenAI-compatible API: OpenRouter, Groq, Together, vLLM</td></tr>
+          <tr><td>Google Gemini</td><td><code>PROPELO_LLM=gemini</code><br><code>GEMINI_API_KEY</code></td><td>Gemini models</td></tr>
+          <tr><td>Ollama</td><td><code>PROPELO_LLM=ollama</code><br><code>OLLAMA_HOST</code> (optional)</td><td>Free and fully local. No key, nothing leaves your machine</td></tr>
         </tbody>
       </table>
-      <p>Pin models with <code>CAREEROS_MODEL</code> (every step) and <code>CAREEROS_MODEL_QUICK</code> (small steps). Without them Propelo picks a sensible model per provider.</p>
+      <p>Pin models with <code>PROPELO_MODEL</code> (every step) and <code>PROPELO_MODEL_QUICK</code> (small steps). Without them Propelo picks a sensible model per provider.</p>
       <div class="callout">Your key is read from the environment at call time and sent only to the provider you chose. Propelo never prints, logs or stores it, and the dashboard only accepts AI requests from its own page, so another website can't spend your key.</div>
 
       <h2 id="first-run">First run</h2>
-<pre class="code">careeros init                       <span class="c"># creates your private config files</span>
-careeros discover && careeros scan  <span class="c"># map company job boards and build the feed</span>
-careeros serve                      <span class="c"># dashboard at http://127.0.0.1:8765</span></pre>
-      <p>Set your filters in <code>config/settings.toml</code>: target roles, experience limit, locations, posting window and pay floor. Your private files (<code>config/*.toml</code>, <code>brain/</code>, <code>data/</code>, <code>.env</code>) are git-ignored. <code>careeros doctor</code> checks the install and that nothing private is tracked.</p>
+<pre class="code">propelo init                       <span class="c"># creates your private config files</span>
+propelo discover && propelo scan  <span class="c"># map company job boards and build the feed</span>
+propelo serve                      <span class="c"># dashboard at http://127.0.0.1:8765</span></pre>
+      <p>Set your filters in <code>config/settings.toml</code>: target roles, experience limit, locations, posting window and pay floor. Your private files (<code>config/*.toml</code>, <code>brain/</code>, <code>data/</code>, <code>.env</code>) are git-ignored. <code>propelo doctor</code> checks the install and that nothing private is tracked.</p>
       <p>Try the gates on any posting without a model:</p>
-<pre class="code">careeros evaluate --company "Demo Co" --title "Junior AI Engineer" \
+<pre class="code">propelo evaluate --company "Demo Co" --title "Junior AI Engineer" \
   --location "Remote, India" --mode remote --text-file posting.txt</pre>
 
       <h2 id="ai">AI commands</h2>
       <p>Each command drafts with your model, then code checks the draft before you see it.</p>
-      <h3><code>careeros ai profile resume.pdf -o profile.json</code></h3>
+      <h3><code>propelo ai profile resume.pdf -o profile.json</code></h3>
       <p>Turns your resume into a structured profile. Any value the resume doesn't contain is removed and listed, so the model can't add a job, a tool or a number.</p>
-      <h3><code>careeros ai posting posting.txt</code></h3>
+      <h3><code>propelo ai posting posting.txt</code></h3>
       <p>Extracts company, title, pay, experience and requirements. A requirement is kept only if its quote appears in the posting.</p>
-      <h3><code>careeros ai evaluate --jd posting.txt --resume resume.pdf -o eval.json</code></h3>
-      <p>Scores fit from 1 to 5, requirement by requirement, with gaps and how to handle them. The draft must pass the same checks as <code>careeros eval-check</code>: verbatim quotes from the posting, the score inside its dimensions' range, a gap for every unmet critical requirement. If it fails, the model gets the errors once and tries again; if it fails twice, nothing is written. Use <code>--brain brain.json</code> to score against your Career Brain instead of the resume.</p>
-<pre class="code">careeros ai evaluate --jd jd.txt --resume resume.pdf -o eval.json
-careeros eval-check eval.json --jd jd.txt --md report.md</pre>
+      <h3><code>propelo ai evaluate --jd posting.txt --resume resume.pdf -o eval.json</code></h3>
+      <p>Scores fit from 1 to 5, requirement by requirement, with gaps and how to handle them. The draft must pass the same checks as <code>propelo eval-check</code>: verbatim quotes from the posting, the score inside its dimensions' range, a gap for every unmet critical requirement. If it fails, the model gets the errors once and tries again; if it fails twice, nothing is written. Use <code>--brain brain.json</code> to score against your Career Brain instead of the resume.</p>
+<pre class="code">propelo ai evaluate --jd jd.txt --resume resume.pdf -o eval.json
+propelo eval-check eval.json --jd jd.txt --md report.md</pre>
 
       <h2 id="dashboard">Dashboard</h2>
-      <p><code>careeros serve</code> opens the dashboard on <code>127.0.0.1</code> only. It shows fresh roles with the quotes behind every check, a daily batch to approve, applications by stage, inbox replies, follow-ups and referral notes. When a model is configured, the dashboard's AI actions (reading a posting, tailoring a resume and cover letter, importing your resume) run on it; without one, they fall back to rule-based versions.</p>
+      <p><code>propelo serve</code> opens the dashboard on <code>127.0.0.1</code> only. It shows fresh roles with the quotes behind every check, a daily batch to approve, applications by stage, inbox replies, follow-ups and referral notes. When a model is configured, the dashboard's AI actions (reading a posting, tailoring a resume and cover letter, importing your resume) run on it; without one, they fall back to rule-based versions.</p>
       <p>Try it without installing: <a href="demo/">the demo</a> uses fictional data.</p>
 
       <h2 id="feed">Job feed and API</h2>
@@ -131,18 +131,18 @@ careeros eval-check eval.json --jd jd.txt --md report.md</pre>
         <li>Messages and referral notes are drafted; you send them.</li>
         <li>The apply agent submits only when it can answer every question from your saved details, and never twice.</li>
       </ul>
-      <div class="callout pink">Read the full <a href="https://github.com/VishStack01/careeros/blob/main/docs/responsible-use.md">responsible use</a> notes before running the apply agent.</div>
+      <div class="callout pink">Read the full <a href="https://github.com/VishStack01/Propelo/blob/main/docs/responsible-use.md">responsible use</a> notes before running the apply agent.</div>
 
       <h2 id="faq">FAQ</h2>
       <h3>Do I need an API key?</h3>
       <p>No. Scanning, filtering, tracking and the dashboard work without one. A key (or Ollama) adds the AI steps.</p>
       <h3>Which model should I use?</h3>
-      <p>Any capable chat model works. Evaluations are long and strict, so a larger model passes the checks more often; small steps can use a cheaper model through <code>CAREEROS_MODEL_QUICK</code>.</p>
+      <p>Any capable chat model works. Evaluations are long and strict, so a larger model passes the checks more often; small steps can use a cheaper model through <code>PROPELO_MODEL_QUICK</code>.</p>
       <h3>What does it cost?</h3>
       <p>Propelo is free and MIT licensed. You pay your provider for what your key uses, or nothing with Ollama.</p>
 
       <h2 id="contribute">Contribute</h2>
-      <p>Issues and pull requests are welcome. Run <code>pip install -e ".[dev]"</code> and <code>pytest</code> before opening a PR, and read <a href="https://github.com/VishStack01/careeros/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>.</p>
+      <p>Issues and pull requests are welcome. Run <code>pip install -e ".[dev]"</code> and <code>pytest</code> before opening a PR, and read <a href="https://github.com/VishStack01/Propelo/blob/main/CONTRIBUTING.md">CONTRIBUTING.md</a>.</p>
 <pre class="code">pip install -e ".[dev]"
 pytest -q</pre>
     </article>
@@ -152,8 +152,9 @@ pytest -q</pre>
 <footer>
   <div class="wrap fgrid">
     <div><a class="brand" href="./">propelo<i></i></a><p>Fresh roles from company career pages, honest checks, and applications built only from your real experience. Made in India, MIT licensed.</p></div>
-    <div><h4>Product</h4><ul><li><a href="jobs.html">Job board</a></li><li><a href="./#product">Dashboard</a></li><li><a href="./#app">App</a></li><li><a href="./#pricing">Pricing</a></li></ul></div>
-    <div><h4>Developers</h4><ul><li><a href="docs.html">Docs</a></li><li><a href="https://github.com/VishStack01/careeros">GitHub</a></li><li><a href="demo/">Demo</a></li><li><a href="feed.xml">RSS feed</a></li></ul></div>
+    <div><h4>Product</h4><ul><li><a href="jobs.html">Job board</a></li><li><a href="./#product">Dashboard</a></li><li><a href="./#app">App</a></li><li><a href="./#guarantees">Guarantees</a></li><li><a href="./#pricing">Pricing</a></li></ul></div>
+    <div><h4>Free tools</h4><ul><li><a href="visa-jobs.html">Visa sponsor jobs</a></li><li><a href="sponsor-check.html">Sponsor check</a></li><li><a href="check.html">Scam check</a></li></ul></div>
+    <div><h4>Developers</h4><ul><li><a href="docs.html">Docs</a></li><li><a href="https://github.com/VishStack01/Propelo">GitHub</a></li><li><a href="demo/">Demo</a></li><li><a href="feed.xml">RSS feed</a></li></ul></div>
     <div><h4>Legal</h4><ul><li><a data-app="/terms" href="https://app.propelo.org/terms">Terms</a></li><li><a data-app="/privacy" href="https://app.propelo.org/privacy">Privacy</a></li><li><a data-app="/refunds" href="https://app.propelo.org/refunds">Refunds</a></li></ul></div>
   </div>
   <div class="wrap fbase"><span>© 2026 Propelo · built by <a href="https://github.com/VishStack01">Venkata Vishnu Vardhan Raju Chakravarthula</a></span><span>MIT licence</span></div>

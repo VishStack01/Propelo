@@ -7,7 +7,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from careeros import countries, scan, sponsors
+from propelo import countries, scan, sponsors
 from tests.conftest import feed_record, write_feed
 
 
@@ -84,7 +84,7 @@ def test_feed_keeps_study_countries_ahead_of_the_rest_when_trimmed():
 
 
 def test_intake_skips_unchanged_roles_and_reads_texts_out_of_order(cloud, tmp_path):
-    from careeros.cloud.ingest import ingest
+    from propelo.cloud.ingest import ingest
     records = [feed_record(i) for i in range(12)]
     write_feed(tmp_path / "feed", records)
     first = ingest(cloud.db, cloud.cfg.feed_url, log=lambda *_: None)
@@ -111,7 +111,7 @@ def test_intake_skips_unchanged_roles_and_reads_texts_out_of_order(cloud, tmp_pa
 # ---------------------------------------------------------------- growth: sources, funnel, passes, pages
 
 def test_signup_source_is_kept_and_the_funnel_counts_by_it(cloud, tmp_path):
-    from careeros.cloud import repo
+    from propelo.cloud import repo
     assert repo.clean_source("Reddit UKJobs!!") == "reddit-ukjobs" and repo.clean_source("x" * 80) == "x" * 40 and repo.clean_source(None) == ""
     admin = cloud.user("admin@example.com")
     c = cloud.client()
@@ -127,7 +127,7 @@ def test_signup_source_is_kept_and_the_funnel_counts_by_it(cloud, tmp_path):
 
 
 def _pass_cloud(cloud, monkeypatch):
-    from careeros.cloud import plans
+    from propelo.cloud import plans
     for k, v in dict(pass_enabled=True, razorpay_key_id="rzp_test", razorpay_key_secret="s", razorpay_webhook_secret="whsec").items():
         object.__setattr__(cloud.cfg, k, v)
     links = []
@@ -173,7 +173,7 @@ def test_pass_is_off_by_default_and_sells_pro_once(cloud, monkeypatch):
 
 
 def test_sponsor_check_data_and_visa_pages(tmp_path):
-    from careeros import growth_pages
+    from propelo import growth_pages
     feed, out, site = tmp_path / "feed", tmp_path / "out", tmp_path / "website"
     feed.mkdir(); out.mkdir(); site.mkdir()
     rows = ["Organisation Name,Town/City,County,Type & Rating,Route"] + [f"Firm {i} Ltd,Leeds,,Worker (A rating),Skilled Worker" for i in range(1200)]
@@ -203,7 +203,7 @@ def test_sponsor_check_data_and_visa_pages(tmp_path):
 # ---------------------------------------------------------------- lists of employers that have sponsored
 
 def test_register_links_are_found_on_the_official_pages():
-    from careeros import registers
+    from propelo import registers
     page = ('<a href="/sites/dolgov/files/ETA/oflc/pdfs/LCA_Disclosure_Data_FY2026_Q2.xlsx">Q2</a>'
             '<a href="/sites/dolgov/files/ETA/oflc/pdfs/LCA_Disclosure_Data_FY2026_Q3.xlsx">Q3</a>'
             '<a href="/sites/dolgov/files/ETA/oflc/pdfs/LCA_Disclosure_Data_FY2025_Q4.xlsx">old</a><a href="/x/PERM_Disclosure_Data_FY2026_Q3.xlsx">perm</a>')
@@ -219,7 +219,7 @@ def test_register_links_are_found_on_the_official_pages():
 
 def test_register_spreadsheets_are_tallied_and_used(tmp_path):
     openpyxl = pytest.importorskip("openpyxl")
-    from careeros import registers
+    from propelo import registers
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.append(["CASE_NUMBER", "CASE_STATUS", "VISA_CLASS", "EMPLOYER_NAME"])
@@ -269,7 +269,7 @@ def test_pricing_page_goes_straight_to_checkout_when_payments_are_on(cloud):
 
 
 def test_discovery_gives_the_deep_sweep_most_of_each_run():
-    from careeros import discover
+    from propelo import discover
     rest = [{"name": f"curated {i}", "category": "ai-native"} for i in range(50)]
     deep = [{"name": f"deep {i}", "category": "deep"} for i in range(500)]
     got = discover.share_out(rest + deep, 40)

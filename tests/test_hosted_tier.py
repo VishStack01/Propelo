@@ -1,6 +1,6 @@
 """The service's own model: quick tasks on the quick model, application writing on the main one."""
 
-from careeros.cloud.plans import hosted_tier
+from propelo.cloud.plans import hosted_tier
 
 
 def test_hosted_tier():

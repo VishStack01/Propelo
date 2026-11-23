@@ -21,7 +21,7 @@ def no_server_model(monkeypatch):
 
 @pytest.fixture
 def fake_model(monkeypatch):
-    from careeros import llm
+    from propelo import llm
     calls = []
 
     def complete(prompt, tier="default", system="", max_tokens=4096, json_mode=False, cfg=None, timeout=180, env=None):
@@ -156,8 +156,8 @@ def test_admin_grants_pro(cloud):
 
 
 def test_plan_caps_auto_apply_and_match_cadence(cloud):
-    from careeros.cloud.db import now_iso
-    from careeros.cloud.worker import Worker
+    from propelo.cloud.db import now_iso
+    from propelo.cloud.worker import Worker
     c = cloud.user()
     c.put("/api/d/settings/profile", json={"dailyCap": 20})
     k = cloud.client()
@@ -280,7 +280,7 @@ def test_catalog_has_three_plans_in_two_currencies(cloud):
 
 
 def test_standard_webhook_signature():
-    from careeros.cloud import plans
+    from propelo.cloud import plans
     body, wid, ts = b'{"a":1}', "msg_x", "1700000000"
     key = base64.b64decode(DODO_SECRET[6:])
     sig = base64.b64encode(hmac.new(key, f"{wid}.{ts}.".encode() + body, hashlib.sha256).digest()).decode()
@@ -354,10 +354,10 @@ def test_upgrade_keeps_pro_until_ultra_is_paid(cloud):
         task = t.one("SELECT kind, payload FROM tasks WHERE kind = 'billing_cancel'")
     assert json.loads(task["payload"]) == {"provider": "razorpay", "sub_id": SUB["id"]}
 
-    from careeros.cloud.worker import cancel_superseded
+    from propelo.cloud.worker import cancel_superseded
     seen = []
     cloud.app.state.razorpay.post = None
-    from careeros.cloud import plans
+    from propelo.cloud import plans
     orig = plans._post
     plans._post = lambda url, body, kid, ksec: (seen.append((url, body)), {})[1]
     try:

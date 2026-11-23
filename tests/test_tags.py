@@ -2,8 +2,8 @@
 
 import pytest as _pytest
 
-from careeros import tags as _tags
-from careeros.scan import wanted_title
+from propelo import tags as _tags
+from propelo.scan import wanted_title
 
 
 @_pytest.mark.parametrize("title,family", [
@@ -56,9 +56,9 @@ def test_tag_includes_family():
 
 
 def test_families_in_settings_drive_the_role_gate():
-    from careeros.feed import settings_from_dashboard
-    from careeros.gates import gate_role
-    from careeros.models import Job
+    from propelo.feed import settings_from_dashboard
+    from propelo.gates import gate_role
+    from propelo.models import Job
     s = settings_from_dashboard({"families": ["Marketing & Growth"], "targetRoles": []})
     assert gate_role(Job(title="Growth Marketing Associate", company="X", url="u", source="test"), s).passed
     assert not gate_role(Job(title="Backend Engineer", company="X", url="u", source="test"), s).passed

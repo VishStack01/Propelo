@@ -4,11 +4,11 @@ from pathlib import Path
 
 import pytest
 
-from careeros import pipeline
-from careeros.dedupe import canonical_url, fingerprint
-from careeros.settings import Settings
-from careeros.sources import ashby, greenhouse, lever
-from careeros.store import AlreadySubmitted, NeedsHumanCheck, Paused, Store
+from propelo import pipeline
+from propelo.dedupe import canonical_url, fingerprint
+from propelo.settings import Settings
+from propelo.sources import ashby, greenhouse, lever
+from propelo.store import AlreadySubmitted, NeedsHumanCheck, Paused, Store
 
 FIX = Path(__file__).parent / "fixtures"
 NOW = datetime(2026, 10, 9, 6, 0, tzinfo=timezone.utc)

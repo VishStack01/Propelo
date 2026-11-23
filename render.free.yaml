@@ -9,7 +9,7 @@
 #   - Free web services cannot use the usual email ports. Use your provider's alternative port
 #     (Resend: smtps://resend:<key>@smtp.resend.com:2465).
 # Paid plans promise AI actions (tailored resumes, cover letters, fit scores). They only work once the service has a
-# model key: add CAREEROS_LLM=anthropic and ANTHROPIC_API_KEY (or openai / gemini) under Environment before selling Pro.
+# model key: add PROPELO_LLM=anthropic and ANTHROPIC_API_KEY (or openai / gemini) under Environment before selling Pro.
 # Before you take payments, change the web service and the database to paid plans in the dashboard
 # (nothing else changes), or use render.yaml, which runs the worker as its own service.
 databases:

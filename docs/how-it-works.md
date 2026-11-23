@@ -6,17 +6,17 @@ Follow one role from posting to interview.
 The `career-brain` skill interviews you and reads your resume, LinkedIn export,
 GitHub and portfolio. Every role, internship, client and project becomes a
 claim: **problem → action → tools → outcome → proof**, with a status (past,
-current, in progress, planned, retired). `careeros brain-check` refuses claims
+current, in progress, planned, retired). `propelo brain-check` refuses claims
 without evidence. This file is the ceiling on everything that follows.
 
 ## 2. The scout finds the role
-Every few hours `careeros scout` pulls the public job feeds of the companies on
+Every few hours `propelo scout` pulls the public job feeds of the companies on
 your watchlist, and the `job-scout` skill searches boards without APIs. A role
 posted 9 hours ago on a company's Ashby board arrives with its real posting
 date, location fields and full description.
 
 ## 3. The gatekeeper decides, and shows its working
-`careeros/gates.py` runs nine gates. Each one records the sentence it relied on:
+`propelo/gates.py` runs nine gates. Each one records the sentence it relied on:
 
 | Gate | Example verdict | Quote stored |
 |---|---|---|
@@ -43,7 +43,7 @@ claim), maps each requirement to evidence, lists gaps honestly, and decides:
 
 ## 5. Tailoring and the truth gate
 The `tailor` skill writes `resume.json` where every bullet names the claims it
-comes from, then a PDF, a cover note and screening answers. `careeros
+comes from, then a PDF, a cover note and screening answers. `propelo
 claims-check` blocks any bullet that has no source, uses a number the brain
 doesn't contain, names a tool the claim didn't use, or writes up planned work
 as done. Then the `reviewer` skill, on a different model, checks
@@ -51,7 +51,7 @@ interview-defensibility, does a 6-second recruiter scan and lists the hiring
 manager's objections. Only a pass moves the role to **ready**.
 
 ## 6. Applying
-`careeros apply` opens the company's own form, reads every field and resolves
+`propelo apply` opens the company's own form, reads every field and resolves
 each answer with a confidence:
 
 - **high**: copied from your profile or the reviewed package

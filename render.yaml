@@ -1,21 +1,21 @@
 # One-click deploy on Render: a PostgreSQL database, the web app and the worker.
 # After the first deploy, set PUBLIC_URL (https://app.propelo.org once the custom domain is added),
 # SMTP_URL, MAIL_FROM, SUPPORT_EMAIL and BOOTSTRAP_ADMIN_EMAIL in the dashboard, then redeploy.
-# Optional: CAREEROS_LLM + a provider key for the hosted AI allowance, the RAZORPAY_* values to take
+# Optional: PROPELO_LLM + a provider key for the hosted AI allowance, the RAZORPAY_* values to take
 # rupee payments and the DODO_* values to take dollar payments. The full walk-through is docs/launch.md.
 # Check plan names and prices on render.com before you deploy.
 databases:
-  - name: careeros-db
-    databaseName: careeros
-    user: careeros
+  - name: propelo-db
+    databaseName: propelo
+    user: propelo
 
 services:
   - type: web
-    name: careeros-web
+    name: propelo-web
     runtime: docker
     dockerfilePath: ./Dockerfile
     healthCheckPath: /api/health
-    preDeployCommand: careeros cloud migrate
+    preDeployCommand: propelo cloud migrate
     disk:
       name: uploads
       mountPath: /data
@@ -23,7 +23,7 @@ services:
     envVars:
       - key: DATABASE_URL
         fromDatabase:
-          name: careeros-db
+          name: propelo-db
           property: connectionString
       - key: APP_ENV
         value: production
@@ -55,7 +55,7 @@ services:
         value: "400"
       - key: ULTRA_AI_CREDITS
         value: "1500"
-      - key: CAREEROS_LLM
+      - key: PROPELO_LLM
         sync: false
       - key: ANTHROPIC_API_KEY
         sync: false
@@ -91,20 +91,20 @@ services:
         sync: false
       - key: GOOGLE_CLIENT_SECRET
         sync: false
-      - key: CAREEROS_LLM_FALLBACK
+      - key: PROPELO_LLM_FALLBACK
         sync: false
       - key: SENTRY_DSN
         sync: false
 
   - type: worker
-    name: careeros-worker
+    name: propelo-worker
     runtime: docker
     dockerfilePath: ./Dockerfile
-    dockerCommand: careeros cloud worker
+    dockerCommand: propelo cloud worker
     envVars:
       - key: DATABASE_URL
         fromDatabase:
-          name: careeros-db
+          name: propelo-db
           property: connectionString
       - key: APP_ENV
         value: production
@@ -123,75 +123,75 @@ services:
       - key: SECRETS_KEY
         fromService:
           type: web
-          name: careeros-web
+          name: propelo-web
           envVarKey: SECRETS_KEY
       # The worker sends automatic recruiter emails, so it needs the Google client too.
       - key: GOOGLE_CLIENT_ID
         fromService:
           type: web
-          name: careeros-web
+          name: propelo-web
           envVarKey: GOOGLE_CLIENT_ID
       - key: GOOGLE_CLIENT_SECRET
         fromService:
           type: web
-          name: careeros-web
+          name: propelo-web
           envVarKey: GOOGLE_CLIENT_SECRET
       - key: SENTRY_DSN
         fromService:
           type: web
-          name: careeros-web
+          name: propelo-web
           envVarKey: SENTRY_DSN
       # The worker moves guarantees on (interview found, window ended, claim due) and emails people.
       - key: GUARANTEE
         fromService:
           type: web
-          name: careeros-web
+          name: propelo-web
           envVarKey: GUARANTEE
       - key: CONCIERGE
         fromService:
           type: web
-          name: careeros-web
+          name: propelo-web
           envVarKey: CONCIERGE
       # The worker cancels a replaced subscription after a plan change, so it needs the payment keys too.
       - key: RAZORPAY_KEY_ID
         fromService:
           type: web
-          name: careeros-web
+          name: propelo-web
           envVarKey: RAZORPAY_KEY_ID
       - key: RAZORPAY_KEY_SECRET
         fromService:
           type: web
-          name: careeros-web
+          name: propelo-web
           envVarKey: RAZORPAY_KEY_SECRET
       - key: RAZORPAY_PLAN_PRO
         fromService:
           type: web
-          name: careeros-web
+          name: propelo-web
           envVarKey: RAZORPAY_PLAN_PRO
       - key: RAZORPAY_PLAN_ULTRA
         fromService:
           type: web
-          name: careeros-web
+          name: propelo-web
           envVarKey: RAZORPAY_PLAN_ULTRA
       - key: DODO_API_KEY
         fromService:
           type: web
-          name: careeros-web
+          name: propelo-web
           envVarKey: DODO_API_KEY
       - key: DODO_PRODUCT_PRO
         fromService:
           type: web
-          name: careeros-web
+          name: propelo-web
           envVarKey: DODO_PRODUCT_PRO
       - key: DODO_PRODUCT_ULTRA
         fromService:
           type: web
-          name: careeros-web
+          name: propelo-web
           envVarKey: DODO_PRODUCT_ULTRA
       - key: DODO_MODE
         fromService:
           type: web
-          name: careeros-web
+          name: propelo-web
           envVarKey: DODO_MODE
       - key: SUPPORT_EMAIL
         sync: false

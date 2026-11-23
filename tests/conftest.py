@@ -63,9 +63,9 @@ def cloud(request, tmp_path):
     pytest.importorskip("fastapi")
     from fastapi.testclient import TestClient
 
-    from careeros.cloud.app import create_app
-    from careeros.cloud.config import Config
-    from careeros.cloud.mailer import OUTBOX
+    from propelo.cloud.app import create_app
+    from propelo.cloud.config import Config
+    from propelo.cloud.mailer import OUTBOX
 
     if request.param == "postgres":
         _reset_postgres(PG_URL)

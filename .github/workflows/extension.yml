@@ -23,9 +23,9 @@ jobs:
       - name: Zip
         run: |
           v=$(python3 -c "import json; print(json.load(open('extension/manifest.json'))['version'])")
-          cd extension && zip -r -X "../careeros-autofill-$v.zip" . -x "*.DS_Store" && cd ..
-          echo "ZIP=careeros-autofill-$v.zip" >> "$GITHUB_ENV"
+          cd extension && zip -r -X "../propelo-autofill-$v.zip" . -x "*.DS_Store" && cd ..
+          echo "ZIP=propelo-autofill-$v.zip" >> "$GITHUB_ENV"
       - uses: actions/upload-artifact@v4
         with:
-          name: careeros-autofill
+          name: propelo-autofill
           path: ${{ env.ZIP }}

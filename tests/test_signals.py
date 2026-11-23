@@ -4,10 +4,10 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from careeros import gates, liveness, signals
-from careeros.models import Job, iso
-from careeros.settings import Settings
-from careeros.sources.http import FetchError
+from propelo import gates, liveness, signals
+from propelo.models import Job, iso
+from propelo.settings import Settings
+from propelo.sources.http import FetchError
 
 
 @pytest.mark.parametrize("text,kind,country", [

@@ -3,8 +3,8 @@ hybrid roles in places they chose. India keeps its own rules."""
 
 from datetime import datetime, timezone
 
-from careeros import countries, extract, feed, gates
-from careeros.models import Job
+from propelo import countries, extract, feed, gates
+from propelo.models import Job
 
 
 def _job(title="Backend Engineer", location="Remote", mode="remote", desc="Build APIs.", **kw):
@@ -47,7 +47,7 @@ def test_on_site_roles_only_in_chosen_places():
 
 
 def test_work_authorization_is_judged_against_home():
-    from careeros import signals
+    from propelo import signals
     desc = "You must be authorized to work in the United States without sponsorship."
     j = _job(location="Remote - United States", desc=desc)
     wa = signals.work_authorization(desc)
@@ -171,7 +171,7 @@ def test_match_reads_any_iterable_once():
 
 
 def test_a_perk_is_not_read_as_open_worldwide():
-    from careeros import extract
+    from propelo import extract
     perk = 'Take advantage of up to 2 months working outside of your country of employment over a rolling 12-month period with our "Work from Anywhere" policy.'
     reach = "We have a global presence and many of our roles offer the option to work remotely."
     assert extract.remote_scope("London", perk).scope == "" and extract.remote_scope("Melbourne, Australia; Remote", reach).scope == ""

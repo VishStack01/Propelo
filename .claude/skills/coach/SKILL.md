@@ -37,8 +37,8 @@ Ask the user, then write to the job's `interviews` list
 - the questions asked, in their words, and how each answer landed;
 - anything new about the team, the stack or the scope;
 - new stories worth adding to the brain (the `career-brain` skill adds them, with evidence);
-- the thank-you note for tomorrow (`careeros/followups.py` schedules it; the
-  `outreach` skill drafts it; run `careeros writing-check` on it).
+- the thank-you note for tomorrow (`propelo/followups.py` schedules it; the
+  `outreach` skill drafts it; run `propelo writing-check` on it).
 
 ## 4. Red flags across rounds
 Advisory only, for the user's eyes. From the debriefs, quote what was said:
@@ -72,7 +72,7 @@ terms, numbers that don't match what was discussed). Never state law from
 memory; never search the web for it in this step.
 
 ## 6. Negotiation brief
-Start from `careeros salary-gap --job-id <id>`: the posting's advertised range,
+Start from `propelo salary-gap --job-id <id>`: the posting's advertised range,
 the user's floor and ask, every number they've stated, and the offer. Add market
 data from AmbitionBox, Levels.fyi and Glassdoor, labelled with source and date.
 Then: the one number to ask for and why, two or three scripted asks (base,

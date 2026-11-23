@@ -1,4 +1,4 @@
-"""Copy careeros/data/scam_rules.json into the dashboard and the website's scam check page.
+"""Copy propelo/data/scam_rules.json into the dashboard and the website's scam check page.
 
 The Python check, the dashboard and website/check.html must use the same rules; tests compare them.
 Run after editing the JSON: python3 scripts/sync_scam_rules.py
@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 
 def main() -> None:
-    rules = json.loads((ROOT / "careeros" / "data" / "scam_rules.json").read_text(encoding="utf-8"))["rules"]
+    rules = json.loads((ROOT / "propelo" / "data" / "scam_rules.json").read_text(encoding="utf-8"))["rules"]
     blob = json.dumps(rules, ensure_ascii=False)
     dash = ROOT / "dashboard" / "app.html"
     s = dash.read_text(encoding="utf-8")

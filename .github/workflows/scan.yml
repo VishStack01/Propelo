@@ -4,7 +4,7 @@ name: scan
 # with public feeds, publish the result as assets of the `feed-latest`
 # release (india.jsonl.gz and friends), and rebuild the public job board on GitHub Pages.
 # The feed and the board are public lists of openings, not anyone's personal
-# data; personal filters run elsewhere (`careeros filter-feed`).
+# data; personal filters run elsewhere (`propelo filter-feed`).
 #
 # GitHub delays or drops scheduled runs when it is busy, so the schedule asks
 # every hour at an off-peak minute; caches keep the polite polling limits.
@@ -70,19 +70,19 @@ jobs:
 
       - name: Hiring radar (every third run)
         # JobSpy reads Indeed India and Naukri to learn which companies are hiring.
-        # Only employer board links and company names are kept; see careeros/sources/radar.py.
+        # Only employer board links and company names are kept; see propelo/sources/radar.py.
         continue-on-error: true
         run: |
           if [ $(( 10#$(date -u +%H) % 3 )) -eq 0 ] || { [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.chain }}" != "true" ]; }; then
             pip install "python-jobspy>=1.4" >/dev/null 2>&1 || true
-            careeros radar --config config/radar.toml --boards feed/boards.json --out feed/radar-companies.csv 2>&1 | tee feed/radar.log
+            propelo radar --config config/radar.toml --boards feed/boards.json --out feed/radar-companies.csv 2>&1 | tee feed/radar.log
           fi
 
       - name: Early-career pay from real offers
         # leetcode-compensation (MIT): median offers at up to 1.5 years, per company, so roles
         # that don't state pay can be judged on what that company really pays freshers.
         continue-on-error: true
-        run: careeros payers --out config/pay/offers-pay.csv
+        run: propelo payers --out config/pay/offers-pay.csv
 
       - name: Deep sweep list (daily)
         # ~20,000 company boards from the open ats-scrapers inventory (MIT). Only the list is
@@ -91,8 +91,8 @@ jobs:
         continue-on-error: true
         run: |
           if [ ! -f feed/deep-companies.csv ] || [ $(( 10#$(date -u +%H) )) -eq 4 ] || { [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.chain }}" != "true" ]; }; then
-            careeros deep --boards feed/boards.json --out feed/deep-companies.csv 2>&1 | tee feed/deep.log
-            careeros yc-companies --out feed/yc-companies.csv 2>&1 | tee -a feed/deep.log
+            propelo deep --boards feed/boards.json --out feed/deep-companies.csv 2>&1 | tee feed/deep.log
+            propelo yc-companies --out feed/yc-companies.csv 2>&1 | tee -a feed/deep.log
           fi
 
       - name: UK sponsor register (daily)
@@ -101,7 +101,7 @@ jobs:
         continue-on-error: true
         run: |
           if [ ! -f feed/uk-sponsors.csv ] || [ $(( 10#$(date -u +%H) )) -eq 5 ] || { [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.chain }}" != "true" ]; }; then
-            careeros uk-sponsors --out feed/uk-sponsors.csv
+            propelo uk-sponsors --out feed/uk-sponsors.csv
           fi
 
       - name: Dutch sponsor register (daily)
@@ -110,16 +110,16 @@ jobs:
         continue-on-error: true
         run: |
           if [ ! -f feed/nl-sponsors.csv ] || [ $(( 10#$(date -u +%H) )) -eq 6 ] || { [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.chain }}" != "true" ]; }; then
-            careeros nl-sponsors --out feed/nl-sponsors.csv
+            propelo nl-sponsors --out feed/nl-sponsors.csv
           fi
 
       - name: Sponsor sweep list
         # Employers on the government sponsor lists (UK, Netherlands, Ireland, US, Canada) whose job boards
         # nobody has listed yet. Only names are prepared here, from the files above; discover tries 500 of
-        # them a run (CAREEROS_SPONSOR_SWEEP) and keeps a board only when it is that employer's and has
+        # them a run (PROPELO_SPONSOR_SWEEP) and keeps a board only when it is that employer's and has
         # roles in that country.
         continue-on-error: true
-        run: careeros sponsor-candidates --feed feed --boards feed/boards.json --out feed/sponsor-companies.csv 2>&1 | tee feed/sponsor-sweep.log
+        run: propelo sponsor-candidates --feed feed --boards feed/boards.json --out feed/sponsor-companies.csv 2>&1 | tee feed/sponsor-sweep.log
 
       - name: Discover job boards
         # New companies, boards that errored last scan, and unmapped companies
@@ -128,48 +128,48 @@ jobs:
         # request per board), so a full pass of the sweep takes a day or two. Boards with roles in India or a
         # developed country are kept (discover.FOCUS), not only India.
         env:
-          CAREEROS_SCAN_ONSITE: world
+          PROPELO_SCAN_ONSITE: world
         run: |
           set -o pipefail
-          careeros discover --companies config/companies/companies.csv --extra feed/radar-companies.csv --extra feed/yc-companies.csv --extra feed/deep-companies.csv --extra feed/sponsor-companies.csv --cache feed/boards.json --refresh-days 14 --limit 3000 --max-minutes 12 2>&1 | tee feed/discover.log
+          propelo discover --companies config/companies/companies.csv --extra feed/radar-companies.csv --extra feed/yc-companies.csv --extra feed/deep-companies.csv --extra feed/sponsor-companies.csv --cache feed/boards.json --refresh-days 14 --limit 3000 --max-minutes 12 2>&1 | tee feed/discover.log
 
       - name: Scan boards
         # On-site and hybrid roles in every country, for people searching outside India.
         env:
-          CAREEROS_SCAN_ONSITE: world
+          PROPELO_SCAN_ONSITE: world
           # A few boards sometimes hang for an hour; stop waiting after 60 minutes and keep their last roles.
-          CAREEROS_SCAN_DEADLINE_MIN: "50"
+          PROPELO_SCAN_DEADLINE_MIN: "50"
           # As the board list grows, each run reads the curated boards plus the most overdue of the rest
           # (deep-sweep boards every four hours); boards not read keep their roles from the last run.
-          CAREEROS_SCAN_MAX_BOARDS: "2400"
-          # Country-wide job APIs (see careeros/sources/national.py). Each stays off until its secret is added.
+          PROPELO_SCAN_MAX_BOARDS: "2400"
+          # Country-wide job APIs (see propelo/sources/national.py). Each stays off until its secret is added.
           ADZUNA_APP_ID: ${{ secrets.ADZUNA_APP_ID }}
           ADZUNA_APP_KEY: ${{ secrets.ADZUNA_APP_KEY }}
           USAJOBS_KEY: ${{ secrets.USAJOBS_KEY }}
           USAJOBS_EMAIL: ${{ secrets.USAJOBS_EMAIL }}
         run: |
           set -o pipefail
-          careeros scan --boards feed/boards.json --out feed 2>&1 | tee feed/scan.log
+          propelo scan --boards feed/boards.json --out feed 2>&1 | tee feed/scan.log
 
       - name: Newly funded companies, for you to review
         # Funding headlines from Inc42, Entrackr and TechCrunch India. Nothing is
-        # added to the company list until you run `careeros funded --add`.
+        # added to the company list until you run `propelo funded --add`.
         continue-on-error: true
-        run: careeros funded --json --days 30 > feed/funded.json
+        run: propelo funded --json --days 30 > feed/funded.json
 
       - name: Package the filter tool next to the feed
-        # One-file copy of careeros (python3 careeros.pyz ...) for agents that
+        # One-file copy of Propelo (python3 propelo.pyz ...) for agents that
         # can download files but can't clone repositories.
         if: always()
         run: |
           app="$RUNNER_TEMP/app"
           mkdir -p "$app" feed
-          cp -r careeros "$app/"
+          cp -r propelo "$app/"
           find "$app" -name __pycache__ -prune -exec rm -rf {} +
-          printf 'from careeros.cli import main\nmain()\n' > "$app/__main__.py"
-          python -m zipapp "$app" -o feed/careeros.pyz
+          printf 'from propelo.cli import main\nmain()\n' > "$app/__main__.py"
+          python -m zipapp "$app" -o feed/propelo.pyz
           cp config/platforms.toml feed/platforms.toml
-          python feed/careeros.pyz --version
+          python feed/propelo.pyz --version
 
       - name: Publish the feed (release assets)
         # Also after a failed step, so the board map and the logs are kept. The feed lives
@@ -222,7 +222,7 @@ jobs:
         if: always()
         continue-on-error: true
         timeout-minutes: 12
-        run: careeros logos --feed feed --cache .logo-cache --limit 1500
+        run: propelo logos --feed feed --cache .logo-cache --limit 1500
 
       - name: Build the job board
         if: always()
@@ -231,7 +231,7 @@ jobs:
           # in Settings > Pages), else the default GitHub Pages address.
           base="${{ vars.SITE_URL }}"
           [ -n "$base" ] || base="https://${GITHUB_REPOSITORY_OWNER,,}.github.io/${GITHUB_REPOSITORY#*/}/"
-          careeros site --feed feed --out site --demo dashboard/index.html --base-url "$base" --logos .logo-cache
+          propelo site --feed feed --out site --demo dashboard/index.html --base-url "$base" --logos .logo-cache
 
       - uses: actions/configure-pages@v5
         if: always()

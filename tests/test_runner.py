@@ -8,9 +8,9 @@ import pytest
 
 pytest.importorskip("playwright.sync_api")
 
-from careeros.apply import runner  # noqa: E402
-from careeros.apply.answers import Context  # noqa: E402
-from careeros.store import Store  # noqa: E402
+from propelo.apply import runner  # noqa: E402
+from propelo.apply.answers import Context  # noqa: E402
+from propelo.store import Store  # noqa: E402
 
 ROOT = Path(__file__).parents[1]
 FORM = (ROOT / "tests" / "fixtures" / "form.html").resolve().as_uri()

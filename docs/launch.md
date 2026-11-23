@@ -23,10 +23,10 @@ The code is ready. What's left needs accounts, money or a signature that only yo
 ## 1. Deploy on Render
 
 0. **Trying it for free first:** choose **New > Blueprint**, pick this repository and set the Blueprint file path to `render.free.yaml`. That makes one free web service (it also runs the worker) and a free database, and asks for four values: `SMTP_URL`, `MAIL_FROM`, `SUPPORT_EMAIL` and `BOOTSTRAP_ADMIN_EMAIL`. Read the limits at the top of that file: the service sleeps when nobody visits, the free database is deleted after 30 days unless you upgrade it, and email must use the provider's alternative port (Resend: `2465`). Before taking payments, change the web service and the database to paid plans in the dashboard; nothing else changes.
-1. In Render, choose **New > Blueprint** and pick this repository. It creates `careeros-web`, `careeros-worker` and `careeros-db`. The free tier isn't enough (workers and disks aren't free, and free databases expire); check prices at render.com/pricing before you confirm.
-2. On `careeros-web`, set `PUBLIC_URL`, `SMTP_URL`, `MAIL_FROM`, `SUPPORT_EMAIL`, `BOOTSTRAP_ADMIN_EMAIL` (your own email: it becomes the operator) and `COMPANY_NAME`. `SECRETS_KEY` is generated for you. **Never change it** after users save keys or connect Gmail: everything encrypted with it becomes unreadable.
+1. In Render, choose **New > Blueprint** and pick this repository. It creates `propelo-web`, `propelo-worker` and `propelo-db`. The free tier isn't enough (workers and disks aren't free, and free databases expire); check prices at render.com/pricing before you confirm.
+2. On `propelo-web`, set `PUBLIC_URL`, `SMTP_URL`, `MAIL_FROM`, `SUPPORT_EMAIL`, `BOOTSTRAP_ADMIN_EMAIL` (your own email: it becomes the operator) and `COMPANY_NAME`. `SECRETS_KEY` is generated for you. **Never change it** after users save keys or connect Gmail: everything encrypted with it becomes unreadable.
 3. The worker copies most values from the web service. Set `PUBLIC_URL`, `SMTP_URL`, `MAIL_FROM`, `SUPPORT_EMAIL` and `BOOTSTRAP_ADMIN_EMAIL` on it too.
-4. Redeploy. The release step runs `careeros cloud migrate`. `https://<your-app>/api/ready` should answer `"ok": true`.
+4. Redeploy. The release step runs `propelo cloud migrate`. `https://<your-app>/api/ready` should answer `"ok": true`.
 
 ## 2. Domain and email
 
@@ -36,7 +36,7 @@ The code is ready. What's left needs accounts, money or a signature that only yo
 
 ## 3. Hosted AI
 
-Set `CAREEROS_LLM=anthropic` and `ANTHROPIC_API_KEY` on `careeros-web` (or `openai` / `gemini` with their key). Add a second provider for outages: `CAREEROS_LLM_FALLBACK=openai` plus `OPENAI_API_KEY`. Set a monthly spending limit in each provider's console. Allowances: Free 15, Pro 400, Ultra 1,500 AI actions a month (`FREE_AI_CREDITS`, `PRO_AI_CREDITS`, `ULTRA_AI_CREDITS`). People's own keys cost you nothing.
+Set `PROPELO_LLM=anthropic` and `ANTHROPIC_API_KEY` on `propelo-web` (or `openai` / `gemini` with their key). Add a second provider for outages: `PROPELO_LLM_FALLBACK=openai` plus `OPENAI_API_KEY`. Set a monthly spending limit in each provider's console. Allowances: Free 15, Pro 400, Ultra 1,500 AI actions a month (`FREE_AI_CREDITS`, `PRO_AI_CREDITS`, `ULTRA_AI_CREDITS`). People's own keys cost you nothing.
 
 Rough cost check before you set prices: an AI action is one model call of a few thousand tokens. Multiply your provider's price per call by 1,500 and make sure Ultra still leaves margin after payment fees and tax.
 
@@ -46,7 +46,7 @@ Rough cost check before you set prices: an AI action is one model call of a few 
 2. In **Test mode**, under Subscriptions > Plans, create two monthly plans: **Pro at ₹499** and **Ultra at ₹1,199**. Copy their `plan_...` ids.
 3. Settings > API Keys: generate a key id and secret.
 4. Settings > Webhooks: add `https://<your-app>/api/billing/webhook`, choose a secret, select the `subscription.*` events.
-5. Set `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, `RAZORPAY_PLAN_PRO` and `RAZORPAY_PLAN_ULTRA` on `careeros-web` and redeploy.
+5. Set `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, `RAZORPAY_PLAN_PRO` and `RAZORPAY_PLAN_ULTRA` on `propelo-web` and redeploy.
 6. Test with a test card or UPI id: upgrade to Pro, then switch to Ultra (Pro stays on until Ultra is paid, then Pro is cancelled for you), cancel, and check that Razorpay's webhook log shows 200s.
 7. Go **Live**: create the same plans and webhook in live mode (the ids differ) and replace the values.
 
@@ -95,13 +95,13 @@ The web app is installable already. For the stores, see [mobile/README.md](../mo
 
 - In GitHub, set the repository's About: description, website `https://propelo.org/`, topics `job-search`, `ai-agent`, `india`, `open-source`, `career`, `resume`.
 - Turn on the hourly scan: `gh workflow enable scan.yml`. The worker ingests every 15 minutes; Ultra accounts are matched on every ingest.
-- `website/index.html` has `<meta name="careeros-app" content="https://app.propelo.org">`: every "Start free" and legal link points at the app there.
+- `website/index.html` has `<meta name="propelo-app" content="https://app.propelo.org">`: every "Start free" and legal link points at the app there.
 - Start with `SIGNUP_MODE=allowlist` for a private beta, then open sign-ups.
 
 To give someone a plan without payment, sign in as the operator and run in the browser console:
 
 ```js
-fetch("/api/admin/grant", {method: "POST", headers: {"Content-Type": "application/json", "X-CareerOS-CSRF": "1"},
+fetch("/api/admin/grant", {method: "POST", headers: {"Content-Type": "application/json", "X-Propelo-CSRF": "1"},
   body: JSON.stringify({email: "friend@example.com", plan: "ultra", until: "2026-12-31"})}).then(r => r.json())
 ```
 
@@ -111,7 +111,7 @@ Concierge is a person on your team running a candidate's search, paid by a share
 
 1. **Have a lawyer review the Concierge terms** at `/terms#concierge` (fee, instalments, the 90-day rule, the 6-month attribution window, and the clause on hidden offers) before the first case. Charging candidates a placement fee is legal in India, but the terms are your contract with them.
 2. **GST:** placement services are usually taxable. Ask your accountant, then set `CONCIERGE_TAX_RATE` (for example 18) once you're registered.
-3. **Partners:** create accounts for your talent partners, then as the operator run `fetch("/api/admin/staff", {method: "POST", headers: {"Content-Type": "application/json", "X-CareerOS-CSRF": "1"}, body: JSON.stringify({email: "partner@yourdomain"})})`. They work at `https://<your-app>/staff`. Unassigned Ultra requests show first.
+3. **Partners:** create accounts for your talent partners, then as the operator run `fetch("/api/admin/staff", {method: "POST", headers: {"Content-Type": "application/json", "X-Propelo-CSRF": "1"}, body: JSON.stringify({email: "partner@yourdomain"})})`. They work at `https://<your-app>/staff`. Unassigned Ultra requests show first.
 4. **Turn it on** once steps 1 to 3 are done: set `CONCIERGE=on` on both services (the blueprint starts with it off). Requests email every partner.
 5. **Collecting fees:** instalments use Razorpay payment links. In the Razorpay dashboard, add the `payment_link.paid` event to the same webhook. Keep each offer letter you verify.
 6. **Other countries:** `CONCIERGE_COUNTRIES` widens it, but only after legal advice for each country. The UK prohibits charging work-seekers and is always refused; most EU countries restrict it; many US states license and cap fees.
@@ -136,7 +136,7 @@ Two guarantees sit outside the plans. Pro and Ultra members apply for them (the 
 
 1. **Adzuna** (India, US, UK, Canada, Australia, New Zealand, Singapore, western Europe): register at developer.adzuna.com, then add `ADZUNA_APP_ID` and `ADZUNA_APP_KEY` as repository secrets (Settings, Secrets and variables, Actions). The scan reads them once a day. Read Adzuna's terms: listings link to Adzuna's own page, which is how the feed uses them.
 2. **USAJOBS** (US federal roles): request a key at developer.usajobs.gov and add `USAJOBS_KEY` and `USAJOBS_EMAIL` (the email you registered with).
-3. **Watch the feed size** after turning on the hourly scan: `feed/summary.json` shows `openings` and `trimmed`. Raise or lower `CAREEROS_FEED_MAX` in `scan.yml` to keep `full.jsonl.gz` well under 100 MB.
+3. **Watch the feed size** after turning on the hourly scan: `feed/summary.json` shows `openings` and `trimmed`. Raise or lower `PROPELO_FEED_MAX` in `scan.yml` to keep `full.jsonl.gz` well under 100 MB.
 4. **Chrome Web Store:** zip the `extension` folder (the extension workflow builds it), pay the one-time developer fee, and describe the permissions as the extension's README does: no sites up front, the hiring sites only when the person switches on the panel, and never LinkedIn, Naukri, Indeed or Wellfound. Store review asks why each permission is needed; the README's table is the answer.
 
 ## 11. The domain: propelo.org (site) and app.propelo.org (app)
@@ -154,7 +154,7 @@ dashboard, `/business`, `/partner`, payments) is Render on `app.propelo.org`.
 | A | @ | 185.199.111.153 |
 | AAAA | @ | 2606:50c0:8000::153, 2606:50c0:8001::153, 2606:50c0:8002::153, 2606:50c0:8003::153 (one record each) |
 | CNAME | www | vishstack01.github.io |
-| CNAME | app | the target Render shows when you add the domain (normally `careeros-web.onrender.com`) |
+| CNAME | app | the target Render shows when you add the domain (normally `propelo-web.onrender.com`) |
 
 These are GitHub's published Pages addresses; check them against GitHub's "Managing a custom domain for your
 GitHub Pages site" page when you set them.

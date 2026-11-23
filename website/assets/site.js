@@ -15,8 +15,8 @@
     return;
   }
 
-  // Links into the hosted app follow <meta name="careeros-app">, so the address lives in one place.
-  var appMeta = document.querySelector('meta[name="careeros-app"]');
+  // Links into the hosted app follow <meta name="propelo-app">, so the address lives in one place.
+  var appMeta = document.querySelector('meta[name="propelo-app"]');
   var appUrl = appMeta && /^https:\/\//.test(appMeta.content) ? appMeta.content.replace(/\/+$/, "") : "";
   // A link that brought the visitor here can carry a short label (?src=reddit-ukjobs, or utm_source / ref).
   // It is passed on to the sign-up page so each channel's sign-ups can be counted. No cookie, nothing about the person.
@@ -41,7 +41,7 @@
     $$("a", links).forEach(function (a) { a.addEventListener("click", function () { links.classList.remove("open"); menu.setAttribute("aria-expanded", "false"); }); });
   }
 
-  // Live numbers from the latest scan (data/stats.json, written by `careeros site`).
+  // Live numbers from the latest scan (data/stats.json, written by `propelo site`).
   var fmt = function (n) { return Number(n).toLocaleString("en-IN"); };
   fetch("data/stats.json", { cache: "no-cache" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (s) {
     if (!s || !s.openings) return;
@@ -87,7 +87,8 @@
         } else if (n.nodeType === 1) walk(n);
       });
     })(el);
-    el.style.setProperty("--ks", Math.max(4, Math.min(12, Math.round(900 / Math.max(k, 1)))) + "ms");
+    // The whole line is readable within about half a second, however long it is.
+    el.style.setProperty("--ks", Math.max(1, Math.min(10, Math.round(450 / Math.max(k, 1)))) + "ms");
   });
 
   // Siblings enter 70 ms apart, capped at six steps.

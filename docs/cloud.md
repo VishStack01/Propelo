@@ -24,11 +24,11 @@ flowchart LR
 
 | Part | What it does | Code |
 |---|---|---|
-| Web app / API | Sign-up, sign-in, sessions, the dashboard, each user's documents and files, computer keys, the agent API | `careeros/cloud/app.py` |
-| Worker | Reads the hourly feed into the shared inventory, matches every verified account against its own filters, sends email, cleans up | `careeros/cloud/worker.py`, `ingest.py`, `matching.py` |
-| Database | PostgreSQL in staging and production, SQLite for development and tests. Versioned migrations | `careeros/cloud/db.py`, `careeros/cloud/migrations/` |
-| Files | Resumes in a private directory, one folder per user | `careeros/cloud/storage.py` |
-| Apply agent | Runs on each user's own computer in the Claude desktop app, using their own browser sign-ins. Talks to the API with a computer key | `careeros/cloud/prompts/apply.md` |
+| Web app / API | Sign-up, sign-in, sessions, the dashboard, each user's documents and files, computer keys, the agent API | `propelo/cloud/app.py` |
+| Worker | Reads the hourly feed into the shared inventory, matches every verified account against its own filters, sends email, cleans up | `propelo/cloud/worker.py`, `ingest.py`, `matching.py` |
+| Database | PostgreSQL in staging and production, SQLite for development and tests. Versioned migrations | `propelo/cloud/db.py`, `propelo/cloud/migrations/` |
+| Files | Resumes in a private directory, one folder per user | `propelo/cloud/storage.py` |
+| Apply agent | Runs on each user's own computer in the Claude desktop app, using their own browser sign-ins. Talks to the API with a computer key | `propelo/cloud/prompts/apply.md` |
 
 **The server never fills in employer forms and never holds anyone's job-site logins.**
 Applications go out from each user's own computer, exactly as in the personal setup,
@@ -39,14 +39,14 @@ person's pipeline, and refuse a second submission for any role.
 
 | | How |
 |---|---|
-| Plans | `careeros/cloud/plans.py`: Free, Pro and Ultra, with limits for matching cadence (daily, hourly, every 15 minutes), AI actions per month, auto-apply per day, copilot questions, mock interviews and storage. Prices: ₹0 / ₹499 / ₹1,199 in India and $0 / $22.50 / $48.50 elsewhere, from `PRO_PRICE_INR`, `ULTRA_PRICE_INR`, `PRO_PRICE_USD_CENTS` and `ULTRA_PRICE_USD_CENTS`; allowances from `FREE_AI_CREDITS`, `PRO_AI_CREDITS` and `ULTRA_AI_CREDITS`. |
+| Plans | `propelo/cloud/plans.py`: Free, Pro and Ultra, with limits for matching cadence (daily, hourly, every 15 minutes), AI actions per month, auto-apply per day, copilot questions, mock interviews and storage. Prices: ₹0 / ₹499 / ₹1,199 in India and $0 / $22.50 / $48.50 elsewhere, from `PRO_PRICE_INR`, `ULTRA_PRICE_INR`, `PRO_PRICE_USD_CENTS` and `ULTRA_PRICE_USD_CENTS`; allowances from `FREE_AI_CREDITS`, `PRO_AI_CREDITS` and `ULTRA_AI_CREDITS`. |
 | Payments | Rupees through Razorpay subscriptions, dollars through Dodo Payments (merchant of record, so it charges and files VAT and sales tax abroad). `/api/billing/checkout {plan, currency}` returns the provider's hosted page, so card and UPI details never reach this service. `/api/billing/webhook` (Razorpay) checks the `X-Razorpay-Signature` HMAC; `/api/billing/dodo-webhook` checks the Standard Webhooks signature and a 5-minute timestamp window. Every event is stored once by its id, and events older than the last one applied are ignored. A plan change waits as pending until the new subscription is paid; then the old one is cancelled by a `billing_cancel` task, so an abandoned checkout never removes a plan. Cancelling keeps the plan until the paid period ends. `/api/billing/portal` opens Dodo's invoice page. |
-| Recruiter emails | `careeros/cloud/autosend.py` and `mailbox.py`: opt-in sending from the person's own Gmail (OAuth, `gmail.send` only; the refresh token is encrypted with `SECRETS_KEY`). The worker's `autosend` task runs every 15 minutes. Rules: an approved template, an address with a recorded https source, not a free-mail domain, not opted out, the plan's daily limit (Pro 10, Ultra 25), weekdays 09:00 to 18:00 in the person's time zone, one first email per address per 30 days, follow-ups on day 7 and 14 only while the role is still "applied" and no reply is in the Inbox. Rows in `outreach_sends` are claimed before sending and never retried after an uncertain failure. `/optout` and the `List-Unsubscribe` header add the address (hashed) to `email_optouts` for every user. |
-| Scam check | `careeros/scamcheck.py` with rules in `careeros/data/scam_rules.json` (the dashboard carries an identical copy, checked by a test). Matched and extension-saved roles store `risk`; `evaluation.apply_gate` refuses high-risk roles. |
-| Concierge | `careeros/cloud/concierge.py`, the app's Concierge tab and the team workspace at `/staff` (`static/staff.html`). Part of Pro and Ultra, in `CONCIERGE_COUNTRIES` (India by default; the UK is always refused). The candidate accepts versioned terms; partners (users with `is_staff`, set by `/api/admin/staff`) take cases, propose roles and can only move a role forward after the candidate approves it. An offer from an approved company within `CONCIERGE_ATTRIBUTION_DAYS` creates a fee of `CONCIERGE_RATE_LOW`% of fixed pay up to `CONCIERGE_BAND` and `CONCIERGE_RATE_HIGH`% above it, plus `CONCIERGE_TAX_RATE`; a partner confirms the offer letter, then the fee is split into instalments from 30 days after joining, paid through Razorpay payment links (`payment_link.paid` on the Razorpay webhook). Cases pause when the plan ends. Every staff action and case view is in the audit log. |
-| Guarantees | `careeros/cloud/guarantee.py`, the app's Guarantees tab and one-time pop-up, applications and claims in `/staff`. For Pro and Ultra members, by application; nobody is enrolled directly. Interview Guarantee: apply (roles, note, terms), a person accepts or declines with a reason, the member pays once (Razorpay payment link or Dodo one-time checkout) within 7 days, and the 45-day window starts on the paid webhook. Progress is counted from the person's `jobs` documents (`appliedAt` in the window, in different ISO weeks, unsafe postings left out; an interview is a job reaching screen, interview or offer). The guarantee is met by `GUARANTEE_MIN_INTERVIEWS` (3) such roles or a second round for one role (screen then interview, two logged rounds, or an offer). Short of that with the activity done: the price paid is refunded by a person in the payment provider; the app records the approval and the refund. Job Guarantee: the Concierge application (`requested` cases can be accepted or declined in `/staff`), paid only by the placement fee after joining. Migration `0008_guarantee_review.sql`. |
-| Match score | `careeros/matchscore.py`, `POST /api/agent/match`, the gauge in `extension/gauge.js` (copied into the app; a test keeps them equal). Skills up to 60 points (required terms weigh 1, nice-to-have 0.5, title terms x1.5, repeats +25% each up to two; credit 1.0 for a term in a bullet with a number, 0.8 in a bullet or summary, 0.4 only in the skills list), experience up to 25 (full when you have the years asked, less by the share you're short), role up to 15 (title words found in your titles and targets). Parts that can't be measured are left out and the rest scaled to 100; the margin is 24/sqrt(terms) + 3, +5 without experience, at most 20. |
-| Operators | `/api/admin/overview`, `/api/admin/audit?kind=`, `/api/admin/grant {email, plan, until}`. `/.well-known/security.txt`. Optional `SENTRY_DSN` (scrubbed: no bodies, cookies, headers or user). `CAREEROS_LLM_FALLBACK` for a second AI provider. |
+| Recruiter emails | `propelo/cloud/autosend.py` and `mailbox.py`: opt-in sending from the person's own Gmail (OAuth, `gmail.send` only; the refresh token is encrypted with `SECRETS_KEY`). The worker's `autosend` task runs every 15 minutes. Rules: an approved template, an address with a recorded https source, not a free-mail domain, not opted out, the plan's daily limit (Pro 10, Ultra 25), weekdays 09:00 to 18:00 in the person's time zone, one first email per address per 30 days, follow-ups on day 7 and 14 only while the role is still "applied" and no reply is in the Inbox. Rows in `outreach_sends` are claimed before sending and never retried after an uncertain failure. `/optout` and the `List-Unsubscribe` header add the address (hashed) to `email_optouts` for every user. |
+| Scam check | `propelo/scamcheck.py` with rules in `propelo/data/scam_rules.json` (the dashboard carries an identical copy, checked by a test). Matched and extension-saved roles store `risk`; `evaluation.apply_gate` refuses high-risk roles. |
+| Concierge | `propelo/cloud/concierge.py`, the app's Concierge tab and the team workspace at `/staff` (`static/staff.html`). Part of Pro and Ultra, in `CONCIERGE_COUNTRIES` (India by default; the UK is always refused). The candidate accepts versioned terms; partners (users with `is_staff`, set by `/api/admin/staff`) take cases, propose roles and can only move a role forward after the candidate approves it. An offer from an approved company within `CONCIERGE_ATTRIBUTION_DAYS` creates a fee of `CONCIERGE_RATE_LOW`% of fixed pay up to `CONCIERGE_BAND` and `CONCIERGE_RATE_HIGH`% above it, plus `CONCIERGE_TAX_RATE`; a partner confirms the offer letter, then the fee is split into instalments from 30 days after joining, paid through Razorpay payment links (`payment_link.paid` on the Razorpay webhook). Cases pause when the plan ends. Every staff action and case view is in the audit log. |
+| Guarantees | `propelo/cloud/guarantee.py`, the app's Guarantees tab and one-time pop-up, applications and claims in `/staff`. For Pro and Ultra members, by application; nobody is enrolled directly. Interview Guarantee: apply (roles, note, terms), a person accepts or declines with a reason, the member pays once (Razorpay payment link or Dodo one-time checkout) within 7 days, and the 45-day window starts on the paid webhook. Progress is counted from the person's `jobs` documents (`appliedAt` in the window, in different ISO weeks, unsafe postings left out; an interview is a job reaching screen, interview or offer). The guarantee is met by `GUARANTEE_MIN_INTERVIEWS` (3) such roles or a second round for one role (screen then interview, two logged rounds, or an offer). Short of that with the activity done: the price paid is refunded by a person in the payment provider; the app records the approval and the refund. Job Guarantee: the Concierge application (`requested` cases can be accepted or declined in `/staff`), paid only by the placement fee after joining. Migration `0008_guarantee_review.sql`. |
+| Match score | `propelo/matchscore.py`, `POST /api/agent/match`, the gauge in `extension/gauge.js` (copied into the app; a test keeps them equal). Skills up to 60 points (required terms weigh 1, nice-to-have 0.5, title terms x1.5, repeats +25% each up to two; credit 1.0 for a term in a bullet with a number, 0.8 in a bullet or summary, 0.4 only in the skills list), experience up to 25 (full when you have the years asked, less by the share you're short), role up to 15 (title words found in your titles and targets). Parts that can't be measured are left out and the rest scaled to 100; the margin is 24/sqrt(terms) + 3, +5 without experience, at most 20. |
+| Operators | `/api/admin/overview`, `/api/admin/audit?kind=`, `/api/admin/grant {email, plan, until}`. `/.well-known/security.txt`. Optional `SENTRY_DSN` (scrubbed: no bodies, cookies, headers or user). `PROPELO_LLM_FALLBACK` for a second AI provider. |
 | AI actions | `/api/ai` (signed-in sessions only, never computer keys) runs on the user's own key when one is saved, otherwise on the service's model within the plan's monthly allowance. A failed model call isn't counted. |
 | Own keys | Encrypted with `SECRETS_KEY` (Fernet). Only the last four characters are shown or exported. OpenAI-compatible addresses must be https on a list of known providers, so the server can't be pointed at internal addresses. |
 | Phone apps | `mobile/` wraps the hosted app (Capacitor). The apps hide the Upgrade button because app stores require their own billing for in-app subscriptions. |
@@ -73,7 +73,7 @@ Launch steps, from Render to the app stores: [launch.md](launch.md).
 | Password reset | 1-hour single-use link; resetting signs out every session and emails a notice. |
 | Enumeration | Sign-up, resend and reset give the same answer whether or not the email has an account; failed sign-ins spend the same time either way. |
 | Sessions | Opaque tokens, only a SHA-256 stored; HttpOnly, SameSite=Lax, Secure on https cookies; 14-day expiry; "sign out everywhere". |
-| CSRF | Cookie-authenticated writes need the `X-CareerOS-CSRF` header (a cross-site page can't send it without a CORS preflight, which the server never grants) and a matching Origin when one is sent. |
+| CSRF | Cookie-authenticated writes need the `X-Propelo-CSRF` header (a cross-site page can't send it without a CORS preflight, which the server never grants) and a matching Origin when one is sent. |
 | Rate limits | Sign-in by IP and by email, sign-up, resend and reset in the database (shared across replicas); a per-process limit on all API calls. |
 | Computer keys | `cos_k_…` tokens, hashed, shown once, up to 5 per account. They can read the pipeline and use `/api/agent/*` and uploads; they can't change documents directly, manage keys, export or delete the account. |
 | Headers | CSP with a per-request script nonce, `frame-ancestors 'none'`, HSTS on https, nosniff, no referrer leaks, COOP. |
@@ -142,16 +142,16 @@ in, from the dashboard's *Brain & setup → Your computer* panel (`/api/prompts/
    `https://your.domain/api/auth/linkedin/callback` as the redirect URL).
 
 A web service with a disk runs as one instance. To run more, move uploads to object
-storage first (replace `LocalStorage` in `careeros/cloud/storage.py`).
+storage first (replace `LocalStorage` in `propelo/cloud/storage.py`).
 
 ### Option B: one server with Docker Compose
 
 ```bash
-git clone https://github.com/VishStack01/careeros.git && cd careeros
+git clone https://github.com/VishStack01/Propelo.git && cd Propelo
 cp .env.example .env     # set POSTGRES_PASSWORD, APP_ENV=production, PUBLIC_URL=https://your.domain,
                          # SMTP_URL, MAIL_FROM, BOOTSTRAP_ADMIN_EMAIL, TRUST_PROXY=1
 DOMAIN=your.domain docker compose --profile https up -d --build
-docker compose exec web careeros cloud check
+docker compose exec web propelo cloud check
 ```
 
 Compose starts PostgreSQL (not exposed), applies migrations, then the web app (bound to
@@ -162,8 +162,8 @@ the certificate. Point your domain's DNS at the server first.
 
 ```bash
 pip install -e ".[cloud]"
-careeros cloud serve          # SQLite in data/cloud.db, emails printed to the terminal
-careeros cloud worker         # in a second terminal
+propelo cloud serve          # SQLite in data/cloud.db, emails printed to the terminal
+propelo cloud worker         # in a second terminal
 ```
 
 Open http://127.0.0.1:8000, sign up, and copy the confirmation link from the terminal.
@@ -172,7 +172,7 @@ Open http://127.0.0.1:8000, sign up, and copy the confirmation link from the ter
 
 Every setting is an environment variable; see `.env.example`. In `staging` and
 `production` the app refuses to start without PostgreSQL, an `https://` `PUBLIC_URL`,
-`SMTP_URL`, and applied migrations. `careeros cloud check` prints what's missing.
+`SMTP_URL`, and applied migrations. `propelo cloud check` prints what's missing.
 
 | Variable | Default | |
 |---|---|---|
@@ -183,7 +183,7 @@ Every setting is an environment variable; see `.env.example`. In `staging` and
 | `SIGNUP_MODE`, `SIGNUP_ALLOWLIST` | `open` | `allowlist` with emails or `@domains` for a private beta; `closed` to stop sign-ups |
 | `BOOTSTRAP_ADMIN_EMAIL` | | That account can read `/api/admin/overview` |
 | `TRUST_PROXY` | `0` | `1` only behind your own reverse proxy, so client IPs come from `X-Forwarded-For` |
-| `ALL_IN_ONE` | `off` | `on` makes `careeros cloud serve` also apply migrations and run the worker as a child process: one small server instead of three services. One instance only |
+| `ALL_IN_ONE` | `off` | `on` makes `propelo cloud serve` also apply migrations and run the worker as a child process: one small server instead of three services. One instance only |
 | `STORAGE` | `disk` | `db` keeps uploaded files in the database instead of `UPLOAD_DIR`, for a host where the service has no disk |
 | `MAX_UPLOAD_MB`, `USER_STORAGE_MB` | 5, 25 | Per file and per account |
 | `FEED_URL`, `INGEST_EVERY_MINUTES` | upstream feed, 15 | |
@@ -191,7 +191,7 @@ Every setting is an environment variable; see `.env.example`. In `staging` and
 
 ## Operate
 
-**Release.** Back up the database, run `careeros cloud migrate` (Render does this in
+**Release.** Back up the database, run `propelo cloud migrate` (Render does this in
 `preDeployCommand`, Compose in the `migrate` service), deploy, then check `/api/ready`.
 Never edit a migration that has run; add a new numbered file.
 
@@ -209,7 +209,7 @@ back up the uploads volume on the same schedule, and do a restore drill before l
 every quarter.
 
 **Feed held back.** If ingestion refuses a feed that shrank sharply and you have checked the
-scan is right, run `careeros cloud ingest --force`.
+scan is right, run `propelo cloud ingest --force`.
 
 **Requests from users.** Export and deletion are self-service in *Brain & setup → Account*.
 To disable an account, set `users.disabled_at`; its sessions and keys stop working at once.

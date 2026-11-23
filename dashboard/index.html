@@ -2207,11 +2207,12 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
         <button type="button" data-act="window" data-w="week" aria-pressed="true">Last 25 days <span class="n" id="n-week"></span></button>
       </div>
     </div>
-    <div class="sources" id="sources" aria-label="Where the search looks"><span>Searching</span><span>Internshala</span><span>Wellfound</span><span>YC jobs</span><span>Cutshort</span><span>Greenhouse</span><span>Lever</span><span>Ashby</span></div>
-    <div class="tiers" id="tiers"></div>
-    <div class="section" id="auto-sec"></div>
-    <div class="section" id="batch-sec"></div>
+    <div class="sources" id="sources" aria-label="Where the search looks"><span>Searching</span><span>company career pages</span></div>
+    <!-- The roles first: this tab is where people come to see them. The pipeline summary follows. -->
     <div class="section" id="fresh-sec"></div>
+    <div class="section" id="batch-sec"></div>
+    <div class="section" id="auto-sec"></div>
+    <div class="tiers" id="tiers"></div>
     <div class="section" id="wait-sec"></div>
     <div class="section" id="kpi-sec"></div>
   </section>
@@ -2371,7 +2372,7 @@ function yearsOf(s){
 }
 const stretchOf = y => y + (y < 3 ? 1 : 2);
 const AGES = [[1,'24 hours'],[3,'3 days'],[7,'7 days'],[14,'14 days'],[25,'25 days, if still open'],[30,'30 days, if still open']];
-/* Job families, the same list the public board and the scan use (careeros/tags.py). */
+/* Job families, the same list the public board and the scan use (propelo/tags.py). */
 const FAMILIES = ['Software Engineering','AI & Data','Product & Design','Marketing & Growth','Sales & Accounts','Finance & Strategy','Operations & People','Engineering & Trades','Healthcare','Education','Legal','Retail & Hospitality','Media & Writing'];
 const DEFAULTS = {homeCountry: HOME_GUESS, places: '', remoteOk: true, targetRoles: [], families: [], locations: ['South India (any work mode)','Rest of India (remote only)','Remote worldwide (first priority)'], dailyCap: 8, minFit: 'good', salaryFloorLpa: '', noticeDays: '', dealbreakers: '', approvalMode: 'auto-when-clear', schedule: '', yearsExperience: '', experienceLevels: [], maxRequiredYears: 99, maxPostingAgeDays: 25};
 
@@ -2515,7 +2516,7 @@ function warmList(people){
 function freshPill(j){ const t = postedText(j.postedAt); if (!t) return ''; const h = age(j); return `<span class="pill${h < 72 ? ' fresh' : ''}">${esc(t)}</span>`; }
 function pay20(j){ if (j.payTier) return j.payTier === '20+'; const v = String(obj(arr(j.checks).find(x => obj(x).gate === 'Pay')).value || ''); if (/^Not stated/i.test(v)) return false; const n = v.match(/[\d.]+(?=\s*LPA)/g); return !!n && Number(n[n.length - 1]) >= 20; }
 /* Referral finder: people-search links the user opens in their own signed-in browser, and a drafted note.
-   Mirrors careeros/referrals.py; Propelo never signs in to LinkedIn or sends anything there. */
+   Mirrors propelo/referrals.py; Propelo never signs in to LinkedIn or sends anything there. */
 function collegeWords(c){ return String(c || '').toLowerCase().replace(/\b(university|institute|of|technology|college|engineering|the|and|deemed|to|be)\b/g, ' ').match(/[a-z]{3,}/g)?.slice(0, 2) || []; }
 function refLinks(j){
   const a = applicant(), co = j.company || '', college = collegeWords(a.college).join(' '), city = a.city || '';
@@ -3559,7 +3560,7 @@ function renderCloud(){
   const keyRows = keys === null ? '<p class="small">Loading…</p>' : keys.length ? `<div class="rows">${keys.map(k => `<div class="keyrow"><span><b>${esc(k.name)}</b> <span class="muted">${esc(k.prefix)}…</span><br><span class="small">Added ${esc(when(k.createdAt))} · ${k.lastUsedAt ? 'last used ' + esc(when(k.lastUsedAt)) : 'not used yet'}</span></span><button class="btn sm ghost" data-act="key-revoke" data-id="${esc(k.id)}">Remove</button></div>`).join('')}</div>` : '<p class="small">No computer keys yet. Create one to link the Claude desktop app on your computer.</p>';
   const fresh = nk ? `<div class="keybox"><b>Copy your key now. It's shown only once.</b>${copy(nk)}
     <ol>
-      <li>Save it on your computer. macOS or Linux, in Terminal:${copy(`mkdir -p ~/.careeros && printf '%s' '${nk}' > ~/.careeros/key && chmod 600 ~/.careeros/key`)}Windows, in PowerShell:${copy(`New-Item -ItemType Directory -Force $HOME\\.careeros | Out-Null; Set-Content -NoNewline -Path $HOME\\.careeros\\key -Value '${nk}'`)}</li>
+      <li>Save it on your computer. macOS or Linux, in Terminal:${copy(`mkdir -p ~/.propelo && printf '%s' '${nk}' > ~/.propelo/key && chmod 600 ~/.propelo/key`)}Windows, in PowerShell:${copy(`New-Item -ItemType Directory -Force $HOME\\.propelo | Out-Null; Set-Content -NoNewline -Path $HOME\\.propelo\\key -Value '${nk}'`)}</li>
       <li>In the Claude desktop app on that computer, create a scheduled task (every 3 hours during the day works well), paste the auto-apply prompt below, and make sure it runs on this computer.</li>
     </ol><button class="btn sm" data-act="key-hide">Done</button></div>` : '';
   const prompts = state.prompts.apply ? `<details><summary>Auto-apply prompt for the scheduled task</summary>${copy(state.prompts.apply)}</details>
@@ -3717,7 +3718,7 @@ function renderFoot(){
 }
 
 /* ---------- Drawer ---------- */
-/* ---------- Scam check: the same rules as careeros/data/scam_rules.json (a test keeps them identical) ---------- */
+/* ---------- Scam check: the same rules as propelo/data/scam_rules.json (a test keeps them identical) ---------- */
 const SCAM_RULES = [{"id": "fee", "level": "high", "pattern": "\\b(registration|training|security|processing|joining|onboarding|kit|verification|interview)\\s+(fee|fees|deposit|charges?|amount)\\b", "why": "Asks you to pay a fee or deposit. Real employers never charge to hire you."}, {"id": "pay-to-start", "level": "high", "pattern": "\\b(pay|deposit|transfer)\\s+(?:rs\\.?|inr|₹|\\$)?\\s?\\d[\\d,]*\\s*(?:/-)?\\s*(?:to|for|as|before)\\b", "why": "Asks for money before you start."}, {"id": "ids-upfront", "level": "high", "pattern": "\\b(send|share|submit|upload)\\b[^.\\n]{0,60}\\b(aadhaa?r|pan card|bank (account|details|statement)|otp|cvv|atm pin|upi pin)\\b", "why": "Wants ID numbers, bank details or codes before any interview."}, {"id": "chat-only", "level": "caution", "pattern": "\\b(whats\\s?app|telegram)\\b[^.\\n]{0,40}\\b(only|to apply|for (the )?interview|hr|recruiter)\\b|\\b(apply|contact|message|ping)\\b[^.\\n]{0,30}\\b(on|via|at)\\s+(whats\\s?app|telegram)\\b", "why": "Recruiting happens only over WhatsApp or Telegram."}, {"id": "free-mail", "level": "caution", "pattern": "\\b[a-z0-9._%+-]+@(gmail|yahoo|outlook|hotmail|rediffmail|ymail|proton(mail)?)\\.(com|in|me)\\b", "why": "The contact address is a free personal email, not the company's."}, {"id": "no-interview", "level": "caution", "pattern": "\\b(no interview|without (any )?interview|direct (joining|selection)|instant (joining|selection)|spot (offer|selection)|100% (job|placement) guarantee(d)?|guaranteed (job|placement))\\b", "why": "Promises a job without an interview or with a guarantee."}, {"id": "easy-money", "level": "caution", "pattern": "\\b(earn|make|income of)\\b[^.\\n]{0,25}(₹|rs\\.?|inr|\\$)\\s?\\d[\\d,]*\\s*(per|a|/)\\s*(day|hour|week)\\b|\\b(part[- ]time|home[- ]based)\\b[^.\\n]{0,40}\\b(typing|data entry|like|review|liking)\\b[^.\\n]{0,40}\\b(earn|income|payment)\\b", "why": "Pay quoted per day for simple tasks, a common pattern in task scams."}, {"id": "shortener", "level": "caution", "pattern": "https?://(bit\\.ly|tinyurl\\.com|t\\.ly|cutt\\.ly|rb\\.gy|shorturl\\.at|is\\.gd|ow\\.ly)/", "why": "The apply link is hidden behind a link shortener."}, {"id": "form-site", "level": "caution", "pattern": "https?://(forms\\.gle|docs\\.google\\.com/forms|[a-z0-9-]+\\.wixsite\\.com|sites\\.google\\.com|[a-z0-9-]+\\.blogspot\\.com|[a-z0-9-]+\\.weebly\\.com|form\\.jotform\\.com)", "why": "Applications go to a free form or site builder instead of a careers page."}, {"id": "urgency", "level": "caution", "pattern": "\\b(urgent(ly)? hiring|limited (seats|slots)|only \\d+ (seats|slots) left|apply (within|in) \\d+ (hours|hrs|minutes))\\b", "why": "Pushes you to act within hours."}, {"id": "crypto-pay", "level": "caution", "pattern": "\\b(paid|salary|payment)\\b[^.\\n]{0,30}\\b(in )?(usdt|bitcoin|btc|crypto|gift cards?)\\b", "why": "Offers pay in crypto or gift cards."}, {"id": "task-scam", "level": "high", "pattern": "\\b(like|rate|review|subscribe to|follow)\\b[^.\\n]{0,30}\\b(youtube|videos?|hotels?|products?|google maps|restaurants?|instagram)\\b[^.\\n]{0,60}\\b(earn|paid|commission|income|per task)\\b|\\b(prepaid|merchant|vip|premium) tasks?\\b", "why": "Pays you to like videos, rate hotels or do \"tasks\". This is a known scam: small payouts first, then you're asked to deposit money."}, {"id": "refundable", "level": "high", "pattern": "\\brefundable\\b[^.\\n]{0,30}\\b(deposit|amount|fee|charges?|payment)\\b", "why": "Mentions a \"refundable\" deposit or fee. Employers don't take deposits, refundable or not."}, {"id": "buy-kit", "level": "high", "pattern": "\\b(buy|purchase|pay for)\\b[^.\\n]{0,30}\\b(laptop|equipment|starter kit|software licen[cs]e|training (material|course)|uniform)\\b[^.\\n]{0,40}\\b(before|to (start|join|begin))\\b", "why": "Asks you to buy equipment or training before you start. Employers provide what the job needs."}, {"id": "data-entry", "level": "caution", "pattern": "\\b(data entry|typing|form filling|copy[- ]paste|captcha)\\b[^.\\n]{0,40}\\b(work from home|wfh|home[- ]based|part[- ]time|daily payment)\\b", "why": "Home-based data entry or typing work with quick pay is a common scam format. Check the company before sharing anything."}];
 const SCAM_RX = SCAM_RULES.map(r => Object.assign({rx: new RegExp(r.pattern, 'i')}, r));
 function scamCheck(j){
@@ -4054,7 +4055,7 @@ function resumeScore(p, posting, match){
   return {pct: Math.round(matched.length / kws.length * 100), matched, missing, total: kws.length};
 }
 function tailoredResumeOf(p, t){ const v = tailoredView(p, t); return {headline: obj(v.basics).headline, summary: v.summary, experience: arr(v.experience).map(e => ({bullets: e.bullets})), projects: arr(v.projects).map(e => ({bullets: e.bullets}))}; }
-/* The match score from the server (careeros/matchscore.py): the same numbers as the browser extension,
+/* The match score from the server (propelo/matchscore.py): the same numbers as the browser extension,
    with every part of the arithmetic shown. The gauge code is a copy of extension/gauge.js (a test keeps them equal). */
 /*GAUGE*/
 /* The match gauge: a big score that counts up while its ring fills, then the arithmetic behind it.
@@ -4561,7 +4562,7 @@ function firstRunBlock(){
   const steps = [
     ['s-heart', 'var(--pink)', 'Set your filters', 'Roles, experience, places and pay', 'setup', filtersOk],
     ['s-flower', 'var(--bgreen)', 'Add your resume', 'Every application starts from it', 'profile', resumeOk],
-    ['s-star', 'var(--bblue)', 'Get your first matches', cloud() ? 'Within a minute of saving your filters, then after every scan' : 'Run careeros scan, or wait for the next feed', 'today', false]
+    ['s-star', 'var(--bblue)', 'Get your first matches', cloud() ? 'Within a minute of saving your filters, then after every scan' : 'Run propelo scan, or wait for the next feed', 'today', false]
   ];
   const left = steps.filter(x => !x[5]).length, nm = firstName() ? esc(firstName()) : '';
   return `<div class="today">
@@ -5067,7 +5068,7 @@ async function naCreate(){
   if (tailorNow) tailorJob(id, opts);
 }
 
-/* ---------- same role, however it is written (mirrors careeros.dedupe.fingerprint) ---------- */
+/* ---------- same role, however it is written (mirrors propelo.dedupe.fingerprint) ---------- */
 const DUP_CO = /\b(private|pvt|limited|ltd|llp|inc|incorporated|corp|corporation|co|company|technologies|technology|labs?|solutions|software|systems|ai|india|the|operations|group|holdings|gmbh|ag|plc|llc|bv)\b/g;
 const DUP_PLACE = new Set('remote worldwide global anywhere hybrid onsite on site office in fully 100 work from home wfh multiple cities locations based only india bengaluru bangalore hyderabad chennai pune mumbai delhi new ncr gurugram gurgaon noida kolkata kochi ahmedabad jaipur coimbatore usa us united states uk kingdom kindom ireland germany france spain italy netherlands poland portugal czech republic czechia slovakia canada mexico brazil singapore australia japan uae dubai london berlin paris amsterdam dublin galway prague kosice košice bakersfield ca ny sf san francisco york seattle austin boston toronto sydney emea apac latam eu europe asia americas north america'.split(' '));
 const DUP_TERMS = new Set('fresher freshers contract contractual full part time permanent temporary internship intern new grad graduate entry level'.split(' '));
@@ -5303,7 +5304,7 @@ async function fileText(file){
   const name = (file.name || '').toLowerCase();
   // On Propelo Cloud the server reads PDF and Word files: the app's security policy doesn't load outside scripts.
   if (cloud() && (/\.(pdf|docx)$/.test(name) || /pdf|officedocument/.test(file.type || ''))){
-    const r = await fetch('api/read-file', {method: 'POST', credentials: 'same-origin', headers: {'Content-Type': 'application/octet-stream', 'X-CareerOS-CSRF': '1'}, body: file});
+    const r = await fetch('api/read-file', {method: 'POST', credentials: 'same-origin', headers: {'Content-Type': 'application/octet-stream', 'X-Propelo-CSRF': '1'}, body: file});
     const d = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(d.error || 'Could not read that file.');
     return String(d.text || '');
@@ -5489,7 +5490,7 @@ function renderNow(){
   $('#c-skipped').textContent = all.filter(j => j.stage === 'skipped').length;
   $('#cta-batch').textContent = ready ? `Review batch (${ready})` : 'Review batch';
   const f = filterSummary();
-  $('#notice-text').innerHTML = state.status === 'nodb' ? 'Open this page as its owner, signed in to Claude, to see your pipeline.' : state.status === 'demo' ? 'Demo with fictional companies. Run <b>careeros serve</b> to see your own pipeline.' : cloud() ? `Each scan: roles for <b>${esc(f.exp)}</b><span class="long"> ${esc(f.locs)}</span>, from ${esc(Number(obj(state.me && state.me.feed).companies || 1400).toLocaleString('en-IN'))} company career pages, posted in the last ${esc(f.days)} days.` : `Every 6 hours: roles for <b>${esc(f.exp)}</b><span class="long">${esc(f.pay)} ${esc(f.locs)}</span>, posted in the last ${esc(f.days)} ${f.days === 1 ? 'day' : 'days'}.`;
+  $('#notice-text').innerHTML = state.status === 'nodb' ? 'Open this page as its owner, signed in to Claude, to see your pipeline.' : state.status === 'demo' ? 'Demo with fictional companies. Run <b>propelo serve</b> to see your own pipeline.' : cloud() ? `Each scan: roles for <b>${esc(f.exp)}</b><span class="long"> ${esc(f.locs)}</span>, from ${esc(Number(obj(state.me && state.me.feed).companies || 1400).toLocaleString('en-IN'))} company career pages, posted in the last ${esc(f.days)} days.` : `Every 6 hours: roles for <b>${esc(f.exp)}</b><span class="long">${esc(f.pay)} ${esc(f.locs)}</span>, posted in the last ${esc(f.days)} ${f.days === 1 ? 'day' : 'days'}.`;
   const navTab = state.tab === 'app' ? 'pipeline' : state.tab;
   document.querySelectorAll('.tab[role="tab"]').forEach(t => t.setAttribute('aria-selected', String(t.dataset.tab === navTab)));
   const dockOn = ['home','today','pipeline'].includes(navTab) ? navTab : 'more';
@@ -5955,7 +5956,7 @@ document.addEventListener('click', e => {
   else if (act === 'rs-theme' || act === 'rs-accent'){ const cur = prof(); if (!state.db) return; state.tb = null; saveProfile(Object.assign({}, cur, act === 'rs-theme' ? {theme: el.dataset.v, accent: ''} : {accent: el.dataset.v})); }
   else if (act === 'rs-build'){ const p = prof(), t = themeOf(p.theme, p); state.tbExisting = !!t.custom; state.tbFrom = t.name; state.tb = Object.assign(cleanTheme(t), t.custom ? {} : {id: 'c-' + Math.random().toString(36).slice(2, 8), name: t.name + ' (mine)'}, {accent: p.accent || t.accent}); state.tbFor = 'live'; render(); }
   else if (act === 'tb-cancel'){ state.tb = null; render(); }
-  else if (act === 'tb-download'){ if (state.tb) saveFile(slug(state.tb.name) + '.careeros-theme.json', JSON.stringify(Object.assign(cleanTheme(state.tb), {format: 'careeros-theme'}), null, 2), 'Theme saved as a file. Share it; anyone can add it with "Add a theme file".'); }
+  else if (act === 'tb-download'){ if (state.tb) saveFile(slug(state.tb.name) + '.propelo-theme.json', JSON.stringify(Object.assign(cleanTheme(state.tb), {format: 'careeros-theme'}), null, 2), 'Theme saved as a file. Share it; anyone can add it with "Add a theme file".'); }
   else if (act === 'tb-save'){ const p = prof(), t = cleanTheme(state.tb); saveProfile(Object.assign({}, p, {customThemes: arr(p.customThemes).filter(x => obj(x).id !== t.id).concat([t]).slice(-20), theme: t.id, accent: ''}), 'Theme saved.').then(ok => { if (ok){ state.tb = null; render(); } }); }
   else if (act === 'tb-delete'){ const p = prof(), id = state.tb && state.tb.id; if (!id || !confirm('Delete this theme?')) return; saveProfile(Object.assign({}, p, {customThemes: arr(p.customThemes).filter(x => obj(x).id !== id), theme: p.theme === id ? 'editorial' : p.theme}), 'Theme deleted.').then(() => { state.tb = null; render(); }); }
   else if (act === 'rs-download'){ const p = prof(); if (!hasProfile(p)){ toast('Your profile is empty.'); return; } saveFile((personName() || 'Resume') + ' - Resume.html', resumeDoc(p, p.theme, p.accent, (personName() || 'Resume') + ' - Resume'), 'Saved. Open it and print to PDF.'); }
@@ -6061,7 +6062,7 @@ renderNow();
 
 /* ---------- data adapters for running outside Claude ----------
    Hosted as a Claude artifact: the page's own database (window.claude).
-   `careeros serve`: a local JSON API over SQLite with the same document model.
+   `propelo serve`: a local JSON API over SQLite with the same document model.
    Anywhere else (e.g. GitHub Pages): fictional demo data held in memory. */
 function makeSnap(id, data){ return {id, exists: data != null, data: () => data == null ? undefined : data, metadata: {fromCache: false, hasPendingWrites: false}}; }
 function makeQuerySnap(list){ const docs = list.map(x => makeSnap(x.id, x.data)); return {docs, size: docs.length, empty: !docs.length, docChanges: () => [], metadata: {fromCache: false, hasPendingWrites: false}}; }
@@ -6074,7 +6075,7 @@ function toLogin(){ location.replace('login?next=' + encodeURIComponent(location
 async function api(url, init){
   init = Object.assign({cache: 'no-store', credentials: 'same-origin'}, init || {});
   const method = (init.method || 'GET').toUpperCase();
-  init.headers = Object.assign(method === 'GET' ? {} : {'X-CareerOS-CSRF': '1'}, init.headers || {});
+  init.headers = Object.assign(method === 'GET' ? {} : {'X-Propelo-CSRF': '1'}, init.headers || {});
   const r = await fetch(url, init);
   if (r.status === 401){ toLogin(); throw {code: 'unauthenticated'}; }
   return r;
@@ -6181,7 +6182,7 @@ function makeCloudAssets(){
     list: async () => (await api('api/assets')).json()
   };
 }
-/* Your own model through `careeros serve` (CAREEROS_LLM + your API key): the same json() call the hosted page uses. */
+/* Your own model through `propelo serve` (PROPELO_LLM + your API key): the same json() call the hosted page uses. */
 function makeServerSample(){
   const call = async (prompt, opts) => {
     const r = await api('api/ai', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({prompt, tier: obj(opts).modelTier || 'default', json: true, feature: obj(opts).feature || ''})});

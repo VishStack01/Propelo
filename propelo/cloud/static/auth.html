@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Propelo · Sign in</title>
+<meta name="description" content="Propelo finds fresh roles from company career pages, checks each against your filters with quotes from the posting, and applies from your own computer.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&display=swap">
+<style>
+:root{
+  --page:#FFFFFF; --ink:#000000; --ink-2:#34322F; --muted:#6B6762; --panel:#F7F6F3; --panel-2:#EEECE7; --line:#E4E1DB; --field:#FFFFFF;
+  --plum:#45012E; --plum-text:#FCD6EF; --gold:#F5D867; --blue:#151515; --good:#02693E; --good-soft:#DDF3E5; --bad:#C2341D; --bad-soft:#FBE3DE;
+  --btn:#000000; --btn-ink:#FFFFFF; --f:"Hanken Grotesk","Helvetica Neue",Arial,sans-serif; --ease:cubic-bezier(.2,.8,.2,1);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --page:#0E0D0C; --ink:#F6F4F0; --ink-2:#D9D5CE; --muted:#A49F97; --panel:#181715; --panel-2:#22201D; --line:#2F2C28; --field:#121110;
+    --plum:#2A0019; --good:#55C78A; --good-soft:#143322; --bad:#F27A63; --bad-soft:#3B1B15; --btn:#F6F4F0; --btn-ink:#000000; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --page:#0E0D0C; --ink:#F6F4F0; --ink-2:#D9D5CE; --muted:#A49F97; --panel:#181715; --panel-2:#22201D; --line:#2F2C28; --field:#121110;
+  --plum:#2A0019; --good:#55C78A; --good-soft:#143322; --bad:#F27A63; --bad-soft:#3B1B15; --btn:#F6F4F0; --btn-ink:#000000; color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;min-height:100%}
+body{background:var(--page);color:var(--ink);font-family:var(--f);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:12px}
+.shell{min-height:100vh;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.side{background:var(--plum);color:var(--plum-text);padding:clamp(28px,5vw,64px);display:flex;flex-direction:column;gap:40px;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:19px;letter-spacing:-.02em;color:#FFFFFF;text-decoration:none}
+.mark{width:30px;height:30px;border-radius:12px;background:#FFFFFF;color:#000000;display:grid;place-items:center}
+.mark svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.pitch h1{font-size:clamp(30px,3.6vw,46px);line-height:1.04;letter-spacing:-.035em;color:#FFFFFF;margin:0 0 16px;font-weight:600;max-width:15ch;text-wrap:balance}
+.pitch p{margin:0;max-width:44ch;font-size:16.5px}
+.promises{list-style:none;margin:0;padding:0;display:grid;gap:14px;max-width:46ch}
+.promises li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:12px;font-size:15px}
+.promises svg{width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;margin-top:1px}
+.promises b{color:#FFFFFF;font-weight:600}
+.main{display:grid;place-items:center;padding:clamp(24px,5vw,64px) clamp(16px,4vw,56px)}
+.card{width:100%;max-width:420px;display:grid;gap:22px}
+section[data-mode]{display:grid;gap:22px}
+.card h2{font-size:30px;letter-spacing:-.03em;margin:0;font-weight:600;line-height:1.1}
+.card .lede{color:var(--muted);margin:6px 0 0}
+form{display:grid;gap:16px}
+label{display:grid;gap:7px;font-size:14px;font-weight:600}
+input[type=text],input[type=email],input[type=password]{width:100%;font:inherit;font-size:16px;font-weight:400;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:12px;padding:12px 14px;transition:border-color .2s var(--ease),box-shadow .2s var(--ease)}
+input:focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--ink) 12%,transparent)}
+input[aria-invalid="true"]{border-color:var(--bad)}
+.pw{position:relative}
+.pw input{padding-right:64px}
+.pw button{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:none;font:inherit;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;padding:8px}
+.hint{font-size:13px;font-weight:400;color:var(--muted)}
+.hint.ok{color:var(--good)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:14px}
+.agree{display:grid;grid-template-columns:20px minmax(0,1fr);gap:10px;font-weight:400;font-size:14px;color:var(--ink-2);align-items:start}
+.agree input{width:18px;height:18px;margin:2px 0 0;accent-color:var(--ink)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;padding:13px 18px;font:inherit;font-size:15.5px;font-weight:600;border:1px solid var(--btn);background:var(--btn);color:var(--btn-ink);cursor:pointer;width:100%;transition:transform .15s var(--ease),opacity .2s}
+.btn:active{transform:scale(.98)}
+.btn[disabled]{opacity:.55;cursor:progress}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.linkbtn{border:0;background:none;padding:0;font:inherit;color:inherit;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.alt{font-size:14.5px;color:var(--muted);text-align:center}
+.alt a{color:var(--ink);font-weight:600;text-underline-offset:3px}
+.li-btn{background:transparent;color:var(--btn);text-decoration:none;margin-top:12px}.li-btn[hidden]{display:none}
+.msg{border-radius:12px;padding:12px 14px;font-size:14.5px}
+.msg.err{background:var(--bad-soft);color:var(--bad)}
+.msg.ok{background:var(--good-soft);color:var(--good)}
+.done{display:grid;gap:14px;justify-items:start}
+.done .big{width:52px;height:52px;border-radius:12px;background:var(--panel-2);display:grid;place-items:center}
+.done svg{width:26px;height:26px;stroke:var(--ink);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.foot{font-size:13px;color:var(--muted);display:flex;gap:16px;flex-wrap:wrap}
+.foot a{text-decoration:none}
+.foot a:hover{text-decoration:underline}
+.spin{width:16px;height:16px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:r .8s linear infinite}
+@keyframes r{to{transform:rotate(1turn)}}
+@media (prefers-reduced-motion: reduce){ .spin{animation:none} *{transition:none!important} }
+@media (max-width:860px){
+  .shell{grid-template-columns:minmax(0,1fr)}
+  .side{gap:22px;padding:22px 16px 26px}
+  .pitch h1{font-size:28px}
+  .pitch p{font-size:15px}
+  .promises{display:none}
+  .main{place-items:start center;padding:28px 16px 40px}
+}
+/* Propelo brand: cream, pastel shapes, Bricolage Grotesque + Figtree */
+:root{--page:#FAF3E6;--ink:#151515;--ink-2:#47433D;--muted:#8C867D;--panel:#EFE7D9;--panel-2:#E6DCCB;--line:#DDD2C1;--field:#FFFDF8;--btn:#151515;--btn-ink:#FAF3E6;
+  --pink:#F5B8DB;--bgreen:#9AAB63;--bblue:#B6CAEB;--yellow:#F5D867;--good:#5E7A1F;--good-soft:#E2EAC6;
+  --f:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;--d:"Bricolage Grotesque",ui-rounded,system-ui,sans-serif;--spring:cubic-bezier(.34,1.56,.64,1)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--page:#12110F;--ink:#F3EDE2;--ink-2:#D6CFC3;--muted:#9C958A;--panel:#1E1C19;--panel-2:#2A2722;--line:#34302A;--field:#191815;--btn:#F3EDE2;--btn-ink:#151515}}
+body{font-size:15.5px}
+.side{background:var(--pink);color:#151515;margin:14px;border-radius:28px;position:relative;overflow:hidden}
+.brand{color:#151515;font-family:var(--d);font-size:24px;font-weight:600}
+.mark{background:#151515;color:var(--pink);border-radius:12px;width:38px;height:38px}
+.mark svg{width:22px;height:22px;fill:currentColor;stroke:none}
+.pitch,.promises,.brand{position:relative;z-index:1}
+.pitch h1{font-family:var(--d);color:#151515;font-weight:600;letter-spacing:-.04em;font-size:clamp(34px,4vw,54px)}
+.pitch p{color:#2b2925}
+.promises svg{stroke:#151515}
+.promises b{color:#151515}
+.promises li{background:rgba(255,255,255,.5);border-radius:18px;padding:12px 14px}
+.sh{position:absolute;pointer-events:none;z-index:0}
+.sh svg{width:100%;height:100%}
+.card h2{font-family:var(--d);font-size:36px;letter-spacing:-.04em}
+input[type=text],input[type=email],input[type=password]{border-radius:12px;padding:13px 16px}
+input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 60%,transparent)}
+.btn{border-radius:999px;padding:14px 20px;min-height:48px;transition:transform 120ms cubic-bezier(.23,1,.32,1),opacity 120ms cubic-bezier(.23,1,.32,1)}
+.btn:hover{opacity:.88}
+.btn:active{transform:scale(.97)}
+.btn.ghost{border-width:1.5px}
+.msg{border-radius:12px}
+.done .big{border-radius:50%;background:var(--pink)}
+.card{animation:rise 280ms cubic-bezier(.23,1,.32,1) both}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}}
+@media (max-width:860px){.side{margin:10px;border-radius:28px}.sh{display:none}}
+@media (prefers-reduced-motion: reduce){.sh,.card{animation:none}}
+</style>
+<style>
+/* ===== Propelo layer (see docs/design.md): cream and ink, one pink accent, Figtree at 400 to 600 ===== */
+:root:root{--page:#FAF3E6;--cream:#FAF3E6;--panel:#F2EADC;--sand:#F2EADC;--panel-2:#EAE0CF;--field:#FFFCF7;--line:rgba(21,21,21,.12);
+  --ink:#151515;--ink-2:#4F4A44;--text:#4F4A44;--muted:#6E675D;--btn:#151515;--btn-ink:#FAF3E6;
+  --pink:#FF85BA;--lav:#BDB6FC;--yellow:#FCF15C;--orange:#FF7034;--green:#FF7034;--blue:#BDB6FC;--bblue:#BDB6FC;--bgreen:#FF7034;
+  --f:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;--d:var(--f);--ease:cubic-bezier(.16,1,.3,1)}
+@media (prefers-color-scheme: dark){:root:root:not([data-theme="light"]){--page:#141311;--cream:#141311;--panel:#1C1A17;--sand:#1C1A17;--panel-2:#26231F;--field:#1C1A17;--line:rgba(243,236,224,.12);
+  --ink:#F3ECE0;--ink-2:#D2CABE;--text:#D2CABE;--muted:#9E978B;--btn:#F3ECE0;--btn-ink:#141311;color-scheme:dark}}
+h1,h2,h3,.brand,.lede,.price,.pitch h1,.card h2{font-family:var(--f)}
+h1,h2,.pitch h1,.card h2,.plan h2,.price,.faq h3{font-weight:500 !important;letter-spacing:-.04em}
+h3{font-weight:600}
+.brand{display:inline-flex;align-items:baseline;gap:2px;font-weight:600 !important;font-size:24px;letter-spacing:-.05em;text-decoration:none}
+.brand .dot{width:7px;height:7px;border-radius:50%;background:var(--pink)}
+.mark,.sh,.shape{display:none !important}
+.pill{text-transform:none !important;letter-spacing:0 !important;border:1.5px solid #151515;color:#151515}
+.btn{font-weight:500 !important;text-transform:none !important;letter-spacing:0 !important}
+.side .brand .dot{background:#151515}
+.promises li{background:rgba(255,252,247,.6);box-shadow:inset 0 0 0 1px rgba(21,21,21,.12)}
+.plan.pro{background:var(--yellow) !important;box-shadow:inset 0 0 0 1.5px #151515}
+.plan li::before{background:currentColor !important;opacity:.45;width:8px !important;height:8px !important;margin-top:8px !important}
+input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 45%,transparent) !important}
+</style>
+</head>
+<body>
+<div class="shell">
+  <aside class="side">
+    <a class="brand" href="/login">propelo<span class="dot" aria-hidden="true"></span></a>
+    <div class="pitch">
+      <h1>Fresh roles, checked against your rules.</h1>
+      <p>Propelo reads thousands of company career pages several times a day, keeps the roles that fit you, and shows the sentence from each posting that decided it.</p>
+    </div>
+    <ul class="promises">
+      <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span><b>Straight from company sites,</b> often before the big boards list them.</span></li>
+      <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span><b>Nothing invented.</b> Every line on a tailored resume comes from your own record.</span></li>
+      <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span><b>Applies from your computer,</b> where you're signed in. We never ask for your job-site passwords.</span></li>
+    </ul>
+  </aside>
+
+  <main class="main">
+    <div class="card">
+      <!-- sign in -->
+      <section data-mode="login" hidden>
+        <div><h2>Sign in</h2><p class="lede">Welcome back.</p></div>
+        <form id="f-login" novalidate>
+          <div class="msg" role="alert" hidden></div>
+          <label>Email<input type="email" name="email" autocomplete="email" required></label>
+          <label>Password<span class="pw"><input type="password" name="password" autocomplete="current-password" required><button type="button" class="show" aria-label="Show password">Show</button></span></label>
+          <div class="row"><span></span><a href="/forgot">Forgot password?</a></div>
+          <button class="btn" type="submit">Sign in</button>
+        </form>
+        <a class="btn li-btn" href="/api/auth/linkedin/start" hidden>Continue with LinkedIn</a>
+        <p class="alt">New here? <a href="/signup">Create an account</a></p>
+      </section>
+
+      <!-- two-step sign-in -->
+      <section data-mode="mfa" hidden>
+        <h1>Enter your code</h1>
+        <p class="lede">Open your authenticator app and type the 6-digit code for Propelo. Lost your phone? Use one of your recovery codes.</p>
+        <form id="f-mfa" novalidate>
+          <div class="msg" role="alert" hidden></div>
+          <label>Code<input type="text" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="20" required></label>
+          <button class="btn" type="submit">Continue</button>
+        </form>
+        <p class="alt"><a href="/login">Start again</a></p>
+      </section>
+
+      <!-- sign up -->
+      <section data-mode="signup" hidden>
+        <div><h2>Create your account</h2><p class="lede">Free to start. It takes a minute.</p></div>
+        <form id="f-signup" novalidate>
+          <div class="msg" role="alert" hidden></div>
+          <label>Your name<input type="text" name="name" autocomplete="name" maxlength="80"></label>
+          <label>Email<input type="email" name="email" autocomplete="email" required></label>
+          <label>Password<span class="pw"><input type="password" name="password" autocomplete="new-password" minlength="10" required aria-describedby="pw-hint"><button type="button" class="show" aria-label="Show password">Show</button></span><span class="hint" id="pw-hint">At least 10 characters.</span></label>
+          <label class="agree"><input type="checkbox" name="agree" required><span>I agree to the <a href="/terms" target="_blank">terms</a> and the <a href="/privacy" target="_blank">privacy notice</a>.</span></label>
+          <button class="btn" type="submit">Create account</button>
+        </form>
+        <p class="alt">Already have an account? <a href="/login">Sign in</a></p>
+      </section>
+
+      <!-- check your inbox -->
+      <section data-mode="sent" hidden>
+        <div class="done">
+          <span class="big"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span>
+          <h2>Check your inbox</h2>
+          <p class="lede" id="sent-text">We sent a link to confirm your email. It expires in 24 hours.</p>
+          <div class="msg" role="status" hidden></div>
+          <p class="alt" style="text-align:left">No email? Check spam, or <button class="linkbtn" type="button" id="resend">send it again</button>.</p>
+          <a class="btn ghost" href="/login">Back to sign in</a>
+        </div>
+      </section>
+
+      <!-- forgot -->
+      <section data-mode="forgot" hidden>
+        <div><h2>Reset your password</h2><p class="lede">We'll email you a link to choose a new one.</p></div>
+        <form id="f-forgot" novalidate>
+          <div class="msg" role="alert" hidden></div>
+          <label>Email<input type="email" name="email" autocomplete="email" required></label>
+          <button class="btn" type="submit">Send reset link</button>
+        </form>
+        <p class="alt"><a href="/login">Back to sign in</a></p>
+      </section>
+
+      <!-- reset -->
+      <section data-mode="reset" hidden>
+        <div><h2>Choose a new password</h2><p class="lede">This signs you out on every other device.</p></div>
+        <form id="f-reset" novalidate>
+          <div class="msg" role="alert" hidden></div>
+          <label>New password<span class="pw"><input type="password" name="password" autocomplete="new-password" minlength="10" required><button type="button" class="show" aria-label="Show password">Show</button></span><span class="hint">At least 10 characters.</span></label>
+          <button class="btn" type="submit">Save password</button>
+        </form>
+      </section>
+
+      <!-- verify -->
+      <section data-mode="verify" hidden>
+        <div class="done">
+          <span class="big" id="v-icon"><span class="spin" aria-hidden="true"></span></span>
+          <h2 id="v-title">Confirming your email…</h2>
+          <div class="msg" role="alert" hidden></div>
+          <a class="btn ghost" href="/login" id="v-back" hidden>Go to sign in</a>
+        </div>
+      </section>
+
+      <nav class="foot" aria-label="Legal"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="https://github.com/VishStack01/Propelo" rel="noopener">Open source</a></nav>
+    </div>
+  </main>
+</div>
+<script>
+(function(){
+  const $ = (s, el) => (el || document).querySelector(s);
+  const params = new URLSearchParams(location.search);
+  const frag = new URLSearchParams(location.hash.slice(1));
+  const token = frag.get('token') || '', afterVerify = frag.get('next') || '';
+  let mfaTicket = frag.get('mfa') || '';
+  if (token || mfaTicket) history.replaceState(null, '', location.pathname + location.search); // keep the link out of history
+  let mode = location.pathname.replace(/^\/+|\/+$/g, '') || 'login';
+  let lastEmail = '';
+  // Sign in with LinkedIn, when this server has it set up (name and email only; nothing is posted or sent).
+  // Inside the phone app, LinkedIn's sign-in would open and finish in the phone's browser, not the app: offer email there.
+  const inApp = /CareerOSApp/.test(navigator.userAgent || '');
+  if (!inApp) fetch('/api/auth/providers').then(r => r.ok ? r.json() : {}).then(p => { if (p && p.linkedin) document.querySelectorAll('.li-btn').forEach(b => { b.hidden = false; }); }).catch(() => {});
+  const liErr = {linkedin_cancelled: 'LinkedIn sign-in was cancelled.', linkedin_state: 'That sign-in link expired. Try again.', linkedin_failed: "LinkedIn didn't confirm the sign-in. Try again.",
+                 linkedin_no_email: "LinkedIn didn't share a confirmed email address, which Propelo needs.", closed: 'Sign-up is by invitation right now.', disabled: 'This account is disabled.'}[new URLSearchParams(location.hash.slice(1)).get('error') || ''];
+
+  function show(m){
+    mode = m;
+    document.querySelectorAll('[data-mode]').forEach(s => { s.hidden = s.dataset.mode !== m; });
+    document.title = 'Propelo · ' + ({login:'Sign in', mfa:'Two-step sign-in', signup:'Create account', sent:'Check your inbox', forgot:'Reset password', reset:'New password', verify:'Confirm email'}[m] || 'Sign in');
+    const first = $('[data-mode="' + m + '"] input');
+    if (first && matchMedia('(min-width: 861px)').matches) first.focus();
+  }
+  function msg(form, text, kind){
+    const el = $('.msg', form); if (!el) return;
+    el.hidden = !text; el.textContent = text || ''; el.className = 'msg ' + (kind || 'err');
+  }
+  function busy(form, on, label){
+    const b = $('button[type=submit]', form); if (!b) return;
+    if (on){ b.dataset.label = b.textContent; b.disabled = true; b.innerHTML = '<span class="spin" aria-hidden="true"></span>' + (label || 'Working…'); }
+    else { b.disabled = false; b.textContent = b.dataset.label || b.textContent; }
+  }
+  async function post(url, body){
+    let r;
+    try { r = await fetch(url, {method: 'POST', headers: {'Content-Type': 'application/json', 'X-Propelo-CSRF': '1'}, credentials: 'same-origin', body: JSON.stringify(body)}); }
+    catch(e){ return {ok: false, status: 0, data: {error: "Can't reach Propelo. Check your connection and try again."}}; }
+    let data = {}; try { data = await r.json(); } catch(e){}
+    return {ok: r.ok, status: r.status, data};
+  }
+  const next = () => { const n = params.get('next') || '/'; return /^\/(?![\/\\])[^\s]*$/.test(n) ? n : '/'; };
+
+  document.addEventListener('click', e => {
+    const b = e.target.closest('.show'); if (!b) return;
+    const input = b.parentElement.querySelector('input');
+    const vis = input.type === 'password'; input.type = vis ? 'text' : 'password';
+    b.textContent = vis ? 'Hide' : 'Show'; b.setAttribute('aria-label', vis ? 'Hide password' : 'Show password');
+  });
+
+  const pw = $('#f-signup input[name=password]'), hint = $('#pw-hint');
+  pw.addEventListener('input', () => {
+    const n = pw.value.length;
+    hint.textContent = n >= 10 ? 'Length looks good.' : `At least 10 characters (${10 - n} to go).`;
+    hint.classList.toggle('ok', n >= 10);
+  });
+
+  $('#f-login').addEventListener('submit', async e => {
+    e.preventDefault(); const f = e.target; msg(f, '');
+    const email = f.email.value.trim(), password = f.password.value;
+    if (!email || !password){ msg(f, 'Enter your email and password.'); return; }
+    busy(f, true, 'Signing in…');
+    const r = await post('/api/auth/login', {email, password});
+    busy(f, false);
+    if (r.ok && r.data.mfa){ mfaTicket = r.data.ticket; show('mfa'); return; }
+    if (r.ok){ location.replace(next()); return; }
+    if (r.data.code === 'unverified'){ lastEmail = email; $('#sent-text').textContent = 'Confirm your email to sign in. We can send the link again.'; show('sent'); return; }
+    msg(f, r.data.error || 'Sign-in failed. Try again.');
+  });
+
+  $('#f-mfa').addEventListener('submit', async e => {
+    e.preventDefault(); const f = e.target; msg(f, '');
+    const code = f.code.value.trim();
+    if (!code){ msg(f, 'Enter the code from your authenticator app.'); return; }
+    busy(f, true, 'Checking…');
+    const r = await post('/api/auth/mfa', {ticket: mfaTicket, code});
+    busy(f, false);
+    if (r.ok){ location.replace(next()); return; }
+    if (r.data.code === 'mfa_expired'){ msg(f, r.data.error); setTimeout(() => location.replace('/login'), 1500); return; }
+    msg(f, r.data.error || "That code didn't work."); f.code.select();
+  });
+
+  // The short label on the link that brought this visitor (?src=..., utm_source or ref), kept for this browser so a
+  // sign-up after looking around is still counted for that channel. A label only: no cookie and nothing about the person.
+  function source(){
+    let s = '';
+    try {
+      const q = new URLSearchParams(location.search);
+      s = (q.get('src') || q.get('utm_source') || q.get('ref') || '').slice(0, 40);
+      if (s) localStorage.setItem('propelo-src', s); else s = localStorage.getItem('propelo-src') || '';
+    } catch (e) { s = ''; }
+    return s;
+  }
+  source();
+  $('#f-signup').addEventListener('submit', async e => {
+    e.preventDefault(); const f = e.target; msg(f, '');
+    const email = f.email.value.trim();
+    if (!/^\S+@\S+\.\S+$/.test(email)){ msg(f, 'Enter a valid email address.'); f.email.setAttribute('aria-invalid', 'true'); f.email.focus(); return; }
+    f.email.removeAttribute('aria-invalid');
+    if (f.password.value.length < 10){ msg(f, 'Use at least 10 characters for your password.'); f.password.focus(); return; }
+    if (!f.agree.checked){ msg(f, 'Please agree to the terms and privacy notice.'); return; }
+    busy(f, true, 'Creating your account…');
+    const r = await post('/api/auth/signup', {name: f.name.value.trim(), email, password: f.password.value, next: next() !== '/' ? next() : '', src: source()});
+    busy(f, false);
+    if (r.ok){ lastEmail = email; $('#sent-text').textContent = `We sent a link to ${email}. It expires in 24 hours.`; show('sent'); return; }
+    msg(f, r.data.error || 'Sign-up failed. Try again.');
+  });
+
+  $('#resend').addEventListener('click', async () => {
+    const box = $('[data-mode="sent"] .msg');
+    if (!lastEmail){ box.hidden = false; box.className = 'msg err'; box.textContent = 'Sign in again to get a new link.'; return; }
+    const r = await post('/api/auth/resend', {email: lastEmail});
+    box.hidden = false; box.className = 'msg ' + (r.ok ? 'ok' : 'err');
+    box.textContent = r.ok ? 'Sent. It can take a minute to arrive.' : (r.data.error || 'Could not send. Try again later.');
+  });
+
+  $('#f-forgot').addEventListener('submit', async e => {
+    e.preventDefault(); const f = e.target; msg(f, '');
+    const email = f.email.value.trim();
+    if (!email){ msg(f, 'Enter your email.'); return; }
+    busy(f, true, 'Sending…');
+    const r = await post('/api/auth/forgot', {email});
+    busy(f, false);
+    msg(f, r.ok ? 'If an account uses that email, a reset link is on its way. It works for 1 hour.' : (r.data.error || 'Could not send. Try again.'), r.ok ? 'ok' : 'err');
+  });
+
+  $('#f-reset').addEventListener('submit', async e => {
+    e.preventDefault(); const f = e.target; msg(f, '');
+    if (!token){ msg(f, 'This page needs the link from your email. Ask for a new one from "Forgot password".'); return; }
+    busy(f, true, 'Saving…');
+    const r = await post('/api/auth/reset', {token, password: f.password.value});
+    busy(f, false);
+    if (r.ok){ location.replace('/'); return; }
+    msg(f, r.data.error || 'Could not reset your password.');
+  });
+
+  async function verify(){
+    const box = $('[data-mode="verify"]');
+    const fail = text => { $('#v-icon').innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>'; $('#v-title').textContent = "That link didn't work"; msg(box, text); $('#v-back').hidden = false; };
+    if (!token){ fail('Open the link from your email, or sign in to get a new one.'); return; }
+    const r = await post('/api/auth/verify', {token});
+    if (r.ok){ $('#v-icon').innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>'; $('#v-title').textContent = 'Email confirmed'; const dest = /^\/(?![\/\\])[^\s]*$/.test(afterVerify) ? afterVerify : '/'; msg(box, dest === '/' ? 'Taking you to your dashboard…' : 'Taking you back…', 'ok'); setTimeout(() => { location.replace(dest); }, 900); return; }
+    fail(r.data.error || 'That link has expired or was already used.');
+  }
+
+  // Sign-in and sign-up are one-way doors: a visitor who is already signed in (for example after pressing
+  // back from the app) goes straight to the app and can't step back onto this page.
+  if (/^\/(login|signup)$/.test(location.pathname)){
+    fetch('/api/me', {credentials: 'same-origin', cache: 'no-store'}).then(r => { if (r.ok) location.replace(next()); }).catch(() => {});
+  }
+
+  fetch('/api/health').then(r => r.json()).then(h => {
+    if (h.signup === 'closed'){ const f = $('#f-signup'); msg(f, 'Sign-up is closed right now.'); $('button[type=submit]', f).disabled = true; }
+    else if (h.signup === 'allowlist'){ msg($('#f-signup'), 'Sign-up is by invitation: use the email you were invited with.', 'ok'); }
+  }).catch(() => {});
+
+  if (!['login', 'signup', 'forgot', 'reset', 'verify'].includes(mode)) mode = 'login';
+  if (mfaTicket && mode === 'login') mode = 'mfa';
+  show(mode);
+  if (liErr){ msg($('#f-login'), liErr); history.replaceState(null, '', location.pathname); }
+  if (mode === 'verify') verify();
+})();
+</script>
+</body>
+</html>

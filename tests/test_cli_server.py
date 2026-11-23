@@ -4,9 +4,9 @@ import urllib.request
 from http.server import ThreadingHTTPServer
 from pathlib import Path
 
-from careeros import cli
-from careeros.server import make_handler
-from careeros.store import Store
+from propelo import cli
+from propelo.server import make_handler
+from propelo.store import Store
 
 ROOT = Path(__file__).parents[1]
 

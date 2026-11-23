@@ -39,7 +39,7 @@ jobs:
       - name: Download and read the lists
         run: |
           mkdir -p registers
-          careeros registers --out registers --only "${{ inputs.only }}" 2>&1 | tee registers/registers.log
+          propelo registers --out registers --only "${{ inputs.only }}" 2>&1 | tee registers/registers.log
           for f in registers/*.csv; do [ -f "$f" ] && { echo "== $f: $(wc -l < "$f") lines"; head -6 "$f"; }; done || true
 
       - name: Publish next to the feed

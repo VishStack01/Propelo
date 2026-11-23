@@ -6,7 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from careeros.dedupe import fingerprint, title_key
+from propelo.dedupe import fingerprint, title_key
 
 SCRIPT = Path(__file__).resolve().parents[1] / "prompts" / "agent_filter.py"
 

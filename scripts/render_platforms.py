@@ -11,7 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from careeros import platforms  # noqa: E402
+from propelo import platforms  # noqa: E402
 
 GROUPS = [
     ("remote-board", "Remote job boards"),

@@ -60,7 +60,7 @@ Why not 300-500? Past about a hundred, "job sites" are mostly clones and scraper
 
 | Platform | Region | Competition | How | Notes |
 |---|---|---|---|---|
-| Y Combinator jobs<br>[www.ycombinator.com/jobs/role/software-engineer/india](https://www.ycombinator.com/jobs/role/software-engineer/india) | global | medium | Scanned (public feed) · every run | Scanned every 6 hours (careeros/sources/yc.py): software roles in India, Bengaluru, Hyderabad, Chennai and remote, with the salary band and minimum experience YC shows. YC companies hiring in India or remotely are also mapped to their own boards (careeros yc-companies). |
+| Y Combinator jobs<br>[www.ycombinator.com/jobs/role/software-engineer/india](https://www.ycombinator.com/jobs/role/software-engineer/india) | global | medium | Scanned (public feed) · every run | Scanned every 6 hours (propelo/sources/yc.py): software roles in India, Bengaluru, Hyderabad, Chennai and remote, with the salary band and minimum experience YC shows. YC companies hiring in India or remotely are also mapped to their own boards (propelo yc-companies). |
 | Work at a Startup (YC)<br>[www.workatastartup.com](https://www.workatastartup.com) | global | medium | You apply (login) | Its postings are scanned every 6 hours through their public mirror (YC jobs). Applying needs your own profile: make one, stay signed in on the Claude desktop browser, and apply with the drafted note; founders also message you directly. |
 | Peak XV Partners portfolio jobs<br>[careers.peakxv.com/jobs](https://careers.peakxv.com/jobs) | india | low | Agent reads it · every run · to verify |  |
 | Accel India portfolio jobs<br>[jobs.accel.com/jobs](https://jobs.accel.com/jobs) | india | low | Agent reads it · every run · to verify |  |

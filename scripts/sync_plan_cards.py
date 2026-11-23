@@ -1,4 +1,4 @@
-"""Write the website's plan cards from the plan catalog (careeros/cloud/plans.py), so they never drift.
+"""Write the website's plan cards from the plan catalog (propelo/cloud/plans.py), so they never drift.
 Run after changing plan features: python3 scripts/sync_plan_cards.py"""
 
 import html
@@ -8,7 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from careeros.cloud.plans import catalog, public_config  # noqa: E402
+from propelo.cloud.plans import catalog, public_config  # noqa: E402
 
 page = ROOT / "website" / "index.html"
 text = page.read_text(encoding="utf-8")
