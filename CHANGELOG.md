@@ -2,6 +2,12 @@
 
 All notable changes to CareerOS. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [semantic versioning](https://semver.org/).
 
+## [2.16.1] - 2026-11-23
+
+### Fixed
+- **The sponsor sweep slowed discovery down about six times and found nothing.** Its first run looked at 52 register employers and kept no board, while the rest of discovery checked 260 companies instead of about 1,500: register guesses were tried on every hiring system, and some take seconds to answer that a board does not exist. Guesses now go only to Greenhouse, Lever and Ashby, which answer at once, and 150 a run instead of 500. Whether the sweep is worth keeping is decided by its yield over the next few days (register item R-059).
+- Visa job lists left out volunteer and unpaid places, and roles whose title places them in another country ("relocation to New Zealand").
+
 ## [2.16.0] - 2026-11-23
 
 ### Changed

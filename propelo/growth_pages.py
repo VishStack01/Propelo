@@ -20,6 +20,8 @@ from datetime import datetime, timezone
 from html import escape
 from pathlib import Path
 
+from . import countries
+
 
 MAX_ROWS = 150
 MAX_AGE_DAYS = 30
@@ -105,6 +107,9 @@ def _where(r: dict) -> list[str]:
     return r["countries"]
 
 
+_NOT_A_JOB = re.compile(r"\b(volunteers?|volunteering|unpaid)\b", re.I)
+
+
 def pick(records: list[dict], code: str, now: datetime) -> list[dict]:
     """Recent junior and mid-level roles in a country with a sponsorship signal, newest first, a few per employer."""
     rows, per = [], {}
@@ -113,6 +118,11 @@ def pick(records: list[dict], code: str, now: datetime) -> list[dict]:
             continue
         if ((r.get("facts") or {}).get("legit") or {}).get("tier") == "suspicious" or r.get("via") == "board":
             continue  # only roles read from the employer's own careers page
+        if _NOT_A_JOB.search(r.get("title") or ""):
+            continue  # volunteer and unpaid places are not what someone needing a work visa is looking for
+        named = countries.named(r.get("title") or "")
+        if named and code not in named:
+            continue  # "relocation to New Zealand", "Field Operations Manager, APJ (Singapore)": hired elsewhere
         why = signal(r, code)
         if not why:
             continue

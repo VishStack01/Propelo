@@ -34,6 +34,7 @@ ATS_ORDER = ["greenhouse", "lever", "ashby", "smartrecruiters", "recruitee", "br
 # Workable rate-limits hard and answers for any name with an empty board, so it
 # is tried last and with the first slug only, unless the company list names it.
 SLUGS_PER_ATS = {"workable": 1}
+SPONSOR_ATS = ("greenhouse", "lever", "ashby")
 GLOBAL_CATEGORIES = {"global-india-engineering", "remote-first-global", "yc-remote"}
 PROBE_INTERVAL = 0.25  # seconds between requests to one host while discovering
 _deadline = [float("inf")]  # time.monotonic() after which no new company is started
@@ -239,7 +240,10 @@ def discover_one(company: dict) -> dict | None:
         pairs.append(explicit)
     slugs = [s for s in company.get("slugs", []) if s][:4]
     sponsor = company.get("category") == "sponsor"
-    for ats in ATS_ORDER:
+    # Register employers are guesses, most with no board at all: only the three hiring systems that answer a
+    # missing board at once. The others can take seconds to say no, and a run of guesses there held up the
+    # rest of discovery (2.15.0: 260 companies checked in a run instead of about 1,500).
+    for ats in (SPONSOR_ATS if sponsor else ATS_ORDER):
         for slug in slugs[: SLUGS_PER_ATS.get(ats, len(slugs))]:
             pairs.append((ats, slug))
     empty = False

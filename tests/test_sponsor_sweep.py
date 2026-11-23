@@ -105,7 +105,8 @@ def test_discover_keeps_a_sponsors_board_only_when_it_is_theirs(tmp_path, monkey
     assert got["Apex Scaffolding"] == {"category": "sponsor", "status": "unmapped", "checkedAt": got["Apex Scaffolding"]["checkedAt"],
                                        "probes": got["Apex Scaffolding"]["probes"], "retryDays": sponsor_sweep.RETRY_DAYS}
     assert got["Acme Robotics"]["status"] == "unmapped"            # a nameless board under a first word could be anyone's
-    assert ("greenhouse", "monzobank") in asked and ("workable", "monzo") not in asked     # workable gets the first address only
+    assert ("greenhouse", "monzobank") in asked and ("ashby", "apexscaffolding") in asked
+    assert {ats for ats, _ in asked} <= {"greenhouse", "lever", "ashby"}               # only the systems that say no at once
 
 
 def test_a_board_with_no_roles_in_the_country_or_already_read_is_left(tmp_path, monkeypatch):

@@ -276,3 +276,16 @@ def test_discovery_gives_the_deep_sweep_most_of_each_run():
     assert len(got) == 40 and sum(1 for c in got if c["category"] == "deep") == 30 and got[0]["category"] == "deep" and got[3]["category"] != "deep"
     assert len(discover.share_out(rest + deep[:5], 40)) == 40  # few deep boards due: the curated lists take the room
     assert [c["name"] for c in discover.share_out(rest[:2], 40)] == ["curated 0", "curated 1"]
+
+
+def test_visa_lists_leave_out_volunteer_places_and_roles_hired_elsewhere():
+    from datetime import datetime, timezone
+    from propelo import growth_pages
+    now = datetime.now(timezone.utc)
+
+    def rec(i, title):
+        return {"id": f"v{i}", "title": title, "company": f"Co {i}", "location": "London, United Kingdom", "postedAt": now.isoformat(), "url": f"https://x.example/{i}",
+                "via": "careers", "facts": {"visa": {"ukRegister": {"listed": True, "name": f"Co {i} Ltd"}}}}
+    rows = growth_pages.pick([rec(1, "Data Analyst"), rec(2, "Investor Relations Event Volunteer"), rec(3, "Brand Manager (relocation to New Zealand)"),
+                              rec(4, "Unpaid Marketing Intern"), rec(5, "Software Engineer, UK")], "GB", now)
+    assert [r["title"] for r in rows] == ["Data Analyst", "Software Engineer, UK"]

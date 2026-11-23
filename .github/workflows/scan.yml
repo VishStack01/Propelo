@@ -115,7 +115,7 @@ jobs:
 
       - name: Sponsor sweep list
         # Employers on the government sponsor lists (UK, Netherlands, Ireland, US, Canada) whose job boards
-        # nobody has listed yet. Only names are prepared here, from the files above; discover tries 500 of
+        # nobody has listed yet. Only names are prepared here, from the files above; discover tries 150 of
         # them a run (PROPELO_SPONSOR_SWEEP) and keeps a board only when it is that employer's and has
         # roles in that country.
         continue-on-error: true

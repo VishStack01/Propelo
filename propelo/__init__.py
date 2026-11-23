@@ -6,7 +6,7 @@ the claims checker and the form-answer resolver. Judgement work (research,
 tailoring, review) is done by the agent skills in `.claude/skills/`.
 """
 
-__version__ = "2.16.0"
+__version__ = "2.16.1"
 
 
 def _alias_env() -> None:

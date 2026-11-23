@@ -30,7 +30,7 @@ SOURCES = (
     ("CA", "ca-sponsors.csv", CountRegister, 1500),
     ("GB", "uk-sponsors.csv", UkRegister, 0),
 )
-PER_RUN = 500        # employers tried per discover run: a few thousand requests spread over eight hiring systems
+PER_RUN = 150        # employers tried per discover run: up to six quick requests each, on three hiring systems
 RETRY_DAYS = 120     # an employer with no board found is looked at again after this long
 
 # Employers that are licensed sponsors but do not post on the hiring systems we read: asking would be wasted requests.
