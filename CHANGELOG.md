@@ -2,6 +2,16 @@
 
 All notable changes to CareerOS. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [semantic versioning](https://semver.org/).
 
+## [2.15.0] - 2026-11-23
+
+### Added
+- **Sponsor sweep: the job boards of employers on the government sponsor lists.** The lists name about 119,000 employers that can or do sponsor work visas (UK 95,000, Netherlands 11,700, US 6,600, Ireland 4,600, Canada 900 after leaving out takeaways, care homes, farms and similar). Most of their roles were not in the feed because nobody had listed their board. `careeros sponsor-candidates` turns the lists into candidates and `discover` tries 500 of them a run (`CAREEROS_SPONSOR_SWEEP`), the countries in turn. A board is kept only when it lists roles in that country and its own name leads back to that register entry by the same rule that labels roles, so "Apex" on a hiring system is never taken for one of the dozens of Apex companies on the register. Nothing is added to the board list for a name until it has been looked at, and one board is never read under two names.
+- The scan summary reports `sponsorSweep` (checked, kept).
+
+### Fixed
+- **A perk was read as "open worldwide".** "Up to 2 months a year with our Work from Anywhere policy" and "we have a global presence and many roles can be remote" made office roles in London and Melbourne appear as remote worldwide for members in India. The scanner now tells these apart, and the filters drop the wrong answer from feeds written before the fix.
+- Remote roles that do not say who can apply are ranked after the ones known to be open, in India as well.
+
 ## [2.14.0] - 2026-11-23
 
 Found by signing up as a new member against the live feed (120,000 open roles) and by running eight realistic profiles through the matcher.

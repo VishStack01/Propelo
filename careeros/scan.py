@@ -303,7 +303,7 @@ def _previous(out_dir: Path, names: set[str]) -> list[dict]:
 def scan_every_hours(entry: dict) -> float:
     """How often a board is worth reading. Curated and radar boards (mostly India hiring) every run; boards
     from the deep sweep every four hours; deep boards that had nothing we list last time once a day."""
-    if not entry.get("scannedAt") or entry.get("category") != "deep":
+    if not entry.get("scannedAt") or entry.get("category") not in ("deep", "sponsor"):
         return 0.0
     return 24.0 if not entry.get("roles") else 4.0
 
@@ -439,7 +439,7 @@ def run(boards_path: str | Path, out_dir: str | Path, workers: int = 16, detail_
         w = csv.writer(f)
         w.writerow(["name", "category", "city", "website"])
         for n, e in sorted(companies.items()):
-            if e.get("status") != "mapped" and e.get("category") != "deep":  # swept boards with no India roles aren't leads
+            if e.get("status") != "mapped" and e.get("category") not in ("deep", "sponsor"):  # swept boards and register names aren't leads
                 w.writerow([n, e.get("category", ""), e.get("city", ""), e.get("website", "")])
     summary = {
         "generatedAt": iso(datetime.now(timezone.utc)),
@@ -460,10 +460,12 @@ def run(boards_path: str | Path, out_dir: str | Path, workers: int = 16, detail_
                  "optNo": sum(1 for r in unique if (r["facts"].get("visa") or {}).get("opt") == "no"),
                  "eVerify": sum(1 for r in unique if (r["facts"].get("visa") or {}).get("eVerify")),
                  "citizensOnly": sum(1 for r in unique if (r["facts"].get("visa") or {}).get("why") == "citizens")},
-        "companies": sum(1 for e in companies.values() if e.get("category") != "deep" or e.get("status") == "mapped"),
+        "companies": sum(1 for e in companies.values() if e.get("category") not in ("deep", "sponsor") or e.get("status") == "mapped"),
         "boards": len(mapped), "openings": len(unique),
         "deepSweep": {"checked": sum(1 for e in companies.values() if e.get("category") == "deep" and e.get("checkedAt")),
                       "kept": sum(1 for e in companies.values() if e.get("category") == "deep" and e.get("status") == "mapped")},
+        "sponsorSweep": {"checked": sum(1 for e in companies.values() if e.get("category") == "sponsor" and e.get("checkedAt")),
+                         "kept": sum(1 for e in companies.values() if e.get("category") == "sponsor" and e.get("status") == "mapped")},
         "greenhousePay": {"lookedUp": looked_up, "withPay": stated},
         "remoteBoards": board_counts, "trimmed": trimmed, "byAts": {}, "byGeo": {}, "byCountry": {}, "errors": len(errors), "errorSamples": errors[:20], "lateBoards": len(late),
         "boardsRead": len(todo) - len(late), "boardsKept": len(carried),

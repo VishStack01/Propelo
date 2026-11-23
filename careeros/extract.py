@@ -288,6 +288,18 @@ _WHO_CAN_WORK = re.compile(
 )
 
 
+# A sentence about a perk or about the company's reach, not about who can be hired: "up to 2 months a year with
+# our Work from Anywhere policy", "we have a global presence and many roles can be remote".
+_PERK = re.compile(
+    r"\bpolic(?:y|ies)\b|\bperks?\b|\bbenefits?\b|up to \w+ (?:days|weeks|months)|(?:days?|weeks?|months?) (?:a|per|each) year|"
+    r"rolling \d+|global (?:presence|footprint|reach|leader|brand|offices?|customers?|clients?)|"
+    r"(?:offices?|customers?|clients?|teams?) (?:in|around|across) ", re.I)
+
+
+def is_perk(quote: str) -> bool:
+    return bool(_PERK.search(quote or ""))
+
+
 def remote_scope(location: str, text: str) -> RemoteScope:
     """Can someone living in India take this remote role?"""
     text = _no_temp_remote(text)
@@ -312,7 +324,7 @@ def remote_scope(location: str, text: str) -> RemoteScope:
     for rx, scope in ((_INDIA, "india"), (_WORLD, "worldwide"), (_APAC, "apac")):
         for m in rx.finditer(text or ""):
             q = quote_around(text, *m.span())
-            if _WHO_CAN_WORK.search(q):
+            if _WHO_CAN_WORK.search(q) and not (scope == "worldwide" and is_perk(q)):
                 return RemoteScope(True, scope, q)
     for rx, scope in ((_US, "us"), (_EU, "europe")):
         m = rx.search(text or "")

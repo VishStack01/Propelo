@@ -312,7 +312,9 @@ def match(records, settings: Settings, known: list[tuple[str, dict]], summary: d
             return 0
     def top_pay(doc):  # stated 20 LPA+, or public data says freshers get 20 LPA+ at the low end
         return doc.get("payTier") == "20+" or (not doc.get("payTier") and (doc.get("payBand") or {}).get("low", 0) >= 20)
-    kept.sort(key=lambda x: (order.get(x[1].get("region", ""), 9), sponsor_rank(x[1]), 0 if top_pay(x[1]) else 1, -posted_ts(x[1])))
+    def unclear(doc):  # a remote role that doesn't say who can apply comes after the ones known to be open
+        return 1 if any(c.get("gate") == "Location" and "doesn't say who can apply" in (c.get("value") or "") for c in doc.get("checks") or []) else 0
+    kept.sort(key=lambda x: (order.get(x[1].get("region", ""), 9), unclear(x[1]), sponsor_rank(x[1]), 0 if top_pay(x[1]) else 1, -posted_ts(x[1])))
     more = len(kept) > max_kept
     kept, skipped = kept[:max_kept], skipped[:max_skips]
     out = {"more": more, "feedRecords": n_records, "alreadyKnown": n_known, "duplicates": dupes, "kept": kept, "skipped": skipped,

@@ -168,3 +168,30 @@ def test_match_reads_any_iterable_once():
     # When only changed roles are read, the full list of addresses says what is still listed.
     part = feed.match(iter([]), s, known, {"erroredCompanies": []}, now, feed_urls=["https://jobs.example.com/g1"])
     assert part["gone"] == ["zz"] and part["feedRecords"] == 0
+
+
+def test_a_perk_is_not_read_as_open_worldwide():
+    from careeros import extract
+    perk = 'Take advantage of up to 2 months working outside of your country of employment over a rolling 12-month period with our "Work from Anywhere" policy.'
+    reach = "We have a global presence and many of our roles offer the option to work remotely."
+    assert extract.remote_scope("London", perk).scope == "" and extract.remote_scope("Melbourne, Australia; Remote", reach).scope == ""
+    assert extract.remote_scope("London", "This is a fully remote role and we hire from anywhere in the world.").scope == "worldwide"
+    assert extract.remote_scope("Remote - Worldwide", perk).scope == "worldwide"       # the location itself still counts
+    # A feed written before this fix stored the wrong answer: the filter drops it when it reads the sentence.
+    india = feed.settings_from_dashboard({"targetRoles": ["backend"]})
+    old = {"loc": "remote-worldwide", "scope": "worldwide", "scopeEligible": True, "scopeQuote": perk}
+    chk, region = gates.gate_location(_job(location="London", raw={"facts": old}), india)
+    assert not chk.passed and "placed in London" in chk.value
+    good = dict(old, scopeQuote="We hire from anywhere in the world.")
+    assert gates.gate_location(_job(location="London", raw={"facts": good}), india) [1] == "remote-global"
+
+
+def test_unclear_remote_roles_come_after_roles_known_to_be_open_in_india_too():
+    now = datetime.now(timezone.utc)
+
+    def rec(i, location, facts):
+        return {"id": f"u{i}", "company": f"Co {i}", "title": f"Backend Engineer {i}", "url": f"https://jobs.example.com/u{i}", "source": "Greenhouse",
+                "location": location, "workMode": "remote", "postedAt": now.isoformat(), "summary": "Build APIs. Freshers welcome.", "via": "careers", "facts": facts}
+    india = feed.settings_from_dashboard({"targetRoles": ["backend"]})
+    kept = feed.match(iter([rec(1, "Remote", {}), rec(2, "Remote, Worldwide", {})]), india, [], None, now)["kept"]
+    assert [i for i, _ in kept] == ["u2", "u1"] and {d["region"] for _, d in kept} == {"remote-global"}

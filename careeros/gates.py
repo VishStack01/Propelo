@@ -150,6 +150,14 @@ def gate_open(job: Job, today: date) -> Check:
     return Check("Open", True, f"Open{', apply by ' + job.apply_by if job.apply_by else ''}")
 
 
+def _believed(scope: extract.RemoteScope, job: Job) -> extract.RemoteScope:
+    """A stored "open worldwide" is dropped when its sentence turns out to be a perk or a line about the
+    company's reach (feeds written before the scanner learned to tell them apart)."""
+    if scope.scope == "worldwide" and scope.quote and scope.quote.strip() != (job.location or "").strip() and extract.is_perk(scope.quote):
+        return extract.RemoteScope(None, "", "")
+    return scope
+
+
 def _gate_location_elsewhere(job: Job, s: Settings) -> tuple[Check, str]:
     """For someone living outside India: remote roles open to their country or region, and on-site or
     hybrid roles in the places they listed."""
@@ -207,7 +215,7 @@ def gate_location(job: Job, s: Settings) -> tuple[Check, str]:
             return Check("Location", True, "Remote, India (says the title)", job.title), "remote-india"
         f = _facts(job)
         if f is not None and "scope" in f:
-            scope = extract.RemoteScope(f.get("scopeEligible"), f.get("scope") or "", f.get("scopeQuote") or "")
+            scope = _believed(extract.RemoteScope(f.get("scopeEligible"), f.get("scope") or "", f.get("scopeQuote") or ""), job)
         else:
             scope = extract.remote_scope(job.location, job.description)
         # "Remote - Berlin", "Kyiv, Ukraine", "Poland": a remote role placed in one country is almost always

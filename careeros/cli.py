@@ -464,6 +464,12 @@ def main(argv: list[str] | None = None) -> None:
     sp.add_argument("--ats", action="append", help="Only this hiring system (repeatable)")
     sp.set_defaults(fn=cmd_deep)
 
+    sp = sub.add_parser("sponsor-candidates", help="List employers from the sponsor registers whose job boards discover should look for")
+    sp.add_argument("--feed", default="feed", help="Directory holding the register files (uk-sponsors.csv, ie-sponsors.csv, ...)")
+    sp.add_argument("--boards", default="feed/boards.json")
+    sp.add_argument("--out", default="feed/sponsor-companies.csv")
+    sp.set_defaults(fn=cmd_sponsor_candidates)
+
     sp = sub.add_parser("scan", help="Read every mapped board and write the India feed")
     sp.add_argument("--boards", default="feed/boards.json")
     sp.add_argument("--out", default="feed")
@@ -920,6 +926,24 @@ def cmd_radar(a) -> None:
     cache_path.write_text(json.dumps(cache, indent=1, ensure_ascii=False), encoding="utf-8")
     print(f"Radar: {len(rows)} listings read, {len(found['boards'])} employer boards and {len(found['companies'])} companies seen; "
           f"{res['boardsAdded']} boards added to the scan, {res['companiesAdded']} companies queued for discovery.")
+
+
+def cmd_sponsor_candidates(a) -> None:
+    from . import sponsor_sweep
+    cache_path = Path(a.boards)
+    cache = json.loads(cache_path.read_text(encoding="utf-8")) if cache_path.exists() else {"companies": {}}
+    books = sponsor_sweep.load(a.feed)
+    rows = sponsor_sweep.candidates(books, cache)
+    if not rows and Path(a.out).exists():
+        print("Sponsor sweep: no register files found; keeping the last list.")
+        return
+    sponsor_sweep.write(rows, a.out)
+    st = sponsor_sweep.stats(cache)
+    by = {}
+    for r in rows:
+        by[r["country"]] = by.get(r["country"], 0) + 1
+    print(f"Sponsor sweep: {len(rows)} employers on the list for discover ({', '.join(f'{k} {v}' for k, v in sorted(by.items()))}); "
+          f"{st['checked']} checked so far, {st['kept']} boards found.")
 
 
 def cmd_deep(a) -> None:

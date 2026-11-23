@@ -135,3 +135,14 @@ re-enable it from the Actions tab if that happens.
 Add a line to `config/companies/curated.txt` and run
 `python scripts/build_company_list.py`. If you know the board (for example
 `ats:lever:acme`), add it; otherwise discovery finds it. Pull requests welcome.
+
+## Sponsor sweep
+
+The sponsor registers say who can sponsor; the sweep finds where those employers post their jobs.
+
+- `careeros sponsor-candidates --feed feed --boards feed/boards.json --out feed/sponsor-companies.csv` writes one row per register employer that has no mapped board yet: a readable name, the country, and one or two likely board addresses ("Monzo Bank Limited" gives `monzobank` and `monzo`). Lists with counts (US, Ireland, Canada) are taken biggest first; the UK and Dutch lists put likelier names first. Takeaways, care homes, places of worship, farms and similar are left out.
+- `careeros discover --extra feed/sponsor-companies.csv` tries `CAREEROS_SPONSOR_SWEEP` of them a run (500 by default, 0 turns it off), spread through the run.
+- A board is kept only when it lists at least one role in that country **and** the board's own name leads back to the same register entry (exact name, or the only entry that starts with it). A board that gives no name is kept only under the employer's full name as the address, with two or more roles in the country.
+- An employer with no board found is looked at again after 120 days. Only checked names are stored in `boards.json`.
+- Boards found this way are read every four hours when they had roles last time, once a day when they had none.
+- `summary.json` reports `sponsorSweep: {checked, kept}`.

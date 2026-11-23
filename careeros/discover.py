@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import re
 import time
 import xml.etree.ElementTree as ET
@@ -36,6 +37,8 @@ SLUGS_PER_ATS = {"workable": 1}
 GLOBAL_CATEGORIES = {"global-india-engineering", "remote-first-global", "yc-remote"}
 PROBE_INTERVAL = 0.25  # seconds between requests to one host while discovering
 _deadline = [float("inf")]  # time.monotonic() after which no new company is started
+_books: dict = {}          # sponsor registers by country, loaded for a run that has sponsor candidates
+_taken: set = set()        # (hiring system, board) pairs already mapped: never map one board under two names
 
 
 def _norm(s: str) -> str:
@@ -188,6 +191,20 @@ def accept(company: dict, found: dict) -> tuple[bool, str]:
     if found.get("explicit"):
         # Our own list names this exact board (big employers on Workday or their own site).
         return (True, "listed") if any(_india_or_remote(l) or _in_scope(l) for l in found.get("locations", [])) else (False, "no-india-roles")
+    if company.get("category") == "sponsor":
+        # An employer from a government sponsor list, its board address guessed from its name. Keep the board only
+        # if it lists roles in that country and is provably that employer's.
+        from . import sponsor_sweep
+        cc = company.get("country") or ""
+        local = sum(1 for l in found.get("locations", []) if cc in countries.resolve(l or ""))
+        if not local:
+            return False, "no-local-roles"
+        if found.get("board_name"):
+            ok = sponsor_sweep.same_employer(_books, cc, company["name"], found["board_name"])
+            return (True, f"sponsor-name:{local}") if ok else (False, "name-mismatch")
+        # No name on the board to compare: only the employer's full name as the address counts, with several local roles.
+        full = found.get("slug") == (company.get("slugs") or [""])[0] and len(found.get("slug") or "") >= 6
+        return (True, f"sponsor-slug:{local}") if full and local >= 2 else (False, "unsure")
     if company.get("category") == "deep":
         # The inventory gives the exact board, so the board's own name may be a brand name.
         n = deep_fit(found)
@@ -221,6 +238,7 @@ def discover_one(company: dict) -> dict | None:
     if explicit:
         pairs.append(explicit)
     slugs = [s for s in company.get("slugs", []) if s][:4]
+    sponsor = company.get("category") == "sponsor"
     for ats in ATS_ORDER:
         for slug in slugs[: SLUGS_PER_ATS.get(ats, len(slugs))]:
             pairs.append((ats, slug))
@@ -228,18 +246,26 @@ def discover_one(company: dict) -> dict | None:
     for ats, slug in pairs:
         if time.monotonic() > _deadline[0] + 180:
             return None  # well past the time budget: leave the rest of this company for the next run
+        if sponsor and (ats, slug.lower()) in _taken:
+            continue     # that board is already read under another company's name
         tried += 1
         found = probe(ats, slug)
         if not found:
             continue
         if (ats, slug) == explicit and company.get("category") != "deep":
             found = dict(found, explicit=True)
-        ok, conf = accept(company, found)
+        ok, conf = accept(company, dict(found, slug=slug))
         if ok:
-            return {"status": "mapped", "ats": ats, "token": slug, "confidence": conf,
-                    "boardName": found.get("board_name", ""), "openings": len(found.get("locations", [])), "checkedAt": now}
+            out = {"status": "mapped", "ats": ats, "token": slug, "confidence": conf,
+                   "boardName": found.get("board_name", ""), "openings": len(found.get("locations", [])), "checkedAt": now}
+            if sponsor:
+                out["country"] = company.get("country") or ""
+            return out
         empty = empty or conf == "empty"
     out = {"status": "unmapped", "checkedAt": now, "probes": tried}
+    if sponsor:
+        from .sponsor_sweep import RETRY_DAYS
+        return dict(out, retryDays=RETRY_DAYS)
     if empty:
         out["retryDays"] = 3  # an empty board may be real and start hiring soon
     if company.get("category") == "deep":
@@ -261,18 +287,27 @@ def share_out(todo: list[dict], limit: int) -> list[dict]:
     new boards come from, but they sit at the end of the list: left to list order, the curated companies that never
     map (own career sites) used up every run and the sweep was never reached. So a quarter of each run goes to the
     curated and radar lists and the rest to the sweep, taken in turn so neither waits for the other."""
+    from .sponsor_sweep import PER_RUN
+    per_run = int(os.environ.get("CAREEROS_SPONSOR_SWEEP") or PER_RUN)
+    # Employers from the sponsor registers take many requests each (the board address is a guess), so a fixed
+    # number per run, spread through it: enough to cover the registers in days without leaning on any one system.
+    spons = [c for c in todo if c.get("category") == "sponsor"][:max(0, per_run)]
+    todo = [c for c in todo if c.get("category") != "sponsor"]
     deep = [c for c in todo if c.get("category") == "deep"]
     rest = [c for c in todo if c.get("category") != "deep"]
     n_rest = min(len(rest), max(limit // 4, limit - len(deep)))
     rest, deep = rest[:n_rest], deep[:limit - n_rest]
     out: list[dict] = []
-    i = j = 0
-    while i < len(deep) or j < len(rest):
+    i = j = k = 0
+    while i < len(deep) or j < len(rest) or k < len(spons):
         out += deep[i:i + 3]
         i += 3
         if j < len(rest):
             out.append(rest[j])
             j += 1
+        if k < len(spons):
+            out.append(spons[k])
+            k += 1
     return out
 
 
@@ -311,6 +346,12 @@ def run(companies_csv: str | Path, cache_path: str | Path, refresh_days: int = 1
     todo = [c for c in companies if due(c)]
     if limit:
         todo = share_out(todo, limit)
+    _books.clear()
+    _taken.clear()
+    if any(c.get("category") == "sponsor" for c in todo):
+        from . import sponsor_sweep
+        _books.update(sponsor_sweep.load(cache_path.parent))
+        _taken.update((e.get("ats"), str(e.get("token", "")).lower()) for e in known.values() if e.get("status") == "mapped" and e.get("token"))
     log(f"Discovering boards for {len(todo)} of {len(companies)} companies…")
     _deadline[0] = time.monotonic() + max_minutes * 60 if max_minutes else float("inf")
     skipped = 0
@@ -325,21 +366,38 @@ def run(companies_csv: str | Path, cache_path: str | Path, refresh_days: int = 1
             if res is None:
                 skipped += 1
                 continue
+            if c.get("category") == "sponsor" and res.get("status") != "mapped":
+                # A hundred thousand of these: keep only what says when to look again.
+                known[c["name"]] = {"category": "sponsor", **res}
+                continue
+            if res.get("status") == "mapped" and res.get("token"):
+                _taken.add((res.get("ats"), str(res["token"]).lower()))
             known[c["name"]] = {"category": c.get("category", ""), "city": c.get("city", ""), "website": c.get("website", ""), **res}
             if i % 50 == 0:
                 log(f"  {i}/{len(todo)} checked")
                 cache_path.parent.mkdir(parents=True, exist_ok=True)  # keep progress if the run is cut short
                 cache_path.write_text(json.dumps(cache, indent=1, ensure_ascii=False), encoding="utf-8")
+    listed = 0
     for c in companies:  # keep metadata current for every company
+        if c.get("category") == "sponsor":
+            # Register names are candidates, not companies we list: no entry until one has been looked at.
+            if c["name"] in known:
+                known[c["name"]]["category"] = "sponsor"
+            continue
+        listed += 1
         e = known.setdefault(c["name"], {"status": "pending"})
         e["category"], e["city"] = c.get("category", ""), c.get("city", "")
     cache["generatedAt"] = iso(datetime.now(timezone.utc))
     mapped = sum(1 for e in known.values() if e.get("status") == "mapped")
-    cache["stats"] = {"companies": len(companies), "mapped": mapped,
+    cache["stats"] = {"companies": listed, "mapped": mapped,
                       "byAts": {a: sum(1 for e in known.values() if e.get("ats") == a and e.get("status") == "mapped") for a in ATS_ORDER}}
     cache_path.parent.mkdir(parents=True, exist_ok=True)
     cache_path.write_text(json.dumps(cache, indent=1, ensure_ascii=False), encoding="utf-8")
     if skipped:
         log(f"  time budget reached; {skipped} companies left for the next run")
-    log(f"Mapped {mapped} of {len(companies)} companies to a public job board.")
+    log(f"Mapped {mapped} of {listed} companies to a public job board.")
+    if len(companies) > listed:
+        from . import sponsor_sweep
+        st = sponsor_sweep.stats(cache)
+        log(f"Sponsor registers: {st['checked']} of {len(companies) - listed} employers looked at so far, {st['kept']} boards found.")
     return cache

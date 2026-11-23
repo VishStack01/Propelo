@@ -2358,7 +2358,9 @@ function sponsorRank(j){
   if (v.status === 'no' || v.opt === 'no' || reg.listed === false) return 2;
   return (v.status === 'offers' || v.opt === 'yes' || reg.listed || obj(v.nlRegister).listed || v.usLca || v.caLmia || v.iePermits || v.eVerify) ? 0 : 1;
 }
-const byPriority = (a, b) => regionRank(a) - regionRank(b) || sponsorRank(a) - sponsorRank(b) || byFresh(a, b);
+/* Within a region, a remote role that doesn't say who can apply comes after the ones known to be open. */
+const unclearRank = j => arr(j.checks).some(c => c && c.gate === 'Location' && /doesn't say who can apply/.test(c.value || '')) ? 1 : 0;
+const byPriority = (a, b) => regionRank(a) - regionRank(b) || unclearRank(a) - unclearRank(b) || sponsorRank(a) - sponsorRank(b) || byFresh(a, b);
 const autoMode = () => settings().approvalMode === 'auto-when-clear';
 const EXPERIENCE = [['Fresher',0],['1+ years',1],['2+ years',2],['3+ years',3]];
 /* Years of experience: saved as a number; older settings only had the experience checkboxes. */
