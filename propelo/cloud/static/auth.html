@@ -284,6 +284,12 @@ input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 45%,transparent) 
     try { r = await fetch(url, {method: 'POST', headers: {'Content-Type': 'application/json', 'X-Propelo-CSRF': '1'}, credentials: 'same-origin', body: JSON.stringify(body)}); }
     catch(e){ return {ok: false, status: 0, data: {error: "Can't reach Propelo. Check your connection and try again."}}; }
     let data = {}; try { data = await r.json(); } catch(e){}
+    if (!data || typeof data !== 'object') data = {};
+    // An answer with no sentence of its own came from the host, not from Propelo: say what it means.
+    if (!r.ok && !data.error){
+      if ([502, 503, 504].includes(r.status)) data.error = 'Propelo is starting up. Wait a minute and try again.';
+      else if (r.status >= 500) data.error = 'Something went wrong on our side (error ' + r.status + '). Try again in a minute.';
+    }
     return {ok: r.ok, status: r.status, data};
   }
   const next = () => { const n = params.get('next') || '/'; return /^\/(?![\/\\])[^\s]*$/.test(n) ? n : '/'; };

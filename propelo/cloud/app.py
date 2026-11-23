@@ -116,6 +116,18 @@ def err(status: int, message: str, code: str = "") -> HTTPException:
     return HTTPException(status_code=status, detail={"error": message, "code": code} if code else {"error": message})
 
 
+def _db_down(e: BaseException) -> bool:
+    """True when the error means the database could not be reached (asleep, restarting, wrong address)."""
+    seen = set()
+    while e is not None and id(e) not in seen:
+        seen.add(id(e))
+        mod, name = type(e).__module__ or "", type(e).__name__
+        if mod.startswith("psycopg") and name in ("OperationalError", "PoolTimeout", "PoolClosed", "InterfaceError", "ConnectionTimeout", "TooManyRequests"):
+            return True
+        e = e.__cause__ or e.__context__
+    return False
+
+
 def _init_error_reporting(cfg: Config) -> None:
     """Optional error reporting (SENTRY_DSN, with `pip install sentry-sdk`). No request bodies, cookies,
     headers or user details are sent: only the error, its stack and the route."""
@@ -283,7 +295,11 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
             response = JSONResponse({"error": "Request too large."}, status_code=413)
         else:
             request.state.nonce = secrets.token_urlsafe(16)
-            response = await call_next(request)
+            try:
+                response = await call_next(request)
+            except Exception as e:  # noqa: BLE001
+                # Never a bare "Internal Server Error": the page gets a sentence it can show and a reference to quote.
+                response = _failure(request, e, rid)
         nonce = getattr(request.state, "nonce", "")
         response.headers["X-Request-ID"] = rid
         response.headers["X-Content-Type-Options"] = "nosniff"
@@ -304,6 +320,19 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
         log.info(json.dumps({"rid": rid, "method": request.method, "path": request.url.path, "status": response.status_code,
                              "ms": round((time.perf_counter() - t0) * 1000, 1)}))
         return response
+
+    def _failure(request: Request, e: Exception, rid: str) -> Response:
+        down = _db_down(e)
+        log.error(json.dumps({"rid": rid, "path": request.url.path, "error": type(e).__name__, "database": down}),
+                  exc_info=not down)
+        if down:
+            status, code, text = 503, "db_down", "Propelo can't reach its database right now. Try again in a minute."
+        else:
+            status, code, text = 500, "server", "Something went wrong on our side. Try again" + (f", or write to {cfg.support_email} and quote {rid}." if cfg.support_email else f". Reference: {rid}.")
+        if wants_page(request):
+            return HTMLResponse(f"<!doctype html><meta charset=utf-8><title>Propelo</title><p style=\"font:16px system-ui;margin:3rem auto;max-width:32rem\">{html.escape(text)}</p>",
+                                status_code=status)
+        return JSONResponse({"error": text, "code": code, "rid": rid}, status_code=status)
 
     def wants_page(request: Request) -> bool:
         return request.method == "GET" and not request.url.path.startswith("/api/") and "text/html" in request.headers.get("accept", "")

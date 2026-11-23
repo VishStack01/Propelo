@@ -167,3 +167,36 @@ def test_pages_and_headers(cloud):
     assert page.status_code == 200 and "data-act=" in page.text and 'id="demo-data"' not in page.text
     assert c.get("/api/health").json()["mode"] == "cloud"
     assert c.get("/api/ready").json()["ok"] is True
+
+
+def test_a_server_fault_answers_with_a_sentence_and_a_reference(cloud, monkeypatch):
+    """Sign-up once showed only "Sign-up failed" because the server answered a bare 500 the page could not read."""
+    from fastapi.testclient import TestClient
+
+    c = TestClient(cloud.app, raise_server_exceptions=False)
+    c.headers["X-Propelo-CSRF"] = "1"
+
+    def broken(*a, **k):
+        raise RuntimeError("boom")
+    monkeypatch.setattr(cloud.db, "tx", broken)
+    r = c.post("/api/auth/signup", json={"email": "asha@example.com", "password": PW, "name": "Asha"})
+    assert r.status_code == 500 and r.json()["code"] == "server"
+    assert r.json()["rid"] in r.json()["error"] or "Reference" in r.json()["error"]
+    assert "boom" not in r.text and r.headers["X-Request-ID"] == r.json()["rid"]
+
+
+def test_a_database_that_cannot_be_reached_says_so(cloud, monkeypatch):
+    import psycopg
+    from fastapi.testclient import TestClient
+
+    c = TestClient(cloud.app, raise_server_exceptions=False)
+    c.headers["X-Propelo-CSRF"] = "1"
+
+    def down(*a, **k):
+        raise psycopg.OperationalError("failed to resolve host 'dpg-secret-host'")
+    monkeypatch.setattr(cloud.db, "tx", down)
+    r = c.post("/api/auth/signup", json={"email": "asha@example.com", "password": PW, "name": "Asha"})
+    assert r.status_code == 503 and r.json()["code"] == "db_down"
+    assert "database" in r.json()["error"] and "dpg-secret-host" not in r.text
+    r = c.post("/api/auth/login", json={"email": "asha@example.com", "password": PW})
+    assert r.status_code == 503 and r.json()["code"] == "db_down"

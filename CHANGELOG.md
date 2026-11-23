@@ -1,6 +1,11 @@
 # Changelog
 
-All notable changes to CareerOS. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [semantic versioning](https://semver.org/).
+All notable changes to Propelo. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [semantic versioning](https://semver.org/).
+
+## [2.16.2] - 2026-11-24
+
+### Fixed
+- **"Sign-up failed. Try again." with no reason.** When the server could not reach its database it answered a bare "Internal Server Error", which the sign-up and sign-in pages could not read, so they showed a sentence that said nothing. Every server fault now answers with a sentence the page shows: "Propelo can't reach its database right now" when the database is the cause, otherwise a reference number to quote to support. The log line carries the same reference. The pages also say "Propelo is starting up" when the host answers while the free instance wakes.
 
 ## [2.16.1] - 2026-11-23
 
