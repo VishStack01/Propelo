@@ -62,3 +62,109 @@ def test_india_rules_are_unchanged():
     chk, region = gates.gate_location(_job(location="Bengaluru, India", mode="onsite"), s)
     assert chk.passed and region == "south-india"
     assert not gates.gate_location(_job(location="Remote - United States"), s)[0].passed
+
+
+# ---- 2.14.0: what a member abroad actually sees (found by running real profiles against the live feed)
+def test_a_remote_role_placed_in_another_country_is_not_shown():
+    gb = _settings("GB", "United Kingdom")
+    for where in ("Almaty, Almaty Region, Kazakhstan", "Belgrade", "NYC - 12 E 49th St (Tower 49)", "Vilnius, Kaunas", "Kyiv", "Remote - Brasil"):
+        chk, region = gates.gate_location(_job(location=where), gb)
+        assert not chk.passed and region == "", where
+    # A remote role that names no place is kept, in a region of its own so it can be shown last.
+    chk, region = gates.gate_location(_job(location="Remote"), gb)
+    assert chk.passed and region == "remote-unclear" and "doesn't say who can apply" in chk.value
+    # India's rules keep their old region name for it.
+    india = feed.settings_from_dashboard({"targetRoles": ["backend"]})
+    assert gates.gate_location(_job(location="Remote"), india)[1] in ("remote-global", "")
+
+
+def test_places_the_tables_now_know():
+    r = countries.resolve
+    assert r("Almaty, Kazakhstan") == {"KZ"} and r("NYC") == {"US"} and r("SF Bay Area") == {"US"} and r("Washington, D.C.") == {"US"}
+    assert r("Belgrade") == {"RS"} and r("Espoo") == {"FI"} and r("Schweiz") == {"CH"} and r("Ciudad de México") == {"MX"}
+    # A town before a written-out state is in that state.
+    assert r("Belgrade, Montana") == {"US"} and r("Athens, Ohio") == {"US"} and r("Cambridge, Massachusetts") == {"US"}
+    assert r("Birmingham, Alabama, United States") == {"US"} and r("Vienna, Virginia") == {"US"} and r("Paris, Texas") == {"US"}
+    # A flat list of places is still a list, and a named country is never dropped.
+    assert r("Berlin, London, New York") == {"DE", "GB", "US"} and r("Palo Alto, Toronto, Virginia, Miami") == {"CA", "US"}
+    assert r("Canada, Utah, New York") == {"CA", "US"} and r("Paris, France") == {"FR"} and r("London, United Kingdom") == {"GB"}
+    assert r("Remote") == set() and r("Atlanta, Georgia") == {"US"} and r("Tbilisi, Georgia") == set()   # Georgia stays unguessed
+    assert r("Hyderabad, Telangana") == {"IN"} and r("Indianapolis, IN") == {"US"} and r("Toronto, Ontario") == {"CA"}
+    a = r("London")
+    a.add("XX")
+    assert r("London") == {"GB"}                       # callers get their own copy of a cached answer
+
+
+def test_senior_and_director_titles_follow_years_of_experience():
+    def kept(title, years):
+        s = feed.settings_from_dashboard({"homeCountry": "CA", "places": "Canada", "targetRoles": ["marketing", "engineer"], "yearsExperience": years})
+        return gates.gate_seniority(_job(title=title), s).passed
+    assert not kept("Senior Marketing Manager", 2) and kept("Senior Marketing Manager", 3)
+    assert not kept("Director of Marketing", 2) and not kept("Head of Event Marketing", 5) and not kept("VP, Engineering", 7)
+    assert kept("Director of Marketing", 8) and kept("Principal Engineer", 10)
+    assert kept("Marketing Manager", 2) and kept("Marketing Coordinator", 0)
+    assert not kept("Marketing Intern", 4)             # entry titles are still hidden from 3 years on
+    # Without a stated number of years the older rule still applies.
+    s = feed.settings_from_dashboard({"targetRoles": ["engineer"], "maxRequiredYears": 1})
+    assert not gates.gate_seniority(_job(title="Senior Engineer"), s).passed
+    s = feed.settings_from_dashboard({"targetRoles": ["engineer"], "maxRequiredYears": 4})
+    assert gates.gate_seniority(_job(title="Senior Engineer"), s).passed
+
+
+def test_sponsorship_counts_for_remote_roles_in_your_country_too():
+    now = datetime.now(timezone.utc)
+    s = feed.settings_from_dashboard({"homeCountry": "GB", "places": "United Kingdom", "targetRoles": ["backend"], "needsSponsorship": True})
+
+    def visa(location, mode, facts):
+        d = gates.evaluate(_job(location=location, mode=mode, raw={"facts": dict({"loc": "abroad"}, **facts)}), s, now)
+        return [c for c in d.checks if c.gate == "Visa sponsorship"]
+    no = {"visa": {"status": "no", "quote": "We are unable to sponsor visas."}}
+    assert not visa("Remote - United Kingdom", "remote", no)[0].passed      # was let through: only office roles were checked
+    assert not visa("London, United Kingdom", "hybrid", no)[0].passed
+    assert not visa("Remote - UK", "remote", {"visa": {"ukRegister": {"listed": False}}})[0].passed
+    assert visa("Remote - UK", "remote", {"visa": {"ukRegister": {"listed": True, "name": "Acme Ltd"}}})[0].passed
+    assert visa("Remote, Worldwide", "remote", no) == []                     # a role open to the world is not a visa question
+
+
+def test_someone_abroad_sees_local_roles_and_known_sponsors_first():
+    now = datetime.now(timezone.utc)
+    posted = now.isoformat()
+
+    def rec(i, location, mode, visa=None):
+        return {"id": f"r{i}", "company": f"Co {i}", "title": f"Backend Engineer {i}", "url": f"https://jobs.example.com/{i}", "source": "Greenhouse",
+                "location": location, "workMode": mode, "postedAt": posted, "summary": "Build APIs.", "via": "careers",
+                "facts": {"loc": "abroad", "visa": visa or {}}}
+    records = [rec(1, "Remote", "remote"), rec(2, "Remote, Worldwide", "remote"), rec(3, "London, United Kingdom", "hybrid"),
+               rec(4, "Leeds, United Kingdom", "onsite", {"ukRegister": {"listed": True, "name": "Co 4 Ltd"}}),
+               rec(5, "Remote - United Kingdom", "remote", {"status": "offers", "quote": "We sponsor Skilled Worker visas."})]
+    s = feed.settings_from_dashboard({"homeCountry": "GB", "places": "United Kingdom", "targetRoles": ["backend"], "needsSponsorship": True})
+    order = [i for i, _ in feed.match(iter(records), s, [], None, now)["kept"]]
+    assert order[-2:] == ["r2", "r1"]                  # worldwide remote, then the one that doesn't say who can apply
+    assert set(order[:2]) == {"r4", "r5"} and order[2] == "r3"   # employers with a sponsoring record lead the local roles
+    s.needs_sponsorship = False
+    assert [i for i, _ in feed.match(iter(records), s, [], None, now)["kept"]][-2:] == ["r2", "r1"]
+    # India keeps its own order: remote worldwide first.
+    india = feed.settings_from_dashboard({"targetRoles": ["backend"]})
+    first = feed.match(iter([rec(9, "Bengaluru, India", "hybrid"), rec(8, "Remote, Worldwide", "remote")]), india, [], None, now)["kept"]
+    assert [i for i, _ in first][0] == "r8"
+
+
+def test_match_reads_any_iterable_once():
+    now = datetime.now(timezone.utc)
+    s = feed.settings_from_dashboard({"targetRoles": ["backend"]})
+
+    def gen():
+        for i in range(5):
+            yield {"id": f"g{i}", "company": f"Co {i}", "title": "Backend Engineer", "url": f"https://jobs.example.com/g{i}", "source": "Greenhouse",
+                   "location": "Remote, Worldwide", "workMode": "remote", "postedAt": now.isoformat(), "summary": "Build APIs. Freshers welcome.",
+                   "via": "careers", "facts": {}}
+    res = feed.match(gen(), s, [], None, now, max_kept=3)
+    assert res["feedRecords"] == 5 and len(res["kept"]) == 3 and res["more"] is True
+    assert feed.match(gen(), s, [], None, now, max_kept=10)["more"] is False
+    # A known role found through the feed is "gone" only if its address is no longer listed anywhere in it.
+    known = [("g1", {"stage": "found", "foundVia": "careers-feed", "url": "https://jobs.example.com/g1/", "company": "Co 1", "title": "Backend Engineer", "postedAt": now.isoformat()}),
+             ("zz", {"stage": "found", "foundVia": "careers-feed", "url": "https://jobs.example.com/closed", "company": "Co Z", "title": "Backend Engineer", "postedAt": now.isoformat()})]
+    assert feed.match(gen(), s, known, {"erroredCompanies": []}, now)["gone"] == ["zz"]
+    # When only changed roles are read, the full list of addresses says what is still listed.
+    part = feed.match(iter([]), s, known, {"erroredCompanies": []}, now, feed_urls=["https://jobs.example.com/g1"])
+    assert part["gone"] == ["zz"] and part["feedRecords"] == 0

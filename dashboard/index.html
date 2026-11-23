@@ -994,6 +994,11 @@ input:focus,select:focus,textarea:focus{border-color:var(--ink);box-shadow:0 0 0
 .skel .bl svg{fill:var(--panel-2)!important}.skel .bl span{visibility:hidden}.skel .score .num,.skel .score .lab{color:transparent;background:var(--panel-2);border-radius:var(--r-sm)}
 .skel .ctile{background:var(--panel)!important}.skel .ctile *{visibility:hidden}
 /* empty: the shapes become numbered first steps */
+.panel.thin{margin-bottom:14px}.panel.thin p{margin:0 0 12px}
+.qs form{margin-top:16px}.qs-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:-8px}
+.qs-check{display:flex;gap:10px;align-items:flex-start;font-size:14px;font-weight:600;cursor:pointer}.qs-check input{margin-top:3px;width:18px;height:18px;flex:none}.qs-check small{display:block;font-weight:400;color:var(--muted);font-size:13px;margin-top:2px}
+.qs-go{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+@media (max-width:640px){.qs .formgrid{grid-template-columns:1fr}}
 .steps0{display:grid;gap:10px;margin-top:14px}
 .step0{display:grid;grid-template-columns:52px 1fr auto;gap:14px;align-items:center;background:var(--page);border-radius:var(--r-md);padding:10px 14px 10px 10px;border:0;text-align:left;cursor:pointer;color:var(--ink);font:inherit;transition:transform var(--t-press) var(--ease)}
 .step0:active{transform:scale(.97)}
@@ -2341,9 +2346,19 @@ const APPLY_LINE = 4.0;
 const DIM_LABEL = {cvMatch:'Match with your experience', northStar:'Fits the roles you want', comp:'Pay', culture:'Company and culture', redFlags:'Red flags (5 = none)'};
 const LOCATIONS = ['South India (any work mode)','Rest of India (remote only)','Rest of India (any work mode)','Remote worldwide (first priority)'];
 const LOC_SHORT = {'South India (any work mode)':'anywhere in south India','Rest of India (remote only)':'remote across India','Rest of India (any work mode)':'anywhere in India','Remote worldwide (first priority)':'remote worldwide','Bengaluru (onsite/hybrid)':'Bengaluru','Remote (India)':'remote in India','Remote (global)':'remote worldwide'};
-const REGION = {'remote-global':[0,'Remote worldwide','pill world'],'remote-india':[1,'Remote, India','pill india'],'south-india':[2,'',''],'remote-local':[1,'Remote, your country','pill india'],'local':[2,'','']};
-const regionRank = j => (REGION[j.region] || [3])[0];
-const byPriority = (a, b) => regionRank(a) - regionRank(b) || byFresh(a, b);
+const REGION = {'remote-global':[0,'Remote worldwide','pill world'],'remote-india':[1,'Remote, India','pill india'],'south-india':[2,'',''],'remote-local':[1,'Remote, your country','pill india'],'local':[2,'',''],'remote-unclear':[3,'Remote: check who can apply','pill']};
+/* Someone living abroad is looking for work where they live: roles there first, then remote roles open to the
+   world, and last the remote roles that don't say who can apply. India keeps remote worldwide first. */
+const ABROAD_RANK = {'local': 0, 'remote-local': 0, 'remote-global': 1, 'remote-unclear': 2};
+const livesAbroad = () => String(obj(state.settings).homeCountry || 'IN') !== 'IN';
+const regionRank = j => livesAbroad() ? (j.region in ABROAD_RANK ? ABROAD_RANK[j.region] : 3) : (REGION[j.region] || [3])[0];
+function sponsorRank(j){
+  if (!obj(state.settings).needsSponsorship) return 0;
+  const v = obj(j.visa), reg = obj(v.ukRegister);
+  if (v.status === 'no' || v.opt === 'no' || reg.listed === false) return 2;
+  return (v.status === 'offers' || v.opt === 'yes' || reg.listed || obj(v.nlRegister).listed || v.usLca || v.caLmia || v.iePermits || v.eVerify) ? 0 : 1;
+}
+const byPriority = (a, b) => regionRank(a) - regionRank(b) || sponsorRank(a) - sponsorRank(b) || byFresh(a, b);
 const autoMode = () => settings().approvalMode === 'auto-when-clear';
 const EXPERIENCE = [['Fresher',0],['1+ years',1],['2+ years',2],['3+ years',3]];
 /* Years of experience: saved as a number; older settings only had the experience checkboxes. */
@@ -2767,7 +2782,9 @@ function renderBatch(){
   let body;
   if (!ready.length){
     if (!state.loaded.jobs) body = empty('Loading your batch', 'Reading your pipeline.');
-    else if (!brainReady()) body = empty('Your first batch is waiting on your Career Brain', 'Attach your resume in the chat with Claude, plus your LinkedIn PDF export, GitHub and portfolio links if you have them. Every tailored resume is built only from what is in your brain, so nothing gets claimed that you cannot prove.');
+    else if (!brainReady()) body = cloud()
+      ? empty('No prepared applications yet', 'Open any role below and press Start application to work on it now. To have a batch prepared for you every day, add your resume in <button class="linkish" data-act="tab" data-tab="profile">Profile</button>, then follow the two steps in <button class="linkish" data-act="tab" data-tab="auto">Auto-apply</button>.')
+      : empty('Your first batch is waiting on your Career Brain', 'Attach your resume in the chat with Claude, plus your LinkedIn PDF export, GitHub and portfolio links if you have them. Every tailored resume is built only from what is in your brain, so nothing gets claimed that you cannot prove.');
     else body = empty('Nothing to approve right now', `Each morning's run prepares up to ${esc(s.dailyCap)} applications here.`);
   } else {
     body = `<div class="rows">${ready.map((j, i) => `
@@ -2798,7 +2815,10 @@ function renderSources(){
 function renderFresh(){
   const f = filterSummary();
   const all = jobsArr().filter(j => (j.stage === 'found' || !j.stage) && inWindow(j, state.win)).sort(byPriority);
-  const regions = [['all', 'All'], ['saved', 'Saved'], ['startups', 'Startups'], ['remote-global', 'Remote worldwide'], ['remote-india', 'Remote, India'], ['south-india', 'South India']];
+  if (finding()) return findingBlock();
+  const regions = livesAbroad()
+    ? [['all', 'All'], ['saved', 'Saved'], ['local', 'In your places'], ['remote-local', 'Remote, your country'], ['remote-global', 'Remote worldwide'], ['remote-unclear', 'Remote: check who can apply']]
+    : [['all', 'All'], ['saved', 'Saved'], ['startups', 'Startups'], ['remote-global', 'Remote worldwide'], ['remote-india', 'Remote, India'], ['south-india', 'South India']];
   const isStartup = j => /\bYC\b|Work at a Startup|Who is hiring|Hacker News|Wellfound/i.test(j.source || '') || /^yc-/.test(j.category || '');
   const inK = (j, k) => k === 'all' ? true : k === 'saved' ? !!j.saved : k === 'startups' ? isStartup(j) : j.region === k;
   const nIn = k => all.filter(j => inK(j, k)).length;
@@ -2818,7 +2838,13 @@ function renderFresh(){
       <div class="jact">${state.canWrite && state.db ? `<button class="btn sm ghost" data-act="save-job" data-id="${esc(j.id)}">${j.saved ? 'Unsave' : 'Save'}</button><button class="btn sm ghost" data-act="dismiss" data-id="${esc(j.id)}">Dismiss</button><button class="btn sm" data-act="start-app" data-id="${esc(j.id)}">Start application</button>` : ''}</div>
     </div>`).join('');
   const none = state.loaded.jobs ? empty(state.win === 'day' ? 'Nothing new in the last 24 hours' : 'No fresh roles yet', state.win === 'day' ? 'Switch to Last 7 days to see the rest of the week.' : `The next run looks again. Roles that fail a filter go to Skipped with the reason. Our feed comes from company career pages and is strongest for tech and business roles; for other fields, add jobs you find anywhere with New application.`) : empty('Loading roles', 'Reading your pipeline.');
-  return `<div class="sh"><h2>${esc(title)}</h2><p>Remote worldwide roles first, then remote in India, then south India. ${brainReady() ? 'Scored on the next run.' : 'Fit ratings appear once your Career Brain is built.'}</p></div>${chips}<div class="panel">${cards ? `<div class="cards">${cards}</div>${more}` : none}</div>`;
+  /* A short list is the honest answer when few roles fit; say what came close and how to widen it. */
+  const near = jobsArr().filter(j => j.stage === 'skipped' && obj(j.skip).wouldChange);
+  const nearBy = g => near.filter(j => obj(j.skip).gate === g).length;
+  const nearBits = [[nearBy('Seniority'), 'are more senior titles'], [nearBy('Posted'), 'were posted before your window'], [nearBy('Experience'), 'ask for more experience'], [nearBy('Location'), 'are somewhere else'], [nearBy('Pay'), 'pay below your floor']].filter(x => x[0]).map(x => x[0] + ' ' + x[1]);
+  const thin = state.loaded.jobs && state.win !== 'day' && all.length < 10 && near.length
+    ? `<div class="panel thin"><p><b>${all.length === 1 ? 'One role fits' : all.length + ' roles fit'} every filter right now.</b> ${near.length} more came close${nearBits.length ? ': ' + esc(listJoin(nearBits)) : ''}. Each shows the one thing that ruled it out.</p><div class="ract" style="justify-content:flex-start"><button class="btn" data-act="tab" data-tab="skipped">See the near misses</button><button class="btn ghost" data-act="tab" data-tab="setup">Add job titles or widen filters</button></div></div>` : '';
+  return `<div class="sh"><h2>${esc(title)}</h2><p>${livesAbroad() ? `Roles where you live first${obj(state.settings).needsSponsorship ? ', employers with a record of sponsoring visas at the top' : ''}, then remote roles open worldwide.` : 'Remote worldwide roles first, then remote in India, then south India.'} ${brainReady() ? 'Scored on the next run.' : 'Fit ratings appear once your Career Brain is built.'}</p></div>${chips}${thin}<div class="panel">${cards ? `<div class="cards">${cards}</div>${more}` : none}</div>`;
 }
 
 function renderWaiting(){
@@ -4490,13 +4516,50 @@ function upcoming(days){
   const now = Date.now(), end = now + days * 864e5;
   return calEvents().filter(e => e.d >= now - 864e5 / 2 && e.d <= end && e.kind !== 'applied').sort((a, b) => a.d - b.d);
 }
+/* The first minute: three answers, then real roles. Everything else in Settings can wait until the person
+   has seen what the search finds for them. */
+const QS_ROLES = ['Software Engineer', 'Data Analyst', 'Business Analyst', 'Product Manager', 'Marketing', 'Finance', 'Mechanical Engineer', 'Customer Success'];
+const hasFilters = () => { const s = obj(state.settings); return arr(s.targetRoles).length > 0 || arr(s.families).length > 0; };
+const needsQuickStart = () => cloud() && !!state.settings && !hasFilters();
+function quickStartBlock(){
+  const home = HOME_GUESS, ro = wr();
+  return `<div class="today">
+    <section class="hl qs"><div class="hh"><div><h2>${firstName() ? esc(firstName()) + ', what' : 'What'} job are you looking for?</h2>
+      <p>Three answers. Your first matches arrive in under a minute, each with the line from the posting that decided it.</p></div></div>
+      <form id="qs-form" class="formgrid" novalidate>
+        <label class="f full" for="qs-roles">Roles you want <small>job titles, comma separated</small>
+          <input type="text" id="qs-roles" maxlength="300" autocomplete="off" placeholder="e.g. Data Analyst, Business Analyst" required${ro}></label>
+        <div class="full qs-chips" role="group" aria-label="Common roles">${QS_ROLES.map(r => `<button type="button" class="fchip" data-act="qs-role" data-r="${esc(r)}">${esc(r)}</button>`).join('')}</div>
+        <label class="f" for="qs-home">Where you live<select id="qs-home"${ro}>${HOMES.map(([c, n]) => `<option value="${c}"${home === c ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
+        <label class="f" for="qs-years">Years of work experience <small>0 if you are a fresher</small><input type="number" id="qs-years" min="0" max="50" step="0.5" value="0" inputmode="decimal"${ro}></label>
+        <label class="full qs-check" for="qs-visa" id="qs-visa-row"${home === 'IN' ? ' hidden' : ''}><input type="checkbox" id="qs-visa"${ro}> <span>I need an employer to sponsor my visa to work there <small>We then put employers with a record of sponsoring first, and leave out roles that say they cannot.</small></span></label>
+        <div class="full qs-go"><button class="btn solid" type="submit"${ro}>Show my matches</button><span class="small muted">Free. You can change every answer later in Settings.</span></div>
+      </form></section>
+  </div>`;
+}
+/* After the answers are saved the server matches within seconds; until that run lands, say so instead of an empty list. */
+const finding = () => !!state.qsAt && Date.now() - state.qsAt < 120000 && !arr(state.runs).some(r => (toDate(r.finishedAt) || 0) > state.qsAt - 1000);
+function findingBlock(){
+  const n = Number(obj(obj(state.me).feed).inventory) || 0;
+  return `<div class="sh"><h2>Finding your matches</h2><p>${n ? 'Checking ' + n.toLocaleString() + ' open roles' : 'Checking every open role'} from company career pages against your answers.</p></div>
+    <div class="panel"><div class="empty"><b><span class="spin" aria-hidden="true"></span> This takes under a minute</b><p>Each role that fits arrives with the sentence from the posting that decided it. Roles that fail a filter go to Skipped with the reason.</p></div></div>`;
+}
+function startFinding(){
+  state.qsAt = Date.now();
+  const iv = setInterval(() => {
+    if (!finding()){ clearInterval(iv); state.qsAt = 0; render(); return; }
+    if (state.db && state.db.refresh) state.db.refresh();
+  }, 2500);
+}
 /* Before the first match: the highlight shapes become the three steps that produce one. */
 function firstRunBlock(){
+  if (needsQuickStart()) return quickStartBlock();
+  if (finding()) return `<div class="today"><section class="hl">${findingBlock()}</section></div>`;
   const s = settings(), resumeOk = !!obj(applicant().resume).id || hasProfile(), filtersOk = arr(s.targetRoles).length > 0 || arr(s.families).length > 0;
   const steps = [
     ['s-heart', 'var(--pink)', 'Set your filters', 'Roles, experience, places and pay', 'setup', filtersOk],
     ['s-flower', 'var(--bgreen)', 'Add your resume', 'Every application starts from it', 'profile', resumeOk],
-    ['s-star', 'var(--bblue)', 'Get your first matches', cloud() ? 'They arrive after the next scan (several times a day)' : 'Run careeros scan, or wait for the next feed', 'today', false]
+    ['s-star', 'var(--bblue)', 'Get your first matches', cloud() ? 'Within a minute of saving your filters, then after every scan' : 'Run careeros scan, or wait for the next feed', 'today', false]
   ];
   const left = steps.filter(x => !x[5]).length, nm = firstName() ? esc(firstName()) : '';
   return `<div class="today">
@@ -4520,7 +4583,7 @@ function todayBlock(all, f, weeks){
   const replies = inboxNew().length, ready = all.filter(j => j.stage === 'ready').length;
   const up = upcoming(14), interviews = up.filter(e => /interview/i.test(String(e.kind || e.title || ''))).length;
   const nm = firstName() ? esc(firstName()) + ', ' : '';
-  if (state.loaded.jobs && !all.length) return firstRunBlock();
+  if (state.loaded.jobs && (!all.length || needsQuickStart() || finding())) return firstRunBlock();
   const big = best !== null ? `${esc(best.toFixed(1))}<small>/5</small>` : String(open.length);
   const lab = best !== null ? 'best fit waiting for you' : open.length === 1 ? 'fresh role for you' : 'fresh roles for you';
   const ico = (d) => `<svg class="i" viewBox="0 0 24 24">${d}</svg>`;
@@ -5361,6 +5424,7 @@ function renderNow(){
     if (k === 'queue') p.innerHTML = renderQueue();
     if (k === 'skipped') p.innerHTML = renderSkipped();
     if (k === 'setup' && !state.formDirty && !state.apDirty && !state.acctDirty) p.innerHTML = renderSetup();
+    if (k === 'home' && state.qsDirty && $('#qs-form')) return;  /* answers being typed: a background refresh must not wipe them */
     if (k === 'home'){
       const h = renderHome();
       if (p._html !== h){ p.innerHTML = h; p._html = h; }
@@ -5462,6 +5526,7 @@ document.addEventListener('click', e => {
   if (act !== 'sheet' && sheetEntry && !el._replay){ closeSheets(() => { el._replay = true; el.click(); el._replay = false; }); return; }
   if (act !== 'sheet') closeSheetsUI();
   if (act === 'tab') setTab(el.dataset.tab);
+  else if (act === 'qs-role'){ const i = $('#qs-roles'); if (i){ const have = i.value.split(',').map(x => x.trim()).filter(Boolean); if (!have.includes(el.dataset.r)) have.push(el.dataset.r); i.value = have.join(', '); el.setAttribute('aria-pressed', 'true'); state.qsDirty = true; } }
   else if (act === 'sheet') toggleSheet(el.dataset.sheet);
   else if (act === 'window'){ if (state.win !== el.dataset.w){ state.win = el.dataset.w; state.freshLimit = FRESH_PAGE; state.enter = true; state.filterAnim = true; render(); } }
   else if (act === 'region'){ if (state.region !== el.dataset.r){ state.region = el.dataset.r; state.freshLimit = FRESH_PAGE; state.enter = true; state.filterAnim = true; render(); } }
@@ -5605,6 +5670,7 @@ document.addEventListener('keydown', e => {
 });
 document.addEventListener('change', e => {
   const el = e.target;
+  if (el.closest && el.closest('#qs-form')){ state.qsDirty = true; if (el.id === 'qs-home'){ const row = $('#qs-visa-row'); if (row) row.hidden = el.value === 'IN'; } return; }
   if (el.closest && el.closest('#settings-form')) state.formDirty = true;
   if (el.closest && el.closest('#applicant-form')) state.apDirty = true;
   if (el.classList && el.classList.contains('resume-file')){ const f = el.files && el.files[0]; el.value = ''; uploadResume(f); return; }
@@ -5617,6 +5683,7 @@ document.addEventListener('change', e => {
 document.addEventListener('input', e => {
   if (e.target.id === 'pipe-q'){ state.q = e.target.value; render(); }
   else if (e.target.closest && e.target.closest('#settings-form')) state.formDirty = true;
+  else if (e.target.closest && e.target.closest('#qs-form')) state.qsDirty = true;
   else if (e.target.closest && e.target.closest('#applicant-form')) state.apDirty = true;
   else if (e.target.closest && e.target.closest('.acct-form, #key-form')) state.acctDirty = true;
 });
@@ -5733,6 +5800,21 @@ document.addEventListener('submit', e => {
       state.apDirty = false; const m = apMissing();
       toast(m.length ? 'Saved. Still needed: ' + listJoin(m.map(lc1)) + '.' : 'Details saved. Auto-apply uses them on the next run.'); render();
     }).catch(() => {});
+    return;
+  }
+  if (e.target.id === 'qs-form'){
+    e.preventDefault(); if (!state.db) return;
+    const roles = $('#qs-roles').value.split(',').map(x => x.trim()).filter(Boolean).slice(0, 12);
+    if (!roles.length){ toast('Type at least one job title.'); $('#qs-roles').focus(); return; }
+    const home = $('#qs-home').value || 'IN', y = Math.max(0, Math.min(50, Number($('#qs-years').value) || 0));
+    const next = Object.assign({}, settings(), {
+      targetRoles: roles, families: [], homeCountry: home, yearsExperience: y, experienceLevels: [], maxRequiredYears: stretchOf(y),
+      places: home === 'IN' ? '' : (HOMES.find(([c]) => c === home) || [home, home])[1], remoteOk: true,
+      locations: ['South India (any work mode)', 'Rest of India (any work mode)', 'Remote worldwide (first priority)'],
+      needsSponsorship: home !== 'IN' && $('#qs-visa').checked, timezone: TZ, setupAt: nowIso(), updatedAt: nowIso()
+    });
+    if (document.activeElement) document.activeElement.blur();
+    enqueue('settings/profile', () => state.db.doc('settings/profile').set(next)).then(() => { state.qsDirty = false; state.settings = next; startFinding(); setTab('today'); render(); }).catch(() => {});
     return;
   }
   if (e.target.id !== 'settings-form') return;
@@ -5931,6 +6013,7 @@ function makeLocalDB(opts){
     onSnapshot: next => watch(async () => { const res = await call('api/c/' + name); next(makeQuerySnap(shapeList((res && res.docs) || [], opts))); })
   });
   return {
+    refresh,
     collection: name => query(name, {}),
     doc: path => { const [col, id] = path.split('/'); const url = 'api/d/' + col + '/' + encodeURIComponent(id); return {
       onSnapshot: next => watch(async () => { const d = await call(url); next(makeSnap(id, d ? d.data : null)); }),

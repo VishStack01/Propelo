@@ -2,6 +2,7 @@
 
 | version | date | product version | change | why |
 | --- | --- | --- | --- | --- |
+| 1.5 | 23 Nov 2026 | 2.14.0 | R-055 to R-058 added and fixed (matching memory and speed, first-run questions, match quality abroad); R-059 to R-062 added, open (thin results outside the US and India, India remote rule, model key for paid plans, rupee prices abroad) | New-member walkthrough and eight profiles run against the live feed |
 | 1.4 | 23 Nov 2026 | 2.13.0 | R-053 added and fixed (one-server mode for a free host), R-054 added (limits of free hosting, open) | The owner's Render service was failing; first deploy on the free tier |
 | 1.3 | 22 Nov 2026 | 2.11.0 | R-020 and R-022 fixed; R-050 to R-052 added (job board sign-up link, Pro pass, sponsor check and visa-jobs pages) | 14-day growth plan |
 | 1.2 | 22 Nov 2026 | 2.10.0 | Register R-045 to R-049 (feed intake memory, sponsor data per country, continuous scans, database size) | Scan expansion for students abroad |

@@ -46,7 +46,7 @@ Generated from `careeros/cloud/migrations/*.sql`. Do not edit by hand.
 
 ## match_state
 
-`user_id`, `settings_hash`, `last_match_at`, `last_feed_at`
+`user_id`, `settings_hash`, `last_match_at`, `last_feed_at`, `full_at (0015_match_incremental)`, `more (0015_match_incremental)`
 
 ## tasks
 

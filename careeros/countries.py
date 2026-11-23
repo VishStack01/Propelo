@@ -8,6 +8,7 @@ region, or on-site or hybrid in a place they listed.
 from __future__ import annotations
 
 import re
+from functools import lru_cache
 
 # ISO code -> names and common spellings in job locations. Ordered roughly by how often they appear.
 NAMES: dict[str, list[str]] = {
@@ -92,6 +93,39 @@ MORE_CITIES: dict[str, list[str]] = {
 }
 EXTRA_NAMES = {"QA": ["Qatar"], "BH": ["Bahrain"], "KW": ["Kuwait"], "OM": ["Oman"], "LU": ["Luxembourg"], "JO": ["Jordan"], "LB": ["Lebanon"],
                "MA": ["Morocco"], "SK": ["Slovakia"], "SI": ["Slovenia"], "IS": ["Iceland"], "MT": ["Malta"], "CY": ["Cyprus"]}
+
+# The long tail, taken from locations in the live feed that named no country the tables above knew. A remote
+# role placed in one of these ("Almaty, Kazakhstan", "Belgrade", "NYC") is hired there, so someone living
+# elsewhere should not be shown it. "Georgia" is left out on purpose: it is more often the US state.
+EXTRA_NAMES.update({
+    "KZ": ["Kazakhstan"], "BY": ["Belarus"], "BA": ["Bosnia and Herzegovina", "Bosnia"], "MK": ["North Macedonia"], "AL": ["Albania"],
+    "ME": ["Montenegro"], "MD": ["Moldova"], "AM": ["Armenia"], "AZ": ["Azerbaijan"], "UZ": ["Uzbekistan"], "RU": ["Russia"], "GI": ["Gibraltar"],
+    "HN": ["Honduras"], "PA": ["Panama"], "JM": ["Jamaica"], "BZ": ["Belize"], "SV": ["El Salvador"], "GT": ["Guatemala"], "EC": ["Ecuador"],
+    "BO": ["Bolivia"], "DO": ["Dominican Republic"], "PY": ["Paraguay"], "VE": ["Venezuela"], "PR": ["Puerto Rico"], "SR": ["Suriname"],
+    "SN": ["Senegal"], "TN": ["Tunisia"], "DZ": ["Algeria"], "ET": ["Ethiopia"], "GH": ["Ghana"], "UG": ["Uganda"], "MW": ["Malawi"],
+    "TZ": ["Tanzania"], "RW": ["Rwanda"], "ZM": ["Zambia"], "ZW": ["Zimbabwe"], "CM": ["Cameroon"], "MU": ["Mauritius"],
+    "KH": ["Cambodia"], "MM": ["Myanmar"], "MN": ["Mongolia"], "IQ": ["Iraq"],
+    # Names in the country's own language, as its job boards write them.
+    "BR": ["Brasil"], "CH": ["Schweiz", "Suisse"], "ES": ["España"], "IT": ["Italia"], "MX": ["México"], "BE": ["Belgique", "België"],
+    "NL": ["Nederland"], "AT": ["Österreich"], "PL": ["Polska"],
+})
+for _code, _cities in {
+    "US": ["NYC", "Manhattan", "Bay Area", "SF", "Washington, D.C.", "Washington D.C.", "Washington DC", "San Mateo", "Fremont", "Emeryville",
+           "El Segundo", "Long Beach", "Oakland", "Scottsdale", "Santa Barbara", "Ann Arbor", "Los Altos", "Pleasanton", "Santa Monica"],
+    "GB": ["Brighton", "Guildford", "Exeter", "Norwich", "Swindon", "Dundee", "Swansea"],
+    "DE": ["Augsburg", "Mainz", "Passau", "Ulm", "Regensburg", "Wiesbaden", "Würzburg", "Freiburg", "Landshut", "Reutlingen", "Bamberg",
+           "Pforzheim", "Münster", "Kiel", "Potsdam"],
+    "LT": ["Vilnius", "Kaunas"], "FI": ["Espoo", "Tampere"], "UA": ["Kyiv", "Lviv", "Kharkiv"], "KZ": ["Almaty", "Astana"], "BG": ["Sofia"],
+    "RS": ["Belgrade", "Novi Sad"], "BY": ["Minsk"], "EE": ["Tallinn"], "LV": ["Riga"], "SK": ["Bratislava"], "SI": ["Ljubljana"],
+    "TW": ["Taipei"], "AR": ["Buenos Aires"], "PH": ["Makati", "Cebu"], "MA": ["Rabat", "Casablanca"], "TN": ["Tunis"], "HR": ["Zagreb"],
+    "GR": ["Athens", "Thessaloniki"], "CH": ["Bern", "St. Gallen", "Zug"], "BE": ["Leuven", "Ghent", "Antwerp"], "CY": ["Limassol", "Nicosia"],
+    "MK": ["Skopje"], "IL": ["Kfar Saba", "TLV", "Haifa", "Herzliya"], "MX": ["Ciudad de México", "Guadalajara", "Monterrey"],
+    "IT": ["Milano", "Roma", "Bologna"], "PL": ["Gdańsk", "Gdansk", "Poznań", "Poznan", "Katowice", "Łódź"], "JP": ["Yokohama", "Kyoto"],
+    "CN": ["Suzhou", "Hangzhou", "Guangzhou"], "BR": ["Campinas", "São Carlos", "Rio de Janeiro", "Belo Horizonte", "Curitiba"],
+    "RO": ["Iași", "Timișoara"], "PT": ["Braga", "Coimbra"], "ES": ["Málaga", "Malaga", "Sevilla", "Seville", "Bilbao"], "DK": ["Aarhus"],
+    "NO": ["Bergen", "Trondheim"], "SE": ["Uppsala", "Lund"], "AT": ["Graz", "Linz"],
+}.items():
+    MORE_CITIES[_code] = MORE_CITIES.get(_code, []) + _cities
 NAMES.update({k: v for k, v in EXTRA_NAMES.items() if k not in NAMES})
 
 _MORE: dict[str, re.Pattern] = {}
@@ -110,22 +144,48 @@ _AU_NAME = re.compile(r"(?<![A-Za-z])(New South Wales|Queensland|Tasmania|Wester
 _IN_CODE = re.compile(r"(?<![A-Za-z])IND?(?![A-Za-z])\s?[-,]|,\s?IND?$|(?<![A-Za-z])IND(?![A-Za-z])")
 
 
+_PARTS = re.compile(r"\s*(?:;|\||/|\bor\b)\s*")
+
+
+_TOWN_BEFORE_STATE = re.compile(r"[^,;()]+,\s*(?=(?:" + "|".join(re.escape(n) for n in US_STATES.values() if n not in ("Georgia", "Washington", "New York"))
+                                + r")(?![A-Za-z]))", re.I)
+
+
+_COUNTRY_WORDS = {n.lower() for names in list(NAMES.values()) + list(EXTRA_NAMES.values()) for n in names}
+_ANY_STATE = re.compile(r"(?<![A-Za-z])(" + "|".join(re.escape(n) for n in US_STATES.values()) + r")(?![A-Za-z])", re.I)
+
+
 def resolve(location: str) -> set[str]:
     """Countries a location is in, including the ones it doesn't name: Indian cities and states, US states
     ("Austin, TX"), Canadian provinces, Australian states and well-known cities. `named` is the strict
     version; this one is for deciding where a role is. Each place in a list is read on its own."""
+    return set(_resolve(location or ""))
+
+
+@lru_cache(maxsize=65536)
+def _resolve(location: str) -> frozenset[str]:
     out: set[str] = set()
-    for part in re.split(r"\s*(?:;|\||/|\bor\b)\s*", location or ""):
+    for part in _PARTS.split(location):
         if part.strip():
             out |= _resolve_one(part)
-    return out
+    return frozenset(out)
 
 
 def _resolve_one(t: str) -> set[str]:
     from . import geo
-    out = set(named(t))
+    # The town before a written-out state is in that state: "Belgrade, Montana" and "Athens, Ohio" are not
+    # Serbia and Greece. ("New York" is left to the city tables: in "London, New York" it is a second place.)
+    state = _US_NAME.search(t)
+    src = t
+    if state:
+        parts = [x for x in t.split(",") if x.strip()]
+        # Only when the string reads as "town, state" pairs. In "Palo Alto, Toronto, Virginia, Miami" the
+        # places are a flat list and Toronto is still Toronto.
+        if 2 * sum(1 for x in parts if _ANY_STATE.search(x)) >= len(parts) - 1:
+            src = _TOWN_BEFORE_STATE.sub(lambda m: m.group(0) if m.group(0).strip(" ,").lower() in _COUNTRY_WORDS else "", t)
+    out = set(named(src))
     for code, rx in _MORE.items():
-        if code not in out and rx.search(t):
+        if code not in out and rx.search(src):
             out.add(code)
     india = geo.classify(t)["india"]
     if india or (_IN_CODE.search(t) and not out):
@@ -142,7 +202,7 @@ def _resolve_one(t: str) -> set[str]:
             return {"IN"}
         if not ((st == "IN" and india) or (st == "DE" and "DE" in out) or (st == "WA" and "AU" in out) or (st == "CA" and "CA" in out)):
             return {"US"}  # "Cambridge, MA", "Dublin, CA", "Birmingham, AL": the state settles it
-    elif not out and _US_NAME.search(t):
+    elif state:
         out.add("US")
     return out
 

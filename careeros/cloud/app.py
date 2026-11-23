@@ -896,7 +896,9 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
 
     def _after_write(c, uid: str, col: str, did: str) -> None:
         if col == "settings" and did == "profile":
-            repo.enqueue(c, "match_user", user_id=uid, dedupe_key=f"match:{uid}", delay_seconds=15, max_attempts=3)
+            # A short pause so two saves in a row make one match; long enough for that, short enough that the
+            # first matches follow the first answers within seconds.
+            repo.enqueue(c, "match_user", user_id=uid, dedupe_key=f"match:{uid}", delay_seconds=2, max_attempts=3)
 
     def _if_version(request: Request) -> int | None:
         v = request.headers.get("if-match", "")

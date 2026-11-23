@@ -8,6 +8,7 @@ skip log can say exactly why, and you can overrule it.
 from __future__ import annotations
 
 import re
+from functools import lru_cache
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
 
@@ -41,7 +42,12 @@ def _facts(job: Job) -> dict | None:
 
 
 def _kw_regex(words: list[str]) -> re.Pattern:
-    # Plurals count: "agent" matches "Creative Agents".
+    return _kw_compiled(tuple(words))
+
+
+@lru_cache(maxsize=512)
+def _kw_compiled(words: tuple[str, ...]) -> re.Pattern:
+    # Plurals count: "agent" matches "Creative Agents". Built once per word list, not once per role.
     parts = [r"(?<![a-z0-9])" + re.escape(w.lower()) + r"(?:s|es)?(?![a-z0-9])" for w in words if w.strip()]
     return re.compile("|".join(parts) or r"(?!x)x", re.I)
 
@@ -66,12 +72,30 @@ def gate_role(job: Job, s: Settings) -> Check:
     return Check("Role", True, "Target role", title)
 
 
+def title_fits(title: str, s: Settings) -> bool:
+    """The Role gate on a bare title. A role that fails it is never kept and never a near miss, so a caller
+    with a large inventory can drop most of it on the title alone, before reading each role in full."""
+    return gate_role(Job(company="", title=title or "", url="", source=""), s).passed
+
+
 _ENTRY_TITLE = re.compile(r"\b(intern(ship)?|trainee|fresher|graduate (trainee|engineer|program(me)?)|apprentice|entry[- ]level)\b", re.I)
+
+
+# Titles that run a function or a company, which nobody reaches in a couple of years.
+_EXEC_TITLE = re.compile(r"\b(director|head of|head,|vp|vice president|chief|c[etfo]o|principal|distinguished|general manager|managing director)\b", re.I)
+SENIOR_FROM_YEARS = 3    # "Senior", "Lead" and "Staff" titles are shown from this much experience
+EXEC_FROM_YEARS = 8      # "Director", "Head of", "VP" and "Principal" from this much
 
 
 def gate_seniority(job: Job, s: Settings) -> Check:
     level = extract.title_seniority(job.title)
-    if level == "senior" and s.max_required_years < 3:
+    y = s.experience_years
+    if y is not None:
+        if _EXEC_TITLE.search(job.title or "") and y < EXEC_FROM_YEARS:
+            return Check("Seniority", False, f"A director-level title, above your {y:g} years.", job.title)
+        if level == "senior" and y < SENIOR_FROM_YEARS:
+            return Check("Seniority", False, "The title is a senior-level role.", job.title)
+    elif level == "senior" and s.max_required_years < 3:
         return Check("Seniority", False, "The title is a senior-level role.", job.title)
     if s.experience_years is not None and s.experience_years >= 3 and (level == "junior" or _ENTRY_TITLE.search(job.title or "")):
         return Check("Seniority", False, f"An entry-level title, below your {s.experience_years:g} years.", job.title)
@@ -152,7 +176,8 @@ def _gate_location_elsewhere(job: Job, s: Settings) -> tuple[Check, str]:
         if fits is False:
             return Check("Location", False, f"Remote, but only for people in another region ({scope.scope}).", scope.quote or job.location), ""
         if p.keep_unclear_remote:
-            return Check("Location", True, "Remote; the posting doesn't say who can apply. Check before applying.", job.location), "remote-global"
+            # Kept, but in a region of its own: it is shown after the roles known to be open to this person.
+            return Check("Location", True, "Remote; the posting doesn't say who can apply. Check before applying.", job.location), "remote-unclear"
         return Check("Location", False, f"Remote, but the posting doesn't say people in {name} can apply.", job.location), ""
     mode_txt = {"hybrid": "Hybrid", "onsite": "On-site"}.get(job.work_mode, "Work mode not stated")
     loc = job.location or ""
@@ -287,7 +312,8 @@ def gate_sponsorship(job: Job, region: str, s: Settings) -> Check | None:
         return None
     f = _facts(job)
     if (s.location.home or "IN") != "IN":
-        on_site_abroad = region == "local"  # someone on a visa where they live needs it for local roles too
+        # Someone on a visa where they live needs sponsorship for any role based there, in an office or remote.
+        on_site_abroad = region in ("local", "remote-local")
     else:
         loc = (f or {}).get("loc") if f is not None and "loc" in f else ("abroad" if geo.classify(job.location)["abroad"] else "")
         on_site_abroad = loc == "abroad" and not region.startswith("remote")

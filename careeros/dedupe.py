@@ -26,10 +26,19 @@ ROMAN = {"i": "1", "ii": "2", "iii": "3", "iv": "4"}
 TERMS = set("fresher freshers contract contractual full part time permanent temporary internship intern new grad graduate entry level".split())
 
 
+_PLAIN_URL = re.compile(r"https?://[A-Za-z0-9.-]+(?::\d+)?(?:/[A-Za-z0-9._~!$&'()*+,=:@%/-]*)?\Z", re.I)
+
+
 def canonical_url(url: str) -> str:
     if not url:
         return ""
-    p = urlparse(url.strip())
+    url = url.strip()
+    if _PLAIN_URL.match(url):
+        # Most job links are plain (https://host/path): no query to clean, nothing for a full parse to add.
+        scheme, _, rest = url.partition("://")
+        host, _, path = rest.partition("/")
+        return scheme.lower() + "://" + host.lower() + (("/" + path).rstrip("/") or "/")
+    p = urlparse(url)
     query = [(k, v) for k, v in parse_qsl(p.query, keep_blank_values=True) if not _TRACKING.match(k)]
     path = p.path.rstrip("/") or "/"
     return urlunparse((p.scheme.lower() or "https", p.netloc.lower(), path, "", urlencode(query), ""))

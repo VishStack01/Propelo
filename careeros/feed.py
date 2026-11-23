@@ -181,32 +181,53 @@ def _about(summary: str) -> str:
     return m.group(1) if m else s[:240]
 
 
-def match(records: list[dict], settings: Settings, known: list[tuple[str, dict]], summary: dict | None = None,
-          now: datetime | None = None, max_kept: int = 400, max_skips: int = 60) -> dict:
-    """The decision core, in memory: which feed records are new kept roles, which
-    are near-misses worth showing as skipped, and which known roles closed or aged out.
+def match(records, settings: Settings, known: list[tuple[str, dict]], summary: dict | None = None,
+          now: datetime | None = None, max_kept: int = 400, max_skips: int = 60, feed_urls=None, recheck=None) -> dict:
+    """The decision core: which feed records are new kept roles, which are near-misses worth
+    showing as skipped, and which known roles closed or aged out.
 
+    records: any iterable of feed records, read once and never held, so a hundred thousand roles
+             can be streamed from a database without filling memory.
     known: (doc id, dashboard document) pairs already in the user's pipeline.
+    feed_urls: when `records` is only part of the feed (the roles that changed since the last match),
+             the addresses of every role still listed, so an unchanged role is not taken for closed.
     Returns {"kept": [(id, doc)], "skipped": [(id, doc)], "gone": [...], "expired": [...],
-             "feedRecords", "alreadyKnown", "duplicates", "byRegion"}."""
+             "feedRecords", "alreadyKnown", "duplicates", "byRegion", "more"}. alreadyKnown and duplicates
+    count roles that fit; a role that fails the filters is dropped before either is looked at.
+    more: there were more fits than max_kept allowed, so another full pass would add some.
+    recheck: ids of known roles to judge again (after the filters changed); "unfit" lists the ones that
+             no longer pass, or are no longer in `records` at all."""
     now = now or datetime.now(timezone.utc)
     ids, urls, fps = set(), set(), set()
+    watch: set[str] = set()  # roles stale() may call closed: only these need their address looked for in the feed
     for doc_id, d in known:
         ids.add(doc_id)
         if d.get("url"):
             urls.add(canonical_url(d["url"]))
+            if d.get("stage") in ("found", None, "") and d.get("foundVia") in ("careers-feed", "remote-board"):
+                watch.add(canonical_url(d["url"]))
         if d.get("company") and d.get("title"):
             fps.add(fingerprint(d["company"], d["title"]))
-    kept, skipped, n_known, dupes = [], [], 0, 0
+    kept, skipped, n_known, dupes, n_records = [], [], 0, 0, 0
     seen_fp: set[str] = set()
+    listed: set[str] = set()
+    still: set[str] = set()
+    if feed_urls is not None and watch:
+        listed = {u for u in map(canonical_url, feed_urls) if u in watch}
+    in_loop = bool(watch) and feed_urls is None
     for r in records:
-        fp = fingerprint(r["company"], r["title"])
-        if r["id"] in ids or canonical_url(r["url"]) in urls or fp in fps:
+        n_records += 1
+        cu = None
+        if in_loop:
+            cu = canonical_url(r["url"])
+            if cu in watch:
+                listed.add(cu)
+        again = False
+        if r["id"] in ids:
             n_known += 1
-            continue
-        if fp in seen_fp:  # the same role listed once per city: one card is enough
-            dupes += 1
-            continue
+            if recheck is None or r["id"] not in recheck:
+                continue
+            again = True
         board = r.get("via") == "board"
         job = Job(company=r["company"], title=r["title"], url=r["url"],
                   source=r["source"] if board else f"{r['source']} (company careers page)",
@@ -214,9 +235,21 @@ def match(records: list[dict], settings: Settings, known: list[tuple[str, dict]]
                   posted_at=r.get("postedAt", ""), salary_text=r.get("salary", ""),
                   raw={"facts": r.get("facts") or {}, "experience_header": r.get("experienceHeader", "")})
         d = apply_decision(job, settings, now)
+        if again:
+            if d.kept:
+                still.add(r["id"])
+            continue
         failed = [c.gate for c in d.checks if not c.passed]
         role_ok = "Role" not in failed and "Company" not in failed
         if not d.kept and not (role_ok and len(failed) == 1 and failed[0] in NEAR_MISS_GATES):
+            continue
+        # Only now the costlier identity checks: most records never get here.
+        fp = fingerprint(r["company"], r["title"])
+        if (cu if cu is not None else canonical_url(r["url"])) in urls or fp in fps:
+            n_known += 1
+            continue
+        if fp in seen_fp:  # the same role listed once per city: one card is enough
+            dupes += 1
             continue
         seen_fp.add(fp)
         doc = job.to_record()
@@ -254,7 +287,23 @@ def match(records: list[dict], settings: Settings, known: list[tuple[str, dict]]
             if failed[0] == "Pay" and settings.require_stated_pay and not (r.get("facts") or {}).get("salaryHigh"):
                 doc["skip"]["wouldChange"] = "Allowing roles that don't state pay."
             skipped.append((r["id"], doc))
-    order = {"remote-global": 0, "remote-india": 1, "remote-local": 1, "south-india": 2, "local": 2}
+    order = {"remote-global": 0, "remote-india": 1, "remote-local": 1, "south-india": 2, "local": 2, "remote-unclear": 3}
+    abroad = (settings.location.home or "IN") != "IN"
+    if abroad:
+        # Someone living abroad is looking for work where they live: roles there first, then remote roles
+        # open to the world, and last the remote roles that don't say who can apply.
+        order = {"local": 0, "remote-local": 0, "remote-global": 1, "remote-unclear": 2}
+
+    def sponsor_rank(doc):  # for someone who needs a visa: an employer with a record of sponsoring comes first
+        if not settings.needs_sponsorship:
+            return 0
+        v = doc.get("visa") or {}
+        if v.get("status") == "no" or v.get("opt") == "no" or (v.get("ukRegister") or {}).get("listed") is False:
+            return 2
+        if (v.get("status") == "offers" or v.get("opt") == "yes" or (v.get("ukRegister") or {}).get("listed") or (v.get("nlRegister") or {}).get("listed")
+                or v.get("usLca") or v.get("caLmia") or v.get("iePermits") or v.get("eVerify")):
+            return 0
+        return 1
 
     def posted_ts(doc):
         try:
@@ -263,11 +312,13 @@ def match(records: list[dict], settings: Settings, known: list[tuple[str, dict]]
             return 0
     def top_pay(doc):  # stated 20 LPA+, or public data says freshers get 20 LPA+ at the low end
         return doc.get("payTier") == "20+" or (not doc.get("payTier") and (doc.get("payBand") or {}).get("low", 0) >= 20)
-    kept.sort(key=lambda x: (order.get(x[1].get("region", ""), 9), 0 if top_pay(x[1]) else 1, -posted_ts(x[1])))
+    kept.sort(key=lambda x: (order.get(x[1].get("region", ""), 9), sponsor_rank(x[1]), 0 if top_pay(x[1]) else 1, -posted_ts(x[1])))
+    more = len(kept) > max_kept
     kept, skipped = kept[:max_kept], skipped[:max_skips]
-    out = {"feedRecords": len(records), "alreadyKnown": n_known, "duplicates": dupes, "kept": kept, "skipped": skipped,
+    out = {"more": more, "feedRecords": n_records, "alreadyKnown": n_known, "duplicates": dupes, "kept": kept, "skipped": skipped,
            "byRegion": {k: sum(1 for _, d in kept if d.get("region") == k) for k in order}}
-    out.update(stale(known, {canonical_url(r["url"]) for r in records}, summary, settings, now))
+    out.update(stale(known, listed, summary, settings, now))
+    out["unfit"] = sorted(set(recheck) - still - set(out["gone"]) - set(out["expired"])) if recheck is not None else []
     return out
 
 

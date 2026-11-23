@@ -337,12 +337,14 @@ def test_filter_feed_keeps_skips_and_dedupes(boards, tmp_path):
     known.mkdir()
     (known / "x.json").write_text(json.dumps([{"id": "old", "data": {"company": "Sample Corp", "title": "Junior AI Automation Engineer", "url": "https://elsewhere.example/1"}}]))
     s = feed.settings_from_dashboard({
-        "maxRequiredYears": 1, "maxPostingAgeDays": 25, "salaryFloorLpa": 7, "targetRoles": ["Backend", "Software Engineer", "AI Engineer"],
+        "maxRequiredYears": 1, "maxPostingAgeDays": 25, "salaryFloorLpa": 7, "targetRoles": ["Backend", "Software Engineer", "AI Engineer", "AI Automation Engineer"],
         "locations": ["South India (any work mode)", "Rest of India (remote only)", "Remote worldwide (first priority)"],
     })
     assert (s.location.south_india, s.location.rest_of_india, s.location.abroad) == ("any", "remote", "remote")
     idx = feed.run(str(tmp_path / "feed" / "india.jsonl.gz"), s, str(known), tmp_path / "new", now=NOW)
-    assert idx["alreadyKnown"] == 1  # matched by company + title even with a different URL
+    # A role that fits and is already in the pipeline is matched by company + title even with a different URL.
+    # (Roles that fail the filters are dropped before that check, so they are not counted.)
+    assert idx["alreadyKnown"] == 1
     kept = {json.loads(p.read_text())["title"]: json.loads(p.read_text()) for p in (tmp_path / "new" / "kept").glob("*.json")}
     assert "AI Engineer, Agents" in kept and "Junior Backend Engineer" in kept
     assert kept["AI Engineer, Agents"]["foundVia"] == "careers-feed"

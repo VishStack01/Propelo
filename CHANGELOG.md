@@ -2,6 +2,25 @@
 
 All notable changes to CareerOS. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [semantic versioning](https://semver.org/).
 
+## [2.14.0] - 2026-11-23
+
+Found by signing up as a new member against the live feed (120,000 open roles) and by running eight realistic profiles through the matcher.
+
+### Fixed
+- **A person's first match used 1.9 GB of memory and took 56 seconds.** It read every open role into memory at once. On a 512 MB server the worker would have been killed before anyone saw a match. Roles are now read as a stream, and a role is read in full only when its title fits: the same match takes 2 to 6 seconds and about 75 MB.
+- **A repeat match read everything again.** It now reads only roles added, changed or reopened since the last one, with a full pass when the filters change, when the last run found more than it could add, or once a week. The settings hash that decides this now covers every filter (it left out the sponsorship and stated-pay switches).
+- **New members landed on the whole Settings page** (plans, AI key, about forty application fields) when they pressed "Set your filters", and were told matches arrive "after the next scan". Home now asks three things (roles, country, years, plus a sponsorship tick abroad) and shows matches about ten seconds later.
+- **Members abroad were shown roles they cannot take:** remote roles placed in another country the tables did not know (Kazakhstan, "NYC", Belgrade and about 60 more places are now known), director and "Head of" titles for someone with two years of experience, and remote roles in their own country that say they cannot sponsor.
+- **Changing filters left the old matches in the list.** Roles nobody touched that no longer fit are taken back, which also clears what the starting filters matched before the person answered.
+- Filters saved while a match was running were not matched until the next scheduled run.
+- "Belgrade, Montana", "Athens, Ohio" and "Cambridge, Massachusetts" were read as Serbia, Greece and the UK.
+- Near misses shared room with found roles, so a long skip list could stop new matches arriving. Each now has its own limit (700 found, 200 near misses).
+
+### Changed
+- For members abroad, roles where they live come first, employers with a record of sponsoring visas at the top, then remote roles open worldwide, then remote roles that do not say who can apply. India keeps its order.
+- A short list now says how many roles came close and why, with a link to them.
+- The first match after saving filters starts after 2 seconds instead of 15.
+
 ## [2.13.0] - 2026-11-23
 
 ### Added

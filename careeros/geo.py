@@ -9,12 +9,13 @@ The default policy (configurable in settings.toml) is:
 from __future__ import annotations
 
 import re
+from functools import lru_cache
 
 SOUTH_STATES = {"karnataka", "telangana", "andhra pradesh", "tamil nadu", "kerala", "puducherry", "pondicherry"}
 
 SOUTH_CITIES = {
     # Karnataka
-    "bengaluru", "bangalore", "mysuru", "mysore", "mangaluru", "mangalore", "hubli", "hubballi", "dharwad",
+    "bengaluru", "bangalore", "banglore", "mysuru", "mysore", "mangaluru", "mangalore", "hubli", "hubballi", "dharwad",
     "belagavi", "belgaum", "udupi", "manipal", "electronic city", "whitefield", "koramangala", "hsr layout",
     # Telangana
     "hyderabad", "secunderabad", "warangal", "shamshabad", "gachibowli", "hitec city", "hitech city", "madhapur",
@@ -38,6 +39,7 @@ OTHER_INDIA = {
     "bhubaneswar", "patna", "dehradun", "goa", "panaji", "guwahati", "ranchi", "raipur", "amritsar", "ludhiana",
     "jalandhar", "varanasi", "nashik", "aurangabad", "maharashtra", "gujarat", "punjab", "haryana",
     "uttar pradesh", "rajasthan", "west bengal", "madhya pradesh", "bihar", "odisha", "assam",
+    "ranjangaon", "sanand", "gift city", "morinda",
 }
 
 ABROAD_HINTS = re.compile(
@@ -48,11 +50,41 @@ ABROAD_HINTS = re.compile(
 )
 
 
+@lru_cache(maxsize=16)
+def _any(words: frozenset) -> re.Pattern:
+    """One pattern for a whole word list: most locations name none of them, and one search says so."""
+    return re.compile(r"(?<![a-z])(?:" + "|".join(re.escape(w) for w in sorted(words, key=len, reverse=True)) + r")(?![a-z])")
+
+
+@lru_cache(maxsize=4096)
+def _word(w: str) -> re.Pattern:
+    return re.compile(r"(?<![a-z])" + re.escape(w) + r"(?![a-z])")
+
+
 def _has(words: set[str], text: str) -> str:
+    """The longest word of `words` that stands alone in `text`, or ""."""
+    if not _any(frozenset(words)).search(text):
+        return ""
     for w in sorted(words, key=len, reverse=True):
-        if re.search(r"(?<![a-z])" + re.escape(w) + r"(?![a-z])", text):
+        if _word(w).search(text):
             return w
     return ""
+
+
+_SOUTH = frozenset(SOUTH_CITIES | SOUTH_STATES)
+_OTHER = frozenset(OTHER_INDIA)
+_INDIA = re.compile(r"\bindia\b")
+
+
+@lru_cache(maxsize=65536)
+def _classify(location: str) -> tuple[str, str, bool, bool]:
+    # Boards repeat the same few thousand location strings across a hundred thousand roles.
+    loc = location.lower()
+    south = _has(_SOUTH, loc)
+    other = _has(_OTHER, loc)
+    india = bool(south or other or _INDIA.search(loc))
+    abroad = bool(ABROAD_HINTS.search(location)) and not india
+    return south, other, india, abroad
 
 
 def classify(location: str) -> dict:
@@ -61,9 +93,5 @@ def classify(location: str) -> dict:
     Multi-city postings ("Bengaluru, Delhi or Mumbai") touch several; the role
     passes the south-India rule if any listed city is in the south.
     """
-    loc = (location or "").lower()
-    south = _has(SOUTH_CITIES | SOUTH_STATES, loc)
-    other = _has(OTHER_INDIA, loc)
-    india = bool(south or other or re.search(r"\bindia\b", loc))
-    abroad = bool(ABROAD_HINTS.search(location or "")) and not india
+    south, other, india, abroad = _classify(location or "")
     return {"south": south, "other_india": other, "india": india, "abroad": abroad}
