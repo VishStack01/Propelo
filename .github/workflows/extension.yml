@@ -23,7 +23,7 @@ jobs:
       - name: Zip
         run: |
           v=$(python3 -c "import json; print(json.load(open('extension/manifest.json'))['version'])")
-          cd extension && zip -r -X "../propelo-autofill-$v.zip" . -x "*.DS_Store" && cd ..
+          cd extension && zip -r -X "../propelo-autofill-$v.zip" . -x "*.DS_Store" -x "store/*" -x "README.md" && cd ..
           echo "ZIP=propelo-autofill-$v.zip" >> "$GITHUB_ENV"
       - uses: actions/upload-artifact@v4
         with:
