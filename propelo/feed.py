@@ -22,6 +22,7 @@ from .dedupe import canonical_url, fingerprint
 from .gates import apply_decision
 from .models import Job
 from .settings import LocationPolicy, Settings
+from . import visaclock
 
 NEAR_MISS_GATES = {"Experience", "Posted", "Location", "Pay", "Seniority"}
 
@@ -63,6 +64,9 @@ def settings_from_dashboard(doc: dict) -> Settings:
     s.salary_floor_lpa = float(floor) if floor not in (None, "", 0) else None
     s.require_stated_pay = bool(doc.get("requireStatedPay"))
     s.needs_sponsorship = bool(doc.get("needsSponsorship"))
+    if doc.get("jobMode") == "part-time" and visaclock.part_time_ok(doc.get("visa")):
+        # Part-time work while studying is allowed by the student visa itself: no sponsor needed.
+        s.needs_sponsorship = False
     fams = [f for f in (doc.get("families") or []) if f in tagger_families()]
     if fams:
         # Families chosen: they decide, plus any target roles typed in (the built-in tech keywords no longer apply).
@@ -268,6 +272,8 @@ def match(records, settings: Settings, known: list[tuple[str, dict]], summary: d
             doc["archetype"] = r["tags"]["archetype"]
         if (r.get("tags") or {}).get("skills"):
             doc["skills"] = r["tags"]["skills"]
+        if (r.get("tags") or {}).get("type"):
+            doc["jobType"] = r["tags"]["type"]  # Full-time, Part-time, Internship or Contract
         if (r.get("tags") or {}).get("payTier"):
             doc["payTier"] = r["tags"]["payTier"]
         if (r.get("facts") or {}).get("visa"):

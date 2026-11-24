@@ -1,6 +1,6 @@
 # Propelo go-live checklist
 
-Updated 25 November 2026. Pull request 16 is merged and live. Pull request 17 (branch `design/fix-and-peeps`, 690 tests passing) adds the people on the website and app, drops the India plans and the Job Guarantee, and adds the 90-day passes. What is left needs your accounts, so only you can do it. Do it in this order: merging before step 4 would show the new prices before checkout can charge them.
+Updated 25 November 2026. Pull requests 16 and 17 are merged and live: the people on the website and app, dollar-only plans for the US, UK, Ireland and the Netherlands, and the 90-day passes. Checkout stays off until step 4, because your Dodo account has no products yet. What is left needs your accounts, so only you can do it, in this order.
 
 Every value below goes into Render, on the `propelo` service, under **Environment**. Never paste a key or password into a chat, an email or the repository.
 
@@ -28,7 +28,7 @@ Set `PROPELO_LLM` to `anthropic` and `ANTHROPIC_API_KEY` to your key. Set a mont
 
 ## 4. Payments
 
-### Dodo Payments (everyone outside India mode, in dollars)
+### Dodo Payments (every member, in dollars)
 
 1. **Settings → Business:** turn on **Adaptive Currency** so each buyer pays in their own currency.
 2. Create these products and copy each product id (`pdt_...`):
@@ -46,7 +46,7 @@ Set `PROPELO_LLM` to `anthropic` and `ANTHROPIC_API_KEY` to your key. Set a mont
 | Agency roles feed | $99 | One-time | `DODO_PRODUCT_AGENCY_FEED` |
 
 3. **Webhooks:** add `https://app.propelo.org/api/billing/dodo-webhook`, subscribe to the `subscription.*` and `payment.*` events, and copy its secret.
-4. In Render set `DODO_API_KEY`, `DODO_WEBHOOK_SECRET`, the product ids above, and `DODO_MODE=test`. Switch to `live` after step 7.
+4. In Render set `DODO_API_KEY`, `DODO_WEBHOOK_SECRET`, the product ids above, and `DODO_MODE=test`. Switch to `live` after step 6.
 5. If Render has `PRO_PRICE_USD_CENTS` or `ULTRA_PRICE_USD_CENTS` from before, delete them. The code's defaults are the new prices.
 
 ### Razorpay (optional, consultancies in India only)
@@ -73,23 +73,20 @@ The same Google client also sends recruiter emails from a member's Gmail. That n
 
 Mobile number sign-in is for members who add a number in Settings. New members create their account with email, Google, GitHub or LinkedIn first. Each text costs money through Twilio.
 
-## 6. Merge pull request 17
+## 6. Check it is live
 
-1. Wait for its checks to pass on GitHub.
-2. Merge it into `main`. The website updates through the `pages` workflow; Render redeploys the app.
-3. If Render doesn't redeploy by itself: **Manual Deploy → Deploy latest commit**.
-
-## 7. Check it is live
+If Render hasn't picked up the latest `main` by itself: **Manual Deploy → Deploy latest commit**.
 
 - `https://app.propelo.org/api/ready` answers `"ok": true`.
 - `https://app.propelo.org/pricing` shows $0, $39 and $79, the 90-day passes ($99 and $189) under Pro and Ultra, and no rupee prices.
 - The sign-in page shows the buttons you set up in step 5.
 - A Pro checkout in test mode opens Dodo at $39 (or the local-currency equivalent), and each pass at $99 or $189.
 - Buy Pro once with a real card, then refund it from the Dodo dashboard. Then set `DODO_MODE=live` with the live product ids.
+- Home shows "Your visa clock" once a visa is chosen in the first-run questions or in Settings, Your visa.
 
 If something is wrong, revert the merge on `main` and redeploy. Nothing in this release removes data or changes the database.
 
-## 8. Before you take real payments
+## 7. Before you take real payments
 
 - Move the Render web service to a paid plan ($7 a month) so it doesn't sleep. A sleeping app makes the first visitor wait about 50 seconds.
 - Neon's free plan allows 100 compute hours a month per project. An always-on app keeps the database awake longer; watch usage in the Neon console and move to its paid plan if it gets close.
