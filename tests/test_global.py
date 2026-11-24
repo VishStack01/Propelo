@@ -220,3 +220,13 @@ def test_india_rules_stay_until_a_place_abroad_is_named():
     assert not s.location.by_places
     s = feed.settings_from_dashboard({"homeCountry": "IN", "places": "United Kingdom", "targetRoles": ["backend"]})
     assert not s.location.by_places
+
+
+def test_arbeitnow_places_keep_their_own_country():
+    from propelo.sources.aggregators import arbeitnow_location
+    assert arbeitnow_location("Ivry-sur-Seine", "https://www.arbeitnow.fr/jobs/companies/x/data-analyst-1") == "Ivry-sur-Seine, France"
+    assert arbeitnow_location("paris, Île-de-France, France", "https://www.arbeitnow.fr/jobs/x") == "paris, Île-de-France, France"
+    assert arbeitnow_location("München", "https://www.arbeitnow.com/jobs/x") == "München, Germany"
+    assert arbeitnow_location("Berlin", "https://www.arbeitnow.com/jobs/x") == "Berlin"
+    assert arbeitnow_location("", "https://www.arbeitnow.com/jobs/x") == "Germany"
+    assert arbeitnow_location("Somewhere", "https://example.com/jobs/x") == "Somewhere"

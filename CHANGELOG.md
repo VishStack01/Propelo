@@ -16,6 +16,7 @@ All notable changes to Propelo. The format follows [Keep a Changelog](https://ke
 - Consultancy packs and the agency feed bought in rupees now cost the same as in dollars (Starter ₹28,599, Growth ₹54,999, Plus ₹1,07,799, feed ₹8,699), since every seat carries the global allowance. The rupee Pro pass, still off by default, is ₹2,999.
 
 ### Fixed
+- Arbeitnow roles outside Germany (its French, Dutch and other sites) no longer get ", Germany" added to their place, which showed a role in a Paris suburb to someone who chose Germany. The country now comes from the place, or from the Arbeitnow site the posting is on.
 - "1 are somewhere else" and similar near-miss counts now read in the singular.
 - A provider sign-in on an address someone else typed into the sign-up form but never confirmed now removes that person's password and sessions.
 
