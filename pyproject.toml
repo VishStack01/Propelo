@@ -48,7 +48,7 @@ propelo = "propelo.cli:main"
 include = ["propelo*"]
 
 [tool.setuptools.package-data]
-propelo = ["site_app.html", "data/*.json", "cloud/static/*.html", "cloud/static/app/*.html", "cloud/static/app/*.js", "cloud/static/app/*.webmanifest", "cloud/static/app/icons/*.png", "cloud/migrations/*.sql", "cloud/prompts/*.md"]
+propelo = ["site_app.html", "data/*.json", "cloud/static/*.html", "cloud/static/app/*.html", "cloud/static/app/*.js", "cloud/static/app/*.webmanifest", "cloud/static/app/icons/*.png", "cloud/static/app/peeps/*.svg", "cloud/migrations/*.sql", "cloud/prompts/*.md"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

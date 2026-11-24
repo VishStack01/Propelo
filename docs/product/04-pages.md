@@ -52,7 +52,7 @@ layouts checked at 390, 820 and 1280 px with no sideways scrolling (audit 22 Nov
 - **Purpose:** explain exactly what is shared, then join. **States:** bad code (404 page), seats full, already a member.
 
 ### Staff desk · /staff
-- **Purpose:** Interview Guarantee applications and claims; Job Guarantee cases. **Auth:** staff/admin + two-step in production. Every action audited.
+- **Purpose:** Interview Guarantee applications and claims (and Job Guarantee cases where a server still runs it). **Auth:** staff/admin + two-step in production. Every action audited.
 
 ### Admin console · /admin
 - **Purpose:** overview, account lookup, grant plan, make staff, reset two-step, suspend/restore, background jobs, audit log.

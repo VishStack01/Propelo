@@ -7,17 +7,17 @@ The code is ready. What's left needs accounts, money or a signature that only yo
 | # | What | Time | Cost | Blocks |
 |---|---|---|---|---|
 | 1 | [Deploy on Render](#1-deploy-on-render) | 1 hour | Paid plan for web, worker and database | Everything |
-| 2 | [Domain and email sending](#2-domain-and-email) | 1 hour + DNS wait | Domain, SMTP provider | Sign-ups, Razorpay review |
+| 2 | [Domain and email sending](#2-domain-and-email) | 1 hour + DNS wait | Domain, SMTP provider | Sign-ups, the payment provider's review |
 | 3 | [Hosted AI and a fallback](#3-hosted-ai) | 15 min | Model usage | AI allowance on paid plans |
-| 4 | [Razorpay for India](#4-razorpay-rupees) | 1 to 5 days (KYC) | Fee per payment | Rupee checkout |
-| 5 | [Dodo Payments for everyone else](#5-dodo-payments-dollars) | 1 to 3 days (review) | Fee per payment | Dollar checkout |
+| 4 | [Razorpay, optional](#4-razorpay-optional-rupee-links-for-consultancies) | 1 to 5 days (KYC) | Fee per payment | Rupee links for consultancies in India |
+| 5 | [Dodo Payments](#5-dodo-payments-every-member-payment) | 1 to 3 days (review) | Fee per payment | Every member payment |
 | 6 | [Google OAuth for recruiter emails](#6-gmail-sending) | 1 hour, then Google's review (weeks) | Free | Automatic recruiter emails for the public |
 | 7 | [Business and tax](#7-business-and-tax) | Varies | Accountant | Live payments |
 | 8 | [Backups, monitoring and a security test](#8-backups-monitoring-security) | Half a day | Small | Inviting people |
 | 9 | [Store listings](#9-phone-apps) | 1 to 2 weeks with review | Play and Apple fees | The phone apps |
 | 10 | [Repository settings and launch](#10-repository-and-launch) | 30 min | Free | Discovery |
-| 11 | [Concierge](#11-concierge) | 1 to 2 weeks | Staff time, lawyer | The human-run service |
-| 12 | [Guarantees](#12-guarantees) | 1 day, plus a lawyer's review | Refunds you budget for | The Interview and Job Guarantees, by application |
+| 11 | [Concierge](#11-concierge) | Retired | | Nothing: the Job Guarantee is no longer offered |
+| 12 | [Guarantees](#12-guarantees) | 1 day, plus a lawyer's review | Refunds you budget for | The Interview Guarantee, by application |
 | 13 | [More job sources and the extension](#13-sources-and-extension) | 1 hour, plus Chrome review | Free keys; $5 Chrome fee | Openings outside company boards; the extension for everyone |
 
 ## 1. Deploy on Render
@@ -40,24 +40,30 @@ Set `PROPELO_LLM=anthropic` and `ANTHROPIC_API_KEY` on `propelo-web` (or `openai
 
 Rough cost check before you set prices: an AI action is one model call of a few thousand tokens. Multiply your provider's price per call by 1,500 and make sure Ultra still leaves margin after payment fees and tax.
 
-## 4. Razorpay (India plans, in rupees)
+## 4. Razorpay (optional: rupee links for consultancies)
 
-1. Sign up and complete activation (KYC). Razorpay reviews your website: give it the app's address and these pages, which the app serves: `/terms`, `/privacy`, `/refunds`, `/contact`, `/pricing`. Have the policy text reviewed for your situation first; it's a plain-language starting point, not legal advice.
-2. In **Test mode**, under Subscriptions > Plans, create two monthly plans: **Pro (India) at ₹799** and **Ultra (India) at ₹1,999** (the India plans: only members who live in India and look for work there can buy them; `PRO_PRICE_INR` and `ULTRA_PRICE_INR` must match). Copy their `plan_...` ids.
-3. Settings > API Keys: generate a key id and secret.
-4. Settings > Webhooks: add `https://<your-app>/api/billing/webhook`, choose a secret, select the `subscription.*` events.
-5. Set `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, `RAZORPAY_PLAN_PRO` and `RAZORPAY_PLAN_ULTRA` on `propelo-web` and redeploy.
-6. Test with a test card or UPI id: upgrade to Pro, then switch to Ultra (Pro stays on until Ultra is paid, then Pro is cancelled for you), cancel, and check that Razorpay's webhook log shows 200s.
-7. Go **Live**: create the same plans and webhook in live mode (the ids differ) and replace the values.
+Members pay only through Dodo, in dollars. Razorpay is optional: it lets a study-abroad consultancy or agency in India pay for its 30 days by a rupee payment link (UPI, cards, netbanking).
 
-## 5. Dodo Payments (dollars)
+1. Sign up and complete activation (KYC). Razorpay reviews your website: give it the app's address and these pages, which the app serves: `/terms`, `/privacy`, `/refunds`, `/contact`, `/business`. Have the policy text reviewed for your situation first; it's a plain-language starting point, not legal advice.
+2. Settings > API Keys: generate a key id and secret.
+3. Settings > Webhooks: add `https://<your-app>/api/billing/webhook`, choose a secret, select `payment_link.paid`.
+4. Set `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` and `RAZORPAY_WEBHOOK_SECRET` on `propelo-web` and redeploy. `RAZORPAY_PLAN_PRO`, `RAZORPAY_PLAN_ULTRA`, `PRO_PRICE_INR` and `ULTRA_PRICE_INR` are no longer read: delete them if they are set.
+5. Test: open `/business?currency=INR`, buy 30 days of a pack with a test card, and check Razorpay's webhook log shows 200s.
 
-Dodo is the merchant of record for sales outside India: it charges, files VAT and sales tax, and pays you out.
+## 5. Dodo Payments (every member payment)
+
+Dodo is the merchant of record: it charges each buyer in their own currency (turn on Adaptive Currency), files VAT and sales tax, and pays you out.
 
 1. Sign up at dodopayments.com and complete business verification.
-2. In test mode, create two subscription products: **Pro at $22.50 a month** and **Ultra at $48.50 a month**. Copy their `pdt_...` ids.
-3. Developer > API keys: create a key. Developer > Webhooks: add `https://<your-app>/api/billing/dodo-webhook` and copy the `whsec_...` secret. Subscribe to the `subscription.*` events.
-4. Set `DODO_API_KEY`, `DODO_WEBHOOK_SECRET`, `DODO_PRODUCT_PRO`, `DODO_PRODUCT_ULTRA` and `DODO_MODE=test`. Redeploy and run the same tests as for Razorpay, plus **Invoices and card** in Settings, which opens Dodo's customer portal.
+2. In test mode, create these products and copy each `pdt_...` id:
+   - **Pro**, a subscription at **$39 a month** → `DODO_PRODUCT_PRO`
+   - **Ultra**, a subscription at **$79 a month** → `DODO_PRODUCT_ULTRA`
+   - **Pro, 90-day pass**, a one-time payment of **$99** → `DODO_PRODUCT_PASS`
+   - **Ultra, 90-day pass**, a one-time payment of **$189** → `DODO_PRODUCT_PASS_ULTRA`
+   - **Interview Guarantee**, a one-time payment of **$59** → `DODO_PRODUCT_GUARANTEE`
+   - the business packs, if you sell them (see `docs/business.md`)
+3. Developer > API keys: create a key. Developer > Webhooks: add `https://<your-app>/api/billing/dodo-webhook` and copy the `whsec_...` secret. Subscribe to the `subscription.*` and `payment.*` events.
+4. Set `DODO_API_KEY`, `DODO_WEBHOOK_SECRET`, the product ids and `DODO_MODE=test`. Redeploy. Test with a test card: upgrade to Pro, switch to Ultra (Pro stays on until Ultra is paid, then Pro is cancelled for you), cancel, buy each pass on a second account, and open **Invoices and card** in Settings, which opens Dodo's customer portal.
 5. Go live: create live products and webhook, replace the values and set `DODO_MODE=live`.
 
 Two things in the Dodo integration follow its documentation as of this release but weren't tested against a live account: cancelling (`PATCH /subscriptions/{id}` with `cancel_at_next_billing_date`) and the customer portal link. Check both in test mode before going live.
@@ -107,28 +113,19 @@ fetch("/api/admin/grant", {method: "POST", headers: {"Content-Type": "applicatio
 
 ## 11. Concierge
 
-Concierge is a person on your team running a candidate's search, paid by a share of the fixed pay after they join. The software is ready; the service needs people and paperwork.
-
-1. **Have a lawyer review the Concierge terms** at `/terms#concierge` (fee, instalments, the 90-day rule, the 6-month attribution window, and the clause on hidden offers) before the first case. Charging candidates a placement fee is legal in India, but the terms are your contract with them.
-2. **GST:** placement services are usually taxable. Ask your accountant, then set `CONCIERGE_TAX_RATE` (for example 18) once you're registered.
-3. **Partners:** create accounts for your talent partners, then as the operator run `fetch("/api/admin/staff", {method: "POST", headers: {"Content-Type": "application/json", "X-Propelo-CSRF": "1"}, body: JSON.stringify({email: "partner@yourdomain"})})`. They work at `https://<your-app>/staff`. Unassigned Ultra requests show first.
-4. **Turn it on** once steps 1 to 3 are done: set `CONCIERGE=on` on both services (the blueprint starts with it off). Requests email every partner.
-5. **Collecting fees:** instalments use Razorpay payment links. In the Razorpay dashboard, add the `payment_link.paid` event to the same webhook. Keep each offer letter you verify.
-6. **Other countries:** `CONCIERGE_COUNTRIES` widens it, but only after legal advice for each country. The UK prohibits charging work-seekers and is always refused; most EU countries restrict it; many US states license and cap fees.
-7. **Train partners on the rules** shown at the bottom of the workspace: never sign in as the candidate, never automate LinkedIn, send nothing the candidate hasn't approved, write only what's true.
+Retired. The Job Guarantee was Concierge: a talent partner running the search for jobs in India, paid by a fee after joining. With Propelo's move to the US, UK, Ireland and the Netherlands it is no longer offered: leave `CONCIERGE=off`. The code stays for anyone running their own copy; turning it on also needs its terms put back on `/terms`, and legal advice for every country you offer it in (the UK prohibits charging work-seekers and is always refused).
 
 ## 12. Guarantees
 
-Two guarantees sit outside the plans. Pro and Ultra members apply for them (the app offers both in a one-time pop-up and on Home), and a person on the team reviews every application. Nobody is enrolled directly. The blueprint turns them on with `GUARANTEE=on` and `CONCIERGE=on`.
+The Interview Guarantee sits outside the plans. Pro and Ultra members apply for it (the app offers it in a one-time pop-up and on Home), and a person on the team reviews every application. Nobody is enrolled directly. The blueprint turns it on with `GUARANTEE=on`.
 
-- **Interview Guarantee:** if accepted, the member pays ₹4,999 (or $59) once (`GUARANTEE_INTERVIEW_PRICE_INR`, `GUARANTEE_INTERVIEW_PRICE_USD_CENTS`) within 7 days, and gets 45 days (`GUARANTEE_DAYS`). Their part: 25 applications (`GUARANTEE_MIN_APPLICATIONS`) in at least 3 different weeks (`GUARANTEE_MIN_WEEKS`). Fewer than 3 interviews (`GUARANTEE_MIN_INTERVIEWS`) and no second round by day 45: the full ₹4,999 comes back. Plan fees are never refunded.
-- **Job Guarantee:** this is Concierge. Nothing upfront; the member applies, the team accepts or declines with a reason, and the fee is 8% of yearly fixed pay (6% on the part above ₹20 lakh) only after they join (`CONCIERGE_RATE_LOW`, `CONCIERGE_RATE_HIGH`, `CONCIERGE_BAND`). Not placed, nothing to pay.
+- **Interview Guarantee:** if accepted, the member pays $59 once (`GUARANTEE_INTERVIEW_PRICE_USD_CENTS`) within 7 days, and gets 45 days (`GUARANTEE_DAYS`). Their part: 25 applications (`GUARANTEE_MIN_APPLICATIONS`) in at least 3 different weeks (`GUARANTEE_MIN_WEEKS`). Fewer than 3 interviews (`GUARANTEE_MIN_INTERVIEWS`) and no second round by day 45: the full $59 comes back. Plan fees are never refunded.
 
-1. **Have the lawyer read `/terms#guarantees`** with the Concierge terms. India's consumer authority (CCPA) acts against "100% placement" and "guaranteed job" claims, so every page words these as money back or a fee after placement, with the conditions next to them. Keep it that way in ads and posts: "an interview in 45 days or your ₹2,999 back", never "guaranteed job".
-2. **Reviewing applications.** Interview Guarantee applications email every partner and show in `/staff` under Interview Guarantee, with the roles they're aiming for, their note and how many roles Propelo matched them in the last 30 days (about 40 is a healthy sign). Accept only where an interview in 45 days is realistic; a decline needs a sentence they'll read. Job Guarantee applications are Concierge cases in `requested`: "Accept and take this case" or "Decline application" with a reason. Answer within 2 working days, as the app promises.
-3. **Payments.** Rupees use Razorpay payment links (the same webhook, with the `payment_link.paid` event). For dollars, create a one-time product in Dodo priced at $59 and set `DODO_PRODUCT_GUARANTEE`; the existing Dodo webhook needs the `payment.succeeded` event. Test both in test mode: apply, accept in `/staff`, pay, and check the guarantee shows "In progress". An acceptance not paid within 7 days lapses.
-4. **Budget for refunds.** A refund is at most the ₹4,999 paid. Watch the claim rate in the first two months and tune who you accept before tuning the rules (change `GUARANTEE_MIN_APPLICATIONS` or `GUARANTEE_MIN_WEEKS` only with notice).
-5. **Deciding claims.** Claims show in `/staff` under Interview Guarantee. Before approving, look at the person's pipeline and inbox for an interview, invitation or offer in the window. Approve (the amount defaults to the price paid and can't exceed it), issue the refund in the Razorpay or Dodo dashboard to the original payment, then mark it refunded. Answer within 5 working days, as the terms promise.
+1. **Have the lawyer read `/terms#guarantees`.** Consumer regulators act against "guaranteed job" claims, so every page words it as money back, with the conditions next to it and "Terms and conditions apply". Keep it that way in ads and posts: "3 interviews in 45 days or your $59 back", never "guaranteed job".
+2. **Reviewing applications.** Applications email every partner and show in `/staff` under Interview Guarantee, with the roles they're aiming for, their note and how many roles Propelo matched them in the last 30 days (about 40 is a healthy sign). Accept only where 3 interviews in 45 days are realistic; a decline needs a sentence they'll read. Answer within 2 working days, as the app promises.
+3. **Payments.** Create the one-time **Interview Guarantee** product at $59 in Dodo and set `DODO_PRODUCT_GUARANTEE`; the Dodo webhook needs the `payment.succeeded` event. Test it in test mode: apply, accept in `/staff`, pay, and check the guarantee shows "In progress". An acceptance not paid within 7 days lapses.
+4. **Budget for refunds.** A refund is at most the $59 paid. Watch the claim rate in the first two months and tune who you accept before tuning the rules (change `GUARANTEE_MIN_APPLICATIONS` or `GUARANTEE_MIN_WEEKS` only with notice).
+5. **Deciding claims.** Claims show in `/staff` under Interview Guarantee. Before approving, look at the person's pipeline and inbox for an interview, invitation or offer in the window. Approve (the amount defaults to the price paid and can't exceed it), issue the refund in the Dodo dashboard to the original payment, then mark it refunded. Answer within 5 working days, as the terms promise.
 6. **Goodwill or testing:** `POST /api/admin/guarantee {email, kind: "interview"}` starts one without payment for an eligible member.
 7. **Track the promise.** `/api/admin/audit?kind=guarantee` lists applications, reviews, payments, claims and decisions.
 

@@ -66,7 +66,8 @@ class Config:
     github_client_id: str = ""  # Sign in with GitHub: name and confirmed email only
     github_client_secret: str = ""
     # Google OAuth for sending recruiter emails from the person's own Gmail (scope gmail.send only).
-    # Propelo Concierge (human-run search, fee only after joining). Off unless CONCIERGE=on.
+    # Propelo Concierge, sold as the Job Guarantee (a human-run search in India, fee only after joining). Retired with the
+    # move to the US, UK, Ireland and the Netherlands: it stays off and isn't offered anywhere. CONCIERGE=on still runs it.
     concierge_enabled: bool = False
     concierge_countries: tuple = ("IN",)
     concierge_rate_low: float = 8.0
@@ -78,11 +79,14 @@ class Config:
     # Money-back guarantees (see guarantee.py): GUARANTEE_MIN_INTERVIEWS interviews or a second round within GUARANTEE_DAYS on Pro or Ultra, and a job
     # within JOB_GUARANTEE_DAYS with Concierge, or the plan fees paid in that time are refunded.
     guarantee_enabled: bool = False
-    pass_enabled: bool = False          # PASS=on: sell Pro for a fixed number of days, paid once (passes.py)
+    # 90-day passes (passes.py): Pro or Ultra for PASS_DAYS, paid once, nothing renews. On unless PASS=off; each pass
+    # is on sale once its one-time Dodo product is set.
+    pass_enabled: bool = True
     pass_days: int = 90
-    pass_inr: int = 2999
-    pass_usd_cents: int = 9900
-    dodo_product_pass: str = ""        # a one-time Dodo product priced at the pass's dollar price
+    pass_usd_cents: int = 9900          # the Pro pass
+    pass_ultra_usd_cents: int = 18900   # the Ultra pass
+    dodo_product_pass: str = ""         # a one-time Dodo product at the Pro pass's price
+    dodo_product_pass_ultra: str = ""   # a one-time Dodo product at the Ultra pass's price
     guarantee_days: int = 45
     guarantee_min_apps: int = 25
     guarantee_min_weeks: int = 3
@@ -91,36 +95,25 @@ class Config:
     guarantee_claim_days: int = 30
     job_guarantee_days: int = 180
     # Pro and Ultra members apply for the Interview Guarantee; once the team accepts them they pay its price once,
-    # and get it back if that doesn't happen in GUARANTEE_DAYS. The Job Guarantee has no upfront price: it is a
-    # reviewed Concierge application, paid by the placement fee after joining (guarantee_job_inr is unused).
-    guarantee_interview_inr: int = 4999
+    # and get it back if that doesn't happen in GUARANTEE_DAYS.
     guarantee_interview_usd_cents: int = 5900
-    guarantee_job_inr: int = 2999
     dodo_product_guarantee: str = ""   # a one-time Dodo product priced at the Interview Guarantee's dollar price
     security_email: str = ""  # shown in /.well-known/security.txt; falls back to SUPPORT_EMAIL
     google_client_id: str = ""  # one Google client serves Sign in with Google and sending from the member's Gmail
     google_client_secret: str = ""
-    # Plans and billing. Prices are in rupees per month; credits are AI actions per calendar month (UTC).
+    # Plans and billing. Credits are AI actions per calendar month (UTC).
     secrets_key: str = ""  # encrypts users' own AI keys at rest; any long random string
-    # Prices are shown in US dollars everywhere and paid through Dodo Payments (merchant of record: it handles VAT
-    # and sales tax, and with Adaptive Currency on it charges each buyer in their own currency). USD prices are in
-    # cents. The rupee prices and Razorpay remain only for a self-hosted server that has no Dodo account.
-    # India plans: for members who live in India and are job-hunting there. Paid in rupees through Razorpay,
-    # with a smaller AI allowance so the margin holds at an Indian price (docs/business.md has the sums).
-    pro_price_inr: int = 799
-    ultra_price_inr: int = 1999
-    pro_ai_credits_inr: int = 120
-    ultra_ai_credits_inr: int = 300
+    # Member prices are in US dollars, in cents, and paid through Dodo Payments (merchant of record: it handles VAT
+    # and sales tax, and with Adaptive Currency on it charges each buyer in their own currency).
     pro_price_usd_cents: int = 3900
     ultra_price_usd_cents: int = 7900
     free_ai_credits: int = 15
     pro_ai_credits: int = 400
     ultra_ai_credits: int = 1500
+    # Razorpay takes rupee payment links from consultancies and agencies in India (partners.py). Members pay through Dodo.
     razorpay_key_id: str = ""
     razorpay_key_secret: str = ""
     razorpay_webhook_secret: str = ""
-    razorpay_plan_pro: str = ""  # plan_... created in the Razorpay dashboard at pro_price_inr per month
-    razorpay_plan_ultra: str = ""  # plan_... at ultra_price_inr per month
     dodo_api_key: str = ""
     dodo_webhook_secret: str = ""  # whsec_... from Dodo's webhook settings
     dodo_product_pro: str = ""  # pdt_... a monthly subscription product at pro_price_usd_cents
@@ -175,11 +168,12 @@ class Config:
             concierge_instalments=_int("CONCIERGE_INSTALMENTS", 3),
             concierge_attribution_days=_int("CONCIERGE_ATTRIBUTION_DAYS", 180),
             guarantee_enabled=e("GUARANTEE", "off").strip().lower() in ("on", "1", "true", "yes"),
-            pass_enabled=e("PASS", "off").strip().lower() in ("on", "1", "true", "yes"),
+            pass_enabled=e("PASS", "on").strip().lower() in ("on", "1", "true", "yes"),
             pass_days=_int("PASS_DAYS", 90),
-            pass_inr=_int("PASS_PRICE_INR", 2999),
             pass_usd_cents=_int("PASS_PRICE_USD_CENTS", 9900),
+            pass_ultra_usd_cents=_int("PASS_ULTRA_PRICE_USD_CENTS", 18900),
             dodo_product_pass=e("DODO_PRODUCT_PASS", "").strip(),
+            dodo_product_pass_ultra=e("DODO_PRODUCT_PASS_ULTRA", "").strip(),
             guarantee_days=_int("GUARANTEE_DAYS", 45),
             guarantee_min_apps=_int("GUARANTEE_MIN_APPLICATIONS", 25),
             guarantee_min_weeks=_int("GUARANTEE_MIN_WEEKS", 3),
@@ -187,18 +181,12 @@ class Config:
             guarantee_min_interviews=_int("GUARANTEE_MIN_INTERVIEWS", 3),
             guarantee_claim_days=_int("GUARANTEE_CLAIM_DAYS", 30),
             job_guarantee_days=_int("JOB_GUARANTEE_DAYS", 180),
-            guarantee_interview_inr=_int("GUARANTEE_INTERVIEW_PRICE_INR", 4999),
             guarantee_interview_usd_cents=_int("GUARANTEE_INTERVIEW_PRICE_USD_CENTS", 5900),
-            guarantee_job_inr=_int("JOB_GUARANTEE_PRICE_INR", 2999),
             dodo_product_guarantee=e("DODO_PRODUCT_GUARANTEE", "").strip(),
             security_email=e("SECURITY_EMAIL", "").strip(),
             google_client_id=e("GOOGLE_CLIENT_ID", "").strip(),
             google_client_secret=e("GOOGLE_CLIENT_SECRET", "").strip(),
             secrets_key=e("SECRETS_KEY", "").strip(),
-            pro_price_inr=_int("PRO_PRICE_INR", 799),
-            ultra_price_inr=_int("ULTRA_PRICE_INR", 1999),
-            pro_ai_credits_inr=_int("PRO_AI_CREDITS_INR", 120),
-            ultra_ai_credits_inr=_int("ULTRA_AI_CREDITS_INR", 300),
             pro_price_usd_cents=_int("PRO_PRICE_USD_CENTS", 3900),
             ultra_price_usd_cents=_int("ULTRA_PRICE_USD_CENTS", 7900),
             free_ai_credits=_int("FREE_AI_CREDITS", 15),
@@ -207,8 +195,6 @@ class Config:
             razorpay_key_id=e("RAZORPAY_KEY_ID", "").strip(),
             razorpay_key_secret=e("RAZORPAY_KEY_SECRET", "").strip(),
             razorpay_webhook_secret=e("RAZORPAY_WEBHOOK_SECRET", "").strip(),
-            razorpay_plan_pro=e("RAZORPAY_PLAN_PRO", "").strip(),
-            razorpay_plan_ultra=e("RAZORPAY_PLAN_ULTRA", "").strip(),
             dodo_api_key=e("DODO_API_KEY", "").strip(),
             dodo_webhook_secret=e("DODO_WEBHOOK_SECRET", "").strip(),
             dodo_product_pro=e("DODO_PRODUCT_PRO", "").strip(),
@@ -220,7 +206,8 @@ class Config:
 
     @property
     def razorpay_enabled(self) -> bool:
-        return bool(self.razorpay_key_id and self.razorpay_key_secret and self.razorpay_webhook_secret and self.razorpay_plan_pro)
+        """Rupee payment links for consultancies and agencies."""
+        return bool(self.razorpay_key_id and self.razorpay_key_secret and self.razorpay_webhook_secret)
 
     @property
     def dodo_enabled(self) -> bool:
@@ -228,7 +215,8 @@ class Config:
 
     @property
     def billing_enabled(self) -> bool:
-        return self.razorpay_enabled or self.dodo_enabled
+        """Members can buy Pro and Ultra (in dollars, through Dodo)."""
+        return self.dodo_enabled
 
     @property
     def linkedin_enabled(self) -> bool:
@@ -280,8 +268,8 @@ class Config:
             problems.append("SIGNUP_MODE must be open, allowlist or closed.")
         if len(self.secrets_key) < 32:
             problems.append("SECRETS_KEY must be a random string of at least 32 characters (it encrypts users' AI keys).")
-        if any((self.razorpay_key_id, self.razorpay_key_secret, self.razorpay_webhook_secret, self.razorpay_plan_pro, self.razorpay_plan_ultra)) and not self.razorpay_enabled:
-            problems.append("Billing is half set up: set all of RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET, RAZORPAY_WEBHOOK_SECRET and RAZORPAY_PLAN_PRO, or none.")
+        if any((self.razorpay_key_id, self.razorpay_key_secret, self.razorpay_webhook_secret)) and not self.razorpay_enabled:
+            problems.append("Razorpay is half set up: set all of RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET and RAZORPAY_WEBHOOK_SECRET, or none.")
         if any((self.dodo_api_key, self.dodo_webhook_secret, self.dodo_product_pro)) and not self.dodo_enabled:
             problems.append("Dodo Payments is half set up: set all of DODO_API_KEY, DODO_WEBHOOK_SECRET and DODO_PRODUCT_PRO, or none.")
         if any((self.dodo_api_key, self.dodo_webhook_secret, self.dodo_product_pro, self.dodo_product_ultra)) and not self.dodo_enabled:
@@ -289,8 +277,8 @@ class Config:
                 problems.append("Dodo Payments is half set up: set all of DODO_API_KEY, DODO_WEBHOOK_SECRET and DODO_PRODUCT_PRO, or none.")
         if self.concierge_enabled and not (0 < self.concierge_rate_high <= self.concierge_rate_low <= 8):
             problems.append("CONCIERGE_RATE_LOW and CONCIERGE_RATE_HIGH must be between 0 and 8, with the rate above the band no higher than below it.")
-        if self.pass_enabled and not (7 <= self.pass_days <= 366 and self.pass_inr >= 1 and self.pass_usd_cents >= 100):
-            problems.append("PASS is on but PASS_DAYS (7 to 366), PASS_PRICE_INR or PASS_PRICE_USD_CENTS is out of range.")
+        if self.pass_enabled and not (7 <= self.pass_days <= 366 and self.pass_usd_cents >= 100 and self.pass_ultra_usd_cents >= 100):
+            problems.append("PASS is on but PASS_DAYS (7 to 366), PASS_PRICE_USD_CENTS or PASS_ULTRA_PRICE_USD_CENTS is out of range.")
         if self.guarantee_enabled and not (30 <= self.guarantee_days <= 180 and 1 <= self.guarantee_min_weeks <= self.guarantee_days // 7
                                            and self.guarantee_min_apps >= 1 and 1 <= self.guarantee_min_interviews <= 10 and 90 <= self.job_guarantee_days <= 365):
             problems.append("Guarantee settings look wrong: GUARANTEE_DAYS 30 to 180, GUARANTEE_MIN_WEEKS within it, JOB_GUARANTEE_DAYS 90 to 365.")

@@ -33,8 +33,8 @@ sponsorship and, for UK roles, whether the employer is on the Home Office sponso
 
 | customer | what they buy | status |
 | --- | --- | --- |
-| Job seekers in India looking for work in India | Free; India plans Pro ₹799 / Ultra ₹1,999 a month (smaller AI allowance); Interview Guarantee $59; Job Guarantee (8% of salary after joining) | Built |
-| Job seekers abroad, and people in India looking for work abroad (incl. Indian graduates on post-study visas) | Global plans: Pro $39 / Ultra $79 a month, charged in local currency | Built |
+| International students and graduates, and people in India, looking for work in the US, UK, Ireland or the Netherlands (incl. Indian graduates on post-study visas) | Free; Pro $39 / Ultra $79 a month, or a 90-day pass ($99 / $189), charged in local currency; Interview Guarantee $59 | Built |
+| Job seekers inside India looking for work in India | Not a focus since 2.17: the India plans (₹799 / ₹1,999) and the Job Guarantee are retired. The matching rules for India still work for anyone who picks it | Retired |
 | Study-abroad consultancies and college placement cells | Branded portal with student seats: Starter $325 (25), Growth $625 (50), Plus $1,225 (100) per 30 days | Built in 2.8; no customers yet |
 | Recruiting agencies | Filtered roles feed (CSV/JSON, key) $99 per 30 days | Built in 2.8; no customers yet |
 
@@ -48,12 +48,11 @@ decision, nothing invented, nothing submitted below the person's apply line.
 ## Main journeys (detail in 03)
 
 1. Visitor → site → sign up → confirm email → resume and settings → first matches → apply (kit, extension or agent).
-2. Visitor → pricing → checkout (Razorpay / Dodo) → plan on → faster matching and more AI.
+2. Visitor → pricing → checkout (Dodo, in dollars, charged in local currency) → plan or 90-day pass on → faster matching and more AI.
 3. Member → Interview Guarantee application → staff review → pay → 45 days → 3 interviews or a second round, or refund.
-4. Member → Job Guarantee request → staff partner proposes roles → member approves → placed → fee instalments.
-5. Business → `/business` → free pilot request or buy → staff approves / payment → invite students or set feed.
-6. Student → consultancy invite link → sign up → consent → seat with Pro.
-7. Operator → `/admin`, `/staff`, `/partner` → accounts, guarantees, cases, business accounts.
+4. Business → `/business` → free pilot request or buy → staff approves / payment → invite students or set feed.
+5. Student → consultancy invite link → sign up → consent → seat with Pro.
+6. Operator → `/admin`, `/staff`, `/partner` → accounts, guarantees, cases, business accounts.
 
 ## How people find it (today)
 
@@ -63,15 +62,14 @@ analytics and no referral programme in the product.
 
 ## How it makes money
 
-Subscriptions (Razorpay subscriptions in rupees, Dodo in dollars), one-off Interview Guarantee payments,
-Job Guarantee placement fees (manual instalment links), and business plans (30 days prepaid, payment link or
-checkout). No paying customers are recorded anywhere this audit could see.
+Subscriptions and 90-day passes (Dodo, in dollars), one-off Interview Guarantee payments, and business plans
+(30 days prepaid, a Dodo checkout or a Razorpay rupee link). No paying customers are recorded anywhere this audit could see.
 
 ## How it is run
 
 - **Admins** (`is_admin`): `/admin` (overview, account lookup, grant plans, staff access, suspend, two-step reset,
   audit log), plus everything staff can do.
-- **Staff** (`is_staff`): `/staff` (Job Guarantee cases, Interview Guarantee applications and refund claims) and
+- **Staff** (`is_staff`): `/staff` (Interview Guarantee applications and refund claims) and
   `/partner` (business accounts, pilot approvals).
 - **Infrastructure**: Render web service + worker + PostgreSQL (blueprint `render.yaml`); GitHub Actions for the
   scan, Pages, tests, security; GitHub Releases host the feed.

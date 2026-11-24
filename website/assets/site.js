@@ -42,10 +42,10 @@
   }
 
   // Live numbers from the latest scan (data/stats.json, written by `propelo site`).
-  var fmt = function (n) { return Number(n).toLocaleString("en-IN"); };
+  var fmt = function (n) { return Number(n).toLocaleString("en-GB"); };
   fetch("data/stats.json", { cache: "no-cache" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (s) {
     if (!s || !s.openings) return;
-    var date = s.feedAt ? new Date(s.feedAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : "";
+    var date = s.feedAt ? new Date(s.feedAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "";
     var vals = { openings: fmt(s.openings), companies: fmt(s.companies), boards: fmt(s.boards), relisted: fmt(s.relisted), date: date };
     $$("[data-stat]").forEach(function (el) { var v = vals[el.getAttribute("data-stat")]; if (v) el.textContent = v; });
     (s.byAts || []).slice(0, 5).forEach(function (a, i) {

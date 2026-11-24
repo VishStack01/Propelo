@@ -44,14 +44,13 @@
 </nav>
 
 <main id="main">
-<!-- 01 Hero -->
+<!-- Hero -->
 <section class="hero">
   <div class="wrap">
-    <div class="pills reveal"><span class="pill">Jobs abroad</span><span class="pill">Visa sponsor checks</span><span class="pill">Open source</span></div>
     <div class="hero-split">
       <div>
         <h1 class="split" data-wave>Find the roles you qualify for. Apply with only <mark>what's true</mark>.</h1>
-        <p class="sub reveal">Propelo reads thousands of company career pages several times a day, checks each role against your rules with a quote from the posting, and shows whether the employer can sponsor your visa. Built for people looking for work outside their home country, open source and free to start.</p>
+        <p class="sub reveal">Propelo reads thousands of company career pages several times a day, checks each role against your rules with a quote from the posting, and shows whether the employer can sponsor your visa. Built for international students and graduates looking for work in the US, UK, Ireland and the Netherlands. Open source and free to start.</p>
         <div class="ctas reveal">
           <a class="btn" data-app="/signup" href="https://app.propelo.org/signup">Start free<svg><use href="#i-right"/></svg></a>
           <a class="btn light" href="jobs.html">Browse open roles</a>
@@ -60,7 +59,8 @@
         <p class="checkline reveal" style="margin-top:6px">Got a job offer by message or email? <a href="check.html">Check if it's real, free</a>.</p>
         <p class="facts-line reveal"><span><b data-stat="openings">32,776</b> open roles in the last scan</span><span><b data-stat="companies">4,678</b> companies</span><span><b>Free</b> to start</span></p>
       </div>
-      <div class="panel curv" aria-hidden="false">
+      <div class="stage">
+      <div class="panel curv">
         <canvas id="dots" aria-hidden="true"></canvas>
         <div class="notice" role="img" aria-label="A role in Propelo with the quotes behind each check, and an example profile's fit">
           <div class="nhead">
@@ -77,6 +77,8 @@
           <div class="nmatch"><span class="ok">Python, from your RAG project</span><span class="ok">FastAPI, from Acme Labs</span><span class="gap">Kubernetes: not in your profile</span></div>
           <p class="nsrc"><i></i><span data-ex-src="1">Greenhouse · posted 2 h ago</span> · from the last scan</p>
         </div>
+      </div>
+      <img class="peep peep-hero reveal" src="assets/peeps/hero.svg" alt="" width="1362" height="2944" style="--d:.7s">
       </div>
     </div>
     <div class="notes">
@@ -102,7 +104,7 @@
 <section style="padding-top:64px" aria-label="Where the roles come from">
   <div class="wrap bento">
     <div class="card where reveal">
-      <span class="label" style="align-self:flex-start">Where the roles come from</span>
+      <h3>Where the roles come from</h3>
       <div class="bars" id="bars">
         <div class="bar" style="--n:0"><i style="background:var(--orange)"></i><p data-ats="0">Workday career sites</p><b data-pct="0">31%</b><div class="tr"><div class="fl" style="--v:.31;background:var(--orange)"></div></div></div>
         <div class="bar" style="--n:1"><i style="background:var(--pink)"></i><p data-ats="1">Greenhouse job boards</p><b data-pct="1">21%</b><div class="tr"><div class="fl" style="--v:.21;background:var(--pink)"></div></div></div>
@@ -123,30 +125,31 @@
         </div>
       </div>
       <div class="card stat reveal">
-        <div class="big"><b data-stat="openings" data-count>32,776</b><span>open roles</span></div>
-        <p>found at <span data-stat="companies">4,678</span> companies in one scan, each linked to the company's own posting</p>
-        <div class="minis"><span><b data-stat="relisted">771</b> re-listed roles flagged</span><span><b>Hourly</b> scans</span></div>
+        <h3>Checked before it reaches you</h3>
+        <ul class="checks">
+          <li><span><b data-stat="openings">32,776</b> open roles at <b data-stat="companies">4,678</b> companies in the last scan</span></li>
+          <li><span><b data-stat="relisted">771</b> re-listed roles flagged, so an old posting can't pass as new</span></li>
+          <li><span>Every role links to the company's own posting, never a copy</span></li>
+        </ul>
       </div>
     </div>
   </div>
 </section>
 
-<!-- 02 Approach -->
+<!-- Approach -->
 <section id="approach">
   <div class="wrap">
     <div class="head">
       <div>
-        <div class="pills reveal"><span class="pill">Problem</span><span class="pill">Approach</span><span class="pill">Principles</span></div>
-        <h2 class="lede split" style="margin-top:32px">Most job bots optimise the weakest variable: <mark>volume</mark>. They read job cards instead of postings, invent resume lines and guess form answers. Propelo is built the other way round.</h2>
+        <h2 class="lede split">Most job bots optimise the weakest variable: <mark>volume</mark>. They read job cards instead of postings, invent resume lines and guess form answers. Propelo is built the other way round.</h2>
       </div>
-      <div class="ghost" aria-hidden="true" data-n="02"></div>
     </div>
     <div class="principles" id="principles" aria-label="Principles">
-      <div class="pr" style="--n:0"><b>01</b><p>Your key, your data. It runs on your machine with your own AI provider.</p></div>
-      <div class="pr" style="--n:1"><b>02</b><p>Never invents a claim. Every resume line cites your own work.</p></div>
-      <div class="pr" style="--n:2"><b>03</b><p>Shows its work: the sentence behind every decision.</p></div>
-      <div class="pr" style="--n:3"><b>04</b><p>Messages are drafted. You send them.</p></div>
-      <div class="pr" style="--n:4"><b>05</b><p>Platform-safe: no LinkedIn bots and no captcha solving.</p></div>
+      <div class="pr" style="--n:0"><b>Your key, your data.</b><p>Run it on your own machine with your own AI provider, or in your account.</p></div>
+      <div class="pr" style="--n:1"><b>Nothing invented.</b><p>Every resume line points back to your own work.</p></div>
+      <div class="pr" style="--n:2"><b>Shows its work.</b><p>The sentence from the posting behind every keep or skip.</p></div>
+      <div class="pr" style="--n:3"><b>You press send.</b><p>Messages are drafted for you. Recruiter emails go out only if you turn them on.</p></div>
+      <div class="pr" style="--n:4"><b>Platform-safe.</b><p>No LinkedIn bots and no captcha solving.</p></div>
     </div>
     <div class="audiences">
       <div class="reveal">
@@ -161,23 +164,21 @@
   </div>
 </section>
 
-<!-- 03 Product -->
+<!-- Product -->
 <section id="product">
   <div class="wrap">
     <div class="head">
       <div>
-        <div class="pills reveal"><span class="pill">Dashboard</span><span class="pill">Workflow</span></div>
-        <h2 class="lede split" style="margin-top:32px">One dashboard for the whole search: <mark>fresh roles</mark>, a daily batch to approve, tailored applications, replies from your inbox and interviews on your calendar.</h2>
+        <h2 class="lede split">One dashboard for the whole search: <mark>fresh roles</mark>, a daily batch to approve, tailored applications, replies from your inbox and interviews on your calendar.</h2>
       </div>
-      <div class="ghost" aria-hidden="true" data-n="03"></div>
     </div>
     <div class="dash-head">
       <ul class="feats reveal">
-        <li class="feat"><i style="background:var(--lav)"></i>Fresh roles, filtered with quotes<em>03.1</em></li>
-        <li class="feat"><i style="background:var(--pink)"></i>Truthful tailored resumes<em>03.1</em></li>
-        <li class="feat"><i style="background:var(--yellow)"></i>Fit score before applying<em>03.2</em></li>
-        <li class="feat"><i style="background:var(--orange)"></i>Inbox replies and follow-ups<em>03.2</em></li>
-        <li class="feat"><i style="background:var(--lav)"></i>Referral notes, drafted<em>03.3</em></li>
+        <li class="feat"><i style="background:var(--lav)"></i>Fresh roles, filtered with quotes</li>
+        <li class="feat"><i style="background:var(--pink)"></i>Truthful tailored resumes</li>
+        <li class="feat"><i style="background:var(--yellow)"></i>Fit score before applying</li>
+        <li class="feat"><i style="background:var(--orange)"></i>Inbox replies and follow-ups</li>
+        <li class="feat"><i style="background:var(--lav)"></i>Referral notes, drafted</li>
       </ul>
       <p class="sub reveal">The dashboard runs on your machine with <code>propelo serve</code>, or in your Propelo account. It tracks every role from found to offer, shows why each one was kept or skipped, and puts anything that needs you at the top.</p>
     </div>
@@ -232,15 +233,13 @@
   </div>
 </section>
 
-<!-- 04 How it works -->
+<!-- How it works -->
 <section id="how">
   <div class="wrap">
     <div class="head">
       <div>
-        <div class="pills reveal"><span class="pill">How it works</span><span class="pill">Four steps</span></div>
-        <h2 class="lede split" style="margin-top:32px">From a posting to an interview, with <mark>a person deciding</mark> at every step that matters.</h2>
+        <h2 class="lede split">From a posting to an interview, with <mark>a person deciding</mark> at every step that matters.</h2>
       </div>
-      <div class="ghost" aria-hidden="true" data-n="04"></div>
     </div>
     <ol class="steps" id="steps">
       <li class="step reveal"><span class="n">01</span><h3>Find</h3><p>A scan several times a day reads company hiring systems, verifies each role and keeps only those inside your rules, with quotes.</p></li>
@@ -251,15 +250,13 @@
   </div>
 </section>
 
-<!-- 05 Bring your own key -->
+<!-- Bring your own key -->
 <section id="byok">
   <div class="wrap">
     <div class="head">
       <div>
-        <div class="pills reveal"><span class="pill">Open source</span><span class="pill">Bring your own key</span></div>
-        <h2 class="lede split" style="margin-top:32px">Clone it, add <mark>your own API key</mark>, and run the whole agent on your machine. Your resume and search history never leave it.</h2>
+        <h2 class="lede split">Clone it, add <mark>your own API key</mark>, and run the whole agent on your machine. Your resume and search history never leave it.</h2>
       </div>
-      <div class="ghost" aria-hidden="true" data-n="05"></div>
     </div>
     <div class="byok">
       <div class="term curv" aria-label="Terminal: install and run Propelo">
@@ -275,8 +272,7 @@
         <div class="ln"><span class="p">$</span> propelo init && propelo serve   <span class="c"># http://127.0.0.1:8765</span></div>
       </div>
       <div class="reveal">
-        <span class="label">Providers</span>
-        <p class="sub" style="margin-top:16px">The AI steps (reading your resume, scoring fit, tailoring applications, drafting notes) call the model you choose with your key. Scanning, filtering and tracking run without any model at all, and Ollama runs everything locally for free.</p>
+        <p class="sub">The AI steps (reading your resume, scoring fit, tailoring applications, drafting notes) call the model you choose with your key. Scanning, filtering and tracking run without any model at all, and Ollama runs everything locally for free.</p>
         <div class="providers"><span>Anthropic</span><span>OpenAI</span><span>Gemini</span><span>Ollama, local</span><span>Any OpenAI-compatible API</span></div>
         <div class="ctas" style="margin-top:28px"><a class="btn" href="docs.html">Read the docs<svg><use href="#i-right"/></svg></a><a class="btn light" href="demo/">Try the demo</a></div>
       </div>
@@ -284,15 +280,13 @@
   </div>
 </section>
 
-<!-- 06 App -->
+<!-- App -->
 <section id="app">
   <div class="wrap">
     <div class="head">
       <div>
-        <div class="pills reveal"><span class="pill">Web</span><span class="pill">Android</span><span class="pill">iOS</span></div>
-        <h2 class="lede split" style="margin-top:32px">Your whole search <mark>in your pocket</mark>. One number to start the day, then today's roles, replies and follow-ups in one place.</h2>
+        <h2 class="lede split">Your whole search <mark>in your pocket</mark>. One number to start the day, then today's roles, replies and follow-ups in one place.</h2>
       </div>
-      <div class="ghost" aria-hidden="true" data-n="06"></div>
     </div>
     <div class="phones">
       <div class="phone reveal" role="img" aria-label="Propelo app home screen: real roles from the last scan, with an example profile's numbers">
@@ -322,8 +316,7 @@
         </div>
       </div>
       <div class="appcopy reveal">
-        <span class="label">Get the app</span>
-        <p style="margin-top:16px">Open Propelo on your phone and add it to your home screen: it installs like an app, with its own icon, and works offline. The Android and iOS apps use the same screens.</p>
+        <p>Open Propelo on your phone and add it to your home screen: it installs like an app, with its own icon, and works offline. The Android and iOS apps use the same screens.</p>
         <ul class="ticks"><li>Installable today from any modern browser</li><li>Android and iOS builds included in the repo</li><li>Your data stays in your account; export or delete it any time</li></ul>
         <div class="ctas" style="margin-top:28px"><a class="btn" data-app="/signup" href="https://app.propelo.org/signup">Start free<svg><use href="#i-right"/></svg></a><a class="btn light" href="demo/">Try the demo</a></div>
       </div>
@@ -331,47 +324,21 @@
   </div>
 </section>
 
-<!-- 07 Pricing -->
-<!-- Concierge -->
-<section id="concierge">
-  <div class="wrap">
-    <div class="head">
-      <div>
-        <div class="pills reveal"><span class="pill">Job Guarantee</span><span class="pill">Pro and Ultra, in India, by application</span></div>
-        <h2 class="lede split" style="margin-top:32px">Want a person on it? A talent partner runs your search, and you pay <mark>only after you join</mark>.</h2>
-      </div>
-    </div>
-    <ol class="steps cc">
-      <li class="step reveal"><span class="n">01</span><h3>Apply</h3><p>Roles, cities, pay and notice period. A person on the Propelo team reviews it within 2 working days and, if we accept, a talent partner takes your case.</p></li>
-      <li class="step reveal"><span class="n">02</span><h3>Approve</h3><p>Your partner proposes companies. Nothing is sent until you approve each one in the app.</p></li>
-      <li class="step reveal"><span class="n">03</span><h3>Interview</h3><p>They apply, follow up, prepare you for every round and help you compare offers.</p></li>
-      <li class="step reveal"><span class="n">04</span><h3>Pay after joining</h3><p>8% of yearly fixed pay, less on the higher part of a large salary, in three monthly instalments from 30 days after you join. Only for companies you approved.</p></li>
-    </ol>
-    <p class="fine reveal">Nothing upfront, and nothing at all if you aren't placed. For Pro and Ultra members, for jobs in India for now; our talent partner service is called Concierge in the terms. Bonuses, stock and joining bonuses aren't counted, and if the employer ends the job within 90 days, what's unpaid is cancelled. <a data-app="/terms#concierge" href="https://app.propelo.org/terms#concierge">Concierge terms</a></p>
-  </div>
-</section>
-
 <section id="guarantees">
   <div class="wrap">
     <div class="head">
       <div>
-        <div class="pills reveal"><span class="pill">Guarantees</span><span class="pill">For Pro and Ultra members, by application</span></div>
-        <h2 class="lede split" style="margin-top:32px">Want us to stand behind it? Apply for a guarantee: <mark>three interviews or your money back. No job, no fee.</mark></h2>
+        <h2 class="lede split">Want us to stand behind it? Apply for the Interview Guarantee: <mark>three interviews in 45 days, or your $59 back.</mark></h2>
       </div>
     </div>
-    <div class="gcards">
+    <div class="gcards one">
       <article class="gcard reveal"><div class="gtop"><h3>Interview Guarantee</h3><p class="gprice"><span>$59</span><small>once, for 45 days</small></p></div>
         <p class="gpromise">Shortlisted for at least 3 interviews, or a second round, within 45 days. Or the full $59 back. <a data-app="/terms#guarantees" href="https://app.propelo.org/terms#guarantees">Terms and conditions apply.</a></p>
-        <ul><li>Apply in the app. A person on our team reviews it within 2 working days; you pay only if we accept you.</li>
+        <ul><li>For Pro and Ultra members. Apply in the app: a person on our team reviews it within 2 working days, and you pay only if we accept you.</li>
         <li>Your part: send 25 applications in at least 3 different weeks. Auto-apply counts.</li>
         <li>A recruiter screen counts as an interview, from anywhere. Online tests and recorded videos don't. A second round is a further interview for the same role.</li></ul></article>
-      <article class="gcard reveal"><div class="gtop"><h3>Job Guarantee</h3><p class="gprice"><span>$0</span><small>upfront</small></p></div>
-        <p class="gpromise">A talent partner works with you until you're hired. You pay 8% of the yearly fixed pay only after you join.</p>
-        <ul><li>Apply in the app. We review every application and take on people we believe we can place.</li>
-        <li>You approve every company before anything is sent.</li>
-        <li>Not placed, nothing to pay. India only for now.</li></ul></article>
     </div>
-    <p class="fine reveal">Not part of Pro or Ultra, and not for everyone: both are by application. We can't promise anyone a job, and we don't; we put our money where our work is. Terms and conditions apply: <a data-app="/terms#guarantees" href="https://app.propelo.org/terms#guarantees">read the guarantee terms</a>.</p>
+    <p class="fine reveal">Not part of Pro or Ultra, and not for everyone: it's by application. We can't promise anyone a job, and we don't; we put our money where our work is. Terms and conditions apply: <a data-app="/terms#guarantees" href="https://app.propelo.org/terms#guarantees">read the guarantee terms</a>.</p>
   </div>
 </section>
 
@@ -379,34 +346,38 @@
   <div class="wrap">
     <div class="head">
       <div>
-        <div class="pills reveal"><span class="pill">Pricing</span><span class="pill">Cancel any time</span></div>
-        <h2 class="lede split" style="margin-top:32px">Finding and checking roles is <mark>free for everyone</mark>. Pro and Ultra are for when you want them first, with AI that writes from your real experience.</h2>
+        <h2 class="lede split">Finding and checking roles is <mark>free for everyone</mark>. Pro and Ultra are for when you want them first, with AI that writes from your real experience.</h2>
       </div>
-      <div class="ghost" aria-hidden="true" data-n="07"></div>
     </div>
     <div class="prices" data-cur="USD">
       <article class="price reveal"><h3>Free</h3><div class="amt"><span>$0</span></div>
-        <ul><li>Fresh roles from company career pages, matched daily</li><li>Every keep or skip with the quote that decided it</li><li>Pipeline, contacts, follow-ups, calendar and referral drafts</li><li>15 AI actions a month, unlimited with your own key</li><li>Autofill extension, and auto-apply from your own computer up to 5 a day</li></ul>
+        <ul><li>Fresh roles from company career pages, matched daily</li><li>Every keep or skip with the quote that decided it</li><li>Pipeline, contacts, follow-ups, calendar and referral drafts</li><li>15 AI actions a month</li><li>Autofill extension, and auto-apply from your own computer up to 5 a day</li></ul>
         <a class="btn light" data-app="/signup" href="https://app.propelo.org/signup">Start free</a></article>
       <article class="price pro reveal"><h3>Pro</h3><div class="amt"><span>$39</span><small> / month</small></div>
-        <ul><li>Everything in Free</li><li>New roles matched within an hour of each scan</li><li>400 AI actions a month: tailored resumes, cover letters, fit scores</li><li>Auto-apply up to 500 a month (25 a day), with a receipt for each</li><li>Ask Propelo, the copilot, 60 questions a day, and 20 mock interviews a month</li><li>Recruiter emails sent from your Gmail, up to 10 a day, when you turn it on</li><li>Priority support</li></ul>
+        <p class="alt">or $99 for 90 days, paid once. <a data-app="/signup?next=%2Fapp%3Fbuy%3Dpass-pro" href="https://app.propelo.org/signup?next=%2Fapp%3Fbuy%3Dpass-pro">Get the pass</a></p>
+        <ul><li>Everything in Free</li><li>New roles matched within an hour of each scan</li><li>400 AI actions a month: tailored resumes, cover letters, fit scores</li><li>Or bring your own AI key for no monthly limit</li><li>Auto-apply up to 500 a month (25 a day), with a receipt for each</li><li>Ask Propelo, the copilot, 60 questions a day, and 20 mock interviews a month</li><li>Recruiter emails sent from your Gmail, up to 10 a day, when you turn it on</li><li>Priority support</li></ul>
         <a class="btn" data-app="/signup?next=%2Fapp%3Fbuy%3Dpro" href="https://app.propelo.org/signup?next=%2Fapp%3Fbuy%3Dpro">Get Pro</a></article>
       <article class="price ultra reveal"><h3>Ultra</h3><div class="amt"><span>$79</span><small> / month</small></div>
+        <p class="alt">or $189 for 90 days, paid once. <a data-app="/signup?next=%2Fapp%3Fbuy%3Dpass-ultra" href="https://app.propelo.org/signup?next=%2Fapp%3Fbuy%3Dpass-ultra">Get the pass</a></p>
         <ul><li>Everything in Pro</li><li>New roles matched within 15 minutes of each scan</li><li>1,500 AI actions a month</li><li>Auto-apply up to 1,000 a month (60 a day), every one above your apply line</li><li>Ask Propelo, 200 questions a day, and 60 mock interviews a month (no limit on your own AI key)</li><li>LinkedIn profile review</li><li>Recruiter emails from your Gmail, up to 25 a day, with day 7 and 14 follow-ups</li><li>Fastest support</li></ul>
         <a class="btn" data-app="/signup?next=%2Fapp%3Fbuy%3Dultra" href="https://app.propelo.org/signup?next=%2Fapp%3Fbuy%3Dultra">Get Ultra</a></article>
     </div>
-    <p class="fine reveal">Prices are in US dollars. At checkout you pay in your own currency, by card, Apple Pay or Google Pay, through Dodo Payments, our merchant of record, which shows any conversion fee before you pay and adds local tax where required. Prefer to run it yourself? <a href="docs.html">Self-host it</a> with your own key, free. <a data-app="/refunds" href="https://app.propelo.org/refunds">Refunds</a> · <a data-app="/terms" href="https://app.propelo.org/terms">Terms</a> · <a data-app="/privacy" href="https://app.propelo.org/privacy">Privacy</a></p>
+    <p class="fine reveal">Prices are in US dollars. A 90-day pass is paid once and never renews. At checkout you pay in your own currency, by card, Apple Pay or Google Pay, through Dodo Payments, our merchant of record, which shows any conversion fee before you pay and adds local tax where required. Prefer to run it yourself? <a href="docs.html">Self-host it</a> with your own key, free. <a data-app="/refunds" href="https://app.propelo.org/refunds">Refunds</a> · <a data-app="/terms" href="https://app.propelo.org/terms">Terms</a> · <a data-app="/privacy" href="https://app.propelo.org/privacy">Privacy</a></p>
   </div>
 </section>
 
-<section style="padding-top:96px">
+<section class="closing">
   <div class="wrap">
+    <div class="ledge">
+    <img class="peep sit-knees reveal" src="assets/peeps/sit-knees.svg" alt="" width="1359" height="2115" style="--d:.5s">
+    <img class="peep sit-crossed reveal" src="assets/peeps/sit-crossed.svg" alt="" width="1433" height="2325" style="--d:.65s">
     <div class="cta curv">
       <h2>Fewer, better applications. <b>Every claim one you can defend.</b></h2>
       <div class="btns">
         <a class="btn" data-app="/signup" href="https://app.propelo.org/signup">Start free<svg><use href="#i-right"/></svg></a>
         <a class="btn light" href="https://github.com/VishStack01/Propelo">Self-host it</a>
       </div>
+    </div>
     </div>
   </div>
 </section>

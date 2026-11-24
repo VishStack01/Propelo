@@ -16,8 +16,14 @@
     {
       "id": "ids-upfront",
       "level": "high",
-      "pattern": "\\b(send|share|submit|upload)\\b[^.\\n]{0,60}\\b(aadhaa?r|pan card|bank (account|details|statement)|otp|cvv|atm pin|upi pin)\\b",
+      "pattern": "\\b(send|share|submit|upload)\\b[^.\\n]{0,60}\\b(aadhaa?r|pan card|bank (account|details|statement)|otp|one[- ]time (code|password)|cvv|atm pin|upi pin)\\b",
       "why": "Wants ID numbers, bank details or codes before any interview."
+    },
+    {
+      "id": "id-early",
+      "level": "caution",
+      "pattern": "\\b(send|share|submit|upload)\\b[^.\\n]{0,60}\\b(passport|social security( number)?|ssn|national insurance( number)?|pps ?number|bsn|visa (copy|page|stamp))\\b",
+      "why": "Asks for your passport or an ID number. An employer needs these only after a written offer, for the right-to-work check."
     },
     {
       "id": "chat-only",
