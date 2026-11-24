@@ -12,8 +12,9 @@ it is built from:
   * contains a number that doesn't appear in the referenced claims;
   * names a tool from your brain that the referenced claims don't use;
   * lists a skill that isn't in the brain.
-It also warns on banned words from your voice profile, "responsible for", and
-low metric density. Model review (the Reviewer skill) runs after this; this
+It also warns on banned words from your voice profile, "responsible for", the
+stock phrases in propelo/writing.py (spearheaded, robust, proven track record
+and the rest), and low metric density. Model review (the Reviewer skill) runs after this; this
 deterministic pass catches the failures a model can talk itself past.
 """
 
@@ -23,6 +24,7 @@ import re
 from dataclasses import dataclass, field
 
 from .brain import claims as brain_claims
+from . import writing
 
 _NUMBER = re.compile(r"(?<![A-Za-z])(\d[\d,]*(?:\.\d+)?)\s*(%|x|k|m|\+|lakh|cr|crore|ms|s\b|hours?|days?|weeks?|users?)?", re.I)
 _DEFAULT_BANNED = ["leverage", "leveraged", "spearhead", "spearheaded", "synergy", "results-driven", "dynamic", "passionate", "rockstar", "ninja", "guru", "cutting-edge"]
@@ -89,6 +91,10 @@ def check(resume: dict, brain: dict) -> Report:
                 rep.warnings.append(f"{label}: uses '{w}', which is on your banned-words list.")
         if re.search(r"\bresponsible for\b", text, re.I):
             rep.warnings.append(f"{label}: 'responsible for' says what you were assigned, not what you did.")
+        for f in writing.check(text):
+            low = f.phrase.lower()
+            if f.line and low != "responsible for" and not any(re.fullmatch(re.escape(w) + r"(?:s|d|ed|ing)?", low) for w in banned):
+                rep.warnings.append(f"{label}: '{f.phrase}' is {f.why}; {f.instead}.")
 
     for sk in resume.get("skills", []):
         if sk.lower() not in skill_names:

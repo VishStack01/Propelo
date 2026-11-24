@@ -1,0 +1,735 @@
+{
+ "_about": "Phrases that make writing sound machine-made or empty. propelo/writing.py and the dashboard (synced by scripts/sync_slop_rules.py) read this file and must agree; tests compare them. A rule with \"fix\" is replaced in AI drafts automatically; a \"delete\" word is removed (fixing a/an and capitals around it); the rest are flagged for you to rewrite.",
+ "rules": [
+  {
+   "pattern": "\\bI am writing to (express|apply|convey)\\b",
+   "why": "a stock opener",
+   "instead": "open with their problem or your proof point"
+  },
+  {
+   "pattern": "\\b(I am|I'm) (excited|thrilled|delighted|eager) to (apply|submit|express)\\b",
+   "why": "a stock opener",
+   "instead": "say what you'd work on there"
+  },
+  {
+   "pattern": "\\bI (would like|wish) to express my (interest|enthusiasm)\\b",
+   "why": "a stock opener",
+   "instead": "say what you'd work on there"
+  },
+  {
+   "pattern": "\\bplease (accept|find) (my|the) (attached )?(application|resume|cv)\\b",
+   "why": "a stock opener",
+   "instead": "open with your proof point"
+  },
+  {
+   "pattern": "\\bI believe I (would be|am) (a|an) (great|perfect|strong|good|ideal|excellent) (fit|match|candidate|addition)\\b",
+   "why": "a claim with no proof",
+   "instead": "show the fit with one result"
+  },
+  {
+   "pattern": "\\b(perfect|ideal) (fit|match|candidate)\\b",
+   "why": "a claim with no proof",
+   "instead": "show the fit with one result"
+  },
+  {
+   "pattern": "\\bI am confident (that )?(I|my)\\b|\\bI'm confident (that )?(I|my)\\b",
+   "why": "a claim with no proof",
+   "instead": "show it with one result"
+  },
+  {
+   "pattern": "\\b(Thank you|Thanks) for (your time and )?consideration\\b",
+   "why": "a stock closer",
+   "instead": "end with one clear ask"
+  },
+  {
+   "pattern": "\\bI look forward to hearing from you\\b",
+   "why": "a stock closer",
+   "instead": "end with one clear ask"
+  },
+  {
+   "pattern": "\\bplease (do not|don't) hesitate to (contact|reach out to) me\\b",
+   "why": "a stock closer",
+   "instead": "end with one clear ask"
+  },
+  {
+   "pattern": "\\b(I would|I'd) (welcome|appreciate) the opportunity to discuss\\b",
+   "why": "a stock closer",
+   "instead": "end with one clear ask"
+  },
+  {
+   "pattern": "\\baligns? (perfectly )?with (my|your) (values|goals|mission|passion)\\b",
+   "why": "filler",
+   "instead": "say what you'd do for them"
+  },
+  {
+   "pattern": "\\b(deeply )?resonates? with me\\b",
+   "why": "filler",
+   "instead": "say what you'd do for them"
+  },
+  {
+   "pattern": "\\bwhat (excites|draws) me (most )?(about|to)\\b",
+   "why": "a stock line",
+   "instead": "name the thing you'd work on"
+  },
+  {
+   "pattern": "\\bI have always been (fascinated|passionate|interested)\\b",
+   "why": "a stock line",
+   "instead": "say what you built"
+  },
+  {
+   "pattern": "\\bpassionate( about)?\\b|\\bpassion for\\b",
+   "why": "filler",
+   "instead": "name what you built"
+  },
+  {
+   "pattern": "\\bresults[- ]driven\\b|\\bresults[- ]oriented\\b|\\bdetail[- ]oriented\\b|\\bgoal[- ]oriented\\b",
+   "why": "an unprovable adjective",
+   "instead": "replace it with something you did"
+  },
+  {
+   "pattern": "\\bself[- ]starter\\b|\\bgo[- ]getter\\b|\\bteam player\\b|\\bhard[- ]working\\b|\\bquick learner\\b|\\bfast learner\\b",
+   "why": "an unprovable adjective",
+   "instead": "replace it with something you did"
+  },
+  {
+   "pattern": "\\bhighly (motivated|skilled|organi[sz]ed|driven)\\b|\\bstrong work ethic\\b|\\bcan-do attitude\\b",
+   "why": "an unprovable adjective",
+   "instead": "replace it with something you did"
+  },
+  {
+   "pattern": "\\bproven track record\\b|\\bdemonstrated (ability|track record)\\b",
+   "why": "a claim with no proof",
+   "instead": "give the record: one result with a number"
+  },
+  {
+   "pattern": "\\b(extensive|vast|wealth of) experience\\b|\\bwealth of (knowledge|expertise)\\b",
+   "why": "a claim with no proof",
+   "instead": "say how long and what"
+  },
+  {
+   "pattern": "\\bdeep (understanding|expertise|knowledge) of\\b|\\bkeen eye for\\b|\\bexpert in\\b",
+   "why": "a claim with no proof",
+   "instead": "show where you used it"
+  },
+  {
+   "pattern": "\\b(rock ?star|ninja|guru|wizard|unicorn|thought leader)\\b",
+   "why": "a self-label",
+   "instead": "say what you did"
+  },
+  {
+   "pattern": "\\bvisionary\\b|\\btrailblaz(er|ing)\\b",
+   "why": "a self-label",
+   "instead": "say what you did"
+  },
+  {
+   "pattern": "\\bproactive(ly)?\\b",
+   "why": "an unprovable adjective",
+   "instead": "show what you started"
+  },
+  {
+   "pattern": "\\bdedicated (professional|team member|engineer|individual)\\b",
+   "why": "an unprovable adjective",
+   "instead": "replace it with something you did"
+  },
+  {
+   "pattern": "\\bdynamic (professional|individual|team|environment|leader)\\b",
+   "why": "filler",
+   "instead": "cut it"
+  },
+  {
+   "pattern": "\\bpeople person\\b|\\bexcellent communication skills\\b|\\bstrong communication skills\\b",
+   "why": "an unprovable adjective",
+   "instead": "show one time you explained something hard"
+  },
+  {
+   "pattern": "\\bspearheaded\\b",
+   "why": "jargon",
+   "instead": "say 'led'",
+   "fix": "led"
+  },
+  {
+   "pattern": "\\bspearheading\\b",
+   "why": "jargon",
+   "instead": "say 'leading'",
+   "fix": "leading"
+  },
+  {
+   "pattern": "\\bspearheads?\\b",
+   "why": "jargon",
+   "instead": "say 'lead'",
+   "fix": "lead"
+  },
+  {
+   "pattern": "\\bleveraged\\b",
+   "why": "jargon",
+   "instead": "say 'used'",
+   "fix": "used"
+  },
+  {
+   "pattern": "\\bleveraging\\b",
+   "why": "jargon",
+   "instead": "say 'using'",
+   "fix": "using"
+  },
+  {
+   "pattern": "\\bleverages\\b",
+   "why": "jargon",
+   "instead": "say 'uses'",
+   "fix": "uses"
+  },
+  {
+   "pattern": "\\bleverage\\b",
+   "why": "jargon",
+   "instead": "say 'use'",
+   "fix": "use"
+  },
+  {
+   "pattern": "\\butili[sz]ed\\b",
+   "why": "a long word for 'used'",
+   "instead": "say 'used'",
+   "fix": "used"
+  },
+  {
+   "pattern": "\\butili[sz]ing\\b",
+   "why": "a long word for 'using'",
+   "instead": "say 'using'",
+   "fix": "using"
+  },
+  {
+   "pattern": "\\butili[sz]es\\b",
+   "why": "a long word for 'uses'",
+   "instead": "say 'uses'",
+   "fix": "uses"
+  },
+  {
+   "pattern": "\\butili[sz]e\\b",
+   "why": "a long word for 'use'",
+   "instead": "say 'use'",
+   "fix": "use"
+  },
+  {
+   "pattern": "\\butili[sz]ation\\b",
+   "why": "a long word for 'use'",
+   "instead": "say 'use'",
+   "fix": "use"
+  },
+  {
+   "pattern": "\\bcommenced\\b",
+   "why": "a long word for 'started'",
+   "instead": "say 'started'",
+   "fix": "started"
+  },
+  {
+   "pattern": "\\bcommence\\b",
+   "why": "a long word for 'start'",
+   "instead": "say 'start'",
+   "fix": "start"
+  },
+  {
+   "pattern": "\\bendeavou?rs?\\b|\\bendeavou?red\\b",
+   "why": "stiff",
+   "instead": "say 'tried' or name the work"
+  },
+  {
+   "pattern": "\\bdelved into\\b",
+   "why": "sounds machine-written",
+   "instead": "say 'looked into'",
+   "fix": "looked into"
+  },
+  {
+   "pattern": "\\bdelving into\\b",
+   "why": "sounds machine-written",
+   "instead": "say 'looking into'",
+   "fix": "looking into"
+  },
+  {
+   "pattern": "\\bdelves? into\\b",
+   "why": "sounds machine-written",
+   "instead": "say 'look into'",
+   "fix": "look into"
+  },
+  {
+   "pattern": "\\bdelve\\b",
+   "why": "sounds machine-written",
+   "instead": "rewrite it in your own words"
+  },
+  {
+   "pattern": "\\bin order to\\b",
+   "why": "wordy",
+   "instead": "say 'to'",
+   "fix": "to"
+  },
+  {
+   "pattern": "\\ba (plethora|myriad|multitude) of\\b",
+   "why": "wordy",
+   "instead": "say 'many'",
+   "fix": "many"
+  },
+  {
+   "pattern": "\\bplethora\\b|\\bmyriad\\b",
+   "why": "sounds machine-written",
+   "instead": "say 'many'"
+  },
+  {
+   "pattern": "\\bsynerg(y|ies|istic|ize|ise|ized|ised)\\b",
+   "why": "jargon",
+   "instead": "cut it"
+  },
+  {
+   "pattern": "\\bharness(ed|ing)? the power of\\b",
+   "why": "hype",
+   "instead": "say what you used and for what"
+  },
+  {
+   "pattern": "\\bharness(ed|ing|es)?\\b",
+   "why": "jargon",
+   "instead": "say 'used'"
+  },
+  {
+   "pattern": "\\bunlock(ed|ing|s)? (the )?(full )?(potential|value|power)\\b",
+   "why": "hype",
+   "instead": "say what changed"
+  },
+  {
+   "pattern": "\\belevat(e|ed|es|ing) (the|our|your|my)\\b",
+   "why": "hype",
+   "instead": "say what improved and by how much"
+  },
+  {
+   "pattern": "\\bempower(ed|ing|s)?\\b",
+   "why": "hype",
+   "instead": "say who could do what"
+  },
+  {
+   "pattern": "\\brevolutioni[sz](e|ed|es|ing)\\b",
+   "why": "hype",
+   "instead": "say what changed"
+  },
+  {
+   "pattern": "\\bchampion(ed|ing)\\b",
+   "why": "jargon",
+   "instead": "say 'pushed for' or 'led'"
+  },
+  {
+   "pattern": "\\bpioneer(ed|ing)\\b",
+   "why": "hype",
+   "instead": "say 'started' or 'built the first'"
+  },
+  {
+   "pattern": "\\borchestrat(e|ed|es|ing)\\b",
+   "why": "jargon",
+   "instead": "say 'ran' or 'coordinated'"
+  },
+  {
+   "pattern": "\\bfacilitat(e|ed|es|ing)\\b",
+   "why": "vague",
+   "instead": "say what you ran or decided"
+  },
+  {
+   "pattern": "\\boperationali[sz](e|ed|ing)\\b",
+   "why": "jargon",
+   "instead": "say 'put into use'"
+  },
+  {
+   "pattern": "\\bideat(e|ed|ing|ion)\\b",
+   "why": "jargon",
+   "instead": "say 'came up with'"
+  },
+  {
+   "pattern": "\\bactioned\\b",
+   "why": "jargon",
+   "instead": "say 'did' or 'handled'"
+  },
+  {
+   "pattern": "\\bembark(ed|ing)? on\\b",
+   "why": "stiff",
+   "instead": "say 'started'"
+  },
+  {
+   "pattern": "\\bhoned\\b|\\bhoning\\b",
+   "why": "a stock verb",
+   "instead": "say what you practised and where"
+  },
+  {
+   "pattern": "\\bfoster(ed|ing|s)?\\b",
+   "why": "sounds machine-written",
+   "instead": "say what you built or ran"
+  },
+  {
+   "pattern": "\\bbolster(ed|ing|s)?\\b",
+   "why": "sounds machine-written",
+   "instead": "say what improved"
+  },
+  {
+   "pattern": "\\bunderscor(e|es|ed|ing)\\b",
+   "why": "sounds machine-written",
+   "instead": "say it plainly"
+  },
+  {
+   "pattern": "\\bshowcas(e|ed|es|ing)\\b",
+   "why": "sounds machine-written",
+   "instead": "say 'shows' or name the result"
+  },
+  {
+   "pattern": "\\bstreamlin(e|ed|es|ing)\\b",
+   "why": "vague without a number",
+   "instead": "say what got faster and by how much"
+  },
+  {
+   "pattern": "\\boptimi[sz]ed\\b(?![^.]*\\d)",
+   "why": "vague without a number",
+   "instead": "add what improved and by how much"
+  },
+  {
+   "pattern": "\\benhanc(e|ed|es|ing)\\b(?![^.]*\\d)",
+   "why": "vague without a number",
+   "instead": "add what improved and by how much"
+  },
+  {
+   "pattern": "\\bresponsible for\\b",
+   "why": "describes a duty, not a result",
+   "instead": "say what you did and what changed"
+  },
+  {
+   "pattern": "\\btasked with\\b",
+   "why": "describes a duty, not a result",
+   "instead": "say what you did and what changed"
+  },
+  {
+   "pattern": "\\bplayed a (key|crucial|pivotal|vital|critical|instrumental) role\\b|\\b(key|crucial|pivotal|vital|instrumental) role in\\b",
+   "why": "a claim with no proof",
+   "instead": "say exactly what you did"
+  },
+  {
+   "pattern": "\\binstrumental in\\b",
+   "why": "a claim with no proof",
+   "instead": "say exactly what you did"
+  },
+  {
+   "pattern": "\\bdrove (impact|growth|results|innovation|success)\\b|\\bdrive (impact|innovation|results)\\b",
+   "why": "vague",
+   "instead": "name the result"
+  },
+  {
+   "pattern": "\\b(make|made|making) an impact\\b|\\badd(ed|ing)? value\\b|\\bvalue[- ]add\\b",
+   "why": "vague",
+   "instead": "name the result"
+  },
+  {
+   "pattern": "\\b(think|thinking) outside the box\\b|\\bhit the ground running\\b|\\bgame[- ]changer\\b|\\bmove the needle\\b",
+   "why": "a cliché",
+   "instead": "say it plainly"
+  },
+  {
+   "pattern": "\\bat the end of the day\\b|\\blow[- ]hanging fruit\\b|\\bcircle back\\b|\\btouch base\\b|\\bwear(ing)? many hats\\b",
+   "why": "a cliché",
+   "instead": "say it plainly"
+  },
+  {
+   "pattern": "\\bparadigm shift\\b|\\bnext[- ]level\\b|\\bpush(ing)? the boundaries\\b|\\braise the bar\\b",
+   "why": "a cliché",
+   "instead": "say it plainly"
+  },
+  {
+   "pattern": "\\b(a )?deep[- ]dive\\b",
+   "why": "jargon",
+   "instead": "say 'a close look'"
+  },
+  {
+   "pattern": "\\bbest practices\\b",
+   "why": "vague",
+   "instead": "name the practice"
+  },
+  {
+   "pattern": "\\bkey stakeholders\\b",
+   "why": "vague",
+   "instead": "name who"
+  },
+  {
+   "pattern": "\\bfast[- ]paced (environment|world|team|setting)\\b",
+   "why": "filler",
+   "instead": "cut it"
+  },
+  {
+   "pattern": "\\bin today's (fast[- ]paced|digital|ever[- ]changing|competitive|modern) (world|landscape|age|era|environment)\\b",
+   "why": "sounds machine-written",
+   "instead": "cut it"
+  },
+  {
+   "pattern": "\\bever[- ](evolving|changing|growing) (landscape|world|field)\\b",
+   "why": "sounds machine-written",
+   "instead": "cut it"
+  },
+  {
+   "pattern": "\\b(the|this|today's) (digital |tech |technology |business )?landscape\\b",
+   "why": "sounds machine-written",
+   "instead": "name the field"
+  },
+  {
+   "pattern": "\\bnavigat(e|ed|ing) the complexities\\b|\\bnavigat(e|ed|ing) (the )?(challenges|landscape|world)\\b",
+   "why": "sounds machine-written",
+   "instead": "say what you handled"
+  },
+  {
+   "pattern": "\\b(rich )?tapestry\\b",
+   "why": "sounds machine-written",
+   "instead": "rewrite it in your own words"
+  },
+  {
+   "pattern": "\\btestament to\\b",
+   "why": "sounds machine-written",
+   "instead": "show the proof itself"
+  },
+  {
+   "pattern": "\\bin the (realm|world|sphere) of\\b|\\brealm\\b",
+   "why": "sounds machine-written",
+   "instead": "name the field"
+  },
+  {
+   "pattern": "\\bit(?:'s| is) (worth noting|important to note|essential to note) that\\b",
+   "why": "filler",
+   "instead": "cut it and say the thing"
+  },
+  {
+   "pattern": "\\bit goes without saying\\b|\\bneedless to say\\b",
+   "why": "filler",
+   "instead": "cut it"
+  },
+  {
+   "pattern": "\\bIn conclusion,?\\b|\\bIn summary,?\\b|\\bTo sum up,?\\b",
+   "why": "an essay ending",
+   "instead": "cut it"
+  },
+  {
+   "pattern": "^(Moreover|Furthermore|Additionally),",
+   "why": "an essay link word",
+   "instead": "start with the point"
+  },
+  {
+   "pattern": "\\bnot only\\b[^.]{0,80}\\bbut also\\b",
+   "why": "a stock pattern",
+   "instead": "say the two things plainly"
+  },
+  {
+   "pattern": "\\bon (a|my) journey\\b|\\bmy journey\\b",
+   "why": "filler",
+   "instead": "say what you did"
+  },
+  {
+   "pattern": "\\bcommitment to excellence\\b|\\bstrive for excellence\\b|\\bpursuit of excellence\\b",
+   "why": "filler",
+   "instead": "cut it"
+  },
+  {
+   "pattern": "\\bskill ?set\\b",
+   "why": "jargon",
+   "instead": "say 'skills'"
+  },
+  {
+   "pattern": "\\bbandwidth\\b",
+   "why": "jargon",
+   "instead": "say 'time'"
+  },
+  {
+   "pattern": "\\bholistic (approach|view|understanding)\\b",
+   "why": "vague",
+   "instead": "say what you looked at"
+  },
+  {
+   "pattern": "\\bscalable solutions?\\b|\\binnovative solutions?\\b|\\bend[- ]to[- ]end solutions?\\b",
+   "why": "vague",
+   "instead": "name what you built"
+  },
+  {
+   "pattern": "\\bdata[- ]driven (insights|decisions|approach)\\b",
+   "why": "vague",
+   "instead": "name the data and the decision"
+  },
+  {
+   "pattern": "\\bactionable insights\\b",
+   "why": "vague",
+   "instead": "name the insight"
+  },
+  {
+   "pattern": "\\bwide (range|variety|array) of\\b|\\bvarious\\b|\\bnumerous\\b",
+   "why": "vague",
+   "instead": "name them, or give the number"
+  },
+  {
+   "pattern": "\\bsignificantly\\b(?![^.]*\\d)|\\bsubstantially\\b(?![^.]*\\d)|\\bdramatically\\b(?![^.]*\\d)",
+   "why": "vague without a number",
+   "instead": "give the number"
+  },
+  {
+   "pattern": "\\bcomprehensive\\b",
+   "why": "vague",
+   "instead": "say what it covered"
+  },
+  {
+   "pattern": "\\bpivotal\\b|\\bparamount\\b|\\binvaluable\\b",
+   "why": "sounds machine-written",
+   "instead": "say why it mattered"
+  },
+  {
+   "pattern": "\\bimpactful\\b",
+   "why": "jargon",
+   "instead": "say what changed"
+  },
+  {
+   "pattern": "\\bkeen (interest|eye)\\b",
+   "why": "filler",
+   "instead": "say what you did about it"
+  },
+  {
+   "pattern": "\\bdive into\\b|\\bdiving into\\b",
+   "why": "a stock phrase",
+   "instead": "say 'learn' or 'work on'"
+  },
+  {
+   "pattern": "\\bI thrive in\\b|\\bthrive on\\b",
+   "why": "a stock line",
+   "instead": "show one time you did"
+  },
+  {
+   "pattern": "\\bwhere I can (grow|contribute|learn)\\b",
+   "why": "about you, not them",
+   "instead": "say what you'd do for them"
+  },
+  {
+   "pattern": "\\b(my|this) unique (blend|combination|mix) of\\b",
+   "why": "a stock line",
+   "instead": "name the two things"
+  },
+  {
+   "pattern": "\\bbridg(e|es|ed|ing) the gap\\b",
+   "why": "a cliché",
+   "instead": "say what you connected"
+  },
+  {
+   "pattern": "\\bsupercharg(e|ed|es|ing)\\b|\\bturbocharg(e|ed|es|ing)\\b",
+   "why": "hype",
+   "instead": "give the number"
+  },
+  {
+   "pattern": "\\bgame[- ]changing\\b",
+   "why": "hype",
+   "instead": "say what changed"
+  },
+  {
+   "delete": "robust",
+   "why": "vague",
+   "instead": "cut it, or say how it held up"
+  },
+  {
+   "delete": "seamless",
+   "why": "vague",
+   "instead": "cut it, or say what joined up"
+  },
+  {
+   "delete": "seamlessly",
+   "why": "vague",
+   "instead": "cut it"
+  },
+  {
+   "delete": "cutting-edge",
+   "why": "hype",
+   "instead": "cut it"
+  },
+  {
+   "delete": "state-of-the-art",
+   "why": "hype",
+   "instead": "cut it"
+  },
+  {
+   "delete": "world-class",
+   "why": "hype",
+   "instead": "cut it"
+  },
+  {
+   "delete": "best-in-class",
+   "why": "hype",
+   "instead": "cut it"
+  },
+  {
+   "delete": "groundbreaking",
+   "why": "hype",
+   "instead": "cut it"
+  },
+  {
+   "delete": "transformative",
+   "why": "hype",
+   "instead": "cut it"
+  },
+  {
+   "delete": "meticulous",
+   "why": "an unprovable adjective",
+   "instead": "cut it"
+  },
+  {
+   "delete": "meticulously",
+   "why": "an unprovable adjective",
+   "instead": "cut it"
+  },
+  {
+   "delete": "innovative",
+   "why": "hype",
+   "instead": "cut it"
+  },
+  {
+   "delete": "exceptional",
+   "why": "an unprovable adjective",
+   "instead": "cut it"
+  },
+  {
+   "delete": "unparalleled",
+   "why": "hype",
+   "instead": "cut it"
+  },
+  {
+   "delete": "successfully",
+   "why": "filler: a result already says it worked",
+   "instead": "cut it"
+  },
+  {
+   "delete": "effectively",
+   "why": "filler",
+   "instead": "cut it"
+  },
+  {
+   "delete": "diligently",
+   "why": "filler",
+   "instead": "cut it"
+  },
+  {
+   "delete": "tirelessly",
+   "why": "filler",
+   "instead": "cut it"
+  },
+  {
+   "delete": "passionately",
+   "why": "filler",
+   "instead": "cut it"
+  },
+  {
+   "delete": "highly impactful",
+   "why": "hype",
+   "instead": "cut it"
+  },
+  {
+   "delete": "truly",
+   "why": "filler",
+   "instead": "cut it"
+  },
+  {
+   "delete": "incredibly",
+   "why": "filler",
+   "instead": "cut it"
+  },
+  {
+   "pattern": "\\s*—\\s*",
+   "why": "a long dash, common in machine-written text",
+   "instead": "use a comma or a full stop",
+   "fix": ", "
+  }
+ ]
+}
