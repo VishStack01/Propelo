@@ -629,8 +629,19 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
         return {"ok": True, "user": repo.public_user(user)}
 
     # ------------------------------------------------------------ Sign in with Google, GitHub or LinkedIn
+    # Cookie names and return addresses come from this fixed table, never from the request.
+    OAUTH_COOKIE = {k: f"propelo_{k}_state" for k in oauth.PROVIDERS}
+    OAUTH_BACK = {k: {why: f"/login#error={k}_{why}" for why in ("cancelled", "state", "failed", "no_email")} for k in oauth.PROVIDERS}
+    LOGIN_ERROR = {"closed": "/login#error=closed", "disabled": "/login#error=disabled"}
+
+    def known_provider(provider: str) -> str:
+        """The provider's own key from the table, or 404 for anything else."""
+        if provider not in oauth.PROVIDERS:
+            raise err(404, "Not found.")
+        return oauth.PROVIDERS[provider].key
+
     def oauth_cookie(provider: str) -> str:
-        return f"propelo_{provider}_state"
+        return OAUTH_COOKIE[provider]
 
     def oauth_redirect_uri(provider: str) -> str:
         return f"{cfg.public_url}/api/auth/{provider}/callback"
@@ -705,6 +716,7 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
 
     @app.get("/api/auth/{provider}/start")
     def oauth_start(provider: str):
+        provider = known_provider(provider)
         cid, _ = oauth_ready(provider)
         state = secrets.token_urlsafe(24)
         resp = RedirectResponse(oauth.authorize_url(provider, cid, oauth_redirect_uri(provider), state), status_code=303)
@@ -713,6 +725,7 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
 
     @app.get("/api/auth/{provider}/callback")
     def oauth_callback(provider: str, request: Request, code: str = "", state: str = "", error: str = ""):
+        provider = known_provider(provider)
         cid, secret = oauth_ready(provider)
         cookie, path = oauth_cookie(provider), f"/api/auth/{provider}"
 
@@ -720,21 +733,21 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
             resp.delete_cookie(cookie, path=path)
             return resp
 
-        def back(msg: str):
-            return done(RedirectResponse(f"/login#error={msg}", status_code=303))
+        def back(why: str):
+            return done(RedirectResponse(OAUTH_BACK[provider].get(why) or LOGIN_ERROR.get(why) or "/login", status_code=303))
         expected = request.cookies.get(cookie, "")
         if error or not code or not expected or not secrets.compare_digest(expected, state):
-            return back(f"{provider}_cancelled" if error else f"{provider}_state")
+            return back("cancelled" if error else "state")
         ip = client_ip(request)
         with db.tx() as c:
             limited(c, f"{provider}:" + security.ip_key(ip), 30, 3600)
         try:
             who = oauth.identity(provider, oauth.exchange(provider, code, oauth_redirect_uri(provider), cid, secret))
         except Exception:  # noqa: BLE001  a refused or expired code
-            return back(f"{provider}_failed")
+            return back("failed")
         email = security.normalize_email(who["email"])
         if not security.valid_email(email) or not who["verified"]:
-            return back(f"{provider}_no_email")
+            return back("no_email")
         name = who["name"].strip()[:80]
         with db.tx() as c:
             user = repo.user_by_email(c, email)

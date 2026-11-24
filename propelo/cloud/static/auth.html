@@ -335,7 +335,13 @@ input[aria-invalid="true"]{box-shadow:inset 0 0 0 1.5px var(--bad)}
     }
     return {ok: r.ok, status: r.status, data};
   }
-  const next = () => { const n = params.get('next') || '/'; return /^\/(?![\/\\])[^\s]*$/.test(n) ? n : '/'; };
+  // Where to go after signing in: a path on this site only. Anything else (another site, javascript:, //host) goes home.
+  const next = () => {
+    const n = params.get('next') || '/';
+    if (!/^\/(?![\/\\])[^\s]*$/.test(n)) return '/';
+    try { const u = new URL(n, location.origin); return u.origin === location.origin ? u.pathname + u.search + u.hash : '/'; }
+    catch (e) { return '/'; }
+  };
 
   document.addEventListener('click', e => {
     const b = e.target.closest('.show'); if (!b) return;

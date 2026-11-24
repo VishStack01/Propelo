@@ -269,3 +269,12 @@ def test_an_account_without_a_password_can_still_be_deleted(cloud, providers):
     assert c.post("/api/me/delete", json={"confirm": "nope"}).status_code == 400
     assert c.post("/api/me/delete", json={"confirm": "DELETE"}).status_code == 200
     assert c.get("/api/me").status_code == 401
+
+
+def test_provider_routes_only_take_known_providers(cloud, providers):
+    c = cloud.client()
+    for bad in ("evil", "google%0d%0aSet-Cookie:x=1", "GOOGLE"):
+        assert c.get(f"/api/auth/{bad}/start", follow_redirects=False).status_code == 404
+        assert c.get(f"/api/auth/{bad}/callback?code=a&state=b", follow_redirects=False).status_code == 404
+    r = c.get("/api/auth/github/callback?error=access_denied", follow_redirects=False)
+    assert r.headers["location"] == "/login#error=github_cancelled"
