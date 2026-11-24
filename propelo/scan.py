@@ -61,23 +61,27 @@ def wanted_title(title: str) -> bool:
 
 
 # The published feed is capped so its files stay well under GitHub's 100 MB file limit as sources grow.
-# India and remote roles are kept first; the rest of the world fills what's left, newest first.
+# Roles in the four countries Propelo covers and remote roles are kept first; the rest fills what's left, newest first.
 FEED_MAX = int(os.environ.get("CAREEROS_FEED_MAX", "120000") or 120000)
+CORE4 = {"US", "GB", "IE", "NL"}
 
 
 def cap_feed(records: list[dict], limit: int | None = None) -> tuple[list[dict], int]:
     limit = FEED_MAX if limit is None else limit
     if len(records) <= limit:
         return records, 0
-    # India and remote first; then the countries Indian students study and work in (junior and mid-level roles
-    # ahead of senior ones there); then the rest of the world. Each group newest first.
+    # The US, UK, Ireland and the Netherlands and remote roles first (junior and mid-level roles ahead of senior
+    # ones); then India and the other countries students go to; then the rest of the world. Each group newest first.
     study = set(countries.STUDY)
 
     def rank(r: dict) -> int:
-        if r.get("geo") in ("south", "india") or r.get("workMode") == "remote":
+        where = set(r.get("countries") or ())
+        if r.get("workMode") == "remote" or (CORE4 & where and not (r.get("facts") or {}).get("senior")):
             return 0
-        if study & set(r.get("countries") or ()):
-            return 2 if (r.get("facts") or {}).get("senior") else 1
+        if CORE4 & where:
+            return 1
+        if r.get("geo") in ("south", "india") or study & where:
+            return 2
         return 3
     keep = sorted(records, key=rank)[:limit]  # the sort is stable, so each group stays newest first
     keep.sort(key=lambda r: -_ts(r.get("postedAt")))

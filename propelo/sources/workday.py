@@ -4,9 +4,11 @@ Most large employers that pay freshers well (NVIDIA, Salesforce, Adobe, PayPal,
 Qualcomm, Walmart Global Tech, Visa, Intel, Cisco and others) post on Workday.
 The token is "tenant/wdN/site", e.g. "nvidia/wd5/NVIDIAExternalCareerSite".
 
-The list endpoint is narrowed to India through the site's own country facet
-when it has one (else a search for "India"), and to tech titles. Only those
-roles get the detail request, which carries the description and start date.
+The list endpoint is narrowed to the four countries Propelo covers (the US, the
+UK, Ireland and the Netherlands) through the site's own country facet when it
+has one; a site without one is read whole. Every field counts, not only tech:
+the detail request, which carries the description and start date, goes to the
+roles in a job family Propelo matches, early-career titles first.
 Endpoint shapes follow the ats-scrapers project (MIT, github.com/kalil0321/ats-scrapers).
 """
 
@@ -21,10 +23,13 @@ from ..textutil import html_to_text
 from .http import FetchError, post_json, get_json
 
 PAGE = 20  # Workday rejects larger pages
-MAX_PAGES = 15
-DETAIL_CAP = 40
-TECH = re.compile(r"engineer|developer|\bsde\b|\bswe\b|machine learning|\bml\b|\bai\b|data scien|devops|\bsre\b|software|"
-                  r"full[ -]?stack|back[ -]?end|front[ -]?end|mobile|android|\bios\b|graduate|intern|trainee|new grad|associate", re.I)
+MAX_PAGES = 25
+DETAIL_CAP = 60
+# The four countries, as Workday's country facets name them.
+CORE_COUNTRIES = {"united states of america": "US", "united states": "US", "usa": "US", "united kingdom": "GB", "uk": "GB",
+                  "great britain": "GB", "ireland": "IE", "republic of ireland": "IE", "netherlands": "NL", "the netherlands": "NL"}
+# Titles read in full first: graduate schemes, new-grad roles, internships and junior roles.
+EARLY = re.compile(r"graduate|new[- ]grad|early[- ]career|intern|placement|trainee|apprentice|junior|entry[- ]level|associate|rotational|campus", re.I)
 _URL = re.compile(r"^https?://(?P<tenant>[^./]+)\.(?P<wd>wd\d+)\.myworkdayjobs\.com/(?:[a-z]{2}-[A-Z]{2}/)?(?P<site>[^/?#]+)")
 
 
@@ -66,22 +71,36 @@ def posted_from(text: str, now: datetime | None = None) -> str:
     return iso((now - timedelta(days=days)).replace(hour=0, minute=0, second=0, microsecond=0))
 
 
-def india_facet(facets: list) -> tuple[str, str] | None:
-    """(facetParameter, id) of the India value in a country facet, searched recursively."""
-    for f in facets or []:
-        if not isinstance(f, dict):
-            continue
-        param = str(f.get("facetParameter") or "")
-        for v in f.get("values") or []:
-            if not isinstance(v, dict):
+def country_facet(facets: list, wanted: dict | None = None) -> tuple[str, list[str]] | None:
+    """(facetParameter, ids) of the wanted countries in a site's country facet, searched recursively.
+    `wanted` maps lower-case country names to codes; the default is the four countries."""
+    wanted = CORE_COUNTRIES if wanted is None else wanted
+    found: dict[str, list[str]] = {}
+
+    def walk(group: list) -> None:
+        for f in group or []:
+            if not isinstance(f, dict):
                 continue
-            if "facetParameter" in v:  # nested group
-                hit = india_facet([v])
-                if hit:
-                    return hit
-            elif "country" in param.lower() and str(v.get("descriptor", "")).strip().lower() == "india" and v.get("id"):
-                return param, str(v["id"])
-    return None
+            param = str(f.get("facetParameter") or "")
+            for v in f.get("values") or []:
+                if not isinstance(v, dict):
+                    continue
+                if "facetParameter" in v:  # nested group
+                    walk([v])
+                elif "country" in param.lower() and str(v.get("descriptor", "")).strip().lower() in wanted and v.get("id"):
+                    found.setdefault(param, []).append(str(v["id"]))
+
+    walk(facets)
+    if not found:
+        return None
+    param = max(found, key=lambda k: len(found[k]))
+    return param, found[param]
+
+
+def india_facet(facets: list) -> tuple[str, str] | None:
+    """(facetParameter, id) of India in a country facet; kept for boards the India search still reads."""
+    hit = country_facet(facets, {"india": "IN"})
+    return (hit[0], hit[1][0]) if hit else None
 
 
 def _search(token: str, facets: dict, text: str, offset: int) -> dict:
@@ -90,10 +109,12 @@ def _search(token: str, facets: dict, text: str, offset: int) -> dict:
 
 def listings(token: str) -> list[dict]:
     first = _search(token, {}, "", 0)
-    hit = india_facet(first.get("facets") or [])
-    facets, text = ({hit[0]: [hit[1]]}, "") if hit else ({}, "India")
+    hit = country_facet(first.get("facets") or [])
+    if not hit and int(first.get("total") or 0) <= PAGE:
+        return first.get("jobPostings") or []
+    facets, text = ({hit[0]: hit[1]}, "") if hit else ({}, "")
     out, offset = [], 0
-    page = _search(token, facets, text, 0)
+    page = _search(token, facets, text, 0) if hit else first
     total = int(page.get("total") or 0)
     while True:
         out += page.get("jobPostings") or []
@@ -130,13 +151,21 @@ def normalize(item: dict, token: str, company: str, detail: dict | None = None, 
     )
 
 
+def _read_first(items: list[dict]) -> set[int]:
+    """Which listings get the detail request: roles in a job family Propelo matches, early-career titles first."""
+    from ..scan import wanted_title
+    picks = [i for i, it in enumerate(items) if it.get("externalPath") and wanted_title(it.get("title") or "")]
+    picks.sort(key=lambda i: 0 if EARLY.search(items[i].get("title") or "") else 1)
+    return set(picks[:DETAIL_CAP])
+
+
 def fetch(token: str, company: str | None = None) -> list[Job]:
-    jobs, details = [], 0
-    for item in listings(token):
-        title = item.get("title") or ""
+    items = listings(token)
+    read = _read_first(items)
+    jobs = []
+    for i, item in enumerate(items):
         detail = None
-        if TECH.search(title) and details < DETAIL_CAP and item.get("externalPath"):
-            details += 1
+        if i in read:
             try:
                 detail = get_json(api(token) + item["externalPath"], timeout=20, retries=1)
             except FetchError:

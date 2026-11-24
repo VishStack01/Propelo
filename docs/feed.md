@@ -38,9 +38,11 @@ discovery finds it.
 ## 2. Discovery: which hiring system does each company use?
 
 `propelo discover` tries each company's likely board names (its name, aliases
-and website domain, slugified) on eight hiring systems, most common first:
-Greenhouse, Lever, Ashby, Workable, SmartRecruiters, Recruitee, Breezy and
-Personio. A board counts only if it checks out:
+and website domain, slugified) on ten hiring systems, most common first:
+Greenhouse, Lever, Ashby, SmartRecruiters, Recruitee, Breezy, Personio,
+Pinpoint, Teamtailor and Workable. Workday and iCIMS boards come from the
+curated list, links found by the hiring radar, and the deep sweep's inventory.
+A board counts only if it checks out:
 
 - the board's own company name matches ours, when the feed reports one;
 - for India-headquartered companies, at least one opening is in India or remote

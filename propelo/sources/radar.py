@@ -76,6 +76,12 @@ def board_from_url(url: str) -> tuple[str, str] | None:
         from .workday import token_from_url
         tok = token_from_url(url.strip())
         return ("workday", tok) if tok else None
+    m = re.match(r"^([a-z0-9-]+)\.(pinpointhq\.com|teamtailor\.com)$", host)
+    if m and m.group(1) not in ("www", "app", "api", "career", "developers"):
+        return ("pinpoint" if m.group(2) == "pinpointhq.com" else "teamtailor"), m.group(1)
+    m = re.match(r"^careers-([a-z0-9-]+)\.icims\.com$", host)
+    if m:
+        return "icims", m.group(1)
     m = re.match(r"^([a-z0-9-]+)\.(recruitee\.com|breezy\.hr|jobs\.personio\.(?:de|com))$", host)
     if m and m.group(1) not in ("www", "app", "api"):
         kind = {"recruitee.com": "recruitee", "breezy.hr": "breezy"}.get(m.group(2), "personio")

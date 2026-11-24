@@ -9,7 +9,7 @@ agent skill, not by this package.
 
 from __future__ import annotations
 
-from . import amazon, ashby, breezy, greenhouse, lever, personio, recruitee, smartrecruiters, workable, workday
+from . import amazon, ashby, breezy, greenhouse, icims, lever, personio, pinpoint, recruitee, smartrecruiters, teamtailor, workable, workday
 from .http import FetchError
 
 SCOUTS = {
@@ -22,6 +22,9 @@ SCOUTS = {
     "breezy": breezy.fetch,
     "personio": personio.fetch,
     "workday": workday.fetch,
+    "pinpoint": pinpoint.fetch,
+    "teamtailor": teamtailor.fetch,
+    "icims": icims.fetch,
     "amazon": amazon.fetch,
 }
 

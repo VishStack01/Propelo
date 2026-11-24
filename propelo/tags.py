@@ -86,6 +86,14 @@ SKILLS = [
 ]
 
 _INTERN = re.compile(r"\bintern(ship)?\b|\btrainee\b|\bapprentice", re.I)
+# Placements a student does during a degree count with internships.
+_UNDERGRAD = re.compile(r"\b(undergraduate|placement (year|students?|programmes?|programs?)|industrial placements?|year in industry|summer analysts?|co-?op)\b", re.I)
+# Early-career titles that rarely state years. A graduate scheme, a new-grad role or a rotational programme is
+# for people with no experience yet; before this they all landed in "Not stated".
+_GRAD = re.compile(r"\b(graduates?|grad (schemes?|programmes?|programs?|roles?)|new[- ]grads?|early[- ]careers?|rotational|"
+                   r"campus (hires?|hiring|recruit\w*)|university (hires?|hiring|recruit\w*|programmes?|programs?)|"
+                   r"class of 20\d\d|20\d\d (graduates?|grads?|starts?|intakes?))\b", re.I)
+_JUNIOR = re.compile(r"\b(junior|jr\.?|entry[- ]level|associate (software )?(engineers?|developers?))(?!\w)", re.I)
 _CONTRACT = re.compile(r"\bcontract(or)?\b|\bfreelance\b|\bfixed[- ]term\b", re.I)
 _PART = re.compile(r"\bpart[- ]time\b", re.I)
 _VISA = re.compile(r"visa sponsorship (is )?(available|provided|offered)|we (can |will )?sponsor (your )?visa|relocation and visa", re.I)
@@ -94,13 +102,15 @@ _RELOCATION = re.compile(r"relocation (support|assistance|package|bonus)", re.I)
 
 
 def level(title: str, facts: dict) -> str:
-    if _INTERN.search(title or ""):
+    if _INTERN.search(title or "") or _UNDERGRAD.search(title or ""):
         return "Internship"
     e = facts.get("expMin")
     if facts.get("senior") or (e is not None and e >= 5):
         return "Senior"
     if e is None:
-        return "Fresher" if facts.get("fresherOk") else "Not stated"
+        if _GRAD.search(title or "") or facts.get("fresherOk"):
+            return "Fresher"
+        return "Entry" if _JUNIOR.search(title or "") else "Not stated"
     if e == 0:
         return "Fresher"
     if e <= 2:
@@ -110,7 +120,7 @@ def level(title: str, facts: dict) -> str:
 
 def job_type(title: str, text: str) -> str:
     blob = f"{title}\n{text[:3000]}"
-    if _INTERN.search(title or ""):
+    if _INTERN.search(title or "") or _UNDERGRAD.search(title or ""):
         return "Internship"
     if _PART.search(blob):
         return "Part-time"
