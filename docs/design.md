@@ -74,13 +74,23 @@ One easing curve, `cubic-bezier(.16,1,.3,1)`, plus `cubic-bezier(.65,0,.35,1)` f
 
 Every screen has a designed loading state (a skeleton), an empty state that says how to fill it, and inline errors. On Home, the empty state turns into the three steps that produce the first matches.
 
+## The Visa-Clock
+
+Home's count is a note pinned to the board with a strip of tape, tilted 1.5 degrees (flat with Reduce Motion). The paper is the
+urgency: lavender when there is time, yellow inside 90 days of a date (30 for day limits such as OPT unemployment), pink inside
+30 (14) and once a date has passed. The number is big and in tabular figures; the label under it says what it counts ("unemployment
+days left of 90"), and a thin ink bar shows what is left of a fixed allowance. Beside it, in plain type: the dates, "Work today."
+and "Next." as bold run-in heads, the mode switch for students, and the sources folded away. The same paper colour marks the
+small count in the top bar.
+
 ## People
 
 The only illustrations are young people from [Open Peeps](https://www.openpeeps.com/) by Pablo Stanley (CC0, no credit required),
 recoloured to the palette above by `scripts/peeps` (see `scripts/peeps/cast.json` for every character and where it is used).
 
 - **Where:** the hero (a graduate presenting the role card), the closing card (two people sitting on its edge), the scam check,
-  the sign-up board, the 404 page and the app's bare empty states (fresh roles, today's batch, inbox, contacts, interview prep).
+  the sign-up board, the 404 page, the app's first-run questions and its bare empty states (fresh roles, today's batch, inbox,
+  contacts, interview prep).
   Not on every section: a page gets one or two.
 - **Who:** only young characters, with a range of skin tones and hair, including South Asian skin tones; never the grey-haired
   heads or the "Old" face. The script refuses them.

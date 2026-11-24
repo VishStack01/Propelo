@@ -282,7 +282,7 @@ code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:
 /* Forms */
 label.f{display:grid;gap:6px;font-size:14px;font-weight:600}
 label.f small{font-weight:400;color:var(--muted);font-size:13px}
-input[type="text"],input[type="number"],input[type="search"],input[type="email"],input[type="tel"],input[type="url"],select,textarea{font:inherit;font-size:15px;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;width:100%;min-width:0;transition:border-color .2s var(--ease),box-shadow .2s var(--ease)}
+input[type="text"],input[type="number"],input[type="date"],input[type="search"],input[type="email"],input[type="tel"],input[type="url"],select,textarea{font:inherit;font-size:15px;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 12px;width:100%;min-width:0;transition:border-color .2s var(--ease),box-shadow .2s var(--ease)}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 3px var(--panel-2)}
 textarea{resize:vertical;min-height:84px}
 .checks{display:flex;flex-wrap:wrap;gap:8px}
@@ -810,7 +810,7 @@ h1,h2,h3,.hero h1,.phead h1,.sh h2,.card h2,.empty b,.tier-head h3,.jcard h3{fon
 .pill.good,.pill.india{background:var(--bblue);color:var(--on-pastel)}
 .pill.world,.pill.queued{background:var(--pink);color:var(--on-pastel)}
 .pill.needs{background:var(--yellow);color:var(--on-pastel)}
-input[type="text"],input[type="number"],input[type="search"],input[type="email"],input[type="tel"],input[type="url"],input[type="password"],select,textarea{border-radius:var(--r-sm);background:var(--field);border-color:var(--line)}
+input[type="text"],input[type="number"],input[type="date"],input[type="search"],input[type="email"],input[type="tel"],input[type="url"],input[type="password"],select,textarea{border-radius:var(--r-sm);background:var(--field);border-color:var(--line)}
 input:focus,select:focus,textarea:focus{border-color:var(--ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 55%,transparent)}
 .switch button[aria-checked="true"]{background:var(--ink)}
 .switch button[aria-checked="true"]::after{background:var(--page)}
@@ -1000,12 +1000,14 @@ input:focus,select:focus,textarea:focus{border-color:var(--ink);box-shadow:0 0 0
 @media (prefers-reduced-motion:reduce){ .addsheet,.addsheet.open{transform:none!important} }
 @keyframes fade{from{opacity:0}}
 /* touch: every target at least 44 px */
-@media (pointer:coarse){ .btn,.btn.sm,.tab,.linkish,select,input[type="text"],input[type="email"],input[type="password"],input[type="search"]{min-height:44px} }
+@media (pointer:coarse){ .btn,.btn.sm,.tab,.linkish,select,input[type="text"],input[type="date"],input[type="email"],input[type="password"],input[type="search"]{min-height:44px} }
 /* loading: skeleton shapes match the final layout */
 .skel .bl svg{fill:var(--panel-2)!important}.skel .bl span{visibility:hidden}.skel .score .num,.skel .score .lab{color:transparent;background:var(--panel-2);border-radius:var(--r-sm)}
 .skel .ctile{background:var(--panel)!important}.skel .ctile *{visibility:hidden}
 /* empty: the shapes become numbered first steps */
 .panel.thin{margin-bottom:14px}.panel.thin p{margin:0 0 12px}
+.today > .qs{grid-column:1 / -1;position:relative}.qs .hh,.qs form{max-width:720px}.qs-art{position:absolute;right:clamp(24px,4vw,56px);bottom:0;width:clamp(150px,15vw,200px);line-height:0;pointer-events:none}.qs-art svg{display:block;width:100%;height:auto}@media (max-width:1180px){.qs-art{display:none}}.qs .hh,.qs form{position:relative}@media (min-width:1181px){.qs .hh,.qs form{max-width:min(720px,calc(100% - 260px))}}
+:root[data-theme="dark"] .qs-art svg{filter:drop-shadow(1.5px 0 0 #F3ECE0) drop-shadow(-1.5px 0 0 #F3ECE0) drop-shadow(0 1.5px 0 #F3ECE0) drop-shadow(0 -1.5px 0 #F3ECE0)}@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .qs-art svg{filter:drop-shadow(1.5px 0 0 #F3ECE0) drop-shadow(-1.5px 0 0 #F3ECE0) drop-shadow(0 1.5px 0 #F3ECE0) drop-shadow(0 -1.5px 0 #F3ECE0)}}
 .qs form{margin-top:16px}.qs-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:-8px}
 .qs-check{display:flex;gap:10px;align-items:flex-start;font-size:14px;font-weight:600;cursor:pointer}.qs-check input{margin-top:3px;width:18px;height:18px;flex:none}.qs-check small{display:block;font-weight:400;color:var(--muted);font-size:13px;margin-top:2px}
 .qs-go{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
@@ -1279,6 +1281,38 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
 .card.anyjob .btn.btn.btn{background:#151515;color:#FAF3E6;box-shadow:none;border-color:#151515;padding:12px 22px;font-size:15px}
 .card.anyjob .btn.btn.btn:hover{background:#151515;box-shadow:none;opacity:.9}
 @media (max-width:900px){.sources{font-size:16px;margin:16px 0 28px;padding:14px 0}}
+/* Visa-Clock: the count is a note pinned to the board; its paper is the urgency (lilac, then yellow, then pink) */
+.vclock{display:grid;grid-template-columns:minmax(170px,212px) minmax(0,1fr);gap:clamp(20px,3vw,36px);align-items:start}
+.vclock.empty-clock{display:block}
+.vc-note{position:relative;margin:8px 0 0;display:grid;gap:6px;padding:26px 20px 20px;border-radius:6px;background:var(--lav);color:var(--on-pastel);box-shadow:0 1px 0 rgba(21,21,21,.06),0 12px 24px -16px rgba(21,21,21,.45);transform:rotate(-1.5deg)}
+.vc-note::before{content:"";position:absolute;top:-9px;left:50%;width:64px;height:18px;margin-left:-32px;background:color-mix(in srgb,var(--yellow) 72%,transparent);transform:rotate(2deg);border-radius:2px}
+.vc-note.t-soon{background:var(--yellow)} .vc-note.t-soon::before{background:color-mix(in srgb,var(--lav) 78%,transparent)}
+.vc-note.t-urgent,.vc-note.t-over{background:var(--pink)}
+.vc-note.t-none{background:var(--panel-2);color:var(--ink);box-shadow:inset 0 0 0 1px var(--line)}
+.vc-n{font-size:clamp(56px,6vw,76px);font-weight:600;letter-spacing:-.05em;line-height:.9;font-variant-numeric:tabular-nums}
+.vc-n.vc-add{font-size:22px;letter-spacing:-.02em;line-height:1.2}
+.vc-l{font-size:14px;line-height:1.35;font-weight:500}
+.vc-m{display:block;height:6px;border-radius:99px;background:rgba(21,21,21,.14);overflow:hidden;margin-top:8px}
+.vc-m i{display:block;height:100%;background:var(--on-pastel);border-radius:inherit}
+.vc-body{min-width:0}
+.vc-body .chead{margin-bottom:10px}
+.vc-say{color:var(--ink-2);margin:0 0 14px}
+.vc-dates{list-style:none;margin:0 0 16px;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(176px,1fr));gap:8px}
+.vc-dates li{display:grid;gap:2px;padding:10px 12px;border-radius:var(--r-sm);background:var(--panel-2)}
+.vc-dates span{font-size:13px;color:var(--muted)} .vc-dates b{font-weight:600} .vc-dates small{font-size:13px;color:var(--ink-2)}
+.vc-rule{margin:0 0 10px;max-width:72ch;line-height:1.55} .vc-rule b{font-weight:600}
+.vc-mode{display:grid;gap:8px;margin:18px 0 4px;justify-items:start}
+.vc-mode p{margin:0;max-width:62ch}
+.vc-src{margin-top:14px} .vc-src summary{cursor:pointer;font-size:14px;color:var(--ink-2);width:max-content;max-width:100%}
+.vc-src ul{margin:8px 0;padding-left:18px;display:grid;gap:4px} .vc-src p{margin:0;max-width:62ch}
+.vc-src a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--pink);text-underline-offset:3px}
+#vc-top:empty{display:none}
+.vcpill{display:inline-flex;align-items:center;gap:5px;border:0;border-radius:999px;padding:5px 11px;margin-right:10px;font:inherit;font-size:13px;background:var(--lav);color:var(--on-pastel);cursor:pointer;white-space:nowrap}
+.vcpill b{font-weight:600;font-variant-numeric:tabular-nums}
+.vcpill.t-soon{background:var(--yellow)} .vcpill.t-urgent,.vcpill.t-over{background:var(--pink)}
+.vfields{gap:12px} .vfields:empty{display:none} .vf-check{align-self:end;min-height:44px;align-items:center}
+@media (max-width:720px){.vclock{grid-template-columns:1fr;gap:20px}.vc-note{max-width:250px;margin-left:4px}}
+@media (prefers-reduced-motion:reduce){.vc-note{transform:none}}
 </style>
 </head>
 <body>
@@ -2308,7 +2342,7 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
   </div>
 </aside>
 <div class="mainwrap"><div class="surface">
-<div class="topbar" id="nav"><span id="notice-text">Every 6 hours: tech and AI roles.</span><span class="topact"><button type="button" class="linkish" data-act="tab" data-tab="setup">Change filters</button><button class="btn solid sm" data-act="go-batch" id="cta-batch">Review batch</button></span></div>
+<div class="topbar" id="nav"><span id="notice-text">Every 6 hours: tech and AI roles.</span><span id="vc-top"></span><span class="topact"><button type="button" class="linkish" data-act="tab" data-tab="setup">Change filters</button><button class="btn solid sm" data-act="go-batch" id="cta-batch">Review batch</button></span></div>
 <main class="wrap">
   <section role="tabpanel" id="p-home" aria-labelledby="t-home"></section>
   <section role="tabpanel" id="p-today" aria-labelledby="t-today" hidden>
@@ -2411,6 +2445,75 @@ const USD_INR = 88;
 const IN_TZ = /^Asia\/(Kolkata|Calcutta)$/.test(TZ);
 const HOME_GUESS = IN_TZ ? 'IN' : ({'America/New_York':'US','America/Chicago':'US','America/Denver':'US','America/Los_Angeles':'US','America/Phoenix':'US','America/Toronto':'CA','America/Vancouver':'CA','Europe/London':'GB','Europe/Dublin':'IE','Europe/Berlin':'DE','Europe/Paris':'FR','Europe/Madrid':'ES','Europe/Amsterdam':'NL','Europe/Warsaw':'PL','Europe/Lisbon':'PT','Europe/Stockholm':'SE','Europe/Zurich':'CH','Asia/Singapore':'SG','Asia/Dubai':'AE','Australia/Sydney':'AU','Australia/Melbourne':'AU','Asia/Tokyo':'JP','Asia/Manila':'PH','America/Sao_Paulo':'BR','America/Mexico_City':'MX','Africa/Lagos':'NG','Africa/Nairobi':'KE','Asia/Karachi':'PK','Asia/Dhaka':'BD','Asia/Colombo':'LK','Asia/Kathmandu':'NP'}[TZ] || 'US');
 const HOMES = [['IN','India'],['US','United States'],['CA','Canada'],['GB','United Kingdom'],['IE','Ireland'],['DE','Germany'],['FR','France'],['ES','Spain'],['NL','Netherlands'],['PL','Poland'],['PT','Portugal'],['SE','Sweden'],['CH','Switzerland'],['AE','United Arab Emirates'],['SG','Singapore'],['AU','Australia'],['NZ','New Zealand'],['JP','Japan'],['PH','Philippines'],['MY','Malaysia'],['PK','Pakistan'],['BD','Bangladesh'],['LK','Sri Lanka'],['NP','Nepal'],['NG','Nigeria'],['KE','Kenya'],['ZA','South Africa'],['BR','Brazil'],['MX','Mexico']];
+/* visa-clock:start. The Visa-Clock, the same logic as propelo/visaclock.py (tests run both on the same dates).
+   VISA_RULES is copied from propelo/data/visa_rules.json by scripts/sync_visa_rules.py: edit the JSON, not this line. */
+const VISA_RULES = {"checked":"2026-11-25","countries":{"US":"United States","GB":"United Kingdom","IE":"Ireland","NL":"Netherlands"},"tones":{"dates":[30,90],"days":[14,30]},"months":["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"notes":{"missing":"Add your dates in Settings to start the clock.","over":"This date has passed. Check your dates in Settings.","overDays":"No days are left. Get advice today from your school's DSO or an immigration adviser.","paused":"Paused while you have a job.","counting":"Counting each day without a job since {date}.","startsOn":"Your OPT starts on {date}. The count begins then.","programEnded":"Your program ended on {date}.","jobEnded":"Your job ended on {date}. The grace period ends on {end}."},"fields":{"courseEnd":{"type":"date","label":"Course end date"},"permitEnd":{"type":"date","label":"Visa end date"},"optStart":{"type":"date","label":"OPT start date","hint":"On your EAD card"},"optEnd":{"type":"date","label":"OPT end date","hint":"On your EAD card"},"working":{"type":"bool","label":"I have a job on OPT now"},"daysUsed":{"type":"number","label":"Unemployment days used so far","hint":"Leave empty to count from your OPT start date"},"jobEnded":{"type":"date","label":"Last day of your job, if it has ended"}},"work":{"us-campus":["On campus: up to 20 hours a week while school is in session, and full-time during breaks. Off-campus work needs CPT or OPT."],"us-cpt":["Off campus: only the employer and dates your CPT authorisation names. On campus: up to 20 hours a week while school is in session."],"us-opt":["OPT work must be directly related to your major, for at least 20 hours a week."],"us-h1b":["You can work for the employer that filed your H-1B petition."],"uk-student":["Up to 20 hours a week in term time at degree level, and full-time in vacations.","Your course has ended, so full-time work is allowed until your visa ends."],"uk-free":["You can work in most jobs, for any employer, while your Graduate visa lasts."],"uk-sponsored":["You work for the employer that sponsors your visa."],"ie-stamp2":["Up to 20 hours a week now. From June to September, and from 15 December to 15 January, up to 40 hours a week.","Up to 40 hours a week now (June to September, and 15 December to 15 January). Up to 20 hours a week at other times."],"ie-free":["You can work full-time for any employer without an employment permit."],"nl-study":["Up to 16 hours a week, or full-time in June, July and August. Your employer needs a work permit (TWV) for you.","Full-time work is allowed now (June to August). Your employer needs a work permit (TWV) for you."],"nl-free":["You can work for any employer without a work permit (TWV)."]},"statuses":[{"id":"us-f1","country":"US","label":"F-1 student","partTime":true,"sponsor":true,"clock":"program-end","fields":["courseEnd"],"quick":["courseEnd"],"labels":{"courseEnd":"Program end date (on your I-20)"},"badge":["days until your program ends","days left in your 60-day grace period"],"work":"us-campus","next":"Ask your DSO about post-completion OPT before your program ends. OPT gives up to 12 months of work in your field. After your program end date you have 60 days to leave, start OPT, transfer or change status.","sources":[["ICE: F-1 student employment","https://www.ice.gov/sevis/employment"],["Study in the States: the 60-day grace period","https://studyinthestates.dhs.gov/2019/07/students-understand-your-post-completion-grace-period"],["USCIS: OPT for F-1 students","https://www.uscis.gov/working-in-the-united-states/students-and-exchange-visitors/optional-practical-training-opt-for-f-1-students"]]},{"id":"us-cpt","country":"US","label":"F-1 on CPT","partTime":true,"sponsor":true,"clock":"program-end","fields":["courseEnd"],"quick":["courseEnd"],"labels":{"courseEnd":"Program end date (on your I-20)"},"badge":["days until your program ends","days left in your 60-day grace period"],"work":"us-cpt","next":"Ask your DSO about post-completion OPT before your program ends. OPT gives up to 12 months of work in your field.","sources":[["ICE: F-1 student employment","https://www.ice.gov/sevis/employment"],["USCIS: OPT for F-1 students","https://www.uscis.gov/working-in-the-united-states/students-and-exchange-visitors/optional-practical-training-opt-for-f-1-students"]]},{"id":"us-opt","country":"US","label":"OPT (after graduation)","partTime":false,"sponsor":true,"clock":"unemployment","limit":90,"fields":["optStart","optEnd","working","daysUsed"],"quick":["optStart","working"],"labels":{},"badge":["unemployment days left of 90"],"work":"us-opt","next":"If your degree is on the STEM list, a job with an employer enrolled in E-Verify can extend OPT by 24 months. File for the extension before your OPT card ends.","sources":[["Study in the States: the unemployment counter","https://studyinthestates.dhs.gov/sevis-help-hub/student-records/fm-student-employment/unemployment-counter"],["USCIS: OPT for F-1 students","https://www.uscis.gov/working-in-the-united-states/students-and-exchange-visitors/optional-practical-training-opt-for-f-1-students"]]},{"id":"us-stem-opt","country":"US","label":"STEM OPT extension","partTime":false,"sponsor":true,"clock":"unemployment","limit":150,"fields":["optEnd","working","daysUsed"],"quick":["daysUsed","working"],"labels":{"daysUsed":"Unemployment days used so far, including on OPT"},"badge":["unemployment days left of 150"],"work":"us-opt","next":"Each STEM OPT employer must be enrolled in E-Verify. The 150 days include the ones you used on OPT.","sources":[["Study in the States: the unemployment counter","https://studyinthestates.dhs.gov/sevis-help-hub/student-records/fm-student-employment/unemployment-counter"],["USCIS: OPT for F-1 students","https://www.uscis.gov/working-in-the-united-states/students-and-exchange-visitors/optional-practical-training-opt-for-f-1-students"]]},{"id":"us-h1b","country":"US","label":"H-1B","partTime":false,"sponsor":true,"clock":"h1b","fields":["permitEnd","jobEnded"],"quick":["permitEnd"],"labels":{"permitEnd":"H-1B end date (on your I-797 or I-94)"},"badge":["days until your H-1B end date","days left in your 60-day grace period"],"work":"us-h1b","next":"If your job ends, you have up to 60 days, or until your H-1B end date if that is sooner, for a new employer to file a petition for you.","sources":[["USCIS: options after a job ends","https://www.uscis.gov/working-in-the-united-states/options-for-nonimmigrant-workers-following-termination-of-employment"]]},{"id":"uk-student","country":"GB","label":"Student visa","partTime":true,"sponsor":true,"clock":"permit-end","fields":["permitEnd","courseEnd"],"quick":["permitEnd"],"labels":{"permitEnd":"Student visa end date (on your eVisa)"},"badge":["days left to switch from your Student visa"],"work":"uk-student","next":"If you switch to a Skilled Worker visa from your Student visa, the employer pays no Immigration Skills Charge, which is otherwise up to £1,320 for the first year. You can apply once your course is complete, or earlier if the job starts after your course ends. A Graduate visa must also be applied for before your Student visa ends.","sources":[["GOV.UK: Immigration Skills Charge","https://www.gov.uk/uk-visa-sponsorship-employers/immigration-skills-charge"],["GOV.UK: switch to a Skilled Worker visa","https://www.gov.uk/skilled-worker-visa/switch-to-this-visa"],["GOV.UK: Graduate visa","https://www.gov.uk/graduate-visa"],["UKCISA: working on a Student visa","https://www.ukcisa.org.uk/student-advice/working/student-work/"]]},{"id":"uk-graduate","country":"GB","label":"Graduate visa","partTime":false,"sponsor":true,"clock":"permit-end","fields":["permitEnd"],"quick":["permitEnd"],"labels":{"permitEnd":"Graduate visa end date (on your eVisa)"},"badge":["days left on your Graduate visa"],"work":"uk-free","next":"A Graduate visa can't be extended. To stay, switch to a Skilled Worker visa with a licensed sponsor before it ends. It lasts 2 years if you applied by 31 December 2026, 18 months if you apply from 1 January 2027, and 3 years after a PhD.","sources":[["GOV.UK: Graduate visa","https://www.gov.uk/graduate-visa"],["GOV.UK: switch to a Skilled Worker visa","https://www.gov.uk/skilled-worker-visa/switch-to-this-visa"]]},{"id":"uk-skilled","country":"GB","label":"Skilled Worker visa","partTime":false,"sponsor":true,"clock":"permit-end","fields":["permitEnd"],"quick":["permitEnd"],"labels":{"permitEnd":"Skilled Worker visa end date"},"badge":["days left on your Skilled Worker visa"],"work":"uk-sponsored","next":"Roles from employers on the Home Office register of licensed sponsors are marked, so you can see who could sponsor a move.","sources":[["GOV.UK: Skilled Worker visa","https://www.gov.uk/skilled-worker-visa/switch-to-this-visa"]]},{"id":"ie-stamp2","country":"IE","label":"Stamp 2 (student)","partTime":true,"sponsor":true,"clock":"permit-end","fields":["permitEnd","courseEnd"],"quick":["permitEnd"],"labels":{"permitEnd":"Stamp 2 end date (on your IRP card)"},"badge":["days left on your Stamp 2"],"work":"ie-stamp2","next":"Once you have your results, apply for Stamp 1G (the Third Level Graduate Programme) within six months, while your Stamp 2 is still valid.","sources":[["Workplace Relations Commission: Stamp 2 working hours","https://workplacerelations.ie/en/news-media/workplace_relations_notices/changes_to_employment_entitlements_of_non-eea_students_holding_immigration_stamp_2.html"],["Irish Immigration: Third Level Graduate Programme","https://www.irishimmigration.ie/third-level-graduate-programme/"]]},{"id":"ie-stamp1g","country":"IE","label":"Stamp 1G (graduate)","partTime":false,"sponsor":true,"clock":"permit-end","fields":["permitEnd"],"quick":["permitEnd"],"labels":{"permitEnd":"Stamp 1G end date (on your IRP card)"},"badge":["days left on your Stamp 1G"],"work":"ie-free","next":"Stamp 1G lasts 12 months after a level 8 degree, and up to 24 months in total after level 9 or above. To stay longer, a job can lead to a Critical Skills or General Employment Permit.","sources":[["Irish Immigration: Third Level Graduate Programme","https://www.irishimmigration.ie/third-level-graduate-programme/"],["UCD: Stamp 1G permission","https://www.ucd.ie/global/studentexperience/thirdlevelgraduateprogramme-stamp1gpermission/"]]},{"id":"nl-study","country":"NL","label":"Study residence permit","partTime":true,"sponsor":true,"clock":"permit-end","fields":["permitEnd"],"quick":["permitEnd"],"labels":{"permitEnd":"Residence permit end date"},"badge":["days left on your residence permit"],"work":"nl-study","next":"Within three years of graduating you can apply for the orientation year (zoekjaar). It lasts one year and lets you work for any employer without a work permit.","sources":[["EU Immigration Portal: students in the Netherlands","https://home-affairs.ec.europa.eu/policies/migration-and-asylum/eu-immigration-portal/student-netherlands_en"],["IND: orientation year","https://ind.nl/en/residence-permits/work/residence-permit-for-orientation-year"]]},{"id":"nl-zoekjaar","country":"NL","label":"Orientation year (zoekjaar), including top-200 graduates","partTime":false,"sponsor":true,"clock":"permit-end","fields":["permitEnd"],"quick":["permitEnd"],"labels":{"permitEnd":"Orientation year end date"},"badge":["days left in your orientation year"],"work":"nl-free","next":"The orientation year lasts one year and can't be extended. Before it ends, a job can lead to a work permit such as the highly skilled migrant permit.","sources":[["IND: orientation year","https://ind.nl/en/residence-permits/work/residence-permit-for-orientation-year"],["Government.nl: orientation year","https://www.government.nl/topics/immigration-to-the-netherlands/options-for-entrepreneurs-and-employees-from-abroad/orientation-year-highly-educated-persons"]]},{"id":"abroad","country":"","label":"Not living in one of these countries yet","partTime":false,"sponsor":true,"clock":"none","fields":[],"quick":[],"labels":{},"badge":[],"work":"","next":"Roles from employers with a record of sponsoring visas come first, and roles that say they can't sponsor are left out.","sources":[]},{"id":"settled","country":"","label":"Citizen or settled, no visa needed","partTime":false,"sponsor":false,"clock":"none","fields":[],"quick":[],"labels":{},"badge":[],"work":"","next":"","sources":[]}]};
+const VISA_BY_ID = Object.fromEntries(VISA_RULES.statuses.map(s => [s.id, s]));
+function vcDate(v){
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v || '').slice(0, 10)); if (!m) return null;
+  const t = Date.UTC(+m[1], +m[2] - 1, +m[3]), d = new Date(t);
+  return d.getUTCFullYear() === +m[1] && d.getUTCMonth() === +m[2] - 1 && d.getUTCDate() === +m[3] ? t : null;
+}
+function vcNum(v){ if (v === null || v === undefined || v === '' || typeof v === 'boolean') return null; const n = Number(v); return Number.isFinite(n) ? Math.max(0, Math.trunc(n)) : null; }
+const vcFmt = t => { const d = new Date(t); return `${d.getUTCDate()} ${VISA_RULES.months[d.getUTCMonth()]} ${d.getUTCFullYear()}`; };
+const vcIso = t => new Date(t).toISOString().slice(0, 10);
+const vcTone = (n, kind) => { const [urgent, soon] = VISA_RULES.tones[kind]; return n <= urgent ? 'urgent' : n <= soon ? 'soon' : 'ok'; };
+const vcLabel = (st, key) => st.labels[key] || VISA_RULES.fields[key].label;
+function vcWork(st, v, today){
+  const texts = VISA_RULES.work[st.work] || []; if (!texts.length) return '';
+  const k = st.work, d = new Date(today), m = d.getUTCMonth() + 1, day = d.getUTCDate(); let i = 0;
+  if (k === 'uk-student'){ const ce = vcDate(v.courseEnd); i = ce !== null && ce < today ? 1 : 0; }
+  else if (k === 'ie-stamp2') i = (m >= 6 && m <= 9) || (m === 12 && day >= 15) || (m === 1 && day <= 15) ? 1 : 0;
+  else if (k === 'nl-study') i = m >= 6 && m <= 8 ? 1 : 0;
+  return texts[i];
+}
+function partTimeOk(v){ const st = v && typeof v === 'object' ? VISA_BY_ID[String(v.status || '')] : null; return !!(st && st.partTime); }
+function visaClock(v, todayIso){
+  v = v && typeof v === 'object' && !Array.isArray(v) ? v : {};
+  const st = VISA_BY_ID[String(v.status || '')]; if (!st) return null;
+  const today = vcDate(todayIso), notes = VISA_RULES.notes, DAY = 864e5;
+  const out = {status: st.id, label: st.label, country: st.country, partTime: st.partTime, sponsor: st.sponsor,
+    work: vcWork(st, v, today), next: st.next, sources: st.sources.map(([title, url]) => ({title, url})), badge: null, dates: [], missing: []};
+  const left = d => Math.round((d - today) / DAY);
+  const badge = (n, label, total, kind, note) => {
+    const over = kind === 'days' ? n <= 0 : n < 0;
+    out.badge = {days: Math.max(0, n), label, total, tone: over ? 'over' : vcTone(n, kind), note: over ? (kind === 'days' ? notes.overDays : notes.over) : (note || '')};
+  };
+  const kind = st.clock;
+  if (kind === 'program-end'){
+    const ce = vcDate(v.courseEnd);
+    if (ce === null) out.missing = ['courseEnd'];
+    else if (left(ce) >= 0) badge(left(ce), st.badge[0], null, 'dates');
+    else badge(left(ce + 60 * DAY), st.badge[1], 60, 'days', notes.programEnded.replace('{date}', vcFmt(ce)));
+  } else if (kind === 'unemployment'){
+    const limit = Number(st.limit), start = vcDate(v.optStart), used = vcNum(v.daysUsed), working = v.working === true;
+    if (used === null && start === null) out.missing = [st.fields.includes('optStart') ? 'optStart' : 'daysUsed'];
+    else if (start !== null && start > today) badge(limit, st.badge[0], limit, 'days', notes.startsOn.replace('{date}', vcFmt(start)));
+    else {
+      const base = used !== null ? used : 0, since = used !== null ? vcDate(v.asOf) : start;
+      const ticking = working || since === null || since > today ? 0 : Math.round((today - since) / DAY);
+      const note = working ? notes.paused : since !== null ? notes.counting.replace('{date}', vcFmt(since)) : '';
+      badge(limit - base - ticking, st.badge[0], limit, 'days', note);
+    }
+  } else if (kind === 'h1b'){
+    const end = vcDate(v.permitEnd), gone = vcDate(v.jobEnded);
+    if (gone !== null && gone <= today){
+      let grace = gone + 60 * DAY; if (end !== null && end < grace) grace = end;
+      badge(left(grace), st.badge[1], 60, 'days', notes.jobEnded.replace('{date}', vcFmt(gone)).replace('{end}', vcFmt(grace)));
+    } else if (end !== null) badge(left(end), st.badge[0], null, 'dates');
+    else out.missing = ['permitEnd'];
+  } else if (kind === 'permit-end'){
+    const pe = vcDate(v.permitEnd);
+    if (pe !== null) badge(left(pe), st.badge[0], null, 'dates'); else out.missing = ['permitEnd'];
+  }
+  for (const key of st.fields){
+    const d = VISA_RULES.fields[key].type === 'date' && key !== 'jobEnded' ? vcDate(v[key]) : null;
+    if (d !== null) out.dates.push({key, label: vcLabel(st, key), date: vcIso(d), text: vcFmt(d), days: left(d)});
+  }
+  if (out.missing.length) out.missingNote = notes.missing;
+  return out;
+}
+/* visa-clock:end */
 const fTime = new Intl.DateTimeFormat('en-IN', {timeZone: TZ, hour: '2-digit', minute: '2-digit', hour12: false});
 const fDate = new Intl.DateTimeFormat('en-IN', {timeZone: TZ, day: 'numeric', month: 'short'});
 const fKey  = new Intl.DateTimeFormat('en-CA', {timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit'});
@@ -2471,7 +2574,8 @@ const REGION = {'remote-global':[0,'Remote worldwide','pill world'],'remote-indi
 const ABROAD_RANK = {'local': 0, 'remote-local': 0, 'remote-global': 1, 'remote-unclear': 2};
 /* India rules apply only to someone who lives in India and wants to work there. Everyone else (living abroad, or in India
    and looking abroad) is matched against the places they chose. */
-const inIndiaMode = s => String(obj(s).homeCountry || 'IN') === 'IN' && !obj(s).workAbroad;
+/* India-only search is gone from onboarding and Settings; accounts that chose it before keep their rules until they save. */
+const inIndiaMode = s => String(obj(s).homeCountry || '') === 'IN' && obj(s).workAbroad === false && !obj(s).visa;
 const livesAbroad = () => !inIndiaMode(state.settings);
 const regionRank = j => livesAbroad() ? (j.region in ABROAD_RANK ? ABROAD_RANK[j.region] : 3) : (REGION[j.region] || [3])[0];
 function sponsorRank(j){
@@ -2956,11 +3060,12 @@ function renderFresh(){
   const all = jobsArr().filter(j => (j.stage === 'found' || !j.stage) && inWindow(j, state.win)).sort(byPriority);
   if (finding()) return findingBlock();
   const regions = livesAbroad()
-    ? [['all', 'All'], ['saved', 'Saved'], ['local', 'In your places'], ['remote-local', 'Remote, your country'], ['remote-global', 'Remote worldwide'], ['remote-unclear', 'Remote: check who can apply']]
+    ? [['all', 'All'], ...(partTimeMode() ? [['part-time', 'Part-time and internships']] : []), ['saved', 'Saved'], ['local', 'In your places'], ['remote-local', 'Remote, your country'], ['remote-global', 'Remote worldwide'], ['remote-unclear', 'Remote: check who can apply']]
     : [['all', 'All'], ['saved', 'Saved'], ['startups', 'Startups'], ['remote-global', 'Remote worldwide'], ['remote-india', 'Remote, India'], ['south-india', 'South India']];
   const isStartup = j => /\bYC\b|Work at a Startup|Who is hiring|Hacker News|Wellfound/i.test(j.source || '') || /^yc-/.test(j.category || '');
-  const inK = (j, k) => k === 'all' ? true : k === 'saved' ? !!j.saved : k === 'startups' ? isStartup(j) : j.region === k;
+  const inK = (j, k) => k === 'all' ? true : k === 'saved' ? !!j.saved : k === 'part-time' ? isPartTimeRole(j) : k === 'startups' ? isStartup(j) : j.region === k;
   const nIn = k => all.filter(j => inK(j, k)).length;
+  if (partTimeMode() && !state.regionPicked && state.region === 'all' && nIn('part-time')) state.region = 'part-time';
   if (state.region !== 'all' && !nIn(state.region)) state.region = 'all';
   const list = all.filter(j => inK(j, state.region)).sort((a, b) => (b.saved ? 1 : 0) - (a.saved ? 1 : 0));
   const shown = list.slice(0, state.freshLimit), left = list.length - shown.length;
@@ -3814,7 +3919,6 @@ function renderSetup(){
     ${cloud() ? `<label class="f" for="s-alerts">Job alerts by email <small>New roles that pass your filters</small><select id="s-alerts"${ro}>${[['off','Off'],['daily','Daily'],['weekly','Weekly']].map(([v, l]) => `<option value="${v}"${(s.alerts || 'off') === v ? ' selected' : ''}>${l}</option>`).join('')}</select></label>` : ''}
     <label class="f full" for="s-mode">How applications go out<select id="s-mode"${ro}><option value="auto-when-clear"${s.approvalMode === 'auto-when-clear' ? ' selected' : ''}>Auto-apply when every answer comes from my profile</option><option value="daily-batch"${s.approvalMode !== 'auto-when-clear' ? ' selected' : ''}>Daily batch: I approve each one</option></select></label>
     <label class="f" for="s-home">Where you live<select id="s-home"${ro}>${HOMES.map(([c, n]) => `<option value="${c}"${(s.homeCountry || 'IN') === c ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
-    <label class="f" for="s-seek" id="s-seek-row"${(s.homeCountry || 'IN') === 'IN' ? '' : ' hidden'}>Where you want to work<select id="s-seek"${ro}><option value="home"${s.workAbroad ? '' : ' selected'}>In India</option><option value="abroad"${s.workAbroad ? ' selected' : ''}>In another country</option></select></label>
     <div class="full" role="group" aria-labelledby="s-loc-l" id="s-loc-in"${inIndiaMode(s) ? '' : ' hidden'}><span id="s-loc-l" class="groupl">Locations</span><div class="checks">${LOCATIONS.map((l, i) => `<label for="s-loc-${i}"><input type="checkbox" id="s-loc-${i}" value="${esc(l)}" ${arr(s.locations).includes(l) ? 'checked' : ''}${ro}>${esc(l)}</label>`).join('')}</div></div>
     <div class="full formgrid" id="s-loc-world"${inIndiaMode(s) ? ' hidden' : ''} style="gap:12px"><label class="f" for="s-places">On-site or hybrid in <small>countries or cities, comma separated</small><input type="text" id="s-places" value="${esc(s.places || '')}" placeholder="London, Manchester"${ro}></label>
       <label class="cccheck" for="s-remote" style="align-self:end"><input type="checkbox" id="s-remote"${s.remoteOk !== false ? ' checked' : ''}${ro}> Remote roles open to people where you live</label></div>
@@ -3832,7 +3936,7 @@ function renderSetup(){
   return `<div class="hero" style="padding-bottom:18px"><div><h1>Settings</h1><p class="sub">Your plan, what the search knows about you, the filters it applies, and what it has done.</p></div></div>
   ${cloud() ? renderPlan() : ''}
   <div class="setup">
-    <div style="display:grid;gap:34px;min-width:0;padding-top:20px">${renderApplicantForm()}${brain}<div><div class="sh"><h2 style="font-size:24px">Preferences</h2><p>The daily run reads these.</p></div><div class="panel">${form}</div></div></div>
+    <div style="display:grid;gap:34px;min-width:0;padding-top:20px">${renderApplicantForm()}${renderVisaPanel()}${brain}<div><div class="sh"><h2 style="font-size:24px">Preferences</h2><p>The daily run reads these.</p></div><div class="panel">${form}</div></div></div>
     <div style="display:grid;gap:34px;min-width:0;padding-top:20px">
       ${renderCloud()}
       <div><div class="sh"><h2 style="font-size:24px">Ground rules</h2></div><div class="panel"><ul class="checklist">
@@ -3853,7 +3957,7 @@ function renderSetup(){
 function renderFoot(){
   const f = filterSummary();
   const cov = obj(settings().coverage), n = x => Number(x).toLocaleString('en-IN');
-  return `<div><h4>Where it looks</h4><ul><li>${cov.companies ? n(cov.companies) + ' company career pages' : 'Company career pages'}</li><li>${cov.platforms ? n(cov.platforms) + ' job platforms' : 'Remote and Indian job boards'}</li><li>VC portfolio boards</li><li>Searches for new career pages</li></ul></div>
+  return `<div><h4>Where it looks</h4><ul><li>${cov.companies ? n(cov.companies) + ' company career pages' : 'Company career pages'}</li><li>${cov.platforms ? n(cov.platforms) + ' job platforms' : 'Remote job boards'}</li><li>VC portfolio boards</li><li>Searches for new career pages</li></ul></div>
     <div><h4>Your filters</h4><ul><li>For ${esc(f.exp)}</li><li>Posted in the last ${esc(f.days)} days</li><li>${esc(f.locs)}</li><li>${settings().salaryFloorLpa !== '' ? 'Pay floor ' + (livesAbroad() && settings().salaryFloorUsd ? '$' + Number(settings().salaryFloorUsd).toLocaleString('en-US') + ' a year' : esc(settings().salaryFloorLpa) + ' LPA') + (settings().requireStatedPay ? ', stated in the posting' : '') : 'No pay floor'}</li><li>Up to ${esc(settings().dailyCap)} prepared a day</li></ul></div>
     <div><h4>What it never does</h4><ul><li>Invent experience or numbers</li><li>Send LinkedIn messages</li><li>${autoMode() ? 'Guess an answer your profile can\'t back up' : 'Submit without your approval'}</li><li>Apply twice to one company in 6 months</li></ul></div>
     <div><h4>Privacy</h4><ul><li>Only you can read this pipeline, even if you share the link</li><li>Credentials never stored here</li>${cloud() ? '<li><a href="privacy">Privacy notice</a> · <a href="terms">Terms</a></li>' : ''}</ul></div>`;
@@ -4661,6 +4765,88 @@ function upcoming(days){
   const now = Date.now(), end = now + days * 864e5;
   return calEvents().filter(e => e.d >= now - 864e5 / 2 && e.d <= end && e.kind !== 'applied').sort((a, b) => a.d - b.d);
 }
+/* ---------- Visa-Clock: the home card, the onboarding question and the Settings panel ---------- */
+const localIso = () => { try { return new Intl.DateTimeFormat('en-CA', {timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit'}).format(new Date()); } catch (e) { return new Date().toISOString().slice(0, 10); } };
+const visaOf = s => obj(obj(s).visa);
+const myClock = () => visaClock(visaOf(state.settings), localIso());
+const partTimeMode = () => obj(state.settings).jobMode === 'part-time' && partTimeOk(visaOf(state.settings));
+const isPartTimeRole = j => /^(Part-time|Internship)$/.test(j.jobType || '') || /\b(part[- ]time|intern(ship)?|placement|working student|werkstudent|student (job|assistant|ambassador))\b/i.test(j.title || '');
+const daysWord = n => n === 1 ? '1 day' : n + ' days';
+function visaOptions(sel){
+  const opt = s => `<option value="${esc(s.id)}"${sel === s.id ? ' selected' : ''}>${esc(s.label)}</option>`;
+  const groups = Object.entries(VISA_RULES.countries).map(([c, n]) => `<optgroup label="${esc(n)}">${VISA_RULES.statuses.filter(s => s.country === c).map(opt).join('')}</optgroup>`).join('');
+  return `<option value=""${sel ? '' : ' selected'} disabled>Choose your visa</option>${groups}<optgroup label="Other">${VISA_RULES.statuses.filter(s => !s.country).map(opt).join('')}</optgroup>`;
+}
+/* The date fields for one status: all of them in Settings, the one or two that start the clock during onboarding. */
+function visaFields(id, prefix, v, quick, ro){
+  const st = VISA_BY_ID[id]; if (!st) return '';
+  return (quick ? st.quick : st.fields).map(k => {
+    const f = VISA_RULES.fields[k], fid = prefix + k, label = esc(vcLabel(st, k)), hint = f.hint ? ` <small>${esc(f.hint)}</small>` : '';
+    if (f.type === 'bool') return `<label class="qs-check vf-check" for="${fid}"><input type="checkbox" id="${fid}" data-vf="${k}"${v[k] === true ? ' checked' : ''}${ro}> <span>${label}</span></label>`;
+    const attrs = f.type === 'number' ? ' type="number" min="0" max="400" step="1" inputmode="numeric"' : ' type="date"';
+    return `<label class="f" for="${fid}">${label}${hint}<input${attrs} id="${fid}" data-vf="${k}" value="${esc(v[k] ?? '')}"${ro}></label>`;
+  }).join('');
+}
+/* Read a visa form. Days used keep their date, so the clock goes on counting from when they were entered; switching
+   "I have a job" freezes the count reached so far and starts again from today. */
+function readVisa(scope, id, prev){
+  const st = VISA_BY_ID[id]; if (!st) return null;
+  const p = obj(prev), same = p.status === id, today = localIso(), v = {status: id};
+  for (const el of scope.querySelectorAll('[data-vf]')){
+    const k = el.dataset.vf, f = VISA_RULES.fields[k]; if (!f || !st.fields.includes(k)) continue;
+    if (f.type === 'bool') v[k] = el.checked;
+    else if (f.type === 'number'){ const n = vcNum(el.value); if (n !== null) v[k] = n; }
+    else if (vcDate(el.value) !== null) v[k] = el.value;
+  }
+  if (same) for (const k of st.fields) if (!(k in v) && p[k] !== undefined && !scope.querySelector(`[data-vf="${k}"]`)) v[k] = p[k];
+  if (st.clock === 'unemployment'){
+    const was = same ? visaClock(p, today) : null;
+    if (was && was.badge && v.working !== p.working && (v.daysUsed === p.daysUsed || v.daysUsed === undefined)){ v.daysUsed = Math.max(0, st.limit - was.badge.days); v.asOf = today; }
+    else if (v.daysUsed !== undefined) v.asOf = same && p.daysUsed === v.daysUsed && p.asOf ? p.asOf : today;
+  }
+  v.updatedAt = nowIso();
+  return v;
+}
+function visaCard(){
+  const c = myClock();
+  if (!c) return `<section class="card vclock empty-clock enter"><div class="chead"><div><h2>Your visa clock</h2><p class="muted">Add your visa and its end date. Home then counts down the days you have, says what work your visa allows today, and what to do next.</p></div>${state.canWrite ? '<button class="btn sm" data-act="visa-edit">Add your visa</button>' : ''}</div></section>`;
+  if (!c.badge && !c.missing.length) return '';
+  const b = c.badge, pt = partTimeMode();
+  const pct = b && b.total ? Math.max(0, Math.min(100, Math.round(b.days / b.total * 100))) : null;
+  const note = b
+    ? `<p class="vc-note t-${b.tone}"><span class="vc-n">${b.days}</span><span class="vc-l">${esc(b.label)}</span>${pct !== null ? `<span class="vc-m" aria-hidden="true"><i style="width:${pct}%"></i></span>` : ''}</p>`
+    : `<p class="vc-note t-none"><span class="vc-n vc-add">Add your dates</span><span class="vc-l">${esc(c.missingNote)}</span></p>`;
+  const dates = c.dates.length ? `<ul class="vc-dates">${c.dates.map(d => `<li><span>${esc(d.label)}</span><b>${esc(d.text)}</b><small>${d.days > 0 ? 'in ' + daysWord(d.days) : d.days === 0 ? 'today' : daysWord(-d.days) + ' ago'}</small></li>`).join('')}</ul>` : '';
+  const mode = c.partTime ? `<div class="vc-mode"><div class="pseg" role="group" aria-label="What you are looking for"><button type="button" data-act="job-mode" data-v="career" aria-pressed="${!pt}"${wr()}>Sponsored career</button><button type="button" data-act="job-mode" data-v="part-time" aria-pressed="${pt}"${wr()}>Part-time while studying</button></div>
+      <p class="small muted">${pt ? 'Part-time roles and internships come first, and the sponsorship filter is off. Check the work rule above before you apply.' : 'Full-time roles come first, with employers that can sponsor your visa at the top.'}</p></div>` : '';
+  const country = VISA_RULES.countries[c.country] || '';
+  const src = c.sources.length ? `<details class="vc-src"><summary>Where these rules come from</summary><ul>${c.sources.map(x => `<li><a href="${esc(x.url)}" target="_blank" rel="noopener">${esc(x.title)}</a></li>`).join('')}</ul><p class="small muted">Checked ${esc(vcFmt(vcDate(VISA_RULES.checked)))}. Rules change, so confirm anything important with your university's international office or an immigration adviser.</p></details>` : '';
+  return `<section class="card vclock enter" aria-labelledby="vc-h">
+    ${note}
+    <div class="vc-body">
+      <div class="chead"><div><h2 id="vc-h">Your visa clock</h2><p class="muted">${esc(c.label)}${country ? ' · ' + esc(country) : ''}</p></div>${state.canWrite ? '<button class="btn sm" data-act="visa-edit">Edit dates</button>' : ''}</div>
+      ${b && b.note ? `<p class="vc-say">${esc(b.note)}</p>` : ''}
+      ${dates}
+      ${c.work ? `<p class="vc-rule"><b>Work today.</b> ${esc(c.work)}</p>` : ''}
+      ${c.next ? `<p class="vc-rule"><b>Next.</b> ${esc(c.next)}</p>` : ''}
+      ${mode}${src}
+    </div></section>`;
+}
+/* A small badge in the top bar, so the count is in view on every tab. */
+function clockPill(){
+  const c = myClock(), b = c && c.badge; if (!b) return '';
+  return `<button type="button" class="vcpill t-${b.tone}" data-act="tab" data-tab="home" title="${esc(c.label)}: ${b.days} ${esc(b.label)}"><b>${b.days}</b> ${b.days === 1 ? 'day' : 'days'} left</button>`;
+}
+function renderVisaPanel(){
+  const v = visaOf(state.settings), ro = wr(), id = state.vStatus !== undefined ? state.vStatus : (v.status || '');
+  return `<div id="visa-panel"><div class="sh"><h2 style="font-size:24px">Your visa</h2><p>Home counts down from these dates. The rules come from government pages, checked ${esc(vcFmt(vcDate(VISA_RULES.checked)))}.</p></div>
+    <div class="panel"><form id="visa-form" class="formgrid" novalidate>
+      <label class="f full" for="v-status">Your visa now<select id="v-status"${ro}>${visaOptions(id)}</select></label>
+      <div class="full formgrid vfields" id="v-fields">${visaFields(id, 'v-', v.status === id ? v : {}, false, ro)}</div>
+      <div class="full"><button class="btn solid" type="submit"${ro}>Save visa</button></div>
+    </form></div></div>`;
+}
+
 /* The first minute: three answers, then real roles. Everything else in Settings can wait until the person
    has seen what the search finds for them. */
 const QS_PLACES = ['United Kingdom', 'United States', 'Ireland', 'Netherlands'];
@@ -4668,21 +4854,21 @@ const QS_ROLES = ['Software Engineer', 'Data Analyst', 'Business Analyst', 'Prod
 const hasFilters = () => { const s = obj(state.settings); return arr(s.targetRoles).length > 0 || arr(s.families).length > 0; };
 const needsQuickStart = () => cloud() && !!state.settings && !hasFilters();
 function quickStartBlock(){
-  const home = HOME_GUESS, ro = wr();
+  const ro = wr();
   return `<div class="today">
-    <section class="hl qs"><div class="hh"><div><h2>${firstName() ? esc(firstName()) + ', what' : 'What'} job are you looking for?</h2>
-      <p>Three answers. Your first matches arrive in under a minute, each with the line from the posting that decided it.</p></div></div>
+    <section class="hl qs"><span class="qs-art" aria-hidden="true">${PEEPS.laptop}</span><div class="hh"><div><h2>${firstName() ? esc(firstName()) + ', what' : 'What'} job are you looking for?</h2>
+      <p>A few answers. Your first matches arrive in under a minute, each with the line from the posting that decided it.</p></div></div>
       <form id="qs-form" class="formgrid" novalidate>
         <label class="f full" for="qs-roles">Roles you want <small>job titles, comma separated</small>
           <input type="text" id="qs-roles" maxlength="300" autocomplete="off" placeholder="e.g. Data Analyst, Business Analyst" required${ro}></label>
         <div class="full qs-chips" role="group" aria-label="Common roles">${QS_ROLES.map(r => `<button type="button" class="fchip" data-act="qs-role" data-r="${esc(r)}">${esc(r)}</button>`).join('')}</div>
-        <label class="f" for="qs-home">Where you live<select id="qs-home"${ro}>${HOMES.map(([c, n]) => `<option value="${c}"${home === c ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
-        <label class="f" for="qs-seek">Where you want to work<select id="qs-seek"${ro}><option value="home"${home === 'IN' ? '' : ' selected'}>In the country I live in</option><option value="abroad"${home === 'IN' ? ' selected' : ''}>In another country</option></select></label>
-        <div class="full" id="qs-places-row"${home === 'IN' ? '' : ' hidden'}><label class="f" for="qs-places">Countries or cities you want to work in <small>comma separated</small>
-          <input type="text" id="qs-places" maxlength="300" autocomplete="off" placeholder="e.g. United Kingdom, Dublin, Amsterdam"${ro}></label>
+        <div class="full"><label class="f" for="qs-places">Countries or cities you want to work in <small>comma separated</small>
+          <input type="text" id="qs-places" maxlength="300" autocomplete="off" placeholder="e.g. United Kingdom, Dublin, Amsterdam" required${ro}></label>
           <div class="qs-chips" role="group" aria-label="Common countries" style="margin-top:10px">${QS_PLACES.map(r => `<button type="button" class="fchip" data-act="qs-place" data-r="${esc(r)}">${esc(r)}</button>`).join('')}</div></div>
+        <label class="f full" for="qs-vstatus">Your visa now <small>it starts your visa clock</small><select id="qs-vstatus" required${ro}>${visaOptions('')}</select></label>
+        <div class="full formgrid vfields" id="qs-vfields" hidden></div>
         <label class="f" for="qs-years">Years of work experience <small>0 if you are a fresher</small><input type="number" id="qs-years" min="0" max="50" step="0.5" value="0" inputmode="decimal"${ro}></label>
-        <label class="full qs-check" for="qs-visa" id="qs-visa-row"><input type="checkbox" id="qs-visa"${home === 'IN' ? ' checked' : ''}${ro}> <span>I need an employer to sponsor my visa to work there <small>We then put employers with a record of sponsoring first, and leave out roles that say they cannot.</small></span></label>
+        <label class="f" for="qs-home" id="qs-home-row" hidden>Where you live now<select id="qs-home"${ro}>${HOMES.map(([c, n]) => `<option value="${c}"${HOME_GUESS === c ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
         <div class="full qs-go"><button class="btn solid" type="submit"${ro}>Show my matches</button><span class="small muted">Free. You can change every answer later in Settings.</span></div>
       </form></section>
   </div>`;
@@ -4779,6 +4965,7 @@ function renderHome(){
   const numbers = `<details class="nums"><summary>Show the numbers</summary><div class="tablewrap"><table class="grid"><thead><tr><th>Stage</th><th>Reached</th><th>Still there</th><th>Closed here</th></tr></thead><tbody>${['Applied','Screening','Interview','Offer'].map((n, i) => `<tr><td>${n}</td><td>${f.c[i]}</td><td>${f.branches[i][0].n}</td><td>${f.branches[i][1].n}</td></tr>`).join('')}</tbody></table></div></details>`;
   return `<div class="phead"><h1><span>${esc(greet)}</span></h1><button class="btn solid" data-act="tab" data-tab="new">${NI.plus}New application</button></div>
   <p class="lede">${esc(say)}</p>${nudges.length ? `<p class="nudges">${nudges.join('<span aria-hidden="true">·</span>')}</p>` : ''}
+  ${needsQuickStart() ? '' : visaCard()}
   ${todayBlock(all, f, weeks)}
   <section class="card anyjob"><div class="chead"><div><h2>Found a job somewhere else?</h2><p class="muted">Any role, from any site, a WhatsApp forward or an email. Paste it and Propelo checks whether it looks real, shows how you fit, and writes a truthful resume and cover letter for it.</p></div><button class="btn sm" data-act="tab" data-tab="new">Check a job</button></div></section>
   ${queueHomeCard()}
@@ -5641,6 +5828,7 @@ function renderNow(){
   $('#c-skipped').textContent = all.filter(j => j.stage === 'skipped').length;
   $('#cta-batch').textContent = ready ? `Review batch (${ready})` : 'Review batch';
   const f = filterSummary();
+  { const vt = $('#vc-top'); if (vt) vt.innerHTML = clockPill(); }
   $('#notice-text').innerHTML = state.status === 'nodb' ? 'Open this page as its owner, signed in to Claude, to see your pipeline.' : state.status === 'demo' ? 'Demo with fictional companies. Run <b>propelo serve</b> to see your own pipeline.' : cloud() ? `Each scan: roles for <b>${esc(f.exp)}</b><span class="long"> ${esc(f.locs)}</span>, from ${esc(Number(obj(state.me && state.me.feed).companies || 1400).toLocaleString('en-IN'))} company career pages, posted in the last ${esc(f.days)} days.` : `Every 6 hours: roles for <b>${esc(f.exp)}</b><span class="long">${esc(f.pay)} ${esc(f.locs)}</span>, posted in the last ${esc(f.days)} ${f.days === 1 ? 'day' : 'days'}.`;
   const navTab = state.tab === 'app' ? 'pipeline' : state.tab;
   document.querySelectorAll('.tab[role="tab"]').forEach(t => t.setAttribute('aria-selected', String(t.dataset.tab === navTab)));
@@ -5773,10 +5961,17 @@ document.addEventListener('click', e => {
   if (act !== 'sheet') closeSheetsUI();
   if (act === 'tab') setTab(el.dataset.tab);
   else if (act === 'qs-place'){ const i = $('#qs-places'); if (i){ const have = i.value.split(',').map(x => x.trim()).filter(Boolean); if (!have.includes(el.dataset.r)) have.push(el.dataset.r); i.value = have.join(', '); el.setAttribute('aria-pressed', 'true'); state.qsDirty = true; } }
+  else if (act === 'job-mode'){
+    if (!state.db || !state.canWrite) return;
+    const mode = el.dataset.v === 'part-time' ? 'part-time' : 'career', next = Object.assign({}, obj(state.settings), {jobMode: mode, updatedAt: nowIso()});
+    state.settings = next; state.region = mode === 'part-time' ? 'part-time' : 'all'; render();
+    enqueue('settings/profile', () => state.db.doc('settings/profile').set(next)).then(() => toast(mode === 'part-time' ? 'Part-time roles and internships now come first.' : 'Full-time roles with sponsors now come first.')).catch(() => {});
+  }
+  else if (act === 'visa-edit'){ setTab('setup'); setTimeout(() => { const v = $('#visa-panel'); if (v) v.scrollIntoView({behavior: 'smooth', block: 'start'}); const sel = $('#v-status'); if (sel) sel.focus({preventScroll: true}); }, 80); }
   else if (act === 'qs-role'){ const i = $('#qs-roles'); if (i){ const have = i.value.split(',').map(x => x.trim()).filter(Boolean); if (!have.includes(el.dataset.r)) have.push(el.dataset.r); i.value = have.join(', '); el.setAttribute('aria-pressed', 'true'); state.qsDirty = true; } }
   else if (act === 'sheet') toggleSheet(el.dataset.sheet);
   else if (act === 'window'){ if (state.win !== el.dataset.w){ state.win = el.dataset.w; state.freshLimit = FRESH_PAGE; state.enter = true; state.filterAnim = true; render(); } }
-  else if (act === 'region'){ if (state.region !== el.dataset.r){ state.region = el.dataset.r; state.freshLimit = FRESH_PAGE; state.enter = true; state.filterAnim = true; render(); } }
+  else if (act === 'region'){ state.regionPicked = true; if (state.region !== el.dataset.r){ state.region = el.dataset.r; state.freshLimit = FRESH_PAGE; state.enter = true; state.filterAnim = true; render(); } }
   else if (act === 'more-fresh'){ state.freshLimit += FRESH_PAGE; state.enter = false; render(); }
   else if (act === 'go-batch'){ if (state.tab !== 'today'){ state.tab = 'today'; state.enter = true; renderNow(); } const b = $('#batch'); if (b) b.scrollIntoView({behavior:'smooth', block:'start'}); }
   else if (act === 'station'){ state.filter = el.dataset.stage; setTab('pipeline'); render(); }
@@ -5918,7 +6113,17 @@ document.addEventListener('keydown', e => {
 });
 document.addEventListener('change', e => {
   const el = e.target;
-  if (el.closest && el.closest('#qs-form')){ state.qsDirty = true; if (el.id === 'qs-home' || el.id === 'qs-seek'){ const away = $('#qs-seek').value === 'abroad', row = $('#qs-visa-row'), pl = $('#qs-places-row'); if (pl) pl.hidden = !away; if (row){ row.hidden = $('#qs-home').value === 'IN' && !away; if (away && el.id === 'qs-seek') $('#qs-visa').checked = true; } } return; }
+  if (el.closest && el.closest('#qs-form')){
+    state.qsDirty = true;
+    if (el.id === 'qs-vstatus'){
+      const st = VISA_BY_ID[el.value], box = $('#qs-vfields'), home = $('#qs-home-row'), pl = $('#qs-places');
+      if (box){ box.innerHTML = visaFields(el.value, 'qs-', {}, true, ''); box.hidden = !box.innerHTML; }
+      if (home) home.hidden = !st || !!st.country;
+      if (st && st.country && pl && !pl.value.trim()) pl.value = VISA_RULES.countries[st.country];
+    }
+    return;
+  }
+  if (el.id === 'v-status'){ state.vStatus = el.value; const box = $('#v-fields'), v = visaOf(state.settings); if (box) box.innerHTML = visaFields(el.value, 'v-', v.status === el.value ? v : {}, false, wr()); return; }
   if (el.closest && el.closest('#settings-form')) state.formDirty = true;
   if (el.closest && el.closest('#applicant-form')) state.apDirty = true;
   if (el.classList && el.classList.contains('resume-file')){ const f = el.files && el.files[0]; el.value = ''; uploadResume(f); return; }
@@ -6066,17 +6271,28 @@ document.addEventListener('submit', e => {
     e.preventDefault(); if (!state.db) return;
     const roles = $('#qs-roles').value.split(',').map(x => x.trim()).filter(Boolean).slice(0, 12);
     if (!roles.length){ toast('Type at least one job title.'); $('#qs-roles').focus(); return; }
-    const home = $('#qs-home').value || 'IN', y = Math.max(0, Math.min(50, Number($('#qs-years').value) || 0));
-    const away = $('#qs-seek').value === 'abroad', wanted = $('#qs-places').value.trim().slice(0, 300);
-    if (away && !wanted){ toast('Name at least one country or city you want to work in.'); $('#qs-places').focus(); return; }
+    const wanted = $('#qs-places').value.trim().slice(0, 300), st = VISA_BY_ID[$('#qs-vstatus').value];
+    if (!wanted){ toast('Name at least one country or city you want to work in.'); $('#qs-places').focus(); return; }
+    if (!st){ toast('Choose your visa, or "Not living in one of these countries yet".'); $('#qs-vstatus').focus(); return; }
+    const home = st.country || $('#qs-home').value || HOME_GUESS, y = Math.max(0, Math.min(50, Number($('#qs-years').value) || 0));
     const next = Object.assign({}, settings(), {
       targetRoles: roles, families: [], homeCountry: home, yearsExperience: y, experienceLevels: [], maxRequiredYears: stretchOf(y),
-      places: away ? wanted : home === 'IN' ? '' : (HOMES.find(([c]) => c === home) || [home, home])[1], workAbroad: away && home === 'IN', remoteOk: true,
-      locations: ['South India (any work mode)', 'Rest of India (any work mode)', 'Remote worldwide (first priority)'],
-      needsSponsorship: (home !== 'IN' || away) && $('#qs-visa').checked, timezone: TZ, setupAt: nowIso(), updatedAt: nowIso()
+      places: wanted, workAbroad: home === 'IN', remoteOk: true, needsSponsorship: st.sponsor,
+      visa: readVisa($('#qs-form'), st.id, {}), jobMode: 'career', timezone: TZ, setupAt: nowIso(), updatedAt: nowIso()
     });
     if (document.activeElement) document.activeElement.blur();
     enqueue('settings/profile', () => state.db.doc('settings/profile').set(next)).then(() => { state.qsDirty = false; state.settings = next; startFinding(); setTab('today'); render(); }).catch(() => {});
+    return;
+  }
+  if (e.target.id === 'visa-form'){
+    e.preventDefault(); if (!state.db) return;
+    const st = VISA_BY_ID[$('#v-status').value];
+    if (!st){ toast('Choose your visa.'); $('#v-status').focus(); return; }
+    const s0 = obj(state.settings), v = readVisa($('#visa-form'), st.id, visaOf(s0));
+    const next = Object.assign({}, s0, {visa: v, needsSponsorship: st.sponsor, jobMode: st.partTime ? (s0.jobMode || 'career') : 'career', updatedAt: nowIso()},
+      st.country ? {homeCountry: st.country, workAbroad: false} : {});
+    if (document.activeElement) document.activeElement.blur();
+    enqueue('settings/profile', () => state.db.doc('settings/profile').set(next)).then(() => { state.settings = next; state.vStatus = undefined; toast('Visa saved. Home shows your clock.'); render(); }).catch(() => {});
     return;
   }
   if (e.target.id !== 'settings-form') return;
@@ -6094,7 +6310,7 @@ document.addEventListener('submit', e => {
     maxPostingAgeDays: Number($('#s-age').value) || 25, approvalMode: $('#s-mode').value, targetRoles: roles, families: fams, locations: locs, dailyCap: cap, minFit: $('#s-fit').value,
     salaryFloorLpa: sal === '' ? '' : Number(sal), requireStatedPay: !!($('#s-stated') && $('#s-stated').checked), needsSponsorship: !!($('#s-visa') && $('#s-visa').checked), dealbreakers: $('#s-deal').value.trim(), updatedAt: nowIso(),
     ...(usdFloor !== null ? {salaryFloorUsd: usdFloor === '' ? '' : Number(usdFloor)} : {}),
-    homeCountry: home, workAbroad: home === 'IN' && !!$('#s-seek') && $('#s-seek').value === 'abroad', places: $('#s-places') ? $('#s-places').value.trim().slice(0, 300) : '', remoteOk: $('#s-remote') ? $('#s-remote').checked : true, timezone: TZ,
+    homeCountry: home, workAbroad: home === 'IN', places: $('#s-places') ? $('#s-places').value.trim().slice(0, 300) : '', remoteOk: $('#s-remote') ? $('#s-remote').checked : true, timezone: TZ,
     ...($('#s-alerts') ? {alerts: $('#s-alerts').value} : {})
   });
   if (document.activeElement) document.activeElement.blur();
@@ -6168,7 +6384,7 @@ document.addEventListener('click', e => {
 document.addEventListener('input', e => {
   const el = e.target;
   if (el.dataset && el.dataset.pf){ const kind = el.dataset.kind, v = el.value; const val = kind === 'bool' ? el.checked : kind === 'lines' ? v.split(/\n/).map(x => x.trim()).filter(Boolean) : kind === 'csv' ? v.split(',').map(x => x.trim()).filter(Boolean) : v; setPath(draft(), el.dataset.pf, val); if (!state.profDirty){ state.profDirty = true; const sb = $('[data-act="pf-save"]'); if (sb) sb.disabled = !state.canWrite; } }
-  else if (el.id === 's-home' || el.id === 's-seek'){ const inIndia = $('#s-home').value === 'IN', india = inIndia && (!$('#s-seek') || $('#s-seek').value !== 'abroad'); const a = $('#s-loc-in'), b = $('#s-loc-world'), k = $('#s-seek-row'); if (k) k.hidden = !inIndia; if (a) a.hidden = !india; if (b) b.hidden = india; }
+  else if (el.id === 's-home'){ const a = $('#s-loc-in'), b = $('#s-loc-world'); if (a) a.hidden = true; if (b) b.hidden = false; }
   else if (el.id === 'cc-calc'){ state.ccCalc = el.value; const o = $('#cc-out'); if (o) o.innerHTML = ccOut(obj(obj(state.concierge).fee), el.value); return; }
   else if (el.dataset && el.dataset.tl === 'prepId'){ state.tl.prepId = el.value; state.tl.typing = false; state.tl.render = true; render(); return; }
   else if (el.id === 'ct-q'){ state.ctQ = el.value; clearTimeout(state.ctT); state.ctT = setTimeout(() => { const pos = el.selectionStart; render(); requestAnimationFrame(() => { const q = $('#ct-q'); if (q){ q.focus(); try { q.setSelectionRange(pos, pos); } catch(e){} } }); }, 200); return; }

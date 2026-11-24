@@ -27,14 +27,16 @@ Propelo is an AI job-search service. It reads open roles straight from employers
 posting, and helps them apply truthfully: tailored resumes and answers that only use what is true, an autofill
 extension that never presses Submit, an optional auto-apply agent that runs on the person's own computer, a
 pipeline, follow-ups and interview preparation. Since 2.8 it also states what each posting says about visa
-sponsorship and, for UK roles, whether the employer is on the Home Office sponsor register.
+sponsorship and, for UK roles, whether the employer is on the Home Office sponsor register. Home opens on the
+Visa-Clock: the member's visa, a countdown to its next deadline (OPT unemployment days, a grace period, a visa end
+date), the work it allows today and the next step, each rule linked to the government page it comes from.
 
 ## Who it is for
 
 | customer | what they buy | status |
 | --- | --- | --- |
 | International students and graduates, and people in India, looking for work in the US, UK, Ireland or the Netherlands (incl. Indian graduates on post-study visas) | Free; Pro $39 / Ultra $79 a month, or a 90-day pass ($99 / $189), charged in local currency; Interview Guarantee $59 | Built |
-| Job seekers inside India looking for work in India | Not a focus since 2.17: the India plans (₹799 / ₹1,999) and the Job Guarantee are retired. The matching rules for India still work for anyone who picks it | Retired |
+| Job seekers inside India looking for work in India | Not a focus since 2.17: the India plans (₹799 / ₹1,999), the Job Guarantee and the India-only search in onboarding are retired. Accounts that chose India-only matching before keep it until they next save Settings | Retired |
 | Study-abroad consultancies and college placement cells | Branded portal with student seats: Starter $325 (25), Growth $625 (50), Plus $1,225 (100) per 30 days | Built in 2.8; no customers yet |
 | Recruiting agencies | Filtered roles feed (CSV/JSON, key) $99 per 30 days | Built in 2.8; no customers yet |
 
