@@ -129,9 +129,8 @@ def strip_html(tops: list[dict], openings: int) -> str:
         return ""
     items = "".join(f'<a class="tc" href="jobs.html?q={html.escape(t["q"])}"><span class="tcl">{_logo(t["logo"], t["name"])}</span>'
                     f'<b>{html.escape(t["name"])}</b><small>{t["count"]:,} open {"role" if t["count"] == 1 else "roles"}</small></a>' for t in tops)
-    return (f'<section id="companies" class="trust"><div class="wrap"><div class="pills reveal"><span class="pill">Hiring now</span>'
-            f'<span class="pill">From their own career pages</span></div>'
-            f'<h2 class="lede" style="margin-top:28px">Open roles right now at companies like these, around the world.</h2>'
+    return (f'<section id="companies" class="trust"><div class="wrap">'
+            f'<h2 class="lede">Open roles right now at companies like these, around the world.</h2>'
             f'<div class="tgrid reveal">{items}</div>'
             f'<p class="fine">Counts from the last scan of {openings:,} open roles. Logos belong to their companies and link to their roles on the '
             f'job board; Propelo isn\'t affiliated with them.</p></div></section>')

@@ -496,6 +496,17 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
             raise err(404, "Not found.")
         return Response((APP_STATIC / "icons" / name).read_bytes(), media_type="image/png", headers={"Cache-Control": "public, max-age=604800"})
 
+    # Illustrations on the sign-in and 404 pages (Open Peeps by Pablo Stanley, CC0). A fixed table, never a path.
+    PEEPS = {"signup": "signup.svg", "lost": "lost.svg"}
+
+    @app.get("/peeps/{name}", include_in_schema=False)
+    def peep(name: str):
+        file = PEEPS.get(name)
+        if not file:
+            raise err(404, "Not found.")
+        return Response((APP_STATIC / "peeps" / file).read_bytes(), media_type="image/svg+xml",
+                        headers={"Cache-Control": "public, max-age=604800"})
+
     @app.get("/apple-touch-icon.png", include_in_schema=False)
     def apple_icon():
         return icon("apple-touch-icon.png")

@@ -57,7 +57,7 @@ One easing curve, `cubic-bezier(.16,1,.3,1)`, plus `cubic-bezier(.65,0,.35,1)` f
 - **Intro (website home):** the wordmark on pink, letter by letter, then the panel lifts away with a curved bottom edge. Once per visit; a click skips it.
 - **Headlines:** letters rise into place one after another; the hero headline settles from a slight tilt. The highlighter stroke draws in after the words.
 - **Curved reveals:** the hero panel, the dashboard preview, the terminal and the closing card open from the bottom with a rounded edge the first time they scroll into view.
-- **Entrances:** other blocks fade and rise 20 px, 70 ms apart. The principle notes arrive one by one; the source bars fill once; the step line under "How it works" follows the scroll.
+- **Entrances:** other blocks fade and rise 20 px, 70 ms apart. The principle notes arrive one by one, 70 ms apart; the people arrive just after the card they belong to; the source bars fill once; the step line under "How it works" follows the scroll.
 - **The dot grid** in the hero panel swells and takes colour near the cursor, and only draws while the cursor moves.
 - **Feedback:** a press scales to 0.98; a hover is a colour change or a lift of 2 px at most.
 - **In the app:** tabs change instantly; Home's best-fit card and tiles fade and rise once; sheets grow from their trigger.
@@ -74,9 +74,27 @@ One easing curve, `cubic-bezier(.16,1,.3,1)`, plus `cubic-bezier(.65,0,.35,1)` f
 
 Every screen has a designed loading state (a skeleton), an empty state that says how to fill it, and inline errors. On Home, the empty state turns into the three steps that produce the first matches.
 
-## Illustrations
+## People
 
-There are none in the product for now. When they come back, the prompts and sizes are in [illustrations.md](illustrations.md), and they follow the palette above.
+The only illustrations are young people from [Open Peeps](https://www.openpeeps.com/) by Pablo Stanley (CC0, no credit required),
+recoloured to the palette above by `scripts/peeps` (see `scripts/peeps/cast.json` for every character and where it is used).
+
+- **Where:** the hero (a graduate presenting the role card), the closing card (two people sitting on its edge), the scam check,
+  the sign-up board, the 404 page and the app's bare empty states (fresh roles, today's batch, inbox, contacts, interview prep).
+  Not on every section: a page gets one or two.
+- **Who:** only young characters, with a range of skin tones and hair, including South Asian skin tones; never the grey-haired
+  heads or the "Old" face. The script refuses them.
+- **How they sit on the page:** standing beside a card, sitting on its edge, or behind its lower edge. They never cover text.
+- **Clothes:** pink, lavender, yellow, orange or ink, the same colours as the notes. Lines stay ink.
+- **Dark mode:** a thin paper outline around each figure, like a sticker cut out of the page, so the ink lines still read.
+- **Accessibility:** decorative, so `alt=""` and `aria-hidden`.
+
+## No template tells
+
+- No small label chips above headings, no big faded section numbers, no "03.1" tags: the heading says what the section is.
+- No single giant number as a card: numbers sit in a sentence that says what they mean.
+- The yellow highlighter marks one phrase per heading. Links get an underline, not the highlighter.
+- Hover motion only where a mouse or trackpad hovers (`@media (hover:hover) and (pointer:fine)`); a tap on a phone never lifts a card.
 
 ## How this was verified
 

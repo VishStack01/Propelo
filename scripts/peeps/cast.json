@@ -1,0 +1,151 @@
+[
+ {
+  "name": "hero",
+  "kind": "standing",
+  "pose": "robot_dance-1",
+  "head": "Long",
+  "face": "Smile",
+  "theme": {
+   "ink": "#151515",
+   "skin": "#ae5d29",
+   "hair": "#1f1512",
+   "top": "#FF85BA",
+   "jacket": "#FF85BA",
+   "pants": "#151515",
+   "shoes": "#FFFCF7"
+  },
+  "used_in": "website/assets/peeps/hero.svg"
+ },
+ {
+  "name": "sit-crossed",
+  "kind": "sitting",
+  "pose": "crossed_legs",
+  "head": "Pomp",
+  "face": "Calm",
+  "theme": {
+   "ink": "#151515",
+   "skin": "#d08b5b",
+   "hair": "#1f1512",
+   "top": "#FF7034",
+   "jacket": "#FF7034",
+   "pants": "#151515",
+   "shoes": "#FFFCF7"
+  },
+  "used_in": "website/assets/peeps/sit-crossed.svg"
+ },
+ {
+  "name": "sit-knees",
+  "kind": "sitting",
+  "pose": "closed_legs-1",
+  "head": "Bun 2",
+  "face": "Cute",
+  "theme": {
+   "ink": "#151515",
+   "skin": "#694d3d",
+   "hair": "#1f1512",
+   "top": "#BDB6FC",
+   "jacket": "#BDB6FC",
+   "pants": "#FFFCF7",
+   "shoes": "#FF85BA"
+  },
+  "used_in": "website/assets/peeps/sit-knees.svg"
+ },
+ {
+  "name": "lost",
+  "kind": "bust",
+  "pose": "Whatever",
+  "head": "Twists",
+  "face": "Cheeky",
+  "theme": {
+   "ink": "#151515",
+   "skin": "#694d3d",
+   "hair": "#1f1512",
+   "top": "#BDB6FC",
+   "jacket": "#BDB6FC",
+   "device": "#FCF15C"
+  },
+  "used_in": "propelo/cloud/static/app/peeps/lost.svg"
+ },
+ {
+  "name": "scam-check",
+  "kind": "bust",
+  "pose": "Device",
+  "head": "Turban",
+  "face": "Suspicious",
+  "theme": {
+   "ink": "#151515",
+   "skin": "#ae5d29",
+   "hair": "#1f1512",
+   "top": "#FCF15C",
+   "jacket": "#FCF15C",
+   "device": "#FFFCF7",
+   "headwear": "#FF7034"
+  },
+  "used_in": "website/assets/peeps/scam-check.svg"
+ },
+ {
+  "name": "signup",
+  "kind": "standing",
+  "pose": "easing-1",
+  "head": "Medium Bangs",
+  "face": "Smile",
+  "theme": {
+   "ink": "#151515",
+   "skin": "#d08b5b",
+   "hair": "#1f1512",
+   "top": "#FCF15C",
+   "jacket": "#FF7034",
+   "pants": "#151515",
+   "shoes": "#FFFCF7"
+  },
+  "used_in": "propelo/cloud/static/app/peeps/signup.svg"
+ },
+ {
+  "name": "empty-laptop",
+  "kind": "bust",
+  "pose": "Macbook",
+  "head": "Short 3",
+  "face": "Driven",
+  "theme": {
+   "ink": "#151515",
+   "skin": "#ae5d29",
+   "hair": "#1f1512",
+   "top": "#FCF15C",
+   "jacket": "#FCF15C",
+   "device": "#FFFCF7"
+  },
+  "used_in": "dashboard/app.html (PEEPS.laptop, inline)"
+ },
+ {
+  "name": "empty-coffee",
+  "kind": "bust",
+  "pose": "Coffee",
+  "head": "Long Curly",
+  "face": "Calm",
+  "theme": {
+   "ink": "#151515",
+   "skin": "#edb98a",
+   "hair": "#1f1512",
+   "top": "#FF85BA",
+   "jacket": "#FF85BA",
+   "device": "#FCF15C"
+  },
+  "used_in": "dashboard/app.html (PEEPS.coffee, inline)"
+ },
+ {
+  "name": "empty-talk",
+  "kind": "bust",
+  "pose": "Explaining",
+  "head": "Bun 2",
+  "face": "Explaining",
+  "theme": {
+   "ink": "#151515",
+   "skin": "#d08b5b",
+   "hair": "#1f1512",
+   "top": "#BDB6FC",
+   "jacket": "#BDB6FC",
+   "device": "#FCF15C"
+  },
+  "used_in": "dashboard/app.html (PEEPS.talk, inline)"
+ }
+]

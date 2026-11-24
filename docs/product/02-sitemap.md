@@ -159,6 +159,7 @@ flowchart TD
 | `/app` | Dashboard | Verified |
 | `/offline` | Shown by the service worker without a connection | Implemented |
 | `/sw.js`, `/manifest.webmanifest`, `/icons/{name}`, `/apple-touch-icon.png`, `/favicon.ico` | Installable web app | Implemented |
+| `/peeps/{name}` | The two drawings on the sign-in and 404 pages (`signup`, `lost`), from a fixed list | Implemented |
 | `/robots.txt`, `/sitemap.xml` | App's public pages for search; private pages excluded | Verified |
 | `/_blob/{aid}` | Owner-only file download (resume PDFs) | Verified (owner only) |
 | `/.well-known/security.txt` | Vulnerability reporting | Implemented |
