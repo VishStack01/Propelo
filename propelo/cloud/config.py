@@ -60,6 +60,9 @@ class Config:
     max_doc_kb: int = 512
     linkedin_client_id: str = ""  # "Sign in with LinkedIn using OpenID Connect": name, email, photo only
     linkedin_client_secret: str = ""
+    twilio_account_sid: str = ""  # Sign in with a mobile number (Twilio Verify): all three must be set
+    twilio_auth_token: str = ""
+    twilio_verify_sid: str = ""
     github_client_id: str = ""  # Sign in with GitHub: name and confirmed email only
     github_client_secret: str = ""
     # Google OAuth for sending recruiter emails from the person's own Gmail (scope gmail.send only).
@@ -158,6 +161,9 @@ class Config:
             max_doc_kb=_int("MAX_DOC_KB", 512),
             linkedin_client_id=e("LINKEDIN_CLIENT_ID", "").strip(),
             linkedin_client_secret=e("LINKEDIN_CLIENT_SECRET", "").strip(),
+            twilio_account_sid=e("TWILIO_ACCOUNT_SID", "").strip(),
+            twilio_auth_token=e("TWILIO_AUTH_TOKEN", "").strip(),
+            twilio_verify_sid=e("TWILIO_VERIFY_SID", "").strip(),
             github_client_id=e("GITHUB_CLIENT_ID", "").strip(),
             github_client_secret=e("GITHUB_CLIENT_SECRET", "").strip(),
             concierge_enabled=e("CONCIERGE", "off").strip().lower() in ("on", "1", "true", "yes"),
@@ -227,6 +233,10 @@ class Config:
     @property
     def linkedin_enabled(self) -> bool:
         return bool(self.linkedin_client_id and self.linkedin_client_secret)
+
+    @property
+    def phone_enabled(self) -> bool:
+        return bool(self.twilio_account_sid and self.twilio_auth_token and self.twilio_verify_sid)
 
     def oauth_keys(self, provider: str) -> tuple[str, str]:
         """(client id, client secret) for google, github or linkedin; empty strings when not set up."""

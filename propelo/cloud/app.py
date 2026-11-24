@@ -42,7 +42,7 @@ from .. import followups, llm
 from ..dedupe import canonical_url, company_key
 from ..scamcheck import check as scam_check
 from . import mailer as mail
-from . import oauth
+from . import oauth, phone
 from . import autosend, concierge, guarantee, mailbox, mfa, partners, passes, plans, repo, security
 from .config import Config
 from .db import Database, now_iso
@@ -644,7 +644,64 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
 
     @app.get("/api/auth/providers")
     def auth_providers():
-        return {p: bool(cfg.oauth_keys(p)[0]) for p in oauth.PROVIDERS}
+        return dict({p: bool(cfg.oauth_keys(p)[0]) for p in oauth.PROVIDERS}, phone=cfg.phone_enabled)
+
+    # ------------------------------------------------------------ Sign in with a mobile number (Twilio Verify)
+    app.state.phone = phone.Verify(cfg)
+
+    def phone_ready() -> None:
+        if not cfg.phone_enabled:
+            raise err(404, "Sign in with a mobile number isn't set up on this server.", "not_configured")
+
+    def phone_number(body: dict) -> str:
+        num = phone.normalize(str(body.get("phone") or "")[:40])
+        if not num:
+            raise err(400, "Enter the number with its country code, starting with +, for example +44 7700 900123.", "bad_phone")
+        return num
+
+    @app.post("/api/auth/phone/start", status_code=202, dependencies=[Depends(csrf)])
+    def phone_start(request: Request, body: dict = Body(default={})):
+        """Texts a code, but only to a number already confirmed on an account. The answer is the same either way."""
+        phone_ready()
+        num, ip = phone_number(body), client_ip(request)
+        with db.tx() as c:
+            limited(c, "phone-ip:" + security.ip_key(ip), 10, 3600)
+            limited(c, "phone-to:" + num, 5, 3600)
+            user = repo.user_by_phone(c, num)
+        if user and not user["disabled_at"]:
+            try:
+                app.state.phone.send(num)
+            except phone.PhoneError as e:
+                log.warning(json.dumps({"event": "phone-send-failed", "error": str(e)[:200]}))
+                raise err(502, "We couldn't send the code. Try again in a minute.", "phone_failed")
+        return {"ok": True, "message": "If this number is on a Propelo account, a code is on its way. New here? Create your account "
+                                       "first, then add your number in Settings."}
+
+    @app.post("/api/auth/phone/verify", dependencies=[Depends(csrf)])
+    def phone_verify(request: Request, response: Response, body: dict = Body(default={})):
+        phone_ready()
+        num, ip = phone_number(body), client_ip(request)
+        with db.tx() as c:  # its own transaction, so a wrong code still counts toward the limit
+            limited(c, "phone-check:" + num, 8, 900)
+            user = repo.user_by_phone(c, num)
+        bad = err(401, "That code didn't work. Use the newest code we texted, or ask for a new one.", "bad_code")
+        if not user or user["disabled_at"]:
+            raise bad
+        try:
+            ok = app.state.phone.check(num, str(body.get("code") or ""))
+        except phone.PhoneError as e:
+            log.warning(json.dumps({"event": "phone-check-failed", "error": str(e)[:200]}))
+            raise err(502, "We couldn't check the code. Try again in a minute.", "phone_failed")
+        with db.tx() as c:
+            if not ok:
+                repo.audit(c, user["id"], "login-phone-failed", ip)
+                raise bad
+            if mfa.enabled(user):
+                return {"ok": False, "mfa": True, "ticket": mfa.ticket(cfg, user["id"], "phone")}
+            token = repo.create_session(c, user["id"], cfg.session_ttl_days, ip, request.headers.get("user-agent", ""))
+            repo.audit(c, user["id"], "login-phone", ip)
+        set_session_cookie(response, token)
+        return {"ok": True, "user": repo.public_user(user)}
 
     @app.get("/api/auth/{provider}/start")
     def oauth_start(provider: str):
@@ -774,7 +831,7 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
             partner_admin = bool(partners.admin_partners(c, p.uid))
         quota = plans.plan_info(cfg, plan)["storageMb"]
         return dict(repo.public_user(p.user), via=p.kind, plan=plan, ai=ai, billing=cfg.billing_enabled,
-                    partner=partners.branding(seat), partnerAdmin=partner_admin, supportEmail=cfg.support_email,
+                    partner=partners.branding(seat), partnerAdmin=partner_admin, supportEmail=cfg.support_email, phoneSignIn=cfg.phone_enabled,
                     storage={"usedBytes": used, "quotaBytes": quota * 1024 * 1024}, jobsSite=cfg.jobs_site_url,
                     feed={"generatedAt": state.get("generatedAt"), "inventory": state.get("records"), "companies": state.get("companies")})
 
@@ -783,6 +840,51 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
         name = str(body.get("name", p.user["name"])).strip()[:80]
         with db.tx() as c:
             c.execute("UPDATE users SET name = ?, updated_at = ? WHERE id = ?", (name, now_iso(), p.uid))
+        return {"ok": True}
+
+    @app.post("/api/me/phone/start")
+    def my_phone_start(request: Request, body: dict = Body(default={}), p: Principal = Depends(session_only)):
+        """Texts a code to the number a signed-in member is adding."""
+        phone_ready()
+        num = phone_number(body)
+        with db.tx() as c:
+            limited(c, "phone-add:" + p.uid, 5, 3600)
+            other = repo.user_by_phone(c, num)
+            if other and other["id"] != p.uid:
+                raise err(409, "That number is on another Propelo account.", "phone_taken")
+        try:
+            app.state.phone.send(num)
+        except phone.PhoneError as e:
+            log.warning(json.dumps({"event": "phone-send-failed", "error": str(e)[:200]}))
+            raise err(502, "We couldn't send the code. Check the number and try again.", "phone_failed")
+        return {"ok": True}
+
+    @app.post("/api/me/phone/verify")
+    def my_phone_verify(request: Request, body: dict = Body(default={}), p: Principal = Depends(session_only)):
+        phone_ready()
+        num = phone_number(body)
+        with db.tx() as c:
+            limited(c, "phone-add-check:" + p.uid, 8, 900)
+        try:
+            ok = app.state.phone.check(num, str(body.get("code") or ""))
+        except phone.PhoneError:
+            raise err(502, "We couldn't check the code. Try again in a minute.", "phone_failed")
+        if not ok:
+            raise err(400, "That code didn't work. Use the newest code we texted.", "bad_code")
+        with db.tx() as c:
+            other = repo.user_by_phone(c, num)
+            if other and other["id"] != p.uid:
+                raise err(409, "That number is on another Propelo account.", "phone_taken")
+            c.execute("UPDATE users SET phone = ?, phone_verified_at = ?, updated_at = ? WHERE id = ?", (num, now_iso(), now_iso(), p.uid))
+            repo.audit(c, p.uid, "phone-added", client_ip(request))
+            user = repo.user_by_id(c, p.uid)
+        return {"ok": True, "phone": repo.public_user(user)["phone"]}
+
+    @app.delete("/api/me/phone")
+    def my_phone_remove(request: Request, p: Principal = Depends(session_only)):
+        with db.tx() as c:
+            c.execute("UPDATE users SET phone = NULL, phone_verified_at = NULL, updated_at = ? WHERE id = ?", (now_iso(), p.uid))
+            repo.audit(c, p.uid, "phone-removed", client_ip(request))
         return {"ok": True}
 
     @app.get("/api/me/mfa")

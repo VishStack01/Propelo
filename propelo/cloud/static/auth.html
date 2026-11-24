@@ -96,6 +96,7 @@ input[aria-invalid="true"]{box-shadow:inset 0 0 0 1.5px var(--bad)}
 /* Provider logos are the companies' own files, unaltered (source: homarr-labs/dashboard-icons). */
 .btn.prov .logo{flex:none;width:20px;height:20px;stroke:none;fill:initial;transition:none}
 .btn.prov:hover .logo{transform:none}
+.btn.prov .logo.glyph{fill:none;stroke:var(--ink);stroke-width:1.6;stroke-linecap:round}
 .logo.on-dark{display:none}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .logo.on-light{display:none} :root:not([data-theme="light"]) .logo.on-dark{display:block}}
 :root[data-theme="dark"] .logo.on-light{display:none} :root[data-theme="dark"] .logo.on-dark{display:block}
@@ -172,6 +173,7 @@ input[aria-invalid="true"]{box-shadow:inset 0 0 0 1.5px var(--bad)}
           <a class="btn prov" data-provider="google" href="/api/auth/google/start" hidden><svg class="logo" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M501.8 261.8c0-18.2-1.6-35.6-4.7-52.4H256v99.1h137.8c-6.1 31.9-24.2 58.9-51.4 77V450h83.1c48.3-44.6 76.3-110.2 76.3-188.2" style="fill:#4285f4"/><path d="M256 512c69.1 0 127.1-22.8 169.4-61.9l-83.1-64.5c-22.8 15.4-51.9 24.7-86.3 24.7-66.6 0-123.1-44.9-143.4-105.4H27.5V371C69.6 454.5 155.9 512 256 512" style="fill:#34a853"/><path d="M112.6 304.6c-5.1-15.4-8.1-31.7-8.1-48.6s3-33.3 8.1-48.6v-66.1H27.5C10 175.7 0 214.6 0 256s10 80.3 27.5 114.7L93.8 319c0 .1 18.8-14.4 18.8-14.4" style="fill:#fbbc05"/><path d="M256 101.9c37.7 0 71.2 13 98 38.2l73.3-73.3C382.8 25.4 325.1 0 256 0 155.9 0 69.6 57.5 27.5 141.3l85.2 66.1c20.2-60.5 76.7-105.5 143.3-105.5" style="fill:#ea4335"/><path d="M0 0h512v512H0z" style="fill:none"/></svg>Continue with Google</a>
           <a class="btn prov" data-provider="github" href="/api/auth/github/start" hidden><svg class="logo on-light" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M256 6.3C114.6 6.3 0 120.9 0 262.3c0 113.3 73.3 209 175 242.9 12.8 2.2 17.6-5.4 17.6-12.2 0-6.1-.3-26.2-.3-47.7-64.3 11.8-81-15.7-86.1-30.1-2.9-7.4-15.4-30.1-26.2-36.2-9-4.8-21.8-16.6-.3-17 20.2-.3 34.6 18.6 39.4 26.2 23 38.7 59.8 27.8 74.6 21.1 2.2-16.6 9-27.8 16.3-34.2-57-6.4-116.5-28.5-116.5-126.4 0-27.8 9.9-50.9 26.2-68.8-2.6-6.4-11.5-32.6 2.6-67.8 0 0 21.4-6.7 70.4 26.2 20.5-5.8 42.2-8.6 64-8.6s43.5 2.9 64 8.6c49-33.3 70.4-26.2 70.4-26.2 14.1 35.2 5.1 61.4 2.6 67.8 16.3 17.9 26.2 40.6 26.2 68.8 0 98.2-59.8 120-116.8 126.4 9.3 8 17.3 23.4 17.3 47.4 0 34.2-.3 61.8-.3 70.4 0 6.7 4.8 14.7 17.6 12.2C438.7 471.3 512 375.3 512 262.3c0-141.4-114.6-256-256-256" style="fill-rule:evenodd;clip-rule:evenodd;fill:#1b1f23"/></svg><svg class="logo on-dark" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M256 6.3C114.6 6.3 0 120.9 0 262.3c0 113.3 73.3 209 175 242.9 12.8 2.2 17.6-5.4 17.6-12.2 0-6.1-.3-26.2-.3-47.7-64.3 11.8-81-15.7-86.1-30.1-2.9-7.4-15.4-30.1-26.2-36.2-9-4.8-21.8-16.6-.3-17 20.2-.3 34.6 18.6 39.4 26.2 23 38.7 59.8 27.8 74.6 21.1 2.2-16.6 9-27.8 16.3-34.2-57-6.4-116.5-28.5-116.5-126.4 0-27.8 9.9-50.9 26.2-68.8-2.6-6.4-11.5-32.6 2.6-67.8 0 0 21.4-6.7 70.4 26.2 20.5-5.8 42.2-8.6 64-8.6s43.5 2.9 64 8.6c49-33.3 70.4-26.2 70.4-26.2 14.1 35.2 5.1 61.4 2.6 67.8 16.3 17.9 26.2 40.6 26.2 68.8 0 98.2-59.8 120-116.8 126.4 9.3 8 17.3 23.4 17.3 47.4 0 34.2-.3 61.8-.3 70.4 0 6.7 4.8 14.7 17.6 12.2C438.7 471.3 512 375.3 512 262.3c0-141.4-114.6-256-256-256" style="fill-rule:evenodd;clip-rule:evenodd;fill:#fff"/></svg>Continue with GitHub</a>
           <a class="btn prov" data-provider="linkedin" href="/api/auth/linkedin/start" hidden><svg class="logo" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M56.9 512h398.2c31.4 0 56.9-25.5 56.9-56.9V56.9C512 25.5 486.5 0 455.1 0H56.9C25.5 0 0 25.5 0 56.9v398.2C0 486.5 25.5 512 56.9 512" style="fill-rule:evenodd;clip-rule:evenodd;fill:#007ebb"/><path d="M440.9 440.9h-76V311.5c0-35.5-13.5-55.3-41.6-55.3-30.5 0-46.5 20.6-46.5 55.3v129.4h-73.2V194.4h73.2v33.2s22-40.7 74.3-40.7 89.7 31.9 89.7 98v156zM116.3 162.1c-24.9 0-45.2-20.4-45.2-45.5s20.2-45.5 45.2-45.5 45.1 20.4 45.1 45.5-20.2 45.5-45.1 45.5M78.5 440.9h76.4V194.4H78.5z" style="fill-rule:evenodd;clip-rule:evenodd;fill:#fff"/></svg>Continue with LinkedIn</a>
+          <button class="btn prov" type="button" data-provider="phone" data-go="phone" hidden><svg class="logo glyph" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg>Continue with mobile number</button>
         </div>
         <div class="or" hidden>or use your email</div>
         <form id="f-login" novalidate>
@@ -194,6 +196,23 @@ input[aria-invalid="true"]{box-shadow:inset 0 0 0 1.5px var(--bad)}
           <button class="btn" type="submit">Continue</button>
         </form>
         <p class="alt"><a href="/login">Start again</a></p>
+      </section>
+
+      <!-- sign in with a mobile number -->
+      <section data-mode="phone" hidden>
+        <div><h2>Sign in with your mobile number</h2><p class="lede">For accounts that added a number in Settings. We text you a code.</p></div>
+        <form id="f-phone" novalidate>
+          <div class="msg" role="alert" hidden></div>
+          <label>Mobile number<input type="tel" name="phone" autocomplete="tel" inputmode="tel" maxlength="24" placeholder="+44 7700 900123" required></label>
+          <button class="btn" type="submit">Text me a code<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        </form>
+        <form id="f-phone-code" novalidate hidden>
+          <div class="msg" role="alert" hidden></div>
+          <label>Code<input type="text" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="10" required></label>
+          <button class="btn" type="submit">Sign in<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+          <p class="hint"><button class="linkbtn" type="button" data-go="phone-again">Use a different number or send a new code</button></p>
+        </form>
+        <p class="alt"><a href="/login">Sign in another way</a></p>
       </section>
 
       <!-- sign up -->
@@ -290,7 +309,7 @@ input[aria-invalid="true"]{box-shadow:inset 0 0 0 1.5px var(--bad)}
   function show(m){
     mode = m;
     document.querySelectorAll('[data-mode]').forEach(s => { s.hidden = s.dataset.mode !== m; });
-    document.title = 'Propelo · ' + ({login:'Sign in', mfa:'Two-step sign-in', signup:'Create account', sent:'Check your inbox', forgot:'Reset password', reset:'New password', verify:'Confirm email'}[m] || 'Sign in');
+    document.title = 'Propelo · ' + ({login:'Sign in', phone:'Sign in with your mobile number', mfa:'Two-step sign-in', signup:'Create account', sent:'Check your inbox', forgot:'Reset password', reset:'New password', verify:'Confirm email'}[m] || 'Sign in');
     const first = $('[data-mode="' + m + '"] input');
     if (first && matchMedia('(min-width: 861px)').matches) first.focus();
   }
@@ -343,6 +362,36 @@ input[aria-invalid="true"]{box-shadow:inset 0 0 0 1.5px var(--bad)}
     if (r.ok){ location.replace(next()); return; }
     if (r.data.code === 'unverified'){ lastEmail = email; $('#sent-text').textContent = 'Confirm your email to sign in. We can send the link again.'; show('sent'); return; }
     msg(f, r.data.error || 'Sign-in failed. Try again.');
+  });
+
+  // Sign in with a mobile number: the number first, then the texted code.
+  let phoneNum = '';
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-go]'); if (!b) return;
+    if (b.dataset.go === 'phone'){ show('phone'); }
+    if (b.dataset.go === 'phone-again'){ $('#f-phone').hidden = false; $('#f-phone-code').hidden = true; msg($('#f-phone'), ''); $('#f-phone input').focus(); }
+  });
+  $('#f-phone').addEventListener('submit', async e => {
+    e.preventDefault(); const f = e.target; msg(f, '');
+    const phone = f.phone.value.trim();
+    if (!phone){ msg(f, 'Enter your mobile number with its country code.'); return; }
+    busy(f, true, 'Sending…');
+    const r = await post('/api/auth/phone/start', {phone});
+    busy(f, false);
+    if (!r.ok){ msg(f, r.data.error || "We couldn't send the code. Try again."); return; }
+    phoneNum = phone; f.hidden = true; const g = $('#f-phone-code'); g.hidden = false;
+    msg(g, r.data.message || 'If this number is on a Propelo account, a code is on its way.', 'ok'); g.code.value = ''; g.code.focus();
+  });
+  $('#f-phone-code').addEventListener('submit', async e => {
+    e.preventDefault(); const f = e.target;
+    const code = f.code.value.trim();
+    if (!code){ msg(f, 'Enter the code we texted you.'); return; }
+    busy(f, true, 'Checking…');
+    const r = await post('/api/auth/phone/verify', {phone: phoneNum, code});
+    busy(f, false);
+    if (r.ok && r.data.mfa){ mfaTicket = r.data.ticket; show('mfa'); return; }
+    if (r.ok){ location.replace(next()); return; }
+    msg(f, r.data.error || "That code didn't work."); f.code.select();
   });
 
   $('#f-mfa').addEventListener('submit', async e => {
@@ -431,7 +480,7 @@ input[aria-invalid="true"]{box-shadow:inset 0 0 0 1.5px var(--bad)}
     else if (h.signup === 'allowlist'){ msg($('#f-signup'), 'Sign-up is by invitation: use the email you were invited with.', 'ok'); }
   }).catch(() => {});
 
-  if (!['login', 'signup', 'forgot', 'reset', 'verify'].includes(mode)) mode = 'login';
+  if (!['login', 'signup', 'forgot', 'reset', 'verify', 'phone'].includes(mode)) mode = 'login';
   if (mfaTicket && mode === 'login') mode = 'mfa';
   show(mode);
   if (liErr){ msg($('#f-login'), liErr); history.replaceState(null, '', location.pathname); }

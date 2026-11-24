@@ -3700,6 +3700,11 @@ function renderCloud(){
           : state.mfaSetup ? `<p class="small">1. In your authenticator app (Google Authenticator, Microsoft Authenticator, 1Password and others), add an account with this key, or <a href="${esc(state.mfaSetup.uri)}">open it in the app</a> on this phone.</p><p class="small" style="font-family:ui-monospace,Menlo,monospace;word-break:break-all;user-select:all">${esc(state.mfaSetup.secret.replace(/(.{4})/g, '$1 ').trim())}</p><form id="mfa-on-form" class="acct-form" novalidate><input type="text" class="plain" name="code" inputmode="numeric" autocomplete="one-time-code" placeholder="2. Type the 6-digit code it shows" aria-label="Code from your authenticator app" required><div><button class="btn sm solid" type="submit">Turn on</button></div></form>`
           : `<p class="small">Ask for a code from an authenticator app as well as your password when you sign in.${me.isStaff ? ' <b>Staff and admin pages need this.</b>' : ''}</p><form id="mfa-setup-form" class="acct-form" novalidate><input type="password" name="password" autocomplete="current-password" placeholder="Your password" aria-label="Your password"><div><button class="btn sm solid" type="submit">Set up</button></div></form>`}
       </div></details>
+      ${me.phoneSignIn ? `<details${state.phoneAdd ? ' open' : ''}><summary>Mobile number for sign-in${me.phone ? ' (on)' : ''}</summary><div class="acct-form">
+        ${me.phone ? `<p class="small">You can sign in with <b>${esc(me.phone)}</b>: we text a code to it.</p><div><button class="btn sm ghost" data-act="phone-remove" type="button">Remove this number</button></div>`
+          : state.phoneAdd ? `<form id="phone-code-form" class="acct-form" novalidate><p class="small">We texted a code to ${esc(state.phoneAdd)}.</p><input type="text" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="Code" aria-label="Code" required><div class="btns"><button class="btn sm solid" type="submit">Confirm number</button><button class="btn sm ghost" type="button" data-act="phone-cancel">Use another number</button></div></form>`
+          : `<form id="phone-form" class="acct-form" novalidate><p class="small">Add a number to sign in with a texted code instead of your password. It is used for nothing else.</p><input type="tel" name="phone" autocomplete="tel" maxlength="24" placeholder="With country code, e.g. +44 7700 900123" aria-label="Mobile number" required><div><button class="btn sm solid" type="submit">Text me a code</button></div></form>`}
+      </div></details>` : ''}
       <details><summary>Change password</summary><form id="pw-form" class="acct-form" novalidate>
         <input type="password" name="current" autocomplete="current-password" placeholder="Current password" aria-label="Current password" required>
         <input type="password" name="new" autocomplete="new-password" placeholder="New password, at least 10 characters" aria-label="New password" minlength="10" required>
@@ -5826,6 +5831,8 @@ document.addEventListener('click', e => {
   else if (act === 'signout'){ api('api/auth/logout', {method: 'POST'}).catch(() => {}).finally(() => { location.href = 'login'; }); }
   else if (act === 'partner-leave'){ if (confirm('Leave ' + ((state.me.partner || {}).name || 'your consultancy') + '? They stop seeing your progress and your account goes back to your own plan.')) api('api/partner/leave', {method: 'POST'}).then(() => location.reload()).catch(e => toast(e.message || 'Could not leave. Try again.')); }
   else if (act === 'mfa-done'){ state.mfaCodes = null; render(); }
+  else if (act === 'phone-cancel'){ state.phoneAdd = ''; render(); }
+  else if (act === 'phone-remove'){ if (!confirm('Remove this number? You will sign in with your email or another option.')) return; api('api/me/phone', {method: 'DELETE'}).then(() => { state.me.phone = ''; acctSay('Number removed.'); }).catch(() => acctSay('Could not remove the number.', true)); }
   else if (act === 'signout-all'){ api('api/me/logout-all', {method: 'POST'}).catch(() => {}).finally(() => { location.href = 'login'; }); }
   else if (act === 'key-hide'){ state.newKey = null; render(); }
   else if (act === 'upgrade'){ el.disabled = true; const b = obj(state.billing), cs = arr(b.currencies); const cur = cs.includes(state.planCur) ? state.planCur : (cs.includes(guessCur()) ? guessCur() : cs[0]); cloudPost('api/billing/checkout', {plan: el.dataset.plan || 'pro', currency: cur}).then(d => { location.href = d.url; }).catch(d => { el.disabled = false; acctSay(d.error || 'Could not start the payment.', true, 'plan'); }); }
@@ -5968,6 +5975,18 @@ document.addEventListener('submit', e => {
     api('api/me/ai-key', {method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({provider: f.provider.value, key: f.key.value, model: f.model.value, baseUrl: f.baseUrl.value})})
       .then(async r => { const d = await r.json().catch(() => ({})); if (!r.ok) throw d; f.reset(); acctSay('Key saved. AI actions now use it.', false, 'ai'); refreshBilling(); })
       .catch(d => acctSay(d.error || 'Could not save the key.', true, 'ai'));
+    return;
+  }
+  if (e.target.id === 'phone-form'){
+    e.preventDefault(); const f = e.target, num = f.phone.value.trim();
+    cloudPost('api/me/phone/start', {phone: num}).then(() => { state.phoneAdd = num; acctSay(''); })
+      .catch(d => acctSay(d.error || "We couldn't send the code.", true));
+    return;
+  }
+  if (e.target.id === 'phone-code-form'){
+    e.preventDefault(); const f = e.target;
+    cloudPost('api/me/phone/verify', {phone: state.phoneAdd, code: f.code.value}).then(d => { state.phoneAdd = ''; state.me.phone = d.phone; acctSay('Your number is added. You can sign in with it.'); })
+      .catch(d => acctSay(d.error || "That code didn't work.", true));
     return;
   }
   if (e.target.id === 'mfa-setup-form'){

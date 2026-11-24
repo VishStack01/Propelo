@@ -225,7 +225,7 @@ def _provider_sign_in(c, provider):
 @pytest.mark.parametrize("provider", ["google", "github", "linkedin"])
 def test_sign_in_with_a_provider_creates_a_confirmed_account(cloud, providers, provider):
     c = cloud.client()
-    assert cloud.client().get("/api/auth/providers").json() == {"google": True, "github": True, "linkedin": True}
+    assert cloud.client().get("/api/auth/providers").json() == {"google": True, "github": True, "linkedin": True, "phone": False}
     r = _provider_sign_in(c, provider)
     assert r.status_code == 303 and r.headers["location"] == "/app"
     me = c.get("/api/me").json()
@@ -248,7 +248,7 @@ def test_provider_sign_in_needs_the_state_it_was_given_and_a_confirmed_email(clo
 
 
 def test_a_provider_that_is_not_set_up_is_not_offered(cloud):
-    assert cloud.client().get("/api/auth/providers").json() == {"google": False, "github": False, "linkedin": False}
+    assert cloud.client().get("/api/auth/providers").json() == {"google": False, "github": False, "linkedin": False, "phone": False}
     assert cloud.client().get("/api/auth/google/start", follow_redirects=False).status_code == 404
     assert cloud.client().get("/api/auth/anything/start", follow_redirects=False).status_code == 404
 
