@@ -1,6 +1,6 @@
 # Propelo go-live checklist
 
-Updated 24 November 2026. Everything in the code is done and waiting in pull request 16 (branch `propelo-match-and-dollars`, 684 tests passing). What is left needs your accounts, so only you can do it. Do it in this order: merging before step 4 would show the new prices before checkout can charge them.
+Updated 25 November 2026. Pull request 16 is merged and live. Pull request 17 (branch `design/fix-and-peeps`, 690 tests passing) adds the people on the website and app, drops the India plans and the Job Guarantee, and adds the 90-day passes. What is left needs your accounts, so only you can do it. Do it in this order: merging before step 4 would show the new prices before checkout can charge them.
 
 Every value below goes into Render, on the `propelo` service, under **Environment**. Never paste a key or password into a chat, an email or the repository.
 
@@ -73,7 +73,7 @@ The same Google client also sends recruiter emails from a member's Gmail. That n
 
 Mobile number sign-in is for members who add a number in Settings. New members create their account with email, Google, GitHub or LinkedIn first. Each text costs money through Twilio.
 
-## 6. Merge pull request 16
+## 6. Merge pull request 17
 
 1. Wait for its checks to pass on GitHub.
 2. Merge it into `main`. The website updates through the `pages` workflow; Render redeploys the app.
@@ -87,7 +87,7 @@ Mobile number sign-in is for members who add a number in Settings. New members c
 - A Pro checkout in test mode opens Dodo at $39 (or the local-currency equivalent), and each pass at $99 or $189.
 - Buy Pro once with a real card, then refund it from the Dodo dashboard. Then set `DODO_MODE=live` with the live product ids.
 
-If something is wrong, revert the merge on `main` and redeploy. Nothing in this release removes data; the one database change only adds two columns for mobile numbers.
+If something is wrong, revert the merge on `main` and redeploy. Nothing in this release removes data or changes the database.
 
 ## 8. Before you take real payments
 
