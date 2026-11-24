@@ -80,6 +80,23 @@
   }
 
   function clean(s) { return String(s || "").replace(/[\s ]+/g, " ").replace(/[*:]+\s*$/, "").trim(); }
+  // Forms built from web components keep their fields inside shadow roots, where document.querySelectorAll
+  // can't see them. Every open shadow root on the page is searched too (closed ones stay closed).
+  function roots() {
+    var out = [document], i = 0;
+    while (i < out.length && out.length < 400) {
+      var all = out[i++].querySelectorAll("*");
+      for (var k = 0; k < all.length; k++) if (all[k].shadowRoot) out.push(all[k].shadowRoot);
+    }
+    return out;
+  }
+  function deepAll(sel) {
+    var res = [];
+    roots().forEach(function (r) { res = res.concat(Array.prototype.slice.call(r.querySelectorAll(sel))); });
+    return res;
+  }
+  function rootOf(el) { var r = el.getRootNode ? el.getRootNode() : document; return r && r.querySelector ? r : document; }
+  function byId(el, id) { var r = rootOf(el); return (r.getElementById ? r.getElementById(id) : null) || document.getElementById(id); }
   function visible(el) {
     if (el.disabled || el.readOnly) return false;
     if (el.type === "hidden") return false;
@@ -89,9 +106,9 @@
   }
   function labelOf(el) {
     var parts = [];
-    if (el.getAttribute("aria-labelledby")) el.getAttribute("aria-labelledby").split(/\s+/).forEach(function (id) { var n = document.getElementById(id); if (n) parts.push(n.textContent); });
+    if (el.getAttribute("aria-labelledby")) el.getAttribute("aria-labelledby").split(/\s+/).forEach(function (id) { var n = byId(el, id); if (n) parts.push(n.textContent); });
     if (el.getAttribute("aria-label")) parts.push(el.getAttribute("aria-label"));
-    if (el.id) { try { var l = document.querySelector('label[for="' + CSS.escape(el.id) + '"]'); if (l) parts.push(l.textContent); } catch (e) { /* odd id */ } }
+    if (el.id) { try { var l = rootOf(el).querySelector('label[for="' + CSS.escape(el.id) + '"]'); if (l) parts.push(l.textContent); } catch (e) { /* odd id */ } }
     var wrap = el.closest("label"); if (wrap) parts.push(wrap.textContent);
     if (!parts.length) {
       // Common form layouts: a label or legend in the same field wrapper.
@@ -174,12 +191,13 @@
     if (/\bname\b/i.test(hint) && !/user ?name|company|file/i.test(hint)) return "fullName";
     return "";
   }
+  var MARKS = "[data-propelo=filled]{outline:2px solid #F5B8DB!important;outline-offset:1px}[data-propelo=needs]{outline:2px dashed #E49A3C!important;outline-offset:1px}";
   function mark(el, kind) {
     el.setAttribute("data-propelo", kind);
-    if (!document.getElementById("propelo-marks")) {
-      var st = document.createElement("style"); st.id = "propelo-marks";
-      st.textContent = "[data-propelo=filled]{outline:2px solid #F5B8DB!important;outline-offset:1px}[data-propelo=needs]{outline:2px dashed #E49A3C!important;outline-offset:1px}";
-      (document.head || document.documentElement).appendChild(st);
+    var r = rootOf(el), host = r === document ? (document.head || document.documentElement) : r;
+    if (!(r.getElementById ? r.getElementById("propelo-marks") : r.querySelector("#propelo-marks"))) {
+      var st = document.createElement("style"); st.id = "propelo-marks"; st.textContent = MARKS;
+      host.appendChild(st);
     }
   }
   function questionOf(el, group) {
@@ -279,11 +297,28 @@
     return !!t && !PLACEHOLDER.test(t) && !/^\s*$/.test(t);
   }
   function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  // Pickers that load their options from the server (Workday's, among others) take anything from a moment to a
+  // couple of seconds. Look every 80 ms for an option that matches, for up to 3 seconds; a search box that hasn't
+  // shown anything after 700 ms gets an Enter, which is how Workday's search fields start looking.
+  function waitForPick(el, want, ms) {
+    var start = Date.now(), entered = false;
+    return new Promise(function (res) {
+      (function tick() {
+        var hit = pickOption(optionsFor(el), want);
+        if (hit || Date.now() - start > ms) return res(hit);
+        if (!entered && el.tagName === "INPUT" && Date.now() - start > 700 && !optionsFor(el).length) {
+          entered = true;
+          ["keydown", "keyup"].forEach(function (t) { el.dispatchEvent(new KeyboardEvent(t, { key: "Enter", code: "Enter", keyCode: 13, bubbles: true })); });
+        }
+        setTimeout(tick, 80);
+      })();
+    });
+  }
   function press(el) { ["pointerdown", "mousedown", "pointerup", "mouseup", "click"].forEach(function (t) { el.dispatchEvent(new MouseEvent(t, { bubbles: true, cancelable: true, view: window })); }); }
   function optionsFor(el) {
     var ids = (el.getAttribute("aria-controls") || el.getAttribute("aria-owns") || "").split(/\s+/).filter(Boolean), scope = null;
-    for (var i = 0; i < ids.length && !scope; i++) scope = document.getElementById(ids[i]);
-    var list = Array.prototype.slice.call((scope || document).querySelectorAll("[role=option]"));
+    for (var i = 0; i < ids.length && !scope; i++) scope = byId(el, ids[i]);
+    var list = scope ? Array.prototype.slice.call(scope.querySelectorAll("[role=option]")) : deepAll("[role=option]");
     return list.filter(function (o) { var r = o.getBoundingClientRect(); return r.width > 0 && r.height > 0 && o.getAttribute("aria-disabled") !== "true"; })
       .map(function (o) { return { el: o, text: clean(o.textContent) }; });
   }
@@ -300,8 +335,7 @@
     try { el.scrollIntoView({ block: "center" }); } catch (e) { /* ignore */ }
     press(el);
     if (el.tagName === "INPUT") { setValue(el, String(want).split(/[,(]/)[0].trim()); el.focus(); typed = true; }
-    return wait(350).then(function () {
-      var hit = pickOption(optionsFor(el), want);
+    return waitForPick(el, want, 3000).then(function (hit) {
       if (hit) { press(hit.el); mark(el, "filled"); out.filled.push({ label: label || key, value: hit.text }); return wait(150); }
       el.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
       if (typed) setValue(el, "");
@@ -313,8 +347,8 @@
   function pass(data, out, onlyNew) {
     var a = (data && data.applicant) || {};
     var seenRadio = {}, combos = [];
-    var fields = Array.prototype.slice.call(document.querySelectorAll("input, textarea, select"));
-    Array.prototype.slice.call(document.querySelectorAll(COMBO)).forEach(function (c) { if (c.tagName !== "INPUT" && c.tagName !== "SELECT" && fields.indexOf(c) < 0) fields.push(c); });
+    var fields = deepAll("input, textarea, select");
+    deepAll(COMBO).forEach(function (c) { if (c.tagName !== "INPUT" && c.tagName !== "SELECT" && fields.indexOf(c) < 0) fields.push(c); });
     fields.forEach(function (el) {
       if (onlyNew && el.getAttribute("data-propelo-seen")) return;
       var type = (el.type || "").toLowerCase();
@@ -344,7 +378,7 @@
 
       if (type === "radio") {
         if (seenRadio[el.name]) return; seenRadio[el.name] = 1;
-        var group = Array.prototype.slice.call(document.querySelectorAll('input[type=radio][name="' + (window.CSS ? CSS.escape(el.name) : el.name) + '"]'));
+        var group = Array.prototype.slice.call(rootOf(el).querySelectorAll('input[type=radio][name="' + (window.CSS ? CSS.escape(el.name) : el.name) + '"]'));
         group.forEach(function (r) { r.setAttribute("data-propelo-seen", "1"); });
         if (group.some(function (r) { return r.checked; })) return;
         var q = questionOf(el, group);
@@ -395,13 +429,13 @@
       clearTimeout(watch.timer);
       watch.timer = setTimeout(refill, 700);
     });
-    watch.obs.observe(document.body, { childList: true, subtree: true });
+    roots().forEach(function (r) { watch.obs.observe(r === document ? document.body : r, { childList: true, subtree: true }); });
   }
   function refill() {
     if (watch.busy || !watch.data) return;
-    var fresh = Array.prototype.slice.call(document.querySelectorAll("input:not([data-propelo-seen]), textarea:not([data-propelo-seen]), select:not([data-propelo-seen])"))
+    var fresh = deepAll("input:not([data-propelo-seen]), textarea:not([data-propelo-seen]), select:not([data-propelo-seen])")
       .some(function (el) { return el.type !== "hidden" && visible(el); });
-    var freshCombo = Array.prototype.slice.call(document.querySelectorAll(COMBO)).some(function (el) { return !el.getAttribute("data-propelo-seen") && visible(el); });
+    var freshCombo = deepAll(COMBO).some(function (el) { return !el.getAttribute("data-propelo-seen") && visible(el); });
     if (!fresh && !freshCombo) return;
     watch.busy = true; watch.rounds++;
     var out = blank();
@@ -418,7 +452,7 @@
     var a = data.applicant || {};
     if (/prefer not/i.test(a.backlogs || "")) delete a.backlogs;
     // A fresh fill looks at every field again (a field you cleared can be filled again); never overwrites.
-    Array.prototype.slice.call(document.querySelectorAll("[data-propelo-seen]")).forEach(function (el) { el.removeAttribute("data-propelo-seen"); });
+    deepAll("[data-propelo-seen]").forEach(function (el) { el.removeAttribute("data-propelo-seen"); });
     return pass(data, out, false).then(function () { if (data.watch !== false) startWatch(data); return out; });
   };
 })();

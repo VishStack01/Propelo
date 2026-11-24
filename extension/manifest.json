@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "Propelo: autofill, match score and apply queue",
   "short_name": "Propelo",
-  "version": "2.8.0",
-  "description": "See how well each role matches your real resume, fill application forms from your Propelo profile, and work through your apply queue. You check every answer and press Submit yourself.",
+  "version": "2.9.0",
+  "description": "See how well a role matches your real resume, fill application forms from your Propelo profile, and press Submit yourself.",
   "action": {
     "default_title": "Propelo Autofill",
     "default_popup": "popup.html",

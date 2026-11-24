@@ -46,7 +46,7 @@ Set `PROPELO_LLM` to `anthropic` and `ANTHROPIC_API_KEY` to your key. Set a mont
 | Agency roles feed | $99 | One-time | `DODO_PRODUCT_AGENCY_FEED` |
 
 3. **Webhooks:** add `https://app.propelo.org/api/billing/dodo-webhook`, subscribe to the `subscription.*` and `payment.*` events, and copy its secret.
-4. In Render set `DODO_API_KEY`, `DODO_WEBHOOK_SECRET`, the product ids above, and `DODO_MODE=test`. Switch to `live` after step 6.
+4. In Render set `DODO_API_KEY`, `DODO_WEBHOOK_SECRET`, the product ids above, and `DODO_MODE=test`. Switch to `live` after step 7.
 5. If Render has `PRO_PRICE_USD_CENTS` or `ULTRA_PRICE_USD_CENTS` from before, delete them. The code's defaults are the new prices.
 
 ### Razorpay (optional, consultancies in India only)
@@ -73,7 +73,17 @@ The same Google client also sends recruiter emails from a member's Gmail. That n
 
 Mobile number sign-in is for members who add a number in Settings. New members create their account with email, Google, GitHub or LinkedIn first. Each text costs money through Twilio.
 
-## 6. Check it is live
+## 6. Publish the Chrome extension (optional, any time)
+
+Until it's in the Chrome Web Store, members install it with Developer mode, which most won't do.
+
+1. Register at https://chrome.google.com/webstore/devconsole (a one-off $5 fee), with trypropelo@gmail.com.
+2. In GitHub, open **Actions → extension**, the latest run on `main`, and download **propelo-autofill** (the zip for version 2.9.0).
+3. In the developer console press **New item** and upload the zip.
+4. Fill in the listing and the **Privacy practices** tab from `extension/store/listing.md`: the summary, description, category, single purpose, the reason for each permission, the data-use answers and the privacy policy link. Add `extension/store/screenshot-fill.png` as the screenshot.
+5. Submit for review. It usually takes a few days. When it's live, send me the store link and I'll put it on the website and in Settings.
+
+## 7. Check it is live
 
 If Render hasn't picked up the latest `main` by itself: **Manual Deploy → Deploy latest commit**.
 
@@ -86,7 +96,7 @@ If Render hasn't picked up the latest `main` by itself: **Manual Deploy → Depl
 
 If something is wrong, revert the merge on `main` and redeploy. Nothing in this release removes data or changes the database.
 
-## 7. Before you take real payments
+## 8. Before you take real payments
 
 - Move the Render web service to a paid plan ($7 a month) so it doesn't sleep. A sleeping app makes the first visitor wait about 50 seconds.
 - Neon's free plan allows 100 compute hours a month per project. An always-on app keeps the database awake longer; watch usage in the Neon console and move to its paid plan if it gets close.

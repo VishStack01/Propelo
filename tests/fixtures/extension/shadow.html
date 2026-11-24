@@ -1,0 +1,48 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Data Analyst - Acme Careers</title></head>
+<body>
+<h1>Data Analyst</h1>
+<!-- A Workday-style form built from a web component: every field sits inside an open shadow root,
+     the sponsorship list loads its options after 900 ms, and the source box only searches on Enter. -->
+<wd-form></wd-form>
+<script>
+window.submitted = false;
+class WdForm extends HTMLElement {
+  constructor() {
+    super();
+    const r = this.attachShadow({mode: "open"});
+    r.innerHTML = `
+      <form onsubmit="window.submitted = true; return false">
+        <div><label for="fn">First name *</label><input id="fn" required></div>
+        <div><label for="ln">Last name *</label><input id="ln" required></div>
+        <div><label for="em">Email *</label><input id="em" type="email" required></div>
+        <div><label id="spl">Will you now or in the future require visa sponsorship? *</label>
+          <button type="button" id="sp" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="spl" aria-controls="splist" aria-required="true">Select One</button>
+          <ul id="splist" role="listbox"></ul></div>
+        <div><label for="src">How did you hear about us? *</label>
+          <input id="src" role="combobox" aria-controls="srclist" aria-required="true" autocomplete="off">
+          <ul id="srclist" role="listbox"></ul></div>
+        <button type="submit">Submit</button>
+      </form>`;
+    const sp = r.getElementById("sp"), spl = r.getElementById("splist");
+    sp.addEventListener("click", () => {
+      sp.setAttribute("aria-expanded", "true");
+      setTimeout(() => {
+        spl.innerHTML = ["Yes", "No"].map(x => `<li role="option">${x}</li>`).join("");
+        spl.querySelectorAll("[role=option]").forEach(o => o.addEventListener("click", () => { sp.textContent = o.textContent; window.sponsorPicked = o.textContent; spl.innerHTML = ""; }));
+      }, 900);
+    });
+    const src = r.getElementById("src"), sl = r.getElementById("srclist");
+    src.addEventListener("keydown", e => {
+      if (e.key !== "Enter") return;
+      setTimeout(() => {
+        const q = src.value.toLowerCase().slice(0, 4);
+        sl.innerHTML = ["Company website", "LinkedIn", "Referral"].filter(x => x.toLowerCase().includes(q)).map(x => `<li role="option">${x}</li>`).join("");
+        sl.querySelectorAll("[role=option]").forEach(o => o.addEventListener("click", () => { window.sourcePicked = o.textContent; src.value = o.textContent; sl.innerHTML = ""; }));
+      }, 500);
+    });
+  }
+}
+customElements.define("wd-form", WdForm);
+</script>
+</body></html>

@@ -30,6 +30,8 @@ def test_manifest_asks_for_little():
     assert m["background"] == {"service_worker": "background.js"}
     for f in ("popup.html", "popup.js", "fill.js", "background.js", "content.js", "icons/icon-128.png"):
         assert (EXT / f).exists(), f
+    # The Chrome Web Store's limits: a name up to 75 characters and a description up to 132.
+    assert len(m["name"]) <= 75 and len(m["description"]) <= 132
 
 
 def test_scripts_never_submit():
@@ -195,4 +197,20 @@ def test_long_indian_names_and_questions_that_mention_a_field(browser):
     page = _open(browser, "campus.html", "https://internshala.com/application/form/2")
     page.evaluate("d => window.__propeloFill(d)", {"applicant": {**APPLICANT, "currentTitle": "AI Product Designer"}, "resume": None, "watch": False})
     assert page.eval_on_selector("#leave", "e => e.value") == ""  # a question about your role, not your role
+    page.close()
+
+
+def test_shadow_dom_forms_and_slow_pickers(browser):
+    """Workday-style forms keep fields inside shadow roots and load dropdown options late; both are filled."""
+    page = _open(browser, "shadow.html", "https://acme.wd5.myworkdayjobs.com/en-US/External/job/London/Data-Analyst_JR1/apply")
+    a = {**APPLICANT, "howHeard": "Company website", "sponsorshipAbroad": "Yes, I will need sponsorship"}
+    r = page.evaluate("d => window.__propeloFill(d)", {"applicant": a, "resume": None})
+    shadow = lambda sel, prop="value": page.evaluate(f"() => document.querySelector('wd-form').shadowRoot.querySelector('{sel}').{prop}")  # noqa: E731
+    assert shadow("#fn") == "Asha" and shadow("#ln") == "Rao" and shadow("#em") == "asha@example.com"
+    assert page.evaluate("window.sponsorPicked") == "Yes"  # options arrived after 900 ms
+    assert page.evaluate("window.sourcePicked") == "Company website"  # searched on Enter
+    assert shadow("#fn", "getAttribute('data-propelo')") == "filled"
+    assert page.evaluate("!!document.querySelector('wd-form').shadowRoot.getElementById('propelo-marks')")  # outlines show inside the form
+    assert {f["label"].split(" *")[0] for f in r["filled"]} >= {"First name", "Last name", "Email"}
+    assert not page.evaluate("window.submitted")
     page.close()

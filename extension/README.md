@@ -4,6 +4,8 @@ Shows how well a role matches your real resume, fills application forms from you
 
 ## Install
 
+From the Chrome Web Store once it is published (the listing text, permission reasons and privacy answers are in [`store/listing.md`](store/listing.md)). Until then:
+
 1. Get the zip from the latest **extension** workflow run (GitHub Actions tab), or use this folder directly.
 2. Open `chrome://extensions`, turn on **Developer mode**, press **Load unpacked** and pick the `extension` folder (unzipped).
 3. In Propelo: Settings, Your computer, **Create computer key**. Copy the key (it starts with `cos_k_`).
@@ -49,7 +51,7 @@ The computer key can only read your application details and report applications.
 
 ## Works best on
 
-Built and tested on Greenhouse, Lever and Ashby style forms and plain HTML forms. Other sites vary: whatever it can't match is listed under Needs you. Workday's custom dropdowns are left for you; its text fields are filled.
+Built and tested on Greenhouse, Lever and Ashby style forms, plain HTML forms, and forms built from web components (fields inside open shadow roots, as Workday and Salesforce-based sites use). Custom dropdowns are opened and the matching option picked, waiting up to 3 seconds for options that load late; a search box that only searches on Enter gets one. Other sites vary: whatever it can't match is listed under Needs you.
 
 ## Tests
 
