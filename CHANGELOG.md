@@ -18,6 +18,8 @@ All notable changes to Propelo. The format follows [Keep a Changelog](https://ke
 - Consultancy packs and the agency feed bought in rupees now cost the same as in dollars (Starter ₹28,599, Growth ₹54,999, Plus ₹1,07,799, feed ₹8,699), since every seat carries the global allowance. The rupee Pro pass, still off by default, is ₹2,999.
 
 ### Fixed
+- An account made with Google, GitHub or LinkedIn has no password, so it could not be deleted (the form asked for one). Typing DELETE in a signed-in session now does it, and Settings explains how to add a password instead of showing "Change password".
+- In-app plan prices read $39 rather than $39.00, and the mobile number field on the sign-in page has the same style as the others.
 - Arbeitnow roles outside Germany (its French, Dutch and other sites) no longer get ", Germany" added to their place, which showed a role in a Paris suburb to someone who chose Germany. The country now comes from the place, or from the Arbeitnow site the posting is on.
 - "1 are somewhere else" and similar near-miss counts now read in the singular.
 - A provider sign-in on an address someone else typed into the sign-up form but never confirmed now removes that person's password and sessions.

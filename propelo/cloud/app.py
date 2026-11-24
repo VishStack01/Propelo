@@ -849,6 +849,7 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
         num = phone_number(body)
         with db.tx() as c:
             limited(c, "phone-add:" + p.uid, 5, 3600)
+            limited(c, "phone-add-ip:" + security.ip_key(client_ip(request)), 10, 3600)
             other = repo.user_by_phone(c, num)
             if other and other["id"] != p.uid:
                 raise err(409, "That number is on another Propelo account.", "phone_taken")
@@ -990,8 +991,10 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
 
     @app.post("/api/me/delete")
     def delete_account(response: Response, body: dict = Body(default={}), p: Principal = Depends(session_only)):
-        if str(body.get("confirm", "")) != "DELETE" or not security.verify_password(str(body.get("password", "")), p.user["password_hash"]):
-            raise err(400, "Type DELETE and enter your password to delete your account.", "confirm")
+        # An account made with Google, GitHub or LinkedIn has no password: typing DELETE in a signed-in session is the check.
+        has_password = not str(p.user["password_hash"]).startswith("!")
+        if str(body.get("confirm", "")) != "DELETE" or (has_password and not security.verify_password(str(body.get("password", "")), p.user["password_hash"])):
+            raise err(400, "Type DELETE and enter your password to delete your account." if has_password else "Type DELETE to delete your account.", "confirm")
         with db.tx() as c:
             c.execute("DELETE FROM users WHERE id = ?", (p.uid,))  # cascades to every per-user table
         storage.delete_user(p.uid)

@@ -260,3 +260,12 @@ def test_a_stranger_cannot_reserve_an_address_before_its_owner_signs_in_with_a_p
     assert _provider_sign_in(owner, "google").headers["location"] == "/app"
     r = cloud.client().post("/api/auth/login", json={"email": "asha@example.com", "password": PW})
     assert r.status_code in (401, 403) and "user" not in r.json()
+
+
+def test_an_account_without_a_password_can_still_be_deleted(cloud, providers):
+    c = cloud.client()
+    assert _provider_sign_in(c, "google").headers["location"] == "/app"
+    assert c.get("/api/me").json()["hasPassword"] is False
+    assert c.post("/api/me/delete", json={"confirm": "nope"}).status_code == 400
+    assert c.post("/api/me/delete", json={"confirm": "DELETE"}).status_code == 200
+    assert c.get("/api/me").status_code == 401

@@ -2715,13 +2715,14 @@ function renderCloud(){
           : state.phoneAdd ? `<form id="phone-code-form" class="acct-form" novalidate><p class="small">We texted a code to ${esc(state.phoneAdd)}.</p><input type="text" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="Code" aria-label="Code" required><div class="btns"><button class="btn sm solid" type="submit">Confirm number</button><button class="btn sm ghost" type="button" data-act="phone-cancel">Use another number</button></div></form>`
           : `<form id="phone-form" class="acct-form" novalidate><p class="small">Add a number to sign in with a texted code instead of your password. It is used for nothing else.</p><input type="tel" name="phone" autocomplete="tel" maxlength="24" placeholder="With country code, e.g. +44 7700 900123" aria-label="Mobile number" required><div><button class="btn sm solid" type="submit">Text me a code</button></div></form>`}
       </div></details>` : ''}
-      <details><summary>Change password</summary><form id="pw-form" class="acct-form" novalidate>
+      ${me.hasPassword === false ? `<details><summary>Password</summary><div class="acct-form"><p class="small">You sign in with Google, GitHub or LinkedIn, so this account has no password. To add one, sign out and use "Forgot password" on the sign-in page with ${esc(me.email || 'your email')}.</p></div></details>`
+      : `<details><summary>Change password</summary><form id="pw-form" class="acct-form" novalidate>
         <input type="password" name="current" autocomplete="current-password" placeholder="Current password" aria-label="Current password" required>
         <input type="password" name="new" autocomplete="new-password" placeholder="New password, at least 10 characters" aria-label="New password" minlength="10" required>
-        <div><button class="btn sm solid" type="submit">Change password</button></div></form></details>
+        <div><button class="btn sm solid" type="submit">Change password</button></div></form></details>`}
       <details><summary>Delete account</summary><form id="del-form" class="acct-form" novalidate>
         <p class="small">This deletes your account, pipeline, application details, resumes and keys at once. It can't be undone. Export your data first if you want a copy.</p>
-        <input type="password" name="password" autocomplete="current-password" placeholder="Your password" aria-label="Your password" required>
+        ${me.hasPassword === false ? '' : '<input type="password" name="password" autocomplete="current-password" placeholder="Your password" aria-label="Your password" required>'}
         <input type="text" class="plain" name="confirm" placeholder="Type DELETE" aria-label="Type DELETE to confirm" autocomplete="off" required>
         <div><button class="btn sm" style="border-color:var(--bad);color:var(--bad)" type="submit">Delete my account</button></div></form></details>
     </div></div>`;
@@ -2741,7 +2742,8 @@ function renderPlan(){
   const until = sub && sub.currentEnd ? fDate.format(new Date(sub.currentEnd)) : '';
   const curs = arr(b.currencies).length ? arr(b.currencies) : ['INR'];
   const cur$ = curs.includes(state.planCur) ? state.planCur : (sub && sub.currency && curs.includes(sub.currency) ? sub.currency : (curs.includes(guessCur()) ? guessCur() : curs[0]));
-  const price = pl => cur$ === 'USD' ? (Number(pl.priceUsd) ? '$' + pl.priceUsd : '$0') : inr(pl.priceInr);
+  const usd$ = v => '$' + String(v).replace(/\.00$/, '');
+  const price = pl => cur$ === 'USD' ? (Number(pl.priceUsd) ? usd$(pl.priceUsd) : '$0') : inr(pl.priceInr);
   const paid = b.plan === 'pro' || b.plan === 'ultra';
   const prov = cur$ === 'USD' ? 'Secure checkout by Dodo Payments: cards, Apple Pay and Google Pay. Prices include tax where it applies.' : 'Secure checkout by Razorpay: UPI, cards and netbanking.';
   const cards = arr(b.plans).map(pl => {
@@ -2760,7 +2762,7 @@ function renderPlan(){
       <ul>${arr(cur$ === 'INR' && pl.featuresInr ? pl.featuresInr : pl.features).map(f => `<li>${esc(f)}</li>`).join('')}</ul>${action}</article>`;
   }).join('');
   // A pass: Pro for a fixed number of days, paid once. Shown only when the server sells it and this account has no subscription.
-  const ps = b.pass, psPrice = ps ? (cur$ === 'USD' ? '$' + ps.priceUsd : inr(ps.priceInr)) : '';
+  const ps = b.pass, psPrice = ps ? (cur$ === 'USD' ? usd$(ps.priceUsd) : inr(ps.priceInr)) : '';
   const passBox = ps && ps.onSale && !ps.blocked && arr(ps.currencies).includes(cur$) ? `<div class="panel" style="margin-top:14px;display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap">
       <div><b>Prefer to pay once? Pro pass, ${esc(ps.days)} days for ${esc(psPrice)}.</b><p class="small" style="margin:4px 0 0">${ps.running ? 'Your pass runs until ' + esc(fDate.format(new Date(ps.running.endsAt))) + '. Buying another adds its days to the end. ' : ''}Pay once by ${cur$ === 'USD' ? 'card' : 'UPI, card or netbanking'}. Nothing renews and there is nothing to cancel.</p></div>
       <button class="btn solid buy" data-act="buy-pass">Buy the ${esc(ps.days)}-day pass</button></div>` : '';
@@ -5026,7 +5028,7 @@ document.addEventListener('submit', e => {
   if (e.target.id === 'del-form'){
     e.preventDefault(); const f = e.target;
     if (f.confirm.value !== 'DELETE'){ acctSay('Type DELETE to confirm.', true); return; }
-    cloudPost('api/me/delete', {password: f.password.value, confirm: f.confirm.value}).then(() => { location.href = 'login'; })
+    cloudPost('api/me/delete', {password: f.password ? f.password.value : '', confirm: f.confirm.value}).then(() => { location.href = 'login'; })
       .catch(d => acctSay(d.error || 'Could not delete your account.', true));
     return;
   }
