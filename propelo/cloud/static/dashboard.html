@@ -1225,6 +1225,55 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
 .askbar.ccbar{position:static;background:none;padding:0;margin-top:4px}
 @media (max-width:900px){.ccsteps{grid-template-columns:repeat(2,minmax(0,1fr))}.cccalc{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:520px){.ccsteps{grid-template-columns:minmax(0,1fr)}}
+
+/* ===== 2.17: the app matches the website (website/assets/site.css) =====
+   The same page colour and sand panels, the yellow highlighter under each page title, the dotted lavender
+   panel behind the Fresh roles headline, role cards drawn like the website's notice, the website's source
+   row and outlined buttons, and the yellow closing card on Home. */
+:root:root:root:root{--canvas:#FAF3E6;--page:#FAF3E6;--panel-2:#F2EADC;--sand-2:#EAE0CF;--btn-soft:#F2EADC;--line-2:rgba(21,21,21,.16);--mark:#FCF15C;--lav-t:#ECE9FF;--dots:rgba(142,133,232,.34)}
+@media (prefers-color-scheme: dark){:root:root:root:root:not([data-theme="light"]){--panel-2:#201E1B;--sand-2:#2B2824;--btn-soft:#201E1B;--line-2:rgba(243,236,224,.18);--mark:rgba(252,241,92,.34);--lav-t:#27243A;--dots:rgba(142,133,232,.4)}}
+:root:root:root:root[data-theme="dark"]{--panel-2:#201E1B;--sand-2:#2B2824;--btn-soft:#201E1B;--line-2:rgba(243,236,224,.18);--mark:rgba(252,241,92,.34);--lav-t:#27243A;--dots:rgba(142,133,232,.4)}
+/* the sidebar sits on the page, as the website's nav does, with one hairline */
+@media (min-width:901px){
+  .shell{grid-template-columns:256px minmax(0,1fr)}
+  .side{background:transparent;box-shadow:none;border-radius:0;margin:0;top:0;height:100vh;padding:0 16px 16px;border-right:1px solid var(--line)}
+  .side .brand{padding-top:24px}
+}
+.side .bt{font-size:26px}
+.side .bt::after{width:8px;height:8px}
+.topbar{background:transparent;border:1.5px dashed var(--line-2);border-radius:var(--r-md)}
+/* page titles carry the highlighter stroke */
+.phead h1:not(.apptitle) > span,.hero h1:not(#hero-h),#hero-h mark{color:inherit;padding:0 .04em;background:linear-gradient(transparent 58%,var(--mark) 58%,var(--mark) 92%,transparent 92%) no-repeat;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.hero h1:not(#hero-h){width:fit-content;max-width:100%}
+.phead h1{font-size:clamp(34px,4.2vw,56px);letter-spacing:-.04em;line-height:1.06}
+.hero h1{font-weight:500;letter-spacing:-.04em;line-height:1.06}
+.hero .sub,.phead + .lede{font-size:clamp(16px,1.3vw,18px);line-height:1.6;color:var(--ink-2)}
+/* Fresh roles: the headline sits on the website's dotted lavender panel */
+#p-today .hero{background-color:var(--lav-t);background-image:radial-gradient(circle,var(--dots) 1.5px,transparent 1.9px);background-size:24px 24px;background-position:12px 12px;box-shadow:none;border-radius:28px}
+#p-today .hero .seg{background:var(--panel);box-shadow:inset 0 0 0 1px var(--line)}
+/* the source row, as on the website */
+.sources{margin:24px 0 40px;padding:20px 0;border-block:1px solid var(--line);gap:10px 28px;font-size:17px;letter-spacing:-.03em}
+.sources span:first-child{font-size:14px;letter-spacing:0;font-weight:400}
+/* a role is a notice: paper, an ink outline, lifted off a sand panel */
+#p-today .panel:not(.thin){background:var(--panel-2);box-shadow:none;border-radius:28px}
+.jcard{background:var(--panel);box-shadow:inset 0 0 0 1.5px var(--ink);border-radius:var(--r-xl)}
+.jcard:hover{box-shadow:inset 0 0 0 1.5px var(--ink),0 24px 48px -32px rgba(21,21,21,.45)}
+.jcard .sq{background:var(--yellow);color:#151515;box-shadow:inset 0 0 0 1.5px #151515}
+.clogo{box-shadow:inset 0 0 0 1px var(--line)}
+/* buttons: ink, or the website's outline */
+.btn:not(.solid):not(.ghost):not(.danger){background:transparent;border-color:transparent;box-shadow:inset 0 0 0 1.5px var(--line-2);color:var(--ink)}
+.btn:not(.solid):not(.ghost):not(.danger):hover{background:transparent;box-shadow:inset 0 0 0 1.5px var(--ink)}
+/* quiet blocks are sand, as the website's cards are */
+.kpi:nth-child(n),.bcol,.panel.thin{background:var(--panel-2);box-shadow:none}
+.kpi:nth-child(n) .v{background:transparent}
+.bcol{border-radius:var(--r-lg)}
+/* Home ends on the website's yellow card */
+.card.anyjob{background:var(--yellow);box-shadow:none;color:#151515;border-radius:28px;margin-top:16px;padding:40px}
+.card.anyjob h2{color:#151515;font-size:clamp(24px,2.6vw,36px);font-weight:400;letter-spacing:-.035em;line-height:1.12}
+.card.anyjob .muted{color:#4F4A44}
+.card.anyjob .btn.btn.btn{background:#151515;color:#FAF3E6;box-shadow:none;border-color:#151515;padding:12px 22px;font-size:15px}
+.card.anyjob .btn.btn.btn:hover{background:#151515;box-shadow:none;opacity:.9}
+@media (max-width:900px){.sources{font-size:16px;margin:16px 0 28px;padding:14px 0}}
 </style>
 </head>
 <body>
@@ -1278,7 +1327,7 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
   <section role="tabpanel" id="p-today" aria-labelledby="t-today" hidden>
     <div class="hero">
       <div>
-        <h1 id="hero-h">Fresh roles, checked against your filters</h1>
+        <h1 id="hero-h"><mark>Fresh roles</mark>, checked against your filters</h1>
         <p class="sub" id="hero-sub">Fresher and 1+ year tech and AI roles in south India and remote. Anything posted more than 25 days ago, or already closed, is skipped.</p>
       </div>
       <div class="seg" id="seg" data-v="week" role="group" aria-label="How fresh">
@@ -1975,7 +2024,7 @@ function renderTodayDynamic(){
   const found = jobsArr().filter(j => j.stage === 'found' || !j.stage);
   const nDay = found.filter(j => inWindow(j, 'day')).length, nWeek = found.filter(j => inWindow(j, 'week')).length;
   const n = state.win === 'day' ? nDay : nWeek;
-  $('#hero-h').textContent = state.loaded.jobs ? (n ? `${n} fresh ${n === 1 ? 'role' : 'roles'} that fit your filters` : 'No fresh roles yet') : 'Fresh roles, checked against your filters';
+  $('#hero-h').innerHTML = state.loaded.jobs ? (n ? `<mark>${n} fresh ${n === 1 ? 'role' : 'roles'}</mark> that fit your filters` : 'No <mark>fresh roles</mark> yet') : '<mark>Fresh roles</mark>, checked against your filters';
   $('#hero-sub').textContent = `Roles for ${f.exp}${f.pay} ${f.locs}. Anything posted more than ${f.days} ${f.days === 1 ? 'day' : 'days'} ago, or already closed, is skipped.`;
   $('#n-day').textContent = nDay ? nDay : ''; $('#n-week').textContent = nWeek ? nWeek : '';
   const wk = document.querySelector('[data-w="week"]'); if (wk) wk.firstChild.textContent = `Last ${f.days} ${f.days === 1 ? 'day' : 'days'} `;
@@ -2365,7 +2414,7 @@ function guInterview(v){
     `Your part: keep Pro or Ultra, and send at least ${R.minApplications} applications in at least ${R.minWeeks} different weeks. Auto-apply counts; postings the scam check marks unsafe don't.`,
     `Our part: you're shortlisted for interviews for at least ${NI} different roles, or you reach a second round for one role.`,
     'An interview is a live conversation (phone, video or in person) with the employer or its recruiter about a role, recruiter screens included. Online tests and recorded one-way videos don\'t count. Interviews from anywhere count, and so does an invitation you decline. A second round is a further live interview for the same role, or an offer.',
-    `Fewer than ${NI} interviews and no second round by day ${R.days}: claim here within ${R.claimDays} days and get the full ${price} back. Plan fees aren't part of the refund.`];
+    `Fewer than ${NI} interviews and no second round by day ${R.days}: claim here within ${R.claimDays} days and get the full ${price} back. Plan fees aren't part of the refund. Terms and conditions apply.`];
   let body = '';
   const st = cur && cur.status;
   if (st === 'applied') body = `<div class="gustate"><span class="pill">${GU_STATUS.applied}</span><p class="small">Sent ${esc(fDay(cur.agreedAt))}. We'll email you within 2 working days. Roles you're aiming for: ${esc(obj(cur.application).roles || '')}</p></div>`;
@@ -2413,20 +2462,20 @@ function guJob(v){
     <details class="gudetails"><summary>How it works</summary><ul class="gurules"><li>Apply with the roles, cities and pay you want. We review every application and take on people we believe we can place, and tell you why if we can't.</li><li>Your partner proposes companies; nothing is sent until you approve each one.</li><li>The fee is split into three instalments from 30 days after you join, and cancelled if the employer ends the job within 90 days.</li></ul></details></section>`;
 }
 function renderGuarantee(){
-  const head = `<div class="hero" style="padding-bottom:6px"><div><h1>Guarantees</h1><p class="sub">For Pro and Ultra members, by application, and not part of any plan. Not enough interviews, your money back. Not placed, no fee.</p></div></div>`;
+  const head = `<div class="hero" style="padding-bottom:6px"><div><h1>Guarantees</h1><p class="sub">For Pro and Ultra members, by application, and not part of any plan. Not enough interviews, your money back. Not placed, no fee. <a href="/terms#guarantees" target="_blank" rel="noopener">Terms and conditions apply.</a></p></div></div>`;
   if (!cloud()) return head + `<div class="panel"><p class="small">Guarantees are for Pro and Ultra members on Propelo Cloud.</p></div>`;
   const v = state.guarantee;
   if (!v){ if (!state.guLoading){ state.guLoading = true; loadGuarantee(); } return head + '<div class="panel"><p class="small">Loading…</p></div>'; }
   if (!v.enabled) return head + `<div class="panel"><p class="small">Guarantees aren't offered on this server.</p></div>`;
   if (!state.concierge && obj(v.job).concierge && !state.ccLoading){ state.ccLoading = true; loadConcierge(); }
-  return head + `<div class="gugrid">${guInterview(v)}${guJob(v)}</div><p class="small" style="margin-top:18px"><a href="/terms#guarantees" target="_blank" rel="noopener">Guarantee terms</a></p>`;
+  return head + `<div class="gugrid">${guInterview(v)}${guJob(v)}</div><p class="small" style="margin-top:18px">Terms and conditions apply: <a href="/terms#guarantees" target="_blank" rel="noopener">read the guarantee terms</a>.</p>`;
 }
 /* Home: a quiet card with both options for Pro and Ultra members who haven't applied (the pop-up shows once). */
 function guHomeCard(){
   const v = state.guarantee; if (!v || !v.enabled || !v.planAllows) return '';
   const cur = obj(v.interview).current, cc = obj(obj(state.concierge).case);
   if ((cur && !['declined', 'ended', 'void'].includes(cur.status)) || (cc.status && cc.status !== 'closed')) return '';
-  return `<section class="card guhome"><div class="chead"><div><h2>Want us to stand behind your search?</h2><p class="muted">Interview Guarantee: ${esc(money(obj(v.interview).price, obj(v.interview).currency))} once, ${esc(obj(v.rules).minInterviews || 3)} interviews or a second round in ${esc(obj(v.rules).days)} days or your money back. Job Guarantee: nothing upfront, a fee only after you join. Both by application.</p></div><button class="btn solid" data-act="gu-offer">See both</button></div></section>`;
+  return `<section class="card guhome"><div class="chead"><div><h2>Want us to stand behind your search?</h2><p class="muted">Interview Guarantee: ${esc(money(obj(v.interview).price, obj(v.interview).currency))} once, ${esc(obj(v.rules).minInterviews || 3)} interviews or a second round in ${esc(obj(v.rules).days)} days or your money back. Job Guarantee: nothing upfront, a fee only after you join. Both by application. Terms and conditions apply.</p></div><button class="btn solid" data-act="gu-offer">See both</button></div></section>`;
 }
 /* The offer, once, for Pro and Ultra members who haven't applied: a pop-up with both options. */
 /* Company logos: the same ones the public job board shows (fetched from each company's own website). */
@@ -2678,7 +2727,7 @@ function renderCloud(){
 const inApp = /CareerOSApp/.test(navigator.userAgent || '');
 function inr(n){ return '₹' + Number(n || 0).toLocaleString('en-IN'); }
 function capMax(){ const p = state.me && state.me.plan; return p === 'ultra' ? 60 : 25; }
-function guessCur(){ try { return /Asia\/(Kolkata|Calcutta)/.test(Intl.DateTimeFormat().resolvedOptions().timeZone) ? 'INR' : 'USD'; } catch (e) { return 'INR'; } }
+function guessCur(){ return 'USD'; }  // dollars for everyone; the checkout charges each buyer in their own currency
 function refreshBilling(){ return api('api/billing').then(r => r.json()).then(b => { state.billing = b; if (state.me) state.me.ai = b.ai; state.sample = b.ai && b.ai.available ? makeServerSample() : null; render(); }).catch(() => {}); }
 function renderPlan(){
   const b = state.billing;

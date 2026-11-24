@@ -31,10 +31,10 @@ def test_roles_pick_real_recent_roles_one_per_company():
           rec("Unknown Co", "Engineer"),
           rec("Amazon", "Scam", legit={"tier": "suspicious"})]
     picked = showcase.roles(rs, LOGOS, NOW)
-    assert [p["company"] for p in picked] == ["Amazon", "NVIDIA"]
-    a = picked[0]
+    assert [p["company"] for p in picked] == ["NVIDIA", "Amazon"]  # roles outside India lead
+    a = picked[1]
     assert a["title"] == "SDE II" and a["pay"] == "₹30-40 LPA" and a["exp"] == "3+ years" and a["logo"] == "logos/a.png"
-    assert picked[1]["ago"] == "30 h ago"
+    assert picked[0]["ago"] == "30 h ago"
 
 
 def test_strip_and_fill():

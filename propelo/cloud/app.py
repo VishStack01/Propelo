@@ -369,11 +369,9 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
         q = (request.query_params.get("currency") or "").upper()
         if q in plans.CURRENCIES:
             return q
-        country = request.headers.get("cf-ipcountry", "") or request.headers.get("x-country", "")
-        if country and country.upper() not in ("XX", "T1"):
-            return plans.currency_for(country)
-        # No country from the edge: rupees, unless only dollar payments are switched on.
-        return "USD" if cfg.dodo_enabled and not cfg.razorpay_enabled else "INR"
+        # Dollars for everyone (Dodo charges each buyer in their own currency). Rupees only where a server takes
+        # payments through Razorpay alone.
+        return "INR" if cfg.razorpay_enabled and not cfg.dodo_enabled else "USD"
 
     # ------------------------------------------------------------ pages
     @app.get("/", include_in_schema=False)
@@ -420,13 +418,14 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
 
     @app.get("/pricing", include_in_schema=False)
     def pricing(request: Request):
-        # Rendered on the server from the live plan settings, so the page never waits on a fetch.
-        cur = guess_currency(request)
+        # Rendered on the server from the live plan settings, so the page never waits on a fetch. Prices are in
+        # US dollars only; the checkout charges each buyer in their own currency.
+        def _money(usd: str) -> str:
+            return usd[:-3] if str(usd).endswith(".00") else str(usd)
         cards = []
         for pl in plans.catalog(cfg):
-            per = "<small> / month</small>" if pl["priceInr"] else ""
-            price = (f'<span class="inr">₹{pl["priceInr"]:,}{per}</span>'
-                     f'<span class="usd">${pl["priceUsd"] if pl["priceInr"] else "0"}{per}</span>')
+            per = "<small> / month</small>" if pl["id"] != "free" else ""
+            price = f'${_money(pl["priceUsd"]) if pl["id"] != "free" else "0"}{per}'
             items = "".join(f"<li>{html_escape(f)}</li>" for f in pl["features"])
             cls = "btn" if pl["id"] != "free" else "btn light"
             # A paid card goes straight to checkout: create the account, confirm the email, and the payment page opens.
@@ -438,22 +437,22 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
         offer = passes.offer(cfg)
         if offer and offer["currencies"]:
             cards.append('<article class="plan pass"><h2>Pro pass</h2>'
-                         f'<div class="price"><span class="inr">₹{offer["priceInr"]:,}<small> once</small></span><span class="usd">${offer["priceUsd"]}<small> once</small></span></div>'
-                         f'<ul><li>Everything in Pro for {offer["days"]} days</li><li>Pay once by UPI or card</li><li>Nothing renews, nothing to cancel</li></ul>'
+                         f'<div class="price">${_money(offer["priceUsd"])}<small> once</small></div>'
+                         f'<ul><li>Everything in Pro for {offer["days"]} days</li><li>Pay once, in your own currency</li><li>Nothing renews, nothing to cancel</li></ul>'
                          '<a class="btn" href="/signup?next=%2Fapp%3Fbuy%3Dpass">Get the pass</a></article>')
         extras = ""
         for ad in plans.addons(cfg):
             if ad["priceInr"]:
-                price = f'<span class="inr">₹{ad["priceInr"]:,}</span><span class="usd">${ad["priceUsd"]}</span>'
+                price = f'<span>${_money(ad["priceUsd"])}</span>'
             else:
                 price = '<span>No upfront fee</span>'
             extras += (f'<article class="addon"><div><h3>{html_escape(ad["name"])}</h3><p>{html_escape(ad["line"])}</p></div>'
                        f'<p class="aprice">{price}<small>{html_escape(ad["when"])}</small></p></article>')
         if extras:
             extras = ('<section class="addons"><h2>Guarantees for Pro and Ultra members</h2><p class="note">Not part of any plan. Apply in the app; '
-                      'a person on our team reviews every application. <a href="/terms#guarantees">Guarantee terms</a></p>' + extras + '</section>')
+                      'a person on our team reviews every application. Terms and conditions apply: <a href="/terms#guarantees">read the guarantee terms</a>.</p>' + extras + '</section>')
         text = (STATIC / "pricing.html").read_text(encoding="utf-8").replace("<!--PLANS-->", "".join(cards)).replace("<!--ADDONS-->", extras) \
-            .replace('<body data-cur="INR">', f'<body data-cur="{cur}">', 1).replace("<script>", f'<script nonce="{request.state.nonce}">') \
+            .replace("<script>", f'<script nonce="{request.state.nonce}">') \
             .replace("</title>", f'</title>\n<link rel="canonical" href="{cfg.public_url}/pricing">', 1)
         return HTMLResponse(text)
 

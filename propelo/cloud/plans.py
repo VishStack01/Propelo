@@ -10,8 +10,9 @@ Three plans:
          auto-apply cap, the most copilot questions and mock interviews (a stated fair-use limit, none
          on your own key), and LinkedIn review.
 
-Payments: India pays in rupees through Razorpay subscriptions; everyone else pays in US dollars
-through Dodo Payments, which is the merchant of record (it charges and files VAT and sales tax).
+Payments: prices are in US dollars for everyone, paid through Dodo Payments, which is the merchant of
+record (it charges and files VAT and sales tax) and, with Adaptive Currency on, charges each buyer in their
+own currency. Razorpay in rupees remains only for a self-hosted server without a Dodo account.
 Either way the server creates the checkout and sends the person to the provider's hosted page,
 so card and UPI details never touch this service. The provider then calls a webhook; every
 event is verified (Razorpay: HMAC of the body; Dodo: Standard Webhooks), stored once by its id
@@ -72,7 +73,7 @@ def addons(cfg: Config) -> list[dict]:
         return []
     out = [{"id": "interview", "name": "Interview Guarantee", "priceInr": cfg.guarantee_interview_inr, "priceUsd": usd(cfg.guarantee_interview_usd_cents),
             "for": ["pro", "ultra"], "days": cfg.guarantee_days, "when": f"once, for {cfg.guarantee_days} days, after we accept you",
-            "line": f"Apply, and once we accept you, pay once. {cfg.guarantee_min_interviews} interviews or a second round within {cfg.guarantee_days} days, or the full price back."}]
+            "line": f"Apply, and once we accept you, pay once. {cfg.guarantee_min_interviews} interviews or a second round within {cfg.guarantee_days} days, or the full price back. Terms and conditions apply."}]
     if cfg.concierge_enabled:
         out.append({"id": "job", "name": "Job Guarantee", "priceInr": 0, "priceUsd": None, "for": ["pro", "ultra"], "days": None,
                     "when": "nothing upfront",
@@ -126,8 +127,9 @@ def plan_info(cfg: Config, plan: str) -> dict:
 
 
 def currency_for(country: str = "", tz: str = "") -> str:
-    """Rupees for India, dollars everywhere else. The person can always switch on the pricing page."""
-    return "INR" if (country or "").upper() == "IN" or tz in ("Asia/Kolkata", "Asia/Calcutta") else "USD"
+    """US dollars for everyone. Prices are shown in dollars only; Dodo's Adaptive Currency charges each buyer in
+    their own currency at checkout. (Rupees through Razorpay remain only where a server has no Dodo account.)"""
+    return "USD"
 
 
 def period(now: datetime | None = None) -> str:

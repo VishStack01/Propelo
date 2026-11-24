@@ -195,7 +195,7 @@ def test_plan_caps_auto_apply_and_match_cadence(cloud):
 def test_public_pages_and_installable_app(cloud):
     c = cloud.client()
     cloud.cfg.support_email = "help@example.com"
-    for path, text in [("/pricing", "₹499"), ("/refunds", "Refunds and cancellation"), ("/contact", "help@example.com"), ("/terms", "Terms of use")]:
+    for path, text in [("/pricing", "$39"), ("/refunds", "Refunds and cancellation"), ("/contact", "help@example.com"), ("/terms", "Terms of use")]:
         r = c.get(path)
         assert r.status_code == 200 and text in r.text, path
     assert "{{" not in c.get("/privacy").text
@@ -267,15 +267,16 @@ def _dodo_event(kind, uid, sub="sub_dodo_1", product="pdt_ULTRA", at=None, **dat
     return {"business_id": "bus_1", "type": kind, "timestamp": stamp, "data": d}
 
 
-def test_catalog_has_three_plans_in_two_currencies(cloud):
+def test_catalog_has_three_plans_priced_in_dollars(cloud):
     cat = cloud.client().get("/api/plans").json()
     pro, ultra = cat["plans"][1], cat["plans"][2]
-    assert (pro["priceInr"], pro["priceUsd"], ultra["priceInr"], ultra["priceUsd"]) == (499, "22.50", 1199, "48.50")
+    assert (pro["priceInr"], pro["priceUsd"], ultra["priceInr"], ultra["priceUsd"]) == (499, "39.00", 1199, "79.00")
     assert ultra["aiCredits"] == 1500 and ultra["autoApplyPerDay"] == 60 and ultra["matchEveryMinutes"] == 15
     assert ultra["copilotPerDay"] == 200 and ultra["mockInterviews"] == 60 and ultra["linkedinReview"] is True
     assert not any("nlimited copilot" in f for p in cat["plans"] for f in p["features"])
     assert cloud.client().get("/api/plans", headers={"CF-IPCountry": "US"}).json()["currency"] == "USD"
-    assert cloud.client().get("/api/plans", headers={"CF-IPCountry": "IN"}).json()["currency"] == "INR"
+    # Dollars for everyone, India included: the checkout charges each buyer in their own currency.
+    assert cloud.client().get("/api/plans", headers={"CF-IPCountry": "IN"}).json()["currency"] == "USD"
     assert cloud.client().get("/api/plans?currency=usd").json()["currency"] == "USD"
 
 
@@ -375,11 +376,11 @@ def test_admin_can_grant_ultra(cloud):
     assert c.get("/api/me").json()["plan"] == "ultra"
 
 
-def test_pricing_page_shows_both_currencies(cloud):
+def test_pricing_page_shows_dollars_only(cloud):
     c = cloud.client()
-    r = c.get("/pricing", headers={"CF-IPCountry": "DE"})
-    assert '<body data-cur="USD">' in r.text and "$48.50" in r.text and "₹1,199" in r.text and "Ultra" in r.text
-    assert 'body[data-cur="INR"] .usd' in r.text  # the switch's CSS survives
-    nonce = r.headers["content-security-policy"].split("'nonce-")[1].split("'")[0]
-    assert f'<script nonce="{nonce}">' in r.text
-    assert '<body data-cur="INR">' in c.get("/pricing", headers={"CF-IPCountry": "IN"}).text
+    for country in ("DE", "IN", "US"):
+        r = c.get("/pricing", headers={"CF-IPCountry": country})
+        assert "$39<small> / month</small>" in r.text and "$79<small> / month</small>" in r.text and "Ultra" in r.text
+        assert "₹" not in r.text and "data-cur" not in r.text, country  # no rupee prices, no currency switch
+        assert "pay in your own currency" in r.text
+        assert "<script>" not in r.text  # nothing inline without a nonce
