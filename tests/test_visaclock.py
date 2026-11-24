@@ -176,3 +176,43 @@ def test_dashboard_clock_matches_the_python_clock(tmp_path):
     for day, a, b in zip(DAYS, js, py):
         for case, x, y in zip(CASES, a, b):
             assert x == y, (day, case)
+
+
+# ------------------------------------------------------------------ weekly hours for students
+
+def test_weekly_caps_follow_each_country():
+    wc = visaclock.weekly_cap
+    assert wc({"status": "uk-student"}, date(2026, 11, 25))["hours"] == 20
+    assert wc({"status": "uk-student"}, date(2026, 11, 25), vacation=True)["hours"] is None
+    assert wc({"status": "us-f1"}, date(2026, 11, 25))["hours"] == 20
+    assert wc({"status": "ie-stamp2"}, date(2026, 12, 16))["hours"] == 20  # the week starts on 14 December: counts at 20
+    assert wc({"status": "ie-stamp2"}, date(2026, 12, 22))["hours"] == 40
+    assert wc({"status": "ie-stamp2"}, date(2027, 1, 14))["hours"] == 20  # runs past 15 January
+    assert wc({"status": "nl-study"}, date(2027, 7, 7))["hours"] is None and wc({"status": "nl-study"}, date(2027, 8, 31))["hours"] == 16
+    assert wc({"status": "uk-graduate"}, date(2026, 11, 25)) is None and wc(None, date(2026, 11, 25)) is None
+    assert wc({"status": "uk-student"}, date(2026, 11, 29))["week"] == "2026-11-23"  # Sunday belongs to the week from Monday
+
+
+def test_hours_left_warns_two_hours_before_the_limit():
+    cap = visaclock.weekly_cap({"status": "uk-student"}, date(2026, 11, 25))
+    assert visaclock.hours_left(cap, 10)["tone"] == "ok"
+    assert visaclock.hours_left(cap, 16)["tone"] == "soon"
+    warn = visaclock.hours_left(cap, 18.5)
+    assert warn["tone"] == "urgent" and warn["left"] == 1.5 and warn["note"].startswith("1.5 hours left")
+    over = visaclock.hours_left(cap, 21)
+    assert over["tone"] == "over" and over["over"] == 1 and over["note"].startswith("1 hour over")
+    assert visaclock.hours_left(visaclock.weekly_cap({"status": "nl-study"}, date(2027, 7, 7)), 30) is None
+
+
+@pytest.mark.skipif(not shutil.which("node"), reason="node is not installed")
+def test_dashboard_weekly_caps_match_python(tmp_path):
+    cases = [(s, d, vac, w) for s in ("uk-student", "us-f1", "us-cpt", "ie-stamp2", "nl-study", "uk-graduate")
+             for d in ("2026-11-25", "2026-12-16", "2026-12-22", "2027-01-14", "2027-06-02", "2027-07-07", "2027-08-31")
+             for vac in (False, True) for w in (0, 15.5, 18.7, 20, 23)]
+    script = tmp_path / "caps.js"
+    script.write_text(_js_block() + "\nconst cs = JSON.parse(process.argv[2]);\n"
+                      "console.log(JSON.stringify(cs.map(([s, d, vac, w]) => { const c = weeklyCap({status: s}, d, vac); return [c, hoursLeft(c, w)]; })));\n", encoding="utf-8")
+    out = subprocess.run(["node", str(script), json.dumps(cases)], capture_output=True, text=True, timeout=60, check=True)
+    for (s, d, vac, w), got in zip(cases, json.loads(out.stdout)):
+        cap = visaclock.weekly_cap({"status": s}, date.fromisoformat(d), vac)
+        assert got == [cap, visaclock.hours_left(cap, w)], (s, d, vac, w)

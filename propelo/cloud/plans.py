@@ -89,6 +89,7 @@ def _features(cfg: Config, plan: str, credits: int) -> list[str]:
         return ["Fresh roles from company career pages, matched daily",
                 "Every keep or skip with the quote that decided it",
                 "Pipeline, contacts, follow-ups, calendar and referral drafts",
+                "Your visa clock, and for students part-time roles with a weekly hours tracker",
                 f"{credits} AI actions a month",
                 "Autofill extension, and auto-apply from your own computer up to 5 a day"]
     if plan == "pro":

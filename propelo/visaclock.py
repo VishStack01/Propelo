@@ -140,3 +140,43 @@ def clock(v, today: date | None = None) -> dict | None:
     if out["missing"]:
         out["missingNote"] = notes["missing"]
     return out
+
+
+def _monday(d: date) -> date:
+    return d - timedelta(days=d.weekday())
+
+
+def _ie_high(d: date) -> bool:
+    return 6 <= d.month <= 9 or (d.month == 12 and d.day >= 15) or (d.month == 1 and d.day <= 15)
+
+
+def weekly_cap(v, day: date, vacation: bool = False) -> dict | None:
+    """The hours a student may work in the Monday-to-Sunday week holding `day`: {"hours": n or None, "note"}. None
+    hours means no weekly limit that week (a university vacation, or the Dutch summer). None when the status has no
+    weekly limit at all. A week that runs into a stricter period counts at the stricter limit."""
+    st = BY_ID.get(str((v or {}).get("status") or "")) if isinstance(v, dict) else None
+    cap = st and st.get("cap")
+    if not cap:
+        return None
+    week = [_monday(day) + timedelta(days=i) for i in range(7)]
+    hours: int | None = cap["hours"]
+    if cap["kind"] == "term" and vacation:
+        hours = None
+    elif cap["kind"] == "ie" and all(_ie_high(d) for d in week):
+        hours = cap["high"]
+    elif cap["kind"] == "nl" and all(6 <= d.month <= 8 for d in week):
+        hours = None
+    return {"hours": hours, "week": week[0].isoformat(), "note": RULES["notes"]["capVacation"] if hours is None and cap["kind"] == "term" else cap["note"]}
+
+
+def hours_left(cap: dict | None, worked: float) -> dict | None:
+    """How a week's logged hours compare with its limit: {"left", "over", "tone", "note"}; warns 2 hours before the limit."""
+    if not cap or cap["hours"] is None:
+        return None
+    left = round(cap["hours"] - worked, 2)
+    fmt_h = lambda h: f"{h:g} hour" + ("" if h == 1 else "s")  # noqa: E731
+    if left < 0:
+        return {"left": 0, "over": -left, "tone": "over", "note": RULES["notes"]["capOver"].format(over=fmt_h(-left))}
+    if left <= 2:
+        return {"left": left, "over": 0, "tone": "urgent", "note": RULES["notes"]["capWarn"].format(left=fmt_h(left))}
+    return {"left": left, "over": 0, "tone": "ok" if left > cap["hours"] / 4 else "soon", "note": ""}

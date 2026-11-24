@@ -83,6 +83,9 @@ days left of 90"), and a thin ink bar shows what is left of a fixed allowance. B
 and "Next." as bold run-in heads, the mode switch for students, and the sources folded away. The same paper colour marks the
 small count in the top bar.
 
+"Hours this week" sits under it in the same language: the number big, "of 20 hours" small, a thin bar that turns yellow
+then pink, and a sentence when it matters ("1.5 hours left this week. Don't take a shift longer than that.").
+
 ## People
 
 The only illustrations are young people from [Open Peeps](https://www.openpeeps.com/) by Pablo Stanley (CC0, no credit required),
