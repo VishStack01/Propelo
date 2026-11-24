@@ -77,7 +77,7 @@ def addons(cfg: Config) -> list[dict]:
             "line": f"Apply, and once we accept you, pay once. {cfg.guarantee_min_interviews} interviews or a second round within {cfg.guarantee_days} days, or the full price back. Terms and conditions apply."}]
     if cfg.concierge_enabled:
         out.append({"id": "job", "name": "Job Guarantee", "priceInr": 0, "priceUsd": None, "for": ["pro", "ultra"], "days": None,
-                    "when": "nothing upfront",
+                    "when": "you pay only after you join",
                     "line": f"Apply, and once we accept you, a talent partner works with you until you're hired. Pay {cfg.concierge_rate_low}% of the "
                             f"yearly fixed pay ({cfg.concierge_rate_high}% on the part above ₹{cfg.concierge_band // 100000} lakh) only after you join. India only for now."})
     return out
