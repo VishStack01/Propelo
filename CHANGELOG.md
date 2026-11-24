@@ -2,6 +2,28 @@
 
 All notable changes to Propelo. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [semantic versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **Sign in with a mobile number.** A member adds a number in Settings (confirmed with a texted code), then can sign in with it. Codes are sent and checked by Twilio Verify, and only ever to a number already confirmed on an account, so the form can't be used to text strangers. Off until `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` and `TWILIO_VERIFY_SID` are set.
+- **India plans.** Members who live in India and look for work there can take Pro at ₹799 and Ultra at ₹1,999 a month through Razorpay, with 120 and 300 AI actions a month so the margin holds at an Indian price. Everyone else, including people in India looking abroad, pays the global dollar prices in their own currency. The server refuses a rupee checkout from anyone else. The pricing page says so.
+- **"Where you want to work".** The first-run questions and Settings now ask it. Someone living in India who picks another country names the countries or cities, and is matched like a member abroad: office roles in those places, remote roles open to India, and the visa sponsorship check on the office roles. Until a place is named, the India rules stay.
+- **Application details follow that answer.** For work outside India the form asks salary with its currency, postal code, university, and "your right to work where you are applying" instead of LPA, PIN code, backlogs and notice buyout. The browser extension fills the new answers into free-text boxes and "authorised to work" questions.
+- **Sign in with Google and GitHub**, next to LinkedIn and email, each shown only when its keys are set. The sign-in and sign-up page is rebuilt in the website's style, with the providers' own logos.
+
+### Changed
+- The not-found page matches the website: the board, a pinned 404 note and the pill buttons.
+- **The public demo is a graduate in London who needs sponsorship**, with roles in London, Manchester, Amsterdam and Dublin, pay in pounds and euros, and UK and Dutch sponsor-register pills. It was a fresher in Bengaluru.
+- For members outside India mode, the role cards drop the LPA pay pills, the pay icon is a banknote unless the pay is in rupees, the filter summary reads "in United Kingdom, Netherlands (on-site or hybrid) and remote from the United Kingdom", and the pay floor shows in dollars. Pasted postings recognise major cities abroad.
+- Consultancy packs and the agency feed bought in rupees now cost the same as in dollars (Starter ₹28,599, Growth ₹54,999, Plus ₹1,07,799, feed ₹8,699), since every seat carries the global allowance. The rupee Pro pass, still off by default, is ₹2,999.
+
+### Fixed
+- An account made with Google, GitHub or LinkedIn has no password, so it could not be deleted (the form asked for one). Typing DELETE in a signed-in session now does it, and Settings explains how to add a password instead of showing "Change password".
+- In-app plan prices read $39 rather than $39.00, and the mobile number field on the sign-in page has the same style as the others.
+- Arbeitnow roles outside Germany (its French, Dutch and other sites) no longer get ", Germany" added to their place, which showed a role in a Paris suburb to someone who chose Germany. The country now comes from the place, or from the Arbeitnow site the posting is on.
+- "1 are somewhere else" and similar near-miss counts now read in the singular.
+- A provider sign-in on an address someone else typed into the sign-up form but never confirmed now removes that person's password and sessions.
+
 ## [2.16.2] - 2026-11-24
 
 ### Fixed

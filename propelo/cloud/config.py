@@ -60,6 +60,11 @@ class Config:
     max_doc_kb: int = 512
     linkedin_client_id: str = ""  # "Sign in with LinkedIn using OpenID Connect": name, email, photo only
     linkedin_client_secret: str = ""
+    twilio_account_sid: str = ""  # Sign in with a mobile number (Twilio Verify): all three must be set
+    twilio_auth_token: str = ""
+    twilio_verify_sid: str = ""
+    github_client_id: str = ""  # Sign in with GitHub: name and confirmed email only
+    github_client_secret: str = ""
     # Google OAuth for sending recruiter emails from the person's own Gmail (scope gmail.send only).
     # Propelo Concierge (human-run search, fee only after joining). Off unless CONCIERGE=on.
     concierge_enabled: bool = False
@@ -75,8 +80,8 @@ class Config:
     guarantee_enabled: bool = False
     pass_enabled: bool = False          # PASS=on: sell Pro for a fixed number of days, paid once (passes.py)
     pass_days: int = 90
-    pass_inr: int = 1199
-    pass_usd_cents: int = 5400
+    pass_inr: int = 2999
+    pass_usd_cents: int = 9900
     dodo_product_pass: str = ""        # a one-time Dodo product priced at the pass's dollar price
     guarantee_days: int = 45
     guarantee_min_apps: int = 25
@@ -93,16 +98,21 @@ class Config:
     guarantee_job_inr: int = 2999
     dodo_product_guarantee: str = ""   # a one-time Dodo product priced at the Interview Guarantee's dollar price
     security_email: str = ""  # shown in /.well-known/security.txt; falls back to SUPPORT_EMAIL
-    google_client_id: str = ""
+    google_client_id: str = ""  # one Google client serves Sign in with Google and sending from the member's Gmail
     google_client_secret: str = ""
     # Plans and billing. Prices are in rupees per month; credits are AI actions per calendar month (UTC).
     secrets_key: str = ""  # encrypts users' own AI keys at rest; any long random string
-    # India pays in rupees through Razorpay; everyone else pays in US dollars through Dodo Payments
-    # (merchant of record: it handles VAT and sales tax). USD prices are in cents.
-    pro_price_inr: int = 499
-    ultra_price_inr: int = 1199
-    pro_price_usd_cents: int = 2250
-    ultra_price_usd_cents: int = 4850
+    # Prices are shown in US dollars everywhere and paid through Dodo Payments (merchant of record: it handles VAT
+    # and sales tax, and with Adaptive Currency on it charges each buyer in their own currency). USD prices are in
+    # cents. The rupee prices and Razorpay remain only for a self-hosted server that has no Dodo account.
+    # India plans: for members who live in India and are job-hunting there. Paid in rupees through Razorpay,
+    # with a smaller AI allowance so the margin holds at an Indian price (docs/business.md has the sums).
+    pro_price_inr: int = 799
+    ultra_price_inr: int = 1999
+    pro_ai_credits_inr: int = 120
+    ultra_ai_credits_inr: int = 300
+    pro_price_usd_cents: int = 3900
+    ultra_price_usd_cents: int = 7900
     free_ai_credits: int = 15
     pro_ai_credits: int = 400
     ultra_ai_credits: int = 1500
@@ -151,6 +161,11 @@ class Config:
             max_doc_kb=_int("MAX_DOC_KB", 512),
             linkedin_client_id=e("LINKEDIN_CLIENT_ID", "").strip(),
             linkedin_client_secret=e("LINKEDIN_CLIENT_SECRET", "").strip(),
+            twilio_account_sid=e("TWILIO_ACCOUNT_SID", "").strip(),
+            twilio_auth_token=e("TWILIO_AUTH_TOKEN", "").strip(),
+            twilio_verify_sid=e("TWILIO_VERIFY_SID", "").strip(),
+            github_client_id=e("GITHUB_CLIENT_ID", "").strip(),
+            github_client_secret=e("GITHUB_CLIENT_SECRET", "").strip(),
             concierge_enabled=e("CONCIERGE", "off").strip().lower() in ("on", "1", "true", "yes"),
             concierge_countries=tuple(x.strip().upper() for x in e("CONCIERGE_COUNTRIES", "IN").split(",") if x.strip()),
             concierge_rate_low=float(e("CONCIERGE_RATE_LOW", "8") or 8),
@@ -162,8 +177,8 @@ class Config:
             guarantee_enabled=e("GUARANTEE", "off").strip().lower() in ("on", "1", "true", "yes"),
             pass_enabled=e("PASS", "off").strip().lower() in ("on", "1", "true", "yes"),
             pass_days=_int("PASS_DAYS", 90),
-            pass_inr=_int("PASS_PRICE_INR", 1199),
-            pass_usd_cents=_int("PASS_PRICE_USD_CENTS", 5400),
+            pass_inr=_int("PASS_PRICE_INR", 2999),
+            pass_usd_cents=_int("PASS_PRICE_USD_CENTS", 9900),
             dodo_product_pass=e("DODO_PRODUCT_PASS", "").strip(),
             guarantee_days=_int("GUARANTEE_DAYS", 45),
             guarantee_min_apps=_int("GUARANTEE_MIN_APPLICATIONS", 25),
@@ -180,10 +195,12 @@ class Config:
             google_client_id=e("GOOGLE_CLIENT_ID", "").strip(),
             google_client_secret=e("GOOGLE_CLIENT_SECRET", "").strip(),
             secrets_key=e("SECRETS_KEY", "").strip(),
-            pro_price_inr=_int("PRO_PRICE_INR", 499),
-            ultra_price_inr=_int("ULTRA_PRICE_INR", 1199),
-            pro_price_usd_cents=_int("PRO_PRICE_USD_CENTS", 2250),
-            ultra_price_usd_cents=_int("ULTRA_PRICE_USD_CENTS", 4850),
+            pro_price_inr=_int("PRO_PRICE_INR", 799),
+            ultra_price_inr=_int("ULTRA_PRICE_INR", 1999),
+            pro_ai_credits_inr=_int("PRO_AI_CREDITS_INR", 120),
+            ultra_ai_credits_inr=_int("ULTRA_AI_CREDITS_INR", 300),
+            pro_price_usd_cents=_int("PRO_PRICE_USD_CENTS", 3900),
+            ultra_price_usd_cents=_int("ULTRA_PRICE_USD_CENTS", 7900),
             free_ai_credits=_int("FREE_AI_CREDITS", 15),
             pro_ai_credits=_int("PRO_AI_CREDITS", 400),
             ultra_ai_credits=_int("ULTRA_AI_CREDITS", 1500),
@@ -216,6 +233,17 @@ class Config:
     @property
     def linkedin_enabled(self) -> bool:
         return bool(self.linkedin_client_id and self.linkedin_client_secret)
+
+    @property
+    def phone_enabled(self) -> bool:
+        return bool(self.twilio_account_sid and self.twilio_auth_token and self.twilio_verify_sid)
+
+    def oauth_keys(self, provider: str) -> tuple[str, str]:
+        """(client id, client secret) for google, github or linkedin; empty strings when not set up."""
+        if provider not in ("google", "github", "linkedin"):
+            return "", ""
+        cid, secret = getattr(self, provider + "_client_id"), getattr(self, provider + "_client_secret")
+        return (cid, secret) if cid and secret else ("", "")
 
     @property
     def gmail_enabled(self) -> bool:

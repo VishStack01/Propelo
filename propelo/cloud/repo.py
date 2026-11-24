@@ -49,7 +49,17 @@ def user_by_id(c: Conn, uid: str) -> dict | None:
 
 def public_user(u: dict) -> dict:
     return {"id": u["id"], "email": u["email"], "name": u["name"], "emailVerified": bool(u["email_verified_at"]),
-            "isAdmin": bool(u["is_admin"]), "isStaff": bool(u.get("is_staff") or u["is_admin"]), "mfa": bool(u.get("mfa_enabled_at")), "createdAt": u["created_at"]}
+            "isAdmin": bool(u["is_admin"]), "isStaff": bool(u.get("is_staff") or u["is_admin"]), "mfa": bool(u.get("mfa_enabled_at")), "createdAt": u["created_at"],
+            "phone": _mask_phone(u.get("phone")) if u.get("phone_verified_at") else "",
+            "hasPassword": not str(u.get("password_hash") or "").startswith("!")}
+
+
+def _mask_phone(p: str | None) -> str:
+    return f"{p[:3]} ••• •••• {p[-4:]}" if p and len(p) > 7 else ""
+
+
+def user_by_phone(c: Conn, phone: str) -> dict | None:
+    return c.one("SELECT * FROM users WHERE phone = ? AND phone_verified_at IS NOT NULL", (phone,))
 
 
 def audit(c: Conn, user_id: str | None, kind: str, ip: str = "", detail: dict | None = None) -> None:

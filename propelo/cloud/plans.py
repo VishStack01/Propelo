@@ -10,8 +10,10 @@ Three plans:
          auto-apply cap, the most copilot questions and mock interviews (a stated fair-use limit, none
          on your own key), and LinkedIn review.
 
-Payments: India pays in rupees through Razorpay subscriptions; everyone else pays in US dollars
-through Dodo Payments, which is the merchant of record (it charges and files VAT and sales tax).
+Payments: prices are in US dollars for everyone, paid through Dodo Payments, which is the merchant of
+record (it charges and files VAT and sales tax) and, with Adaptive Currency on, charges each buyer in their
+own currency. Members who live in India and look for work there may instead take the India plans: rupee
+prices through Razorpay, with a smaller AI allowance.
 Either way the server creates the checkout and sends the person to the provider's hosted page,
 so card and UPI details never touch this service. The provider then calls a webhook; every
 event is verified (Razorpay: HMAC of the body; Dodo: Standard Webhooks), stored once by its id
@@ -72,10 +74,10 @@ def addons(cfg: Config) -> list[dict]:
         return []
     out = [{"id": "interview", "name": "Interview Guarantee", "priceInr": cfg.guarantee_interview_inr, "priceUsd": usd(cfg.guarantee_interview_usd_cents),
             "for": ["pro", "ultra"], "days": cfg.guarantee_days, "when": f"once, for {cfg.guarantee_days} days, after we accept you",
-            "line": f"Apply, and once we accept you, pay once. {cfg.guarantee_min_interviews} interviews or a second round within {cfg.guarantee_days} days, or the full price back."}]
+            "line": f"Apply, and once we accept you, pay once. {cfg.guarantee_min_interviews} interviews or a second round within {cfg.guarantee_days} days, or the full price back. Terms and conditions apply."}]
     if cfg.concierge_enabled:
         out.append({"id": "job", "name": "Job Guarantee", "priceInr": 0, "priceUsd": None, "for": ["pro", "ultra"], "days": None,
-                    "when": "nothing upfront",
+                    "when": "you pay only after you join",
                     "line": f"Apply, and once we accept you, a talent partner works with you until you're hired. Pay {cfg.concierge_rate_low}% of the "
                             f"yearly fixed pay ({cfg.concierge_rate_high}% on the part above ₹{cfg.concierge_band // 100000} lakh) only after you join. India only for now."})
     return out
@@ -86,39 +88,67 @@ def public_config() -> Config:
     return Config(guarantee_enabled=True, concierge_enabled=True)
 
 
+def _features(cfg: Config, plan: str, credits: int) -> list[str]:
+    if plan == "free":
+        return ["Fresh roles from company career pages, matched daily",
+                "Every keep or skip with the quote that decided it",
+                "Pipeline, contacts, follow-ups, calendar and referral drafts",
+                f"{credits} AI actions a month, unlimited with your own key",
+                "Autofill extension, and auto-apply from your own computer up to 5 a day"]
+    if plan == "pro":
+        return ["Everything in Free",
+                "New roles matched within an hour of each scan",
+                f"{credits:,} AI actions a month: tailored resumes, cover letters, fit scores",
+                "Auto-apply up to 500 a month (25 a day), with a receipt for each",
+                "Ask Propelo, the copilot, 60 questions a day, and 20 mock interviews a month",
+                "Recruiter emails sent from your Gmail, up to 10 a day, when you turn it on",
+                "Priority support"]
+    return ["Everything in Pro",
+            "New roles matched within 15 minutes of each scan",
+            f"{credits:,} AI actions a month",
+            "Auto-apply up to 1,000 a month (60 a day), every one above your apply line",
+            "Ask Propelo, 200 questions a day, and 60 mock interviews a month (no limit on your own AI key)",
+            "LinkedIn profile review",
+            "Recruiter emails from your Gmail, up to 25 a day, with day 7 and 14 follow-ups",
+            "Fastest support"]
+
+
 def catalog(cfg: Config) -> list[dict]:
-    return [
-        {"id": "free", "name": "Free", "priceInr": 0, "priceUsd": "0", "aiCredits": cfg.free_ai_credits,
+    """Each paid plan has a dollar price (everyone) and an India price in rupees with a smaller AI allowance
+    (members who live in India and look for work there)."""
+    rows = [
+        {"id": "free", "name": "Free", "priceInr": 0, "priceUsd": "0", "aiCredits": cfg.free_ai_credits, "aiCreditsInr": cfg.free_ai_credits,
          "matchEveryMinutes": 24 * 60, "matchEveryHours": 24, "autoApplyPerDay": 5, "autoApplyPerMonth": 100, "storageMb": min(cfg.user_storage_mb, 10),
-         "copilotPerDay": 10, "mockInterviews": 2, "autoEmailsPerDay": 0, "linkedinReview": False,
-         "features": ["Fresh roles from company career pages, matched daily",
-                      "Every keep or skip with the quote that decided it",
-                      "Pipeline, contacts, follow-ups, calendar and referral drafts",
-                      f"{cfg.free_ai_credits} AI actions a month, unlimited with your own key",
-                      "Autofill extension, and auto-apply from your own computer up to 5 a day"]},
+         "copilotPerDay": 10, "mockInterviews": 2, "autoEmailsPerDay": 0, "linkedinReview": False},
         {"id": "pro", "name": "Pro", "priceInr": cfg.pro_price_inr, "priceUsd": usd(cfg.pro_price_usd_cents), "aiCredits": cfg.pro_ai_credits,
+         "aiCreditsInr": cfg.pro_ai_credits_inr,
          "matchEveryMinutes": 60, "matchEveryHours": 1, "autoApplyPerDay": 25, "autoApplyPerMonth": 500, "storageMb": cfg.user_storage_mb,
-         "copilotPerDay": 60, "mockInterviews": 20, "autoEmailsPerDay": 10, "linkedinReview": False,
-         "features": ["Everything in Free",
-                      "New roles matched within an hour of each scan",
-                      f"{cfg.pro_ai_credits} AI actions a month: tailored resumes, cover letters, fit scores",
-                      "Auto-apply up to 500 a month (25 a day), with a receipt for each",
-                      "Ask Propelo, the copilot, 60 questions a day, and 20 mock interviews a month",
-                      "Recruiter emails sent from your Gmail, up to 10 a day, when you turn it on",
-                      "Priority support"]},
+         "copilotPerDay": 60, "mockInterviews": 20, "autoEmailsPerDay": 10, "linkedinReview": False},
         {"id": "ultra", "name": "Ultra", "priceInr": cfg.ultra_price_inr, "priceUsd": usd(cfg.ultra_price_usd_cents), "aiCredits": cfg.ultra_ai_credits,
+         "aiCreditsInr": cfg.ultra_ai_credits_inr,
          "matchEveryMinutes": 15, "matchEveryHours": 0.25, "autoApplyPerDay": 60, "autoApplyPerMonth": 1000, "storageMb": max(cfg.user_storage_mb, 100),
-         "copilotPerDay": 200, "mockInterviews": 60, "autoEmailsPerDay": 25, "linkedinReview": True,
-         "features": ["Everything in Pro",
-                      "New roles matched within 15 minutes of each scan",
-                      f"{cfg.ultra_ai_credits:,} AI actions a month",
-                      "Auto-apply up to 1,000 a month (60 a day), every one above your apply line",
-                      "Ask Propelo, 200 questions a day, and 60 mock interviews a month (no limit on your own AI key)",
-                      "LinkedIn profile review",
-                      "Recruiter emails from your Gmail, up to 25 a day, with day 7 and 14 follow-ups",
-                      
-                      "Fastest support"]},
+         "copilotPerDay": 200, "mockInterviews": 60, "autoEmailsPerDay": 25, "linkedinReview": True},
     ]
+    for r in rows:
+        r["features"] = _features(cfg, r["id"], r["aiCredits"])
+        r["featuresInr"] = _features(cfg, r["id"], r["aiCreditsInr"])
+    return rows
+
+
+def india_mode(settings: dict | None) -> bool:
+    """Lives in India and looks for work there: the member the rupee plans are for."""
+    s = settings or {}
+    return str(s.get("homeCountry") or "IN").upper() == "IN" and not s.get("workAbroad")
+
+
+def ai_limit(c: Conn, cfg: Config, user: dict, plan: str | None = None) -> int:
+    """The month's AI allowance: a plan bought in rupees carries the India allowance."""
+    plan = plan or plan_of(c, user)
+    info = plan_info(cfg, plan)
+    s = subscription(c, user["id"])
+    if plan in PAID and s and s.get("currency") == "INR" and _paid_plan(s) == plan:
+        return info["aiCreditsInr"]
+    return info["aiCredits"]
 
 
 def plan_info(cfg: Config, plan: str) -> dict:
@@ -126,8 +156,9 @@ def plan_info(cfg: Config, plan: str) -> dict:
 
 
 def currency_for(country: str = "", tz: str = "") -> str:
-    """Rupees for India, dollars everywhere else. The person can always switch on the pricing page."""
-    return "INR" if (country or "").upper() == "IN" or tz in ("Asia/Kolkata", "Asia/Calcutta") else "USD"
+    """US dollars for everyone. Prices are shown in dollars only; Dodo's Adaptive Currency charges each buyer in
+    their own currency at checkout. (Rupees through Razorpay remain only where a server has no Dodo account.)"""
+    return "USD"
 
 
 def period(now: datetime | None = None) -> str:
@@ -345,7 +376,7 @@ def hosted_fallback(env: dict | None = None) -> llm.Config | None:
 
 def ai_status(c: Conn, cfg: Config, user: dict, env: dict | None = None) -> dict:
     plan = plan_of(c, user)
-    limit = plan_info(cfg, plan)["aiCredits"]
+    limit = ai_limit(c, cfg, user, plan)
     u = usage(c, user["id"])
     own = public_key(c, user["id"])
     hosted = hosted_config(env) is not None
@@ -604,12 +635,14 @@ def grant(c: Conn, uid: str, by: str, until: str | None, plan: str = "pro") -> N
               "VALUES (?, ?, 'granted', 'manual', ?, ?, ?, ?)", (uid, plan, until, by, now, now))
 
 
-def billing_view(c: Conn, cfg: Config, user: dict) -> dict:
+def billing_view(c: Conn, cfg: Config, user: dict, settings: dict | None = None) -> dict:
     s = subscription(c, user["id"])
     plan = plan_of(c, user)
+    # Rupee plans are offered to members who live and look for work in India (and to anyone already paying in rupees).
+    inr = cfg.razorpay_enabled and (india_mode(settings) or bool(s and s["currency"] == "INR"))
     return {
-        "plan": plan, "plans": catalog(cfg), "checkoutEnabled": cfg.billing_enabled,
-        "currencies": [x for x, on in (("INR", cfg.razorpay_enabled), ("USD", cfg.dodo_enabled)) if on],
+        "plan": plan, "plans": catalog(cfg), "checkoutEnabled": cfg.billing_enabled, "indiaMode": india_mode(settings),
+        "currencies": [x for x, on in (("INR", inr), ("USD", cfg.dodo_enabled)) if on],
         "subscription": {"plan": s["plan"], "status": s["status"], "provider": s["provider"], "currency": s["currency"], "currentEnd": s["current_end"],
                          "cancelAtPeriodEnd": bool(s["cancel_at_period_end"]), "granted": s["status"] == "granted",
                          "pendingPlan": s["pending_plan"], "portal": bool(s["provider"] == "dodo" and s["provider_customer_id"])} if s else None,

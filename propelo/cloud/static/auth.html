@@ -4,142 +4,138 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Propelo · Sign in</title>
-<meta name="description" content="Propelo finds fresh roles from company career pages, checks each against your filters with quotes from the posting, and applies from your own computer.">
+<meta name="description" content="Propelo finds fresh roles from company career pages, checks each against your filters with quotes from the posting, and tells you whether the employer can sponsor a visa.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&display=swap">
 <style>
+/* Same world as the website (docs/design.md): a cream notice board, printed notices, sticky notes and one highlighter stroke. */
 :root{
-  --page:#FFFFFF; --ink:#000000; --ink-2:#34322F; --muted:#6B6762; --panel:#F7F6F3; --panel-2:#EEECE7; --line:#E4E1DB; --field:#FFFFFF;
-  --plum:#45012E; --plum-text:#FCD6EF; --gold:#F5D867; --blue:#151515; --good:#02693E; --good-soft:#DDF3E5; --bad:#C2341D; --bad-soft:#FBE3DE;
-  --btn:#000000; --btn-ink:#FFFFFF; --f:"Hanken Grotesk","Helvetica Neue",Arial,sans-serif; --ease:cubic-bezier(.2,.8,.2,1);
+  --page:#FAF3E6; --paper:#FFFCF7; --sand:#F2EADC; --sand-2:#EAE0CF; --line:rgba(21,21,21,.09); --line-2:rgba(21,21,21,.16);
+  --ink:#151515; --text:#4F4A44; --muted:#6E675D; --field:#FFFCF7;
+  --pink:#FF85BA; --lav:#BDB6FC; --yellow:#FCF15C; --orange:#FF7034; --mark:#FCF15C;
+  --good:#1F6B43; --good-soft:#DDF0E3; --bad:#B3321C; --bad-soft:#FBE3DC;
+  --btn:#151515; --btn-ink:#FAF3E6; --f:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --ease:cubic-bezier(.16,1,.3,1); color-scheme:light;
 }
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --page:#0E0D0C; --ink:#F6F4F0; --ink-2:#D9D5CE; --muted:#A49F97; --panel:#181715; --panel-2:#22201D; --line:#2F2C28; --field:#121110;
-    --plum:#2A0019; --good:#55C78A; --good-soft:#143322; --bad:#F27A63; --bad-soft:#3B1B15; --btn:#F6F4F0; --btn-ink:#000000; color-scheme:dark;
-  }
-}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --page:#141311; --paper:#1C1A17; --sand:#201E1B; --sand-2:#2B2824; --line:rgba(243,236,224,.09); --line-2:rgba(243,236,224,.18);
+  --ink:#F3ECE0; --text:#D2CABE; --muted:#9E978B; --field:#1C1A17; --mark:rgba(252,241,92,.34);
+  --good:#6FD39A; --good-soft:#16301F; --bad:#F58B74; --bad-soft:#3A1C16; --btn:#F3ECE0; --btn-ink:#141311; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --page:#0E0D0C; --ink:#F6F4F0; --ink-2:#D9D5CE; --muted:#A49F97; --panel:#181715; --panel-2:#22201D; --line:#2F2C28; --field:#121110;
-  --plum:#2A0019; --good:#55C78A; --good-soft:#143322; --bad:#F27A63; --bad-soft:#3B1B15; --btn:#F6F4F0; --btn-ink:#000000; color-scheme:dark;
-}
-*{box-sizing:border-box}
+  --page:#141311; --paper:#1C1A17; --sand:#201E1B; --sand-2:#2B2824; --line:rgba(243,236,224,.09); --line-2:rgba(243,236,224,.18);
+  --ink:#F3ECE0; --text:#D2CABE; --muted:#9E978B; --field:#1C1A17; --mark:rgba(252,241,92,.34);
+  --good:#6FD39A; --good-soft:#16301F; --bad:#F58B74; --bad-soft:#3A1C16; --btn:#F3ECE0; --btn-ink:#141311; color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box}
 [hidden]{display:none!important}
 html,body{margin:0;min-height:100%}
-body{background:var(--page);color:var(--ink);font-family:var(--f);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+body{background:var(--page);color:var(--text);font:400 16px/1.55 var(--f);-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
 a{color:inherit}
-:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:12px}
-.shell{min-height:100vh;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
-.side{background:var(--plum);color:var(--plum-text);padding:clamp(28px,5vw,64px);display:flex;flex-direction:column;gap:40px;justify-content:space-between}
-.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:19px;letter-spacing:-.02em;color:#FFFFFF;text-decoration:none}
-.mark{width:30px;height:30px;border-radius:12px;background:#FFFFFF;color:#000000;display:grid;place-items:center}
-.mark svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.pitch h1{font-size:clamp(30px,3.6vw,46px);line-height:1.04;letter-spacing:-.035em;color:#FFFFFF;margin:0 0 16px;font-weight:600;max-width:15ch;text-wrap:balance}
-.pitch p{margin:0;max-width:44ch;font-size:16.5px}
-.promises{list-style:none;margin:0;padding:0;display:grid;gap:14px;max-width:46ch}
-.promises li{display:grid;grid-template-columns:22px minmax(0,1fr);gap:12px;font-size:15px}
-.promises svg{width:20px;height:20px;stroke:var(--gold);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;margin-top:1px}
-.promises b{color:#FFFFFF;font-weight:600}
+h1,h2,p,ul{margin:0}
+:focus-visible{outline:2px solid var(--ink);outline-offset:3px;border-radius:10px}
+mark{color:inherit;padding:0 .04em;background:linear-gradient(transparent 58%,var(--mark) 58%,var(--mark) 92%,transparent 92%) no-repeat}
+
+.shell{min-height:100vh;min-height:100dvh;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr)}
+.brand{display:inline-flex;align-items:baseline;gap:2px;font:600 26px/1 var(--f);letter-spacing:-.05em;color:var(--ink);text-decoration:none}
+.brand .dot{width:8px;height:8px;border-radius:50%;background:var(--pink)}
+
+/* ----- the board ----- */
+.side{margin:16px;padding:clamp(28px,4vw,56px);border-radius:28px;background:var(--sand);display:flex;flex-direction:column;gap:36px;justify-content:space-between;position:relative;overflow:hidden}
+.pitch h1{font:500 clamp(34px,3.9vw,56px)/1.04 var(--f);letter-spacing:-.045em;color:var(--ink);max-width:14ch;text-wrap:balance}
+.pitch p{margin-top:18px;max-width:42ch;font-size:17px}
+.board{position:relative;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:18px;align-items:start;max-width:620px}
+.notice{grid-row:span 2;background:var(--paper);border-radius:20px;padding:22px 22px 20px;box-shadow:0 1px 0 var(--line),0 18px 40px -24px rgba(21,21,21,.35);transform:rotate(-1.6deg);position:relative}
+.notice::before{content:"";position:absolute;left:50%;top:-11px;width:78px;height:22px;margin-left:-39px;border-radius:3px;background:color-mix(in srgb,var(--yellow) 78%,transparent);transform:rotate(2deg)}
+.notice .eg{font:500 12.5px/1 var(--f);color:var(--muted)}
+.notice h2{margin-top:10px;font:600 20px/1.2 var(--f);letter-spacing:-.02em;color:var(--ink)}
+.notice .where{margin-top:4px;font-size:14.5px;color:var(--muted)}
+.notice blockquote{margin:16px 0 0;padding:0;font-size:15px;line-height:1.5;color:var(--ink)}
+.checks{margin-top:16px;display:grid;gap:8px;list-style:none;padding:0}
+.checks li{display:flex;gap:9px;align-items:center;font:500 14px/1.3 var(--f);color:var(--ink)}
+.checks i{flex:none;width:18px;height:18px;border-radius:50%;background:var(--ink);display:grid;place-items:center}
+.checks svg{width:11px;height:11px;stroke:var(--page);fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.note{border-radius:4px 4px 18px 4px;padding:16px 16px 18px;color:#151515;font:500 15px/1.35 var(--f);box-shadow:0 14px 26px -18px rgba(21,21,21,.5)}
+.note b{display:block;font-weight:600;margin-bottom:3px}
+.note.a{background:var(--pink);transform:rotate(2.2deg)}
+.note.b{background:var(--lav);transform:rotate(-1.4deg);margin-left:14px}
+.small{font-size:13.5px;color:var(--muted);max-width:52ch}
+
+/* ----- the form ----- */
 .main{display:grid;place-items:center;padding:clamp(24px,5vw,64px) clamp(16px,4vw,56px)}
-.card{width:100%;max-width:420px;display:grid;gap:22px}
+.card{width:100%;max-width:416px;display:grid;gap:24px}
 section[data-mode]{display:grid;gap:22px}
-.card h2{font-size:30px;letter-spacing:-.03em;margin:0;font-weight:600;line-height:1.1}
-.card .lede{color:var(--muted);margin:6px 0 0}
+.card h2,.card h1{font:500 38px/1.05 var(--f);letter-spacing:-.045em;color:var(--ink)}
+.card .lede{margin-top:8px;color:var(--muted);font-size:16.5px}
 form{display:grid;gap:16px}
-label{display:grid;gap:7px;font-size:14px;font-weight:600}
-input[type=text],input[type=email],input[type=password]{width:100%;font:inherit;font-size:16px;font-weight:400;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:12px;padding:12px 14px;transition:border-color .2s var(--ease),box-shadow .2s var(--ease)}
-input:focus{outline:none;border-color:var(--ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--ink) 12%,transparent)}
-input[aria-invalid="true"]{border-color:var(--bad)}
-.pw{position:relative}
-.pw input{padding-right:64px}
-.pw button{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:none;font:inherit;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;padding:8px}
-.hint{font-size:13px;font-weight:400;color:var(--muted)}
+label{display:grid;gap:7px;font:500 14.5px/1.3 var(--f);color:var(--ink)}
+input[type=text],input[type=email],input[type=password],input[type=tel]{width:100%;height:52px;font:400 16px/1 var(--f);color:var(--ink);background:var(--field);border:0;border-radius:14px;padding:0 16px;
+  box-shadow:inset 0 0 0 1.5px var(--line-2);transition:box-shadow 160ms var(--ease)}
+input::placeholder{color:var(--muted);opacity:.75}
+input:hover{box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--ink) 40%,transparent)}
+input:focus{outline:none;box-shadow:inset 0 0 0 1.5px var(--ink),0 0 0 4px color-mix(in srgb,var(--pink) 42%,transparent)}
+input[aria-invalid="true"]{box-shadow:inset 0 0 0 1.5px var(--bad)}
+.pw{position:relative;display:block}
+.pw input{padding-right:68px}
+.pw button{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:none;font:500 13.5px/1 var(--f);color:var(--muted);cursor:pointer;padding:10px;border-radius:10px}
+.pw button:hover{color:var(--ink)}
+.hint{font:400 13.5px/1.3 var(--f);color:var(--muted)}
 .hint.ok{color:var(--good)}
-.row{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:14px}
-.agree{display:grid;grid-template-columns:20px minmax(0,1fr);gap:10px;font-weight:400;font-size:14px;color:var(--ink-2);align-items:start}
-.agree input{width:18px;height:18px;margin:2px 0 0;accent-color:var(--ink)}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;padding:13px 18px;font:inherit;font-size:15.5px;font-weight:600;border:1px solid var(--btn);background:var(--btn);color:var(--btn-ink);cursor:pointer;width:100%;transition:transform .15s var(--ease),opacity .2s}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:14.5px}
+.row a,.alt a,.agree a,.foot a:hover{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1.5px}
+.agree{display:grid;grid-template-columns:22px minmax(0,1fr);gap:10px;font-weight:400;font-size:14.5px;color:var(--text);align-items:start}
+.agree input{width:20px;height:20px;margin:1px 0 0;accent-color:var(--ink)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;width:100%;height:52px;padding:0 24px;border:0;border-radius:999px;background:var(--btn);color:var(--btn-ink);
+  font:500 16px/1 var(--f);white-space:nowrap;text-decoration:none;cursor:pointer;transition:transform 150ms var(--ease),box-shadow 150ms var(--ease),opacity 150ms var(--ease)}
+.btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;transition:transform 200ms var(--ease)}
+.btn:hover svg{transform:translateX(3px)}
 .btn:active{transform:scale(.98)}
-.btn[disabled]{opacity:.55;cursor:progress}
-.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
-.linkbtn{border:0;background:none;padding:0;font:inherit;color:inherit;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
-.alt{font-size:14.5px;color:var(--muted);text-align:center}
-.alt a{color:var(--ink);font-weight:600;text-underline-offset:3px}
-.li-btn{background:transparent;color:var(--btn);text-decoration:none;margin-top:12px}.li-btn[hidden]{display:none}
-.msg{border-radius:12px;padding:12px 14px;font-size:14.5px}
+.btn[disabled]{opacity:.6;cursor:progress}
+.btn.ghost,.btn.prov{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--line-2)}
+.btn.ghost:hover,.btn.prov:hover{box-shadow:inset 0 0 0 1.5px var(--ink)}
+.providers{display:grid;gap:10px}
+/* Provider logos are the companies' own files, unaltered (source: homarr-labs/dashboard-icons). */
+.btn.prov .logo{flex:none;width:20px;height:20px;stroke:none;fill:initial;transition:none}
+.btn.prov:hover .logo{transform:none}
+.btn.prov .logo.glyph{fill:none;stroke:var(--ink);stroke-width:1.6;stroke-linecap:round}
+.logo.on-dark{display:none}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .logo.on-light{display:none} :root:not([data-theme="light"]) .logo.on-dark{display:block}}
+:root[data-theme="dark"] .logo.on-light{display:none} :root[data-theme="dark"] .logo.on-dark{display:block}
+.or{display:flex;align-items:center;gap:14px;font:500 13.5px/1 var(--f);color:var(--muted)}
+.or::before,.or::after{content:"";flex:1;border-top:1.5px dashed var(--line-2)}
+.linkbtn{border:0;background:none;padding:0;font:inherit;color:var(--ink);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.alt{font-size:15px;color:var(--muted);text-align:center}
+.alt a{color:var(--ink);font-weight:500}
+.msg{border-radius:14px;padding:12px 14px;font-size:14.5px;line-height:1.45}
 .msg.err{background:var(--bad-soft);color:var(--bad)}
 .msg.ok{background:var(--good-soft);color:var(--good)}
 .done{display:grid;gap:14px;justify-items:start}
-.done .big{width:52px;height:52px;border-radius:12px;background:var(--panel-2);display:grid;place-items:center}
-.done svg{width:26px;height:26px;stroke:var(--ink);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.foot{font-size:13px;color:var(--muted);display:flex;gap:16px;flex-wrap:wrap}
+.done .big{width:56px;height:56px;border-radius:50%;background:var(--pink);display:grid;place-items:center;color:#151515}
+.done svg{width:26px;height:26px;stroke:#151515;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.foot{font-size:13.5px;color:var(--muted);display:flex;gap:18px;flex-wrap:wrap;justify-content:center}
 .foot a{text-decoration:none}
-.foot a:hover{text-decoration:underline}
 .spin{width:16px;height:16px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:r .8s linear infinite}
 @keyframes r{to{transform:rotate(1turn)}}
-@media (prefers-reduced-motion: reduce){ .spin{animation:none} *{transition:none!important} }
+
+/* ----- motion: notices are pinned up one after another; the form settles in ----- */
+@keyframes rise{from{opacity:0;transform:translateY(14px)}}
+@keyframes pin{from{opacity:0;translate:0 18px;scale:.96}}
+.card{animation:rise 420ms var(--ease) both}
+.pitch{animation:rise 520ms var(--ease) both}
+.notice,.note{animation:pin 620ms var(--ease) both;transition:translate 240ms var(--ease),box-shadow 240ms var(--ease)}
+.notice{animation-delay:120ms} .note.a{animation-delay:260ms} .note.b{animation-delay:380ms}
+@media (hover:hover){.notice:hover,.note:hover{translate:0 -4px}}
+@media (prefers-reduced-motion: reduce){ .spin{animation-duration:2s} .card,.pitch,.notice,.note{animation:none} *{transition:none!important} }
+
+@media (max-width:1040px){ .board{grid-template-columns:minmax(0,1fr)} .note{display:none} .notice{grid-row:auto;max-width:420px} }
 @media (max-width:860px){
   .shell{grid-template-columns:minmax(0,1fr)}
-  .side{gap:22px;padding:22px 16px 26px}
-  .pitch h1{font-size:28px}
-  .pitch p{font-size:15px}
-  .promises{display:none}
+  .side{margin:10px;padding:22px 20px 24px;gap:14px;border-radius:24px}
+  .pitch h1{font-size:30px;max-width:none}
+  .pitch p{display:none}
+  .board,.small{display:none}
   .main{place-items:start center;padding:28px 16px 40px}
+  .card h2,.card h1{font-size:32px}
 }
-/* Propelo brand: cream, pastel shapes, Bricolage Grotesque + Figtree */
-:root{--page:#FAF3E6;--ink:#151515;--ink-2:#47433D;--muted:#8C867D;--panel:#EFE7D9;--panel-2:#E6DCCB;--line:#DDD2C1;--field:#FFFDF8;--btn:#151515;--btn-ink:#FAF3E6;
-  --pink:#F5B8DB;--bgreen:#9AAB63;--bblue:#B6CAEB;--yellow:#F5D867;--good:#5E7A1F;--good-soft:#E2EAC6;
-  --f:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;--d:"Bricolage Grotesque",ui-rounded,system-ui,sans-serif;--spring:cubic-bezier(.34,1.56,.64,1)}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--page:#12110F;--ink:#F3EDE2;--ink-2:#D6CFC3;--muted:#9C958A;--panel:#1E1C19;--panel-2:#2A2722;--line:#34302A;--field:#191815;--btn:#F3EDE2;--btn-ink:#151515}}
-body{font-size:15.5px}
-.side{background:var(--pink);color:#151515;margin:14px;border-radius:28px;position:relative;overflow:hidden}
-.brand{color:#151515;font-family:var(--d);font-size:24px;font-weight:600}
-.mark{background:#151515;color:var(--pink);border-radius:12px;width:38px;height:38px}
-.mark svg{width:22px;height:22px;fill:currentColor;stroke:none}
-.pitch,.promises,.brand{position:relative;z-index:1}
-.pitch h1{font-family:var(--d);color:#151515;font-weight:600;letter-spacing:-.04em;font-size:clamp(34px,4vw,54px)}
-.pitch p{color:#2b2925}
-.promises svg{stroke:#151515}
-.promises b{color:#151515}
-.promises li{background:rgba(255,255,255,.5);border-radius:18px;padding:12px 14px}
-.sh{position:absolute;pointer-events:none;z-index:0}
-.sh svg{width:100%;height:100%}
-.card h2{font-family:var(--d);font-size:36px;letter-spacing:-.04em}
-input[type=text],input[type=email],input[type=password]{border-radius:12px;padding:13px 16px}
-input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 60%,transparent)}
-.btn{border-radius:999px;padding:14px 20px;min-height:48px;transition:transform 120ms cubic-bezier(.23,1,.32,1),opacity 120ms cubic-bezier(.23,1,.32,1)}
-.btn:hover{opacity:.88}
-.btn:active{transform:scale(.97)}
-.btn.ghost{border-width:1.5px}
-.msg{border-radius:12px}
-.done .big{border-radius:50%;background:var(--pink)}
-.card{animation:rise 280ms cubic-bezier(.23,1,.32,1) both}
-@keyframes rise{from{opacity:0;transform:translateY(12px)}}
-@media (max-width:860px){.side{margin:10px;border-radius:28px}.sh{display:none}}
-@media (prefers-reduced-motion: reduce){.sh,.card{animation:none}}
-</style>
-<style>
-/* ===== Propelo layer (see docs/design.md): cream and ink, one pink accent, Figtree at 400 to 600 ===== */
-:root:root{--page:#FAF3E6;--cream:#FAF3E6;--panel:#F2EADC;--sand:#F2EADC;--panel-2:#EAE0CF;--field:#FFFCF7;--line:rgba(21,21,21,.12);
-  --ink:#151515;--ink-2:#4F4A44;--text:#4F4A44;--muted:#6E675D;--btn:#151515;--btn-ink:#FAF3E6;
-  --pink:#FF85BA;--lav:#BDB6FC;--yellow:#FCF15C;--orange:#FF7034;--green:#FF7034;--blue:#BDB6FC;--bblue:#BDB6FC;--bgreen:#FF7034;
-  --f:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;--d:var(--f);--ease:cubic-bezier(.16,1,.3,1)}
-@media (prefers-color-scheme: dark){:root:root:not([data-theme="light"]){--page:#141311;--cream:#141311;--panel:#1C1A17;--sand:#1C1A17;--panel-2:#26231F;--field:#1C1A17;--line:rgba(243,236,224,.12);
-  --ink:#F3ECE0;--ink-2:#D2CABE;--text:#D2CABE;--muted:#9E978B;--btn:#F3ECE0;--btn-ink:#141311;color-scheme:dark}}
-h1,h2,h3,.brand,.lede,.price,.pitch h1,.card h2{font-family:var(--f)}
-h1,h2,.pitch h1,.card h2,.plan h2,.price,.faq h3{font-weight:500 !important;letter-spacing:-.04em}
-h3{font-weight:600}
-.brand{display:inline-flex;align-items:baseline;gap:2px;font-weight:600 !important;font-size:24px;letter-spacing:-.05em;text-decoration:none}
-.brand .dot{width:7px;height:7px;border-radius:50%;background:var(--pink)}
-.mark,.sh,.shape{display:none !important}
-.pill{text-transform:none !important;letter-spacing:0 !important;border:1.5px solid #151515;color:#151515}
-.btn{font-weight:500 !important;text-transform:none !important;letter-spacing:0 !important}
-.side .brand .dot{background:#151515}
-.promises li{background:rgba(255,252,247,.6);box-shadow:inset 0 0 0 1px rgba(21,21,21,.12)}
-.plan.pro{background:var(--yellow) !important;box-shadow:inset 0 0 0 1.5px #151515}
-.plan li::before{background:currentColor !important;opacity:.45;width:8px !important;height:8px !important;margin-top:8px !important}
-input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 45%,transparent) !important}
 </style>
 </head>
 <body>
@@ -147,14 +143,25 @@ input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 45%,transparent) 
   <aside class="side">
     <a class="brand" href="/login">propelo<span class="dot" aria-hidden="true"></span></a>
     <div class="pitch">
-      <h1>Fresh roles, checked against your rules.</h1>
+      <h1>Find the roles that can <mark>take you there.</mark></h1>
       <p>Propelo reads thousands of company career pages several times a day, keeps the roles that fit you, and shows the sentence from each posting that decided it.</p>
     </div>
-    <ul class="promises">
-      <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span><b>Straight from company sites,</b> often before the big boards list them.</span></li>
-      <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span><b>Nothing invented.</b> Every line on a tailored resume comes from your own record.</span></li>
-      <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span><b>Applies from your computer,</b> where you're signed in. We never ask for your job-site passwords.</span></li>
-    </ul>
+    <div class="board" aria-hidden="true">
+      <div class="notice">
+        <span class="eg">Example of a role card</span>
+        <h2>Data Analyst</h2>
+        <p class="where">Amsterdam, Netherlands · posted 3 hours ago</p>
+        <blockquote>"We are a recognised sponsor and <mark>support visa and relocation</mark> for this role."</blockquote>
+        <ul class="checks">
+          <li><i><svg viewBox="0 0 12 12"><path d="M2.5 6.2l2.3 2.3 4.7-5"/></svg></i>Employer is on the sponsor register</li>
+          <li><i><svg viewBox="0 0 12 12"><path d="M2.5 6.2l2.3 2.3 4.7-5"/></svg></i>Matches your title and experience</li>
+          <li><i><svg viewBox="0 0 12 12"><path d="M2.5 6.2l2.3 2.3 4.7-5"/></svg></i>Still open on the company's own page</li>
+        </ul>
+      </div>
+      <div class="note a"><b>Nothing invented.</b>Every line on a tailored resume comes from your own record.</div>
+      <div class="note b"><b>Your passwords stay yours.</b>We never ask for your job-site sign-ins.</div>
+    </div>
+    <p class="small">Sponsor checks use the UK and Dutch government registers and what each posting says. A role card always shows where its answer came from.</p>
   </aside>
 
   <main class="main">
@@ -162,14 +169,20 @@ input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 45%,transparent) 
       <!-- sign in -->
       <section data-mode="login" hidden>
         <div><h2>Sign in</h2><p class="lede">Welcome back.</p></div>
+        <div class="providers" hidden>
+          <a class="btn prov" data-provider="google" href="/api/auth/google/start" hidden><svg class="logo" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M501.8 261.8c0-18.2-1.6-35.6-4.7-52.4H256v99.1h137.8c-6.1 31.9-24.2 58.9-51.4 77V450h83.1c48.3-44.6 76.3-110.2 76.3-188.2" style="fill:#4285f4"/><path d="M256 512c69.1 0 127.1-22.8 169.4-61.9l-83.1-64.5c-22.8 15.4-51.9 24.7-86.3 24.7-66.6 0-123.1-44.9-143.4-105.4H27.5V371C69.6 454.5 155.9 512 256 512" style="fill:#34a853"/><path d="M112.6 304.6c-5.1-15.4-8.1-31.7-8.1-48.6s3-33.3 8.1-48.6v-66.1H27.5C10 175.7 0 214.6 0 256s10 80.3 27.5 114.7L93.8 319c0 .1 18.8-14.4 18.8-14.4" style="fill:#fbbc05"/><path d="M256 101.9c37.7 0 71.2 13 98 38.2l73.3-73.3C382.8 25.4 325.1 0 256 0 155.9 0 69.6 57.5 27.5 141.3l85.2 66.1c20.2-60.5 76.7-105.5 143.3-105.5" style="fill:#ea4335"/><path d="M0 0h512v512H0z" style="fill:none"/></svg>Continue with Google</a>
+          <a class="btn prov" data-provider="github" href="/api/auth/github/start" hidden><svg class="logo on-light" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M256 6.3C114.6 6.3 0 120.9 0 262.3c0 113.3 73.3 209 175 242.9 12.8 2.2 17.6-5.4 17.6-12.2 0-6.1-.3-26.2-.3-47.7-64.3 11.8-81-15.7-86.1-30.1-2.9-7.4-15.4-30.1-26.2-36.2-9-4.8-21.8-16.6-.3-17 20.2-.3 34.6 18.6 39.4 26.2 23 38.7 59.8 27.8 74.6 21.1 2.2-16.6 9-27.8 16.3-34.2-57-6.4-116.5-28.5-116.5-126.4 0-27.8 9.9-50.9 26.2-68.8-2.6-6.4-11.5-32.6 2.6-67.8 0 0 21.4-6.7 70.4 26.2 20.5-5.8 42.2-8.6 64-8.6s43.5 2.9 64 8.6c49-33.3 70.4-26.2 70.4-26.2 14.1 35.2 5.1 61.4 2.6 67.8 16.3 17.9 26.2 40.6 26.2 68.8 0 98.2-59.8 120-116.8 126.4 9.3 8 17.3 23.4 17.3 47.4 0 34.2-.3 61.8-.3 70.4 0 6.7 4.8 14.7 17.6 12.2C438.7 471.3 512 375.3 512 262.3c0-141.4-114.6-256-256-256" style="fill-rule:evenodd;clip-rule:evenodd;fill:#1b1f23"/></svg><svg class="logo on-dark" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M256 6.3C114.6 6.3 0 120.9 0 262.3c0 113.3 73.3 209 175 242.9 12.8 2.2 17.6-5.4 17.6-12.2 0-6.1-.3-26.2-.3-47.7-64.3 11.8-81-15.7-86.1-30.1-2.9-7.4-15.4-30.1-26.2-36.2-9-4.8-21.8-16.6-.3-17 20.2-.3 34.6 18.6 39.4 26.2 23 38.7 59.8 27.8 74.6 21.1 2.2-16.6 9-27.8 16.3-34.2-57-6.4-116.5-28.5-116.5-126.4 0-27.8 9.9-50.9 26.2-68.8-2.6-6.4-11.5-32.6 2.6-67.8 0 0 21.4-6.7 70.4 26.2 20.5-5.8 42.2-8.6 64-8.6s43.5 2.9 64 8.6c49-33.3 70.4-26.2 70.4-26.2 14.1 35.2 5.1 61.4 2.6 67.8 16.3 17.9 26.2 40.6 26.2 68.8 0 98.2-59.8 120-116.8 126.4 9.3 8 17.3 23.4 17.3 47.4 0 34.2-.3 61.8-.3 70.4 0 6.7 4.8 14.7 17.6 12.2C438.7 471.3 512 375.3 512 262.3c0-141.4-114.6-256-256-256" style="fill-rule:evenodd;clip-rule:evenodd;fill:#fff"/></svg>Continue with GitHub</a>
+          <a class="btn prov" data-provider="linkedin" href="/api/auth/linkedin/start" hidden><svg class="logo" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M56.9 512h398.2c31.4 0 56.9-25.5 56.9-56.9V56.9C512 25.5 486.5 0 455.1 0H56.9C25.5 0 0 25.5 0 56.9v398.2C0 486.5 25.5 512 56.9 512" style="fill-rule:evenodd;clip-rule:evenodd;fill:#007ebb"/><path d="M440.9 440.9h-76V311.5c0-35.5-13.5-55.3-41.6-55.3-30.5 0-46.5 20.6-46.5 55.3v129.4h-73.2V194.4h73.2v33.2s22-40.7 74.3-40.7 89.7 31.9 89.7 98v156zM116.3 162.1c-24.9 0-45.2-20.4-45.2-45.5s20.2-45.5 45.2-45.5 45.1 20.4 45.1 45.5-20.2 45.5-45.1 45.5M78.5 440.9h76.4V194.4H78.5z" style="fill-rule:evenodd;clip-rule:evenodd;fill:#fff"/></svg>Continue with LinkedIn</a>
+          <button class="btn prov" type="button" data-provider="phone" data-go="phone" hidden><svg class="logo glyph" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg>Continue with mobile number</button>
+        </div>
+        <div class="or" hidden>or use your email</div>
         <form id="f-login" novalidate>
           <div class="msg" role="alert" hidden></div>
           <label>Email<input type="email" name="email" autocomplete="email" required></label>
           <label>Password<span class="pw"><input type="password" name="password" autocomplete="current-password" required><button type="button" class="show" aria-label="Show password">Show</button></span></label>
           <div class="row"><span></span><a href="/forgot">Forgot password?</a></div>
-          <button class="btn" type="submit">Sign in</button>
+          <button class="btn" type="submit">Sign in<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
         </form>
-        <a class="btn li-btn" href="/api/auth/linkedin/start" hidden>Continue with LinkedIn</a>
         <p class="alt">New here? <a href="/signup">Create an account</a></p>
       </section>
 
@@ -185,16 +198,39 @@ input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 45%,transparent) 
         <p class="alt"><a href="/login">Start again</a></p>
       </section>
 
+      <!-- sign in with a mobile number -->
+      <section data-mode="phone" hidden>
+        <div><h2>Sign in with your mobile number</h2><p class="lede">For accounts that added a number in Settings. We text you a code.</p></div>
+        <form id="f-phone" novalidate>
+          <div class="msg" role="alert" hidden></div>
+          <label>Mobile number<input type="tel" name="phone" autocomplete="tel" inputmode="tel" maxlength="24" placeholder="+44 7700 900123" required></label>
+          <button class="btn" type="submit">Text me a code<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        </form>
+        <form id="f-phone-code" novalidate hidden>
+          <div class="msg" role="alert" hidden></div>
+          <label>Code<input type="text" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="10" required></label>
+          <button class="btn" type="submit">Sign in<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+          <p class="hint"><button class="linkbtn" type="button" data-go="phone-again">Use a different number or send a new code</button></p>
+        </form>
+        <p class="alt"><a href="/login">Sign in another way</a></p>
+      </section>
+
       <!-- sign up -->
       <section data-mode="signup" hidden>
-        <div><h2>Create your account</h2><p class="lede">Free to start. It takes a minute.</p></div>
+        <div><h2>Create your account</h2><p class="lede">Free to start. No card needed.</p></div>
+        <div class="providers" hidden>
+          <a class="btn prov" data-provider="google" href="/api/auth/google/start" hidden><svg class="logo" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M501.8 261.8c0-18.2-1.6-35.6-4.7-52.4H256v99.1h137.8c-6.1 31.9-24.2 58.9-51.4 77V450h83.1c48.3-44.6 76.3-110.2 76.3-188.2" style="fill:#4285f4"/><path d="M256 512c69.1 0 127.1-22.8 169.4-61.9l-83.1-64.5c-22.8 15.4-51.9 24.7-86.3 24.7-66.6 0-123.1-44.9-143.4-105.4H27.5V371C69.6 454.5 155.9 512 256 512" style="fill:#34a853"/><path d="M112.6 304.6c-5.1-15.4-8.1-31.7-8.1-48.6s3-33.3 8.1-48.6v-66.1H27.5C10 175.7 0 214.6 0 256s10 80.3 27.5 114.7L93.8 319c0 .1 18.8-14.4 18.8-14.4" style="fill:#fbbc05"/><path d="M256 101.9c37.7 0 71.2 13 98 38.2l73.3-73.3C382.8 25.4 325.1 0 256 0 155.9 0 69.6 57.5 27.5 141.3l85.2 66.1c20.2-60.5 76.7-105.5 143.3-105.5" style="fill:#ea4335"/><path d="M0 0h512v512H0z" style="fill:none"/></svg>Continue with Google</a>
+          <a class="btn prov" data-provider="github" href="/api/auth/github/start" hidden><svg class="logo on-light" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M256 6.3C114.6 6.3 0 120.9 0 262.3c0 113.3 73.3 209 175 242.9 12.8 2.2 17.6-5.4 17.6-12.2 0-6.1-.3-26.2-.3-47.7-64.3 11.8-81-15.7-86.1-30.1-2.9-7.4-15.4-30.1-26.2-36.2-9-4.8-21.8-16.6-.3-17 20.2-.3 34.6 18.6 39.4 26.2 23 38.7 59.8 27.8 74.6 21.1 2.2-16.6 9-27.8 16.3-34.2-57-6.4-116.5-28.5-116.5-126.4 0-27.8 9.9-50.9 26.2-68.8-2.6-6.4-11.5-32.6 2.6-67.8 0 0 21.4-6.7 70.4 26.2 20.5-5.8 42.2-8.6 64-8.6s43.5 2.9 64 8.6c49-33.3 70.4-26.2 70.4-26.2 14.1 35.2 5.1 61.4 2.6 67.8 16.3 17.9 26.2 40.6 26.2 68.8 0 98.2-59.8 120-116.8 126.4 9.3 8 17.3 23.4 17.3 47.4 0 34.2-.3 61.8-.3 70.4 0 6.7 4.8 14.7 17.6 12.2C438.7 471.3 512 375.3 512 262.3c0-141.4-114.6-256-256-256" style="fill-rule:evenodd;clip-rule:evenodd;fill:#1b1f23"/></svg><svg class="logo on-dark" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M256 6.3C114.6 6.3 0 120.9 0 262.3c0 113.3 73.3 209 175 242.9 12.8 2.2 17.6-5.4 17.6-12.2 0-6.1-.3-26.2-.3-47.7-64.3 11.8-81-15.7-86.1-30.1-2.9-7.4-15.4-30.1-26.2-36.2-9-4.8-21.8-16.6-.3-17 20.2-.3 34.6 18.6 39.4 26.2 23 38.7 59.8 27.8 74.6 21.1 2.2-16.6 9-27.8 16.3-34.2-57-6.4-116.5-28.5-116.5-126.4 0-27.8 9.9-50.9 26.2-68.8-2.6-6.4-11.5-32.6 2.6-67.8 0 0 21.4-6.7 70.4 26.2 20.5-5.8 42.2-8.6 64-8.6s43.5 2.9 64 8.6c49-33.3 70.4-26.2 70.4-26.2 14.1 35.2 5.1 61.4 2.6 67.8 16.3 17.9 26.2 40.6 26.2 68.8 0 98.2-59.8 120-116.8 126.4 9.3 8 17.3 23.4 17.3 47.4 0 34.2-.3 61.8-.3 70.4 0 6.7 4.8 14.7 17.6 12.2C438.7 471.3 512 375.3 512 262.3c0-141.4-114.6-256-256-256" style="fill-rule:evenodd;clip-rule:evenodd;fill:#fff"/></svg>Continue with GitHub</a>
+          <a class="btn prov" data-provider="linkedin" href="/api/auth/linkedin/start" hidden><svg class="logo" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" viewBox="0 0 512 512"><path d="M56.9 512h398.2c31.4 0 56.9-25.5 56.9-56.9V56.9C512 25.5 486.5 0 455.1 0H56.9C25.5 0 0 25.5 0 56.9v398.2C0 486.5 25.5 512 56.9 512" style="fill-rule:evenodd;clip-rule:evenodd;fill:#007ebb"/><path d="M440.9 440.9h-76V311.5c0-35.5-13.5-55.3-41.6-55.3-30.5 0-46.5 20.6-46.5 55.3v129.4h-73.2V194.4h73.2v33.2s22-40.7 74.3-40.7 89.7 31.9 89.7 98v156zM116.3 162.1c-24.9 0-45.2-20.4-45.2-45.5s20.2-45.5 45.2-45.5 45.1 20.4 45.1 45.5-20.2 45.5-45.1 45.5M78.5 440.9h76.4V194.4H78.5z" style="fill-rule:evenodd;clip-rule:evenodd;fill:#fff"/></svg>Continue with LinkedIn</a>
+        </div>
+        <div class="or" hidden>or use your email</div>
         <form id="f-signup" novalidate>
           <div class="msg" role="alert" hidden></div>
-          <label>Your name<input type="text" name="name" autocomplete="name" maxlength="80"></label>
-          <label>Email<input type="email" name="email" autocomplete="email" required></label>
+          <label>Your name<input type="text" name="name" autocomplete="name" maxlength="80" placeholder="As it appears on your resume"></label>
+          <label>Email<input type="email" name="email" autocomplete="email" required placeholder="you@example.com"></label>
           <label>Password<span class="pw"><input type="password" name="password" autocomplete="new-password" minlength="10" required aria-describedby="pw-hint"><button type="button" class="show" aria-label="Show password">Show</button></span><span class="hint" id="pw-hint">At least 10 characters.</span></label>
           <label class="agree"><input type="checkbox" name="agree" required><span>I agree to the <a href="/terms" target="_blank">terms</a> and the <a href="/privacy" target="_blank">privacy notice</a>.</span></label>
-          <button class="btn" type="submit">Create account</button>
+          <button class="btn" type="submit">Create account<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
         </form>
         <p class="alt">Already have an account? <a href="/login">Sign in</a></p>
       </section>
@@ -256,17 +292,24 @@ input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 45%,transparent) 
   if (token || mfaTicket) history.replaceState(null, '', location.pathname + location.search); // keep the link out of history
   let mode = location.pathname.replace(/^\/+|\/+$/g, '') || 'login';
   let lastEmail = '';
-  // Sign in with LinkedIn, when this server has it set up (name and email only; nothing is posted or sent).
-  // Inside the phone app, LinkedIn's sign-in would open and finish in the phone's browser, not the app: offer email there.
-  const inApp = /CareerOSApp/.test(navigator.userAgent || '');
-  if (!inApp) fetch('/api/auth/providers').then(r => r.ok ? r.json() : {}).then(p => { if (p && p.linkedin) document.querySelectorAll('.li-btn').forEach(b => { b.hidden = false; }); }).catch(() => {});
-  const liErr = {linkedin_cancelled: 'LinkedIn sign-in was cancelled.', linkedin_state: 'That sign-in link expired. Try again.', linkedin_failed: "LinkedIn didn't confirm the sign-in. Try again.",
-                 linkedin_no_email: "LinkedIn didn't share a confirmed email address, which Propelo needs.", closed: 'Sign-up is by invitation right now.', disabled: 'This account is disabled.'}[new URLSearchParams(location.hash.slice(1)).get('error') || ''];
+  // Sign in with Google, GitHub or LinkedIn, each shown only when this server has it set up (name and email only).
+  // Inside the phone app a provider's sign-in would open and finish in the phone's browser, not the app: offer email there.
+  const inApp = /CareerOSApp|PropeloApp/.test(navigator.userAgent || '');
+  if (!inApp) fetch('/api/auth/providers').then(r => r.ok ? r.json() : {}).then(p => {
+    let any = false;
+    document.querySelectorAll('[data-provider]').forEach(b => { const on = !!(p && p[b.dataset.provider]); b.hidden = !on; any = any || on; });
+    document.querySelectorAll('.providers, .or').forEach(el => { el.hidden = !any; });
+  }).catch(() => {});
+  const errCode = new URLSearchParams(location.hash.slice(1)).get('error') || '';
+  const who = {google: 'Google', github: 'GitHub', linkedin: 'LinkedIn'}[errCode.split('_')[0]];
+  const liErr = who ? ({cancelled: who + ' sign-in was cancelled.', state: 'That sign-in link expired. Try again.', failed: who + " didn't confirm the sign-in. Try again.",
+                        no_email: who + " didn't share a confirmed email address, which Propelo needs."}[errCode.split('_').slice(1).join('_')] || '')
+                      : ({closed: 'Sign-up is by invitation right now.', disabled: 'This account is disabled.'}[errCode] || '');
 
   function show(m){
     mode = m;
     document.querySelectorAll('[data-mode]').forEach(s => { s.hidden = s.dataset.mode !== m; });
-    document.title = 'Propelo · ' + ({login:'Sign in', mfa:'Two-step sign-in', signup:'Create account', sent:'Check your inbox', forgot:'Reset password', reset:'New password', verify:'Confirm email'}[m] || 'Sign in');
+    document.title = 'Propelo · ' + ({login:'Sign in', phone:'Sign in with your mobile number', mfa:'Two-step sign-in', signup:'Create account', sent:'Check your inbox', forgot:'Reset password', reset:'New password', verify:'Confirm email'}[m] || 'Sign in');
     const first = $('[data-mode="' + m + '"] input');
     if (first && matchMedia('(min-width: 861px)').matches) first.focus();
   }
@@ -276,8 +319,8 @@ input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 45%,transparent) 
   }
   function busy(form, on, label){
     const b = $('button[type=submit]', form); if (!b) return;
-    if (on){ b.dataset.label = b.textContent; b.disabled = true; b.innerHTML = '<span class="spin" aria-hidden="true"></span>' + (label || 'Working…'); }
-    else { b.disabled = false; b.textContent = b.dataset.label || b.textContent; }
+    if (on){ b._was = b.innerHTML; b.disabled = true; b.innerHTML = '<span class="spin" aria-hidden="true"></span>' + (label || 'Working…'); }
+    else { b.disabled = false; if (b._was) b.innerHTML = b._was; }
   }
   async function post(url, body){
     let r;
@@ -292,7 +335,13 @@ input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 45%,transparent) 
     }
     return {ok: r.ok, status: r.status, data};
   }
-  const next = () => { const n = params.get('next') || '/'; return /^\/(?![\/\\])[^\s]*$/.test(n) ? n : '/'; };
+  // Where to go after signing in: a path on this site only. Anything else (another site, javascript:, //host) goes home.
+  const next = () => {
+    const n = params.get('next') || '/';
+    if (!/^\/(?![\/\\])[^\s]*$/.test(n)) return '/';
+    try { const u = new URL(n, location.origin); return u.origin === location.origin ? u.pathname + u.search + u.hash : '/'; }
+    catch (e) { return '/'; }
+  };
 
   document.addEventListener('click', e => {
     const b = e.target.closest('.show'); if (!b) return;
@@ -319,6 +368,36 @@ input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 45%,transparent) 
     if (r.ok){ location.replace(next()); return; }
     if (r.data.code === 'unverified'){ lastEmail = email; $('#sent-text').textContent = 'Confirm your email to sign in. We can send the link again.'; show('sent'); return; }
     msg(f, r.data.error || 'Sign-in failed. Try again.');
+  });
+
+  // Sign in with a mobile number: the number first, then the texted code.
+  let phoneNum = '';
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-go]'); if (!b) return;
+    if (b.dataset.go === 'phone'){ show('phone'); }
+    if (b.dataset.go === 'phone-again'){ $('#f-phone').hidden = false; $('#f-phone-code').hidden = true; msg($('#f-phone'), ''); $('#f-phone input').focus(); }
+  });
+  $('#f-phone').addEventListener('submit', async e => {
+    e.preventDefault(); const f = e.target; msg(f, '');
+    const phone = f.phone.value.trim();
+    if (!phone){ msg(f, 'Enter your mobile number with its country code.'); return; }
+    busy(f, true, 'Sending…');
+    const r = await post('/api/auth/phone/start', {phone});
+    busy(f, false);
+    if (!r.ok){ msg(f, r.data.error || "We couldn't send the code. Try again."); return; }
+    phoneNum = phone; f.hidden = true; const g = $('#f-phone-code'); g.hidden = false;
+    msg(g, r.data.message || 'If this number is on a Propelo account, a code is on its way.', 'ok'); g.code.value = ''; g.code.focus();
+  });
+  $('#f-phone-code').addEventListener('submit', async e => {
+    e.preventDefault(); const f = e.target;
+    const code = f.code.value.trim();
+    if (!code){ msg(f, 'Enter the code we texted you.'); return; }
+    busy(f, true, 'Checking…');
+    const r = await post('/api/auth/phone/verify', {phone: phoneNum, code});
+    busy(f, false);
+    if (r.ok && r.data.mfa){ mfaTicket = r.data.ticket; show('mfa'); return; }
+    if (r.ok){ location.replace(next()); return; }
+    msg(f, r.data.error || "That code didn't work."); f.code.select();
   });
 
   $('#f-mfa').addEventListener('submit', async e => {
@@ -407,7 +486,7 @@ input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 45%,transparent) 
     else if (h.signup === 'allowlist'){ msg($('#f-signup'), 'Sign-up is by invitation: use the email you were invited with.', 'ok'); }
   }).catch(() => {});
 
-  if (!['login', 'signup', 'forgot', 'reset', 'verify'].includes(mode)) mode = 'login';
+  if (!['login', 'signup', 'forgot', 'reset', 'verify', 'phone'].includes(mode)) mode = 'login';
   if (mfaTicket && mode === 'login') mode = 'mfa';
   show(mode);
   if (liErr){ msg($('#f-login'), liErr); history.replaceState(null, '', location.pathname); }

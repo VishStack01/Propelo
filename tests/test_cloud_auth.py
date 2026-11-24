@@ -200,3 +200,81 @@ def test_a_database_that_cannot_be_reached_says_so(cloud, monkeypatch):
     assert "database" in r.json()["error"] and "dpg-secret-host" not in r.text
     r = c.post("/api/auth/login", json={"email": "asha@example.com", "password": PW})
     assert r.status_code == 503 and r.json()["code"] == "db_down"
+
+
+@pytest.fixture
+def providers(cloud, monkeypatch):
+    from propelo.cloud import oauth
+
+    for k in ("google", "github", "linkedin"):
+        object.__setattr__(cloud.cfg, k + "_client_id", "id")
+        object.__setattr__(cloud.cfg, k + "_client_secret", "secret")
+    who = {"email": "Asha@Example.com", "name": "Asha Rao", "verified": True}
+    monkeypatch.setattr(oauth, "exchange", lambda *a, **k: "token")
+    monkeypatch.setattr(oauth, "identity", lambda provider, token, timeout=15: dict(who))  # reads who at call time
+    return who
+
+
+def _provider_sign_in(c, provider):
+    r = c.get(f"/api/auth/{provider}/start", follow_redirects=False)
+    assert r.status_code == 303
+    state = r.headers["location"].split("state=")[1].split("&")[0]
+    return c.get(f"/api/auth/{provider}/callback?code=abc&state={state}", follow_redirects=False)
+
+
+@pytest.mark.parametrize("provider", ["google", "github", "linkedin"])
+def test_sign_in_with_a_provider_creates_a_confirmed_account(cloud, providers, provider):
+    c = cloud.client()
+    assert cloud.client().get("/api/auth/providers").json() == {"google": True, "github": True, "linkedin": True, "phone": False}
+    r = _provider_sign_in(c, provider)
+    assert r.status_code == 303 and r.headers["location"] == "/app"
+    me = c.get("/api/me").json()
+    assert me["email"] == "asha@example.com" and me["emailVerified"] and me["name"] == "Asha Rao"
+    # A second visit signs the same account in rather than making another.
+    c2 = cloud.client()
+    assert _provider_sign_in(c2, provider).headers["location"] == "/app"
+    assert c2.get("/api/me").json()["id"] == me["id"]
+
+
+def test_provider_sign_in_needs_the_state_it_was_given_and_a_confirmed_email(cloud, providers):
+    c = cloud.client()
+    c.get("/api/auth/github/start", follow_redirects=False)
+    r = c.get("/api/auth/github/callback?code=abc&state=forged", follow_redirects=False)
+    assert r.headers["location"] == "/login#error=github_state" and c.get("/api/me").status_code == 401
+    providers["verified"] = False
+    c = cloud.client()
+    assert _provider_sign_in(c, "google").headers["location"] == "/login#error=google_no_email"
+    assert c.get("/api/me").status_code == 401
+
+
+def test_a_provider_that_is_not_set_up_is_not_offered(cloud):
+    assert cloud.client().get("/api/auth/providers").json() == {"google": False, "github": False, "linkedin": False, "phone": False}
+    assert cloud.client().get("/api/auth/google/start", follow_redirects=False).status_code == 404
+    assert cloud.client().get("/api/auth/anything/start", follow_redirects=False).status_code == 404
+
+
+def test_a_stranger_cannot_reserve_an_address_before_its_owner_signs_in_with_a_provider(cloud, providers):
+    stranger = cloud.client()
+    assert stranger.post("/api/auth/signup", json={"email": "asha@example.com", "password": PW, "name": "Not Asha"}).status_code == 202
+    owner = cloud.client()
+    assert _provider_sign_in(owner, "google").headers["location"] == "/app"
+    r = cloud.client().post("/api/auth/login", json={"email": "asha@example.com", "password": PW})
+    assert r.status_code in (401, 403) and "user" not in r.json()
+
+
+def test_an_account_without_a_password_can_still_be_deleted(cloud, providers):
+    c = cloud.client()
+    assert _provider_sign_in(c, "google").headers["location"] == "/app"
+    assert c.get("/api/me").json()["hasPassword"] is False
+    assert c.post("/api/me/delete", json={"confirm": "nope"}).status_code == 400
+    assert c.post("/api/me/delete", json={"confirm": "DELETE"}).status_code == 200
+    assert c.get("/api/me").status_code == 401
+
+
+def test_provider_routes_only_take_known_providers(cloud, providers):
+    c = cloud.client()
+    for bad in ("evil", "google%0d%0aSet-Cookie:x=1", "GOOGLE"):
+        assert c.get(f"/api/auth/{bad}/start", follow_redirects=False).status_code == 404
+        assert c.get(f"/api/auth/{bad}/callback?code=a&state=b", follow_redirects=False).status_code == 404
+    r = c.get("/api/auth/github/callback?error=access_denied", follow_redirects=False)
+    assert r.headers["location"] == "/login#error=github_cancelled"

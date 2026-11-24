@@ -152,8 +152,11 @@ def test_website_plan_cards_match_the_catalog():
     for cls, plan in (("", "free"), (" pro", "pro"), (" ultra", "ultra")):
         block = re.search(r'<article class="price%s reveal">.*?<ul>(.*?)</ul>' % cls, page, re.S).group(1)
         assert [h.unescape(x) for x in re.findall(r"<li>(.*?)</li>", block)] == catalog(plans_mod.public_config())[["free", "pro", "ultra"].index(plan)]["features"]
-    for price in ("₹499", "₹1,199", "$22.50", "$48.50"):
+    for price in ("$39", "$79"):
         assert price in page
+    # Dollars only: no rupee prices and no currency switch on the pricing cards.
+    pricing = page[page.index('<div class="prices"'):page.index('<section', page.index('<div class="prices"'))]
+    assert "₹" not in pricing and 'class="cur' not in page
 
 
 def test_app_version_shows_no_prices_or_outside_sign_ins():

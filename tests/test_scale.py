@@ -154,18 +154,18 @@ def test_pass_is_off_by_default_and_sells_pro_once(cloud, monkeypatch):
     assert a.post("/api/billing/pass", json={"currency": "INR"}).status_code == 503  # off until PASS=on
     links = _pass_cloud(cloud, monkeypatch)
     offer = a.get("/api/billing").json()["pass"]
-    assert offer["onSale"] and offer["days"] == 90 and offer["priceInr"] == 1199 and offer["currencies"] == ["INR"] and not offer["running"]
+    assert offer["onSale"] and offer["days"] == 90 and offer["priceInr"] == 2999 and offer["currencies"] == ["INR"] and not offer["running"]
     r = a.post("/api/billing/pass", json={"currency": "INR"})
-    assert r.status_code == 200 and r.json()["url"].startswith("https://rzp.io/") and links[0]["amount"] == 119_900
+    assert r.status_code == 200 and r.json()["url"].startswith("https://rzp.io/") and links[0]["amount"] == 299_900
     assert a.get("/api/me").json()["plan"] == "free"  # nothing until the payment webhook
     assert _rzp_paid(cloud, "plink_P1", 100)["result"] == "short" and a.get("/api/me").json()["plan"] == "free"
-    assert _rzp_paid(cloud, "plink_P1", 119_900)["result"] == "paid"
+    assert _rzp_paid(cloud, "plink_P1", 299_900)["result"] == "paid"
     assert a.get("/api/me").json()["plan"] == "pro"
-    assert _rzp_paid(cloud, "plink_P1", 119_900)["result"] == "duplicate"
+    assert _rzp_paid(cloud, "plink_P1", 299_900)["result"] == "duplicate"
     first = a.get("/api/billing").json()["pass"]["running"]["endsAt"]
     # A second pass adds its days to the end of the first.
     a.post("/api/billing/pass", json={"currency": "INR"})
-    assert _rzp_paid(cloud, "plink_P2", 119_900)["result"] == "paid"
+    assert _rzp_paid(cloud, "plink_P2", 299_900)["result"] == "paid"
     second = a.get("/api/billing").json()["pass"]["running"]["endsAt"]
     assert second > first and (datetime.fromisoformat(second.replace("Z", "+00:00")) - datetime.fromisoformat(first.replace("Z", "+00:00"))).days == 90
     admin = cloud.user("admin@example.com")

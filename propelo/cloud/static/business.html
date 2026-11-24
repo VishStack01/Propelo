@@ -10,37 +10,48 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&display=swap">
 <style>
-:root{--page:#F7F2E9;--card:#FFFCF7;--panel:#F2EADC;--ink:#151515;--ink-2:#4F4A44;--muted:#6E675D;--line:rgba(21,21,21,.09);--good:#1F6F5C;--bad:#B42D6A;
+:root{--page:#FAF3E6;--card:#FFFCF7;--panel:#F2EADC;--ink:#151515;--ink-2:#4F4A44;--muted:#6E675D;--line:rgba(21,21,21,.09);--good:#1F6F5C;--bad:#B42D6A;--pink:#FF85BA;--lav:#BDB6FC;--yellow:#FCF15C;--mark:#FCF15C;
   --f:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif}
-@media (prefers-color-scheme:dark){:root{--page:#141311;--card:#1C1A17;--panel:#26231F;--ink:#F3ECE0;--ink-2:#D2CABE;--muted:#9E978B;--line:rgba(243,236,224,.09);--good:#7FD1B9;--bad:#FF9CC8}}
+@media (prefers-color-scheme:dark){:root{--page:#141311;--card:#1C1A17;--panel:#26231F;--ink:#F3ECE0;--ink-2:#D2CABE;--muted:#9E978B;--line:rgba(243,236,224,.09);--good:#7FD1B9;--bad:#FF9CC8;--mark:rgba(252,241,92,.34)}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--page);color:var(--ink);font:16px/1.55 var(--f);-webkit-font-smoothing:antialiased}
 a{color:inherit}
-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;max-width:1120px;margin:0 auto}
-.logo{font-weight:600;font-size:20px;letter-spacing:-.02em;text-decoration:none}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:22px 20px;max-width:1120px;margin:0 auto}
+.logo{display:inline-flex;align-items:baseline;gap:2px;font-weight:600;font-size:24px;letter-spacing:-.05em;text-decoration:none}
+.logo i{width:7px;height:7px;border-radius:50%;background:var(--pink)}
+.logo small{margin-left:10px;font-size:15px;font-weight:400;letter-spacing:0;color:var(--muted)}
+.pills{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:28px}
+.pill{display:inline-flex;align-items:center;height:36px;padding:0 16px;border-radius:999px;border:1.5px solid #151515;color:#151515;font:500 15px/1 var(--f)}
+.pill:nth-child(1){background:var(--pink)}.pill:nth-child(2){background:var(--lav)}.pill:nth-child(3){background:var(--yellow)}
+mark{color:inherit;padding:0 .04em;background:linear-gradient(transparent 58%,var(--mark) 58%,var(--mark) 92%,transparent 92%)}
 nav a{margin-left:16px;font-size:15px;white-space:nowrap}
-@media (max-width:520px){nav a:first-child{display:none}.logo{font-size:17px}}
+@media (max-width:520px){nav a:first-child{display:none}.logo small{display:none}}
 main{max-width:1120px;margin:0 auto;padding:10px 16px 80px}
-.hero{padding:36px 0 26px;max-width:760px}
-.hero h1{font-size:clamp(30px,5vw,46px);line-height:1.08;letter-spacing:-.03em;margin:0 0 14px;font-weight:600}
-.hero p{font-size:18px;color:var(--ink-2);margin:0}
-h2{font-size:26px;letter-spacing:-.02em;margin:46px 0 8px;font-weight:600}
+.hero{padding:40px 0 32px;max-width:900px}
+.hero h1{font-size:clamp(34px,5vw,58px);line-height:1.08;letter-spacing:-.04em;margin:0 0 20px;font-weight:500;text-wrap:balance}
+.hero p{font-size:clamp(17px,1.4vw,20px);line-height:1.6;color:var(--ink-2);margin:0;max-width:680px}
+h2{font-size:clamp(26px,3vw,36px);letter-spacing:-.035em;line-height:1.12;margin:64px 0 10px;font-weight:500}
 .lead{color:var(--ink-2);margin:0 0 18px;max-width:760px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px}
-.card h3{margin:0 0 4px;font-size:18px}
-.price{font-size:32px;font-weight:600;letter-spacing:-.02em;margin:10px 0 0}
-.price small{font-size:14px;color:var(--muted);font-weight:400}
+.card{background:var(--panel);border-radius:28px;padding:28px}
+.card:nth-child(2){background:var(--yellow);color:#151515;box-shadow:inset 0 0 0 1.5px #151515}
+.card:nth-child(3){background:var(--lav);color:#151515;box-shadow:inset 0 0 0 1.5px #151515}
+.card:nth-child(2) .price small,.card:nth-child(3) .price small{color:#4F4A44}
+.card:nth-child(n+2) .btn{background:#151515;border-color:#151515;color:#FAF3E6}
+.card:nth-child(n+2) .btn.ghost{background:transparent;color:#151515}
+.card h3{margin:0 0 4px;font-size:22px;font-weight:500;letter-spacing:-.03em}
+.price{font-size:48px;font-weight:500;letter-spacing:-.05em;line-height:1;margin:14px 0 0}
+.price small{font-size:14px;color:var(--muted);font-weight:400;letter-spacing:0}
 ul{padding-left:20px;margin:12px 0}li{margin:5px 0}
-.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border-radius:999px;border:1px solid var(--ink);background:var(--ink);color:var(--card);font:600 15px var(--f);cursor:pointer;text-decoration:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border-radius:999px;border:1.5px solid var(--ink);background:var(--ink);color:var(--page);font:500 15px var(--f);cursor:pointer;text-decoration:none}
 .btn.ghost{background:transparent;color:var(--ink)}
 .btn[disabled]{opacity:.5;cursor:not-allowed}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .muted{color:var(--muted)}.small{font-size:14px}
 .feat{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:6px}
-.feat div{background:var(--panel);border-radius:16px;padding:16px}
+.feat div{background:var(--card);box-shadow:inset 0 0 0 1px var(--line);border-radius:20px;padding:20px}
 .feat b{display:block;margin-bottom:4px}
-.honest{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:20px;margin-top:40px}
+.honest{background:var(--card);box-shadow:inset 0 0 0 1px var(--line);border-radius:28px;padding:28px;margin-top:56px}
 dialog{border:0;border-radius:22px;padding:0;max-width:520px;width:calc(100% - 32px);background:var(--card);color:var(--ink)}
 dialog::backdrop{background:rgba(0,0,0,.45)}
 .dlg{padding:22px}
@@ -53,10 +64,11 @@ label.chk input{width:18px;min-height:18px;margin-top:3px}
 </style>
 </head>
 <body>
-<header><a class="logo" href="/business">Propelo for business</a><nav><a href="/pricing">For job seekers</a><a href="/partner">Your account</a></nav></header>
+<header><a class="logo" href="/business">propelo<i aria-hidden="true"></i><small>for business</small></a><nav><a href="/pricing">For job seekers</a><a href="/partner">Your account</a></nav></header>
 <main>
   <section class="hero">
-    <h1>Help your students get hired by employers who can sponsor them.</h1>
+    <div class="pills"><span class="pill">For consultancies</span><span class="pill">For university careers teams</span><span class="pill">For agencies</span></div>
+    <h1>Help your students get hired by employers who <mark>can sponsor them</mark>.</h1>
     <p>A job portal under your name for your students, and a daily list of open roles for recruiting agencies. Roles come from employers' own career pages, checked several times a day.</p>
   </section>
 
@@ -77,7 +89,7 @@ label.chk input{width:18px;min-height:18px;margin-top:3px}
   <section class="honest">
     <h3 style="margin:0 0 6px">What we promise, and what we don't</h3>
     <ul class="small">
-      <li>Each plan is paid for 30 days at a time and nothing renews by itself. We remind you a week before it ends.</li>
+      <li>Each plan is paid for 30 days at a time and nothing renews by itself. We remind you a week before it ends. Prices are in US dollars, and you pay in your own currency at checkout.</li>
       <li>A free 30-day pilot for 25 students (or one agency feed) is available on request; a person replies within 2 working days.</li>
       <li>No one can guarantee jobs or visas, and we don't. We make sure applications go to roles that fit and to employers who can sponsor.</li>
       <li>Coverage is strongest in India and growing in the UK and US. Ask us for this week's numbers for your market before you pay.</li>
@@ -107,7 +119,8 @@ label.chk input{width:18px;min-height:18px;margin-top:3px}
   const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
   const params = new URLSearchParams(location.search);
   let cat = null, me = null, chosen = null;
-  const money = (minor, cur) => cur === 'USD' ? '$' + (minor / 100).toLocaleString('en-US') : '₹' + Math.round(minor / 100).toLocaleString('en-IN');
+  // Prices are in US dollars; the checkout charges each buyer in their own currency.
+  const money = (minor, cur) => cur === 'INR' ? '₹' + Math.round(minor / 100).toLocaleString('en-IN') : '$' + (minor / 100).toLocaleString('en-US');
   function card(p){
     const what = p.kind === 'consultancy'
       ? `<ul class="small"><li>${p.seats} student seats with Pro</li><li>Branded portal and invite link</li><li>Progress view and CSV export</li></ul>`

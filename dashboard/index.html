@@ -1219,6 +1219,55 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
 .askbar.ccbar{position:static;background:none;padding:0;margin-top:4px}
 @media (max-width:900px){.ccsteps{grid-template-columns:repeat(2,minmax(0,1fr))}.cccalc{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:520px){.ccsteps{grid-template-columns:minmax(0,1fr)}}
+
+/* ===== 2.17: the app matches the website (website/assets/site.css) =====
+   The same page colour and sand panels, the yellow highlighter under each page title, the dotted lavender
+   panel behind the Fresh roles headline, role cards drawn like the website's notice, the website's source
+   row and outlined buttons, and the yellow closing card on Home. */
+:root:root:root:root{--canvas:#FAF3E6;--page:#FAF3E6;--panel-2:#F2EADC;--sand-2:#EAE0CF;--btn-soft:#F2EADC;--line-2:rgba(21,21,21,.16);--mark:#FCF15C;--lav-t:#ECE9FF;--dots:rgba(142,133,232,.34)}
+@media (prefers-color-scheme: dark){:root:root:root:root:not([data-theme="light"]){--panel-2:#201E1B;--sand-2:#2B2824;--btn-soft:#201E1B;--line-2:rgba(243,236,224,.18);--mark:rgba(252,241,92,.34);--lav-t:#27243A;--dots:rgba(142,133,232,.4)}}
+:root:root:root:root[data-theme="dark"]{--panel-2:#201E1B;--sand-2:#2B2824;--btn-soft:#201E1B;--line-2:rgba(243,236,224,.18);--mark:rgba(252,241,92,.34);--lav-t:#27243A;--dots:rgba(142,133,232,.4)}
+/* the sidebar sits on the page, as the website's nav does, with one hairline */
+@media (min-width:901px){
+  .shell{grid-template-columns:256px minmax(0,1fr)}
+  .side{background:transparent;box-shadow:none;border-radius:0;margin:0;top:0;height:100vh;padding:0 16px 16px;border-right:1px solid var(--line)}
+  .side .brand{padding-top:24px}
+}
+.side .bt{font-size:26px}
+.side .bt::after{width:8px;height:8px}
+.topbar{background:transparent;border:1.5px dashed var(--line-2);border-radius:var(--r-md)}
+/* page titles carry the highlighter stroke */
+.phead h1:not(.apptitle) > span,.hero h1:not(#hero-h),#hero-h mark{color:inherit;padding:0 .04em;background:linear-gradient(transparent 58%,var(--mark) 58%,var(--mark) 92%,transparent 92%) no-repeat;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+.hero h1:not(#hero-h){width:fit-content;max-width:100%}
+.phead h1{font-size:clamp(34px,4.2vw,56px);letter-spacing:-.04em;line-height:1.06}
+.hero h1{font-weight:500;letter-spacing:-.04em;line-height:1.06}
+.hero .sub,.phead + .lede{font-size:clamp(16px,1.3vw,18px);line-height:1.6;color:var(--ink-2)}
+/* Fresh roles: the headline sits on the website's dotted lavender panel */
+#p-today .hero{background-color:var(--lav-t);background-image:radial-gradient(circle,var(--dots) 1.5px,transparent 1.9px);background-size:24px 24px;background-position:12px 12px;box-shadow:none;border-radius:28px}
+#p-today .hero .seg{background:var(--panel);box-shadow:inset 0 0 0 1px var(--line)}
+/* the source row, as on the website */
+.sources{margin:24px 0 40px;padding:20px 0;border-block:1px solid var(--line);gap:10px 28px;font-size:17px;letter-spacing:-.03em}
+.sources span:first-child{font-size:14px;letter-spacing:0;font-weight:400}
+/* a role is a notice: paper, an ink outline, lifted off a sand panel */
+#p-today .panel:not(.thin){background:var(--panel-2);box-shadow:none;border-radius:28px}
+.jcard{background:var(--panel);box-shadow:inset 0 0 0 1.5px var(--ink);border-radius:var(--r-xl)}
+.jcard:hover{box-shadow:inset 0 0 0 1.5px var(--ink),0 24px 48px -32px rgba(21,21,21,.45)}
+.jcard .sq{background:var(--yellow);color:#151515;box-shadow:inset 0 0 0 1.5px #151515}
+.clogo{box-shadow:inset 0 0 0 1px var(--line)}
+/* buttons: ink, or the website's outline */
+.btn:not(.solid):not(.ghost):not(.danger){background:transparent;border-color:transparent;box-shadow:inset 0 0 0 1.5px var(--line-2);color:var(--ink)}
+.btn:not(.solid):not(.ghost):not(.danger):hover{background:transparent;box-shadow:inset 0 0 0 1.5px var(--ink)}
+/* quiet blocks are sand, as the website's cards are */
+.kpi:nth-child(n),.bcol,.panel.thin{background:var(--panel-2);box-shadow:none}
+.kpi:nth-child(n) .v{background:transparent}
+.bcol{border-radius:var(--r-lg)}
+/* Home ends on the website's yellow card */
+.card.anyjob{background:var(--yellow);box-shadow:none;color:#151515;border-radius:28px;margin-top:16px;padding:40px}
+.card.anyjob h2{color:#151515;font-size:clamp(24px,2.6vw,36px);font-weight:400;letter-spacing:-.035em;line-height:1.12}
+.card.anyjob .muted{color:#4F4A44}
+.card.anyjob .btn.btn.btn{background:#151515;color:#FAF3E6;box-shadow:none;border-color:#151515;padding:12px 22px;font-size:15px}
+.card.anyjob .btn.btn.btn:hover{background:#151515;box-shadow:none;opacity:.9}
+@media (max-width:900px){.sources{font-size:16px;margin:16px 0 28px;padding:14px 0}}
 </style>
 </head>
 <body>
@@ -1229,14 +1278,9 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
     "Fresher",
     "1+ years"
    ],
-   "maxRequiredYears": 1,
+   "maxRequiredYears": 2,
    "maxPostingAgeDays": 25,
-   "locations": [
-    "South India (any work mode)",
-    "Rest of India (remote only)",
-    "Remote worldwide (first priority)"
-   ],
-   "salaryFloorLpa": 7,
+   "salaryFloorLpa": 35.2,
    "dailyCap": 8,
    "approvalMode": "auto-when-clear",
    "schedule": "Search every 3 hours",
@@ -1253,7 +1297,18 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
      "HN Who is hiring",
      "VC portfolio boards"
     ]
-   }
+   },
+   "homeCountry": "GB",
+   "places": "United Kingdom, Netherlands, Ireland",
+   "remoteOk": true,
+   "needsSponsorship": true,
+   "salaryFloorUsd": 40000,
+   "yearsExperience": 1,
+   "targetRoles": [
+    "AI Engineer",
+    "Data Scientist",
+    "ML Engineer"
+   ]
   },
   "inboxCheck": {
    "lastCheckedAtHoursAgo": 2,
@@ -1327,7 +1382,7 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
     {
      "name": "Location",
      "level": 3,
-     "reason": "Remote worldwide; India explicitly allowed."
+     "reason": "Remote worldwide; the UK explicitly allowed."
     }
    ],
    "checks": [
@@ -1358,7 +1413,7 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
     {
      "gate": "Pay",
      "passed": true,
-     "value": "26.4–35.2 LPA",
+     "value": "$30K–40K a year",
      "quote": "$30K – $40K"
     }
    ],
@@ -1470,7 +1525,7 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
      "culture": {
       "score": 4,
       "status": "partial",
-      "note": "Remote worldwide with India allowed; moving from demo to paying customers.",
+      "note": "Remote worldwide with the UK allowed; moving from demo to paying customers.",
       "source": "posting"
      },
      "redFlags": {
@@ -1584,13 +1639,13 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
   "kestrel-ai-automation": {
    "company": "Kestrel AI",
    "title": "AI Automation Engineer",
-   "location": "Remote (India)",
+   "location": "Remote (UK)",
    "workMode": "remote",
-   "region": "remote-india",
+   "region": "remote-local",
    "source": "Wellfound",
    "url": "https://example.com/kestrel/automation",
    "postedAtHoursAgo": 30,
-   "salary": "9–12 LPA",
+   "salary": "£38–45K",
    "experience": "1 year",
    "stage": "ready",
    "decision": "C",
@@ -1606,14 +1661,14 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
     {
      "gate": "Location",
      "passed": true,
-     "value": "Remote, India",
-     "quote": "Remote within India."
+     "value": "Remote, United Kingdom",
+     "quote": "Remote within the UK."
     },
     {
      "gate": "Pay",
      "passed": true,
-     "value": "9–12 LPA",
-     "quote": "9–12 LPA"
+     "value": "£38–45K",
+     "quote": "£38–45K"
     }
    ],
    "brief": {
@@ -1655,13 +1710,13 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
      "comp": {
       "score": 3,
       "status": "partial",
-      "note": "9–12 LPA is at your floor.",
+      "note": "£38–45K is above your floor.",
       "source": "posting"
      },
      "culture": {
       "score": 4,
       "status": "partial",
-      "note": "Small team, hybrid in Bengaluru.",
+      "note": "Small team, hybrid in London.",
       "source": "posting"
      },
      "redFlags": {
@@ -1708,7 +1763,7 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
      "compReliability": "medium"
     },
     "comp": {
-     "advertised": "9–12 LPA",
+     "advertised": "£38–45K",
      "market": "Not researched yet."
     },
     "keywords": [
@@ -1731,13 +1786,13 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
   "orbit-junior-ai": {
    "company": "Orbit Systems",
    "title": "Junior AI Engineer",
-   "location": "Hyderabad",
+   "location": "Manchester, United Kingdom",
    "workMode": "hybrid",
-   "region": "south-india",
+   "region": "local",
    "source": "Greenhouse",
    "url": "https://example.com/orbit/junior-ai",
    "postedAtHoursAgo": 20,
-   "salary": "8–11 LPA",
+   "salary": "£34–40K",
    "experience": "Fresher welcome",
    "stage": "approved",
    "fitBand": "pending",
@@ -1751,8 +1806,8 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
     {
      "gate": "Location",
      "passed": true,
-     "value": "Hybrid, Hyderabad (south India)",
-     "quote": "Hyderabad"
+     "value": "Hybrid, Manchester, United Kingdom",
+     "quote": "Manchester, United Kingdom"
     }
    ],
    "brief": {
@@ -1769,14 +1824,22 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
     ]
    },
    "autoApply": "queued",
-   "applyByHoursAgo": -120
+   "applyByHoursAgo": -120,
+   "visa": {
+    "status": "offers",
+    "quote": "We sponsor Skilled Worker visas for this role.",
+    "ukRegister": {
+     "listed": true,
+     "name": "Orbit Systems Ltd"
+    }
+   }
   },
   "quill-llm-eval": {
    "company": "Quill Health",
    "title": "LLM Evaluation Engineer (New Grad)",
-   "location": "Remote (APAC)",
+   "location": "Remote (Europe)",
    "workMode": "remote",
-   "region": "remote-global",
+   "region": "remote-local",
    "source": "Lever",
    "url": "https://example.com/quill/llm-eval",
    "postedAtHoursAgo": 33,
@@ -1788,7 +1851,7 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
     {
      "gate": "Location",
      "passed": true,
-     "value": "Remote (apac), open to India",
+     "value": "Remote (Europe), open to the United Kingdom",
      "quote": "We hire across APAC time zones."
     }
    ]
@@ -1796,34 +1859,48 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
   "banyan-fde": {
    "company": "Banyan Robotics",
    "title": "Forward Deployed Engineer",
-   "location": "Chennai",
+   "location": "London, United Kingdom",
    "workMode": "onsite",
-   "region": "south-india",
+   "region": "local",
    "source": "HN Who is hiring",
    "url": "https://example.com/banyan/fde",
    "postedAtHoursAgo": 120,
-   "salary": "12–18 LPA",
+   "salary": "£48–58K",
    "experience": "1+ years",
    "stage": "found",
    "fitBand": "pending",
    "needsYou": "The form asks you to create an account on Banyan's careers site. Sign in there once in the Claude app's browser, then press Try again.",
    "needsYouAt": "2026-10-12T09:40:00Z",
    "applyUrl": "https://example.com/banyan/apply",
-   "applyTo": "jobs@banyan.example"
+   "applyTo": "jobs@banyan.example",
+   "visa": {
+    "status": "unclear",
+    "ukRegister": {
+     "listed": true,
+     "name": "Banyan Robotics UK Ltd"
+    }
+   }
   },
   "lumen-ml-associate": {
    "company": "Lumen Data",
    "title": "ML Associate",
-   "location": "Kochi",
+   "location": "Amsterdam, Netherlands",
    "workMode": "onsite",
-   "region": "south-india",
-   "source": "Internshala",
+   "region": "local",
+   "source": "Workable",
    "url": "https://example.com/lumen/ml",
    "postedAtHoursAgo": 300,
-   "salary": "7–9 LPA",
+   "salary": "€46–52K",
    "experience": "Fresher (0 years)",
    "stage": "found",
-   "fitBand": "pending"
+   "fitBand": "pending",
+   "visa": {
+    "status": "unclear",
+    "nlRegister": {
+     "listed": true,
+     "name": "Lumen Data B.V."
+    }
+   }
   },
   "tessera-ai-engineer": {
    "company": "Tessera",
@@ -1853,9 +1930,9 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
   "cobalt-genai": {
    "company": "Cobalt Pay",
    "title": "GenAI Engineer",
-   "location": "Bengaluru",
+   "location": "Dublin, Ireland",
    "workMode": "hybrid",
-   "region": "south-india",
+   "region": "local",
    "source": "Greenhouse",
    "url": "https://example.com/cobalt/genai",
    "postedAtHoursAgo": 40,
@@ -1909,39 +1986,39 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
   "pine-ai-dev": {
    "company": "Pine Analytics",
    "title": "AI Developer",
-   "location": "Pune",
+   "location": "Berlin, Germany",
    "workMode": "onsite",
-   "source": "Internshala",
+   "source": "Workable",
    "url": "https://example.com/pine/ai-dev",
    "postedAtHoursAgo": 70,
    "stage": "skipped",
    "skip": {
     "gate": "Location",
-    "reason": "On-site in Pune. Outside south India you only want remote roles.",
+    "reason": "On-site in Berlin, Germany, outside the places you chose.",
     "wouldChange": "A remote option."
    }
   },
   "ember-prompt": {
    "company": "Ember Studio",
    "title": "Prompt Engineer (Fresher)",
-   "location": "Remote (India)",
+   "location": "Remote (UK)",
    "workMode": "remote",
-   "source": "Internshala",
+   "source": "Workable",
    "url": "https://example.com/ember/prompt",
    "postedAtHoursAgo": 90,
    "stage": "skipped",
    "skip": {
     "gate": "Pay",
-    "reason": "Pays 3–4.2 LPA, below your 7 LPA floor.",
-    "wouldChange": "Lowering your floor to 4 LPA."
+    "reason": "Pays £24–26K a year, below your pay floor.",
+    "wouldChange": "Lowering your pay floor to £24,000."
    }
   },
   "vela-ai-fde": {
-   "location": "Bengaluru",
+   "location": "London, United Kingdom",
    "workMode": "hybrid",
    "experience": "0-1 years",
    "source": "Company careers page",
-   "region": "south-india",
+   "region": "local",
    "company": "Vela AI",
    "title": "Forward Deployed Engineer",
    "stage": "interview",
@@ -1949,33 +2026,47 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
    "appliedAtHoursAgo": 460,
    "screenAtHoursAgo": 380,
    "interviewAtHoursAgo": -50,
-   "salary": "18-24 LPA",
+   "salary": "£55–65K",
    "timeline": [
     {
      "atHoursAgo": 460,
      "event": "Applied by auto-apply"
     }
-   ]
+   ],
+   "visa": {
+    "status": "offers",
+    "quote": "Visa sponsorship is available for the right candidate.",
+    "ukRegister": {
+     "listed": true,
+     "name": "Vela AI Ltd"
+    }
+   }
   },
   "harbor-ml": {
-   "location": "Hyderabad",
+   "location": "Edinburgh, United Kingdom",
    "workMode": "hybrid",
    "experience": "0-1 years",
    "source": "Company careers page",
-   "region": "south-india",
+   "region": "local",
    "company": "Harbor Analytics",
    "title": "ML Engineer I",
    "stage": "rejected",
    "closedFrom": "applied",
    "postedAtHoursAgo": 900,
-   "appliedAtHoursAgo": 850
+   "appliedAtHoursAgo": 850,
+   "visa": {
+    "status": "unclear",
+    "ukRegister": {
+     "listed": false
+    }
+   }
   },
   "ridge-llm": {
-   "location": "Remote (India)",
+   "location": "Remote (UK)",
    "workMode": "remote",
    "experience": "0-1 years",
    "source": "Company careers page",
-   "region": "south-india",
+   "region": "local",
    "company": "Ridge",
    "title": "LLM Applications Engineer",
    "stage": "rejected",
@@ -1985,11 +2076,11 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
    "screenAtHoursAgo": 560
   },
   "nimbus-sde": {
-   "location": "Bengaluru",
+   "location": "London, United Kingdom",
    "workMode": "hybrid",
    "experience": "0-1 years",
    "source": "Company careers page",
-   "region": "south-india",
+   "region": "local",
    "company": "Nimbus Cloud",
    "title": "Software Engineer, AI Platform",
    "stage": "applied",
@@ -2002,7 +2093,14 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
      "dueHoursAgo": -30,
      "done": false
     }
-   ]
+   ],
+   "visa": {
+    "status": "unclear",
+    "ukRegister": {
+     "listed": true,
+     "name": "Nimbus Cloud Ltd"
+    }
+   }
   }
  },
  "profile": {
@@ -2011,14 +2109,14 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
     "name": "Asha Rao",
     "headline": "AI Engineer",
     "email": "asha@example.com",
-    "phone": "+91 90000 00000",
-    "location": "Bengaluru",
+    "phone": "+44 7700 900123",
+    "location": "London, United Kingdom",
     "links": [
      "https://github.com/asha-example",
      "https://linkedin.com/in/asha-example"
     ]
    },
-   "summary": "AI engineer who ships retrieval and evaluation systems in Python. Built and ran a RAG service used by 1,200 people, and an evaluation harness that cut review time by 40%. Looking for an early-career AI or forward-deployed engineering role.",
+   "summary": "AI engineer who ships retrieval and evaluation systems in Python. Built and ran a RAG service used by 1,200 people, and an evaluation harness that cut review time by 40%. On a UK Graduate visa; looking for an early-career AI role in the UK or Europe with an employer that can sponsor.",
    "skills": [
     "Python",
     "FastAPI",
@@ -2034,7 +2132,7 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
     {
      "title": "AI Engineer",
      "company": "Acme Labs",
-     "location": "Bengaluru",
+     "location": "London",
      "start": "Jan 2026",
      "end": "Present",
      "bullets": [
@@ -2078,10 +2176,17 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
    ],
    "education": [
     {
+     "degree": "MSc, Data Science",
+     "school": "Example University, London",
+     "start": "2024",
+     "end": "2025",
+     "note": "Merit"
+    },
+    {
      "degree": "B.Tech, Computer Science",
      "school": "Example Institute of Technology",
-     "start": "2021",
-     "end": "2025",
+     "start": "2020",
+     "end": "2024",
      "note": ""
     }
    ],
@@ -2104,7 +2209,7 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
      "due": ""
     },
     {
-     "text": "Confirm your notice period",
+     "text": "Confirm when you could start",
      "due": ""
     }
    ],
@@ -2113,7 +2218,7 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
     "Fri 31 Oct, 15:00–15:45",
     "Mon 3 Nov, 12:00–12:45"
    ],
-   "body": "Hi Asha,\n\nThanks for applying to Vela AI. We would love to set up a 45-minute technical interview with our engineering lead.\n\nCould you share three times that work for you this week or next, and confirm your notice period?\n\nBest,\nPriya",
+   "body": "Hi Asha,\n\nThanks for applying to Vela AI. We would love to set up a 45-minute technical interview with our engineering lead.\n\nCould you share three times that work for you this week or next, and confirm when you could start?\n\nBest,\nPriya",
    "jobId": "vela-ai-fde",
    "company": "Vela AI",
    "status": "new"
@@ -2198,8 +2303,8 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
   <section role="tabpanel" id="p-today" aria-labelledby="t-today" hidden>
     <div class="hero">
       <div>
-        <h1 id="hero-h">Fresh roles, checked against your filters</h1>
-        <p class="sub" id="hero-sub">Fresher and 1+ year tech and AI roles in south India and remote. Anything posted more than 25 days ago, or already closed, is skipped.</p>
+        <h1 id="hero-h"><mark>Fresh roles</mark>, checked against your filters</h1>
+        <p class="sub" id="hero-sub">Roles that fit your filters, from company career pages. Anything posted more than 25 days ago, or already closed, is skipped.</p>
       </div>
       <div class="seg" id="seg" data-v="week" role="group" aria-label="How fresh">
         <span class="thumb"></span>
@@ -2321,6 +2426,8 @@ const I = {
   spark:'<svg class="i" viewBox="0 0 24 24"><path d="M12 3.5l1.9 5.6 5.6 1.9-5.6 1.9L12 18.5l-1.9-5.6-5.6-1.9 5.6-1.9z"/></svg>',
   clock:'<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4.5l3 1.8"/></svg>',
   rupee:'<svg class="i" viewBox="0 0 24 24"><path d="M7 5h10M7 9h10M9 5c4 0 6 1.6 6 4s-2 4-6 4H8l7 6"/></svg>',
+  /* pay in any currency: a banknote */
+  pay:'<svg class="i" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6.5 9.5v5M17.5 9.5v5"/></svg>',
   link:'<svg class="i" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v4a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2h4"/></svg>',
   arrow:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>',
   check:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12.5l4 4 8-9"/></svg>',
@@ -2351,7 +2458,10 @@ const REGION = {'remote-global':[0,'Remote worldwide','pill world'],'remote-indi
 /* Someone living abroad is looking for work where they live: roles there first, then remote roles open to the
    world, and last the remote roles that don't say who can apply. India keeps remote worldwide first. */
 const ABROAD_RANK = {'local': 0, 'remote-local': 0, 'remote-global': 1, 'remote-unclear': 2};
-const livesAbroad = () => String(obj(state.settings).homeCountry || 'IN') !== 'IN';
+/* India rules apply only to someone who lives in India and wants to work there. Everyone else (living abroad, or in India
+   and looking abroad) is matched against the places they chose. */
+const inIndiaMode = s => String(obj(s).homeCountry || 'IN') === 'IN' && !obj(s).workAbroad;
+const livesAbroad = () => !inIndiaMode(state.settings);
 const regionRank = j => livesAbroad() ? (j.region in ABROAD_RANK ? ABROAD_RANK[j.region] : 3) : (REGION[j.region] || [3])[0];
 function sponsorRank(j){
   if (!obj(state.settings).needsSponsorship) return 0;
@@ -2417,10 +2527,11 @@ function filterSummary(){
   const exp = y === '' ? 'any experience' : y === 0 ? 'freshers' : `${y} ${y === 1 ? 'year' : 'years'} of experience (asking up to ${stretchOf(y)})`;
   const home = String(s.homeCountry || 'IN');
   const homeName = (HOMES.find(h => h[0] === home) || [home, home])[1];
-  const locs = home === 'IN' ? arr(s.locations).map(l => LOC_SHORT[l] || l)
-    : [s.remoteOk !== false ? `remote roles open to ${homeName}` : '', String(s.places || '').trim() ? 'on-site or hybrid in ' + String(s.places).trim() : ''];
+  const theName = (c, n) => ['GB','US','NL','AE','PH'].includes(c) ? 'the ' + n : n;
+  const locs = inIndiaMode(s) ? arr(s.locations).map(l => LOC_SHORT[l] || l)
+    : [String(s.places || '').trim() ? 'in ' + String(s.places).trim() + ' (on-site or hybrid)' : '', s.remoteOk !== false ? `remote from ${theName(home, homeName)}` : ''];
   const floor = Number(s.salaryFloorLpa) || 0;
-  const pay = floor ? ` paying ${String(s.homeCountry || 'IN') !== 'IN' && s.salaryFloorUsd ? '$' + Number(s.salaryFloorUsd).toLocaleString('en-US') + ' a year' : floor + ' LPA'} or more${s.requireStatedPay ? ' (stated on the posting)' : ''}` : '';
+  const pay = floor ? ` paying ${!inIndiaMode(s) && s.salaryFloorUsd ? '$' + Number(s.salaryFloorUsd).toLocaleString('en-US') + ' a year' : floor + ' LPA'} or more${s.requireStatedPay ? ' (stated on the posting)' : ''}` : '';
   return {exp, locs: listJoin(locs) || 'any location', days: s.maxPostingAgeDays, pay};
 }
 
@@ -2553,6 +2664,7 @@ function referralHtml(j, copy){
 }
 function payEst(j){ const b = obj(j.payBand); return !pay20(j) && !j.payTier && b.low ? b : null; }
 function payPill(j){
+  if (livesAbroad()) return '';  // LPA bands and Indian public pay data mean nothing to someone looking outside India
   if (pay20(j)) return '<span class="pill strong" title="The posting states pay of 20 LPA or more">20 LPA+</span>';
   const b = payEst(j); if (!b) return '';
   const r = b.low === b.high ? `${b.low}` : `${b.low}–${b.high}`;
@@ -2611,7 +2723,7 @@ function metaLine(j){
   const bits = [];
   if (j.location) bits.push(`<span>${I.pin}${esc(j.location)}${j.workMode ? ', ' + esc(j.workMode) : ''}</span>`);
   if (j.experience) bits.push(`<span>${I.spark}${esc(j.experience)}</span>`);
-  if (j.salary) bits.push(`<span>${I.rupee}${esc(j.salary)}</span>`);
+  if (j.salary) bits.push(`<span>${/₹|LPA|lakh/i.test(j.salary) ? I.rupee : I.pay}${esc(j.salary)}</span>`);
   if (j.source) bits.push(`<span class="muted">via ${esc(j.source)}</span>`);
   return `<div class="meta">${bits.join('')}</div>`;
 }
@@ -2659,11 +2771,14 @@ function renderTiers(){
 }
 
 /* ---------- Auto-apply ---------- */
-const AP_REQUIRED = [['fullName','Full name'],['email','Email'],['phone','Phone'],['city','City'],['experienceYears','Total experience'],['noticePeriod','Notice period'],['workAuthIndia','Work authorization in India']];
+const AP_BASE = [['fullName','Full name'],['email','Email'],['phone','Phone'],['city','City'],['experienceYears','Total experience']];
+const WORK_AUTH = ['Citizen or permanent resident', 'Work visa that lets me change employer', 'Student or graduate visa with work rights', 'I need the employer to sponsor a visa'];
+/* What a form is certain to ask differs by where the work is: Indian forms ask notice period; forms abroad ask your right to work there. */
+const apRequired = () => AP_BASE.concat(inIndiaMode(state.settings) ? [['noticePeriod','Notice period'],['workAuthIndia','Work authorization in India']] : [['workAuth','Your right to work there']]);
 const NOTICE = ['Immediate','15 days','30 days','45 days','60 days','90 days'];
 function applicant(){ return obj(state.applicant); }
 const lc1 = x => x.charAt(0).toLowerCase() + x.slice(1);
-function apMissing(){ const a = applicant(); return AP_REQUIRED.filter(([k]) => a[k] === undefined || a[k] === null || String(a[k]).trim() === '').map(x => x[1]); }
+function apMissing(){ const a = applicant(); return apRequired().filter(([k]) => a[k] === undefined || a[k] === null || String(a[k]).trim() === '').map(x => x[1]); }
 function runnerLinked(){ const r = obj(state.runner); const t = toDate(r.lastSeenAt); return !!(r.linked && t && (Date.now() - t) < 7 * 864e5); }
 function autoOn(){ return settings().approvalMode === 'auto-when-clear'; }
 function appliedToday(){ const k = fKey.format(new Date()); return jobsArr().filter(j => j.appliedAt && toDate(j.appliedAt) && fKey.format(toDate(j.appliedAt)) === k).length; }
@@ -2706,9 +2821,9 @@ function renderAutoApply(inPage){
     </div>${waitHtml}`;
 }
 function renderApplicantForm(){
-  const a = applicant(), res = obj(a.resume), ro = wr();
-  const inp = (id, label, type, opts) => { opts = opts || {}; const req = AP_REQUIRED.some(x => x[0] === id); return `<label class="f${opts.full ? ' full' : ''}" for="ap-${id}">${label}${req ? ' <span class="req" aria-hidden="true">*</span>' : ''}${opts.hint ? ` <small>${opts.hint}</small>` : ''}<input type="${type}" id="ap-${id}" name="${id}" value="${esc(a[id] ?? '')}"${opts.ph ? ` placeholder="${esc(opts.ph)}"` : ''}${opts.attrs || ''}${req ? ' required' : ''}${ro}></label>`; };
-  const sel = (id, label, options, def) => { const req = AP_REQUIRED.some(x => x[0] === id); const cur = a[id] ?? def ?? ''; return `<label class="f" for="ap-${id}">${label}${req ? ' <span class="req" aria-hidden="true">*</span>' : ''}<select id="ap-${id}" name="${id}"${ro}>${req && !cur ? '<option value="">Choose</option>' : ''}${options.map(o => `<option${o === cur ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select></label>`; };
+  const a = applicant(), res = obj(a.resume), ro = wr(), india = inIndiaMode(state.settings);
+  const inp = (id, label, type, opts) => { opts = opts || {}; const req = apRequired().some(x => x[0] === id); return `<label class="f${opts.full ? ' full' : ''}" for="ap-${id}"><span>${label}${req ? ' <span class="req" aria-hidden="true">*</span>' : ''}</span>${opts.hint ? ` <small>${opts.hint}</small>` : ''}<input type="${type}" id="ap-${id}" name="${id}" value="${esc(a[id] ?? '')}"${opts.ph ? ` placeholder="${esc(opts.ph)}"` : ''}${opts.attrs || ''}${req ? ' required' : ''}${ro}></label>`; };
+  const sel = (id, label, options, def) => { const req = apRequired().some(x => x[0] === id); const cur = a[id] ?? def ?? ''; return `<label class="f" for="ap-${id}"><span>${label}${req ? ' <span class="req" aria-hidden="true">*</span>' : ''}</span><select id="ap-${id}" name="${id}"${ro}>${req && !cur ? '<option value="">Choose</option>' : ''}${options.map(o => `<option${o === cur ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select></label>`; };
   const upload = state.assets && state.canWrite ? `<label class="btn filebtn">${state.uploading ? 'Uploading…' : res.id ? 'Replace PDF' : 'Upload PDF'}<input type="file" class="resume-file" accept="application/pdf" aria-label="Upload your resume as a PDF"${state.uploading ? ' disabled' : ''}></label>` : `<span class="small">Open this page in Claude, signed in, to upload.</span>`;
   return `<div id="apply-details"><div class="sh"><h2 style="font-size:24px">Application details</h2><p>What auto-apply puts into application forms. Only you can read this.</p></div>
     <div class="panel" style="display:grid;gap:22px">
@@ -2716,31 +2831,31 @@ function renderApplicantForm(){
       <form id="applicant-form" class="formgrid" novalidate>
         ${inp('fullName', 'Full name', 'text', {attrs: ' autocomplete="name"'})}
         ${inp('email', 'Email', 'email', {attrs: ' autocomplete="email"'})}
-        ${inp('phone', 'Phone', 'tel', {ph: '+91 98xxxxxxx', attrs: ' autocomplete="tel"'})}
-        ${inp('city', 'City', 'text', {ph: 'e.g. Bengaluru'})}
+        ${inp('phone', 'Phone', 'tel', {ph: india ? '+91 98xxxxxxx' : 'With country code, e.g. +44 7xxx xxxxxx', attrs: ' autocomplete="tel"'})}
+        ${inp('city', 'City', 'text', {ph: india ? 'e.g. Bengaluru' : 'Where you live now'})}
         ${inp('linkedin', 'LinkedIn profile', 'url', {ph: 'https://www.linkedin.com/in/…'})}
         ${inp('github', 'GitHub', 'url', {ph: 'https://github.com/…'})}
         ${inp('portfolio', 'Portfolio or website', 'url', {ph: 'https://…', full: true})}
         ${inp('currentTitle', 'Current title', 'text', {ph: 'e.g. AI Product Designer'})}
         ${inp('currentCompany', 'Current company', 'text')}
         ${inp('experienceYears', 'Total experience', 'number', {hint: 'years, e.g. 1.5', attrs: ' min="0" max="40" step="0.5"'})}
-        ${sel('noticePeriod', 'Notice period', NOTICE)}
-        ${inp('currentCtcLpa', 'Current CTC', 'number', {hint: 'LPA, optional', attrs: ' min="0" step="0.1"'})}
-        ${inp('expectedCtcLpa', 'Expected CTC', 'number', {hint: 'LPA', attrs: ' min="0" step="0.1"'})}
-        ${inp('degree', 'Highest degree', 'text', {ph: 'e.g. B.Tech, Computer Science'})}
-        ${inp('college', 'College', 'text')}
+        ${india ? sel('noticePeriod', 'Notice period', NOTICE) : sel('noticePeriod', 'When you can start', ['Prefer not to say'].concat(NOTICE), 'Prefer not to say')}
+        ${india ? inp('currentCtcLpa', 'Current CTC', 'number', {hint: 'LPA, optional', attrs: ' min="0" step="0.1"'}) : inp('currentPay', 'Current salary', 'text', {hint: 'with currency, optional', ph: 'e.g. £38,000 a year'})}
+        ${india ? inp('expectedCtcLpa', 'Expected CTC', 'number', {hint: 'LPA', attrs: ' min="0" step="0.1"'}) : inp('expectedPay', 'Expected salary', 'text', {hint: 'with currency', ph: 'e.g. £45,000 to £50,000 a year'})}
+        ${inp('degree', 'Highest degree', 'text', {ph: india ? 'e.g. B.Tech, Computer Science' : 'e.g. MSc, Data Science'})}
+        ${inp('college', india ? 'College' : 'University', 'text')}
         ${inp('graduationYear', 'Graduation year', 'number', {attrs: ' min="1980" max="2035"'})}
-        ${inp('cgpa', 'CGPA or percentage', 'text', {ph: 'e.g. 8.2/10 or 78%', hint: 'optional'})}
-        ${inp('branch', 'Branch or specialisation', 'text', {ph: 'e.g. Computer Science'})}
-        ${sel('backlogs', 'Active backlogs, if a form asks', ['Prefer not to say', 'None', '1', '2', '3 or more'], 'Prefer not to say')}
-        ${inp('state', 'State', 'text', {ph: 'e.g. Karnataka'})}
-        ${inp('pinCode', 'PIN code', 'text', {ph: '6 digits', attrs: ' inputmode="numeric" maxlength="6" pattern="[0-9]{6}"'})}
-        ${sel('workAuthIndia', 'Authorized to work in India', ['Yes', 'No'])}
-        ${sel('sponsorshipAbroad', 'Need visa sponsorship for roles abroad', ['Not applicable, remote only', 'Yes', 'No'], 'Not applicable, remote only')}
-        ${sel('relocate', 'Open to relocating', ['Yes', 'Within south India', 'No'], 'Within south India')}
+        ${inp('cgpa', india ? 'CGPA or percentage' : 'Grade or GPA', 'text', {ph: india ? 'e.g. 8.2/10 or 78%' : 'e.g. Merit, 3.6/4.0', hint: 'optional'})}
+        ${inp('branch', india ? 'Branch or specialisation' : 'Field of study', 'text', {ph: 'e.g. Computer Science'})}
+        ${india ? sel('backlogs', 'Active backlogs, if a form asks', ['Prefer not to say', 'None', '1', '2', '3 or more'], 'Prefer not to say') : ''}
+        ${inp('state', india ? 'State' : 'State, province or region', 'text', {ph: india ? 'e.g. Karnataka' : ''})}
+        ${india ? inp('pinCode', 'PIN code', 'text', {ph: '6 digits', attrs: ' inputmode="numeric" maxlength="6" pattern="[0-9]{6}"'}) : inp('pinCode', 'Postal code', 'text', {attrs: ' maxlength="12" autocomplete="postal-code"'})}
+        ${india ? sel('workAuthIndia', 'Authorized to work in India', ['Yes', 'No']) : sel('workAuth', 'Your right to work where you are applying', WORK_AUTH)}
+        ${india ? sel('sponsorshipAbroad', 'Need visa sponsorship for roles abroad', ['Not applicable, remote only', 'Yes', 'No'], 'Not applicable, remote only') : sel('sponsorshipAbroad', 'Will you need visa sponsorship, now or later', ['Yes', 'No'], obj(state.settings).needsSponsorship ? 'Yes' : 'No')}
+        ${india ? sel('relocate', 'Open to relocating', ['Yes', 'Within south India', 'No'], 'Within south India') : sel('relocate', 'Open to relocating', ['Yes', 'No'], 'Yes')}
         ${sel('gender', 'Gender, for optional diversity questions', ['Prefer not to say', 'Woman', 'Man', 'Non-binary'], 'Prefer not to say')}
         ${inp('howHeard', '"How did you hear about us?"', 'text', {ph: "Company careers page", full: true})}
-        <div class="full apsub"><b>Questions Indian employers ask</b><small>Filled only when a form asks, and only with what you put here. "Prefer not to say" leaves the question for you.</small></div>
+        ${india ? `<div class="full apsub"><b>Questions Indian employers ask</b><small>Filled only when a form asks, and only with what you put here. "Prefer not to say" leaves the question for you.</small></div>
         ${sel('currentlyEmployed', 'Currently working', ['Prefer not to say', 'Yes', 'No'], 'Prefer not to say')}
         ${sel('servingNotice', 'Serving notice now', ['No', 'Yes'], 'No')}
         ${inp('lastWorkingDay', 'Last working day', 'date', {hint: 'if serving notice'})}
@@ -2750,9 +2865,10 @@ function renderApplicantForm(){
         ${inp('preferredCities', 'Preferred cities', 'text', {ph: 'Bengaluru, Hyderabad, Remote'})}
         ${sel('officeOk', 'Working from the office', ['Prefer not to say', 'Yes', 'Hybrid only', 'Remote only'], 'Prefer not to say')}
         ${sel('shiftsOk', 'Night or rotational shifts', ['Prefer not to say', 'Yes', 'No'], 'Prefer not to say')}
-        ${sel('bondOk', 'Willing to sign a service bond', ['Prefer not to say', 'Yes', 'No'], 'Prefer not to say')}
+        ${sel('bondOk', 'Willing to sign a service bond', ['Prefer not to say', 'Yes', 'No'], 'Prefer not to say')}` : `${sel('currentlyEmployed', 'Currently working', ['Prefer not to say', 'Yes', 'No'], 'Prefer not to say')}
+        ${sel('officeOk', 'Working from the office', ['Prefer not to say', 'Yes', 'Hybrid only', 'Remote only'], 'Prefer not to say')}`}
         <label class="f full" for="ap-gapReason">A gap in your career, in a sentence <small>optional, used only when a form asks</small><textarea id="ap-gapReason" name="gapReason" rows="2" maxlength="400" placeholder="e.g. Six months in 2024 caring for a family member; kept up with a course in data engineering."${ro}>${esc(a.gapReason || '')}</textarea></label>
-        <p class="never full">Never stored or asked for: passwords, one-time codes, Aadhaar, PAN, bank details, passport, date of birth. You sign in to job sites yourself in the Claude desktop app's browser.</p>
+        <p class="never full">Never stored or asked for: passwords, one-time codes, national ID or tax numbers (Aadhaar, PAN, SSN, National Insurance), bank details, passport, date of birth. You sign in to job sites yourself in the Claude desktop app's browser.</p>
         <div class="full"><button class="btn solid" type="submit"${ro}>Save details</button></div>
       </form>
     </div></div>`;
@@ -2844,10 +2960,10 @@ function renderFresh(){
   /* A short list is the honest answer when few roles fit; say what came close and how to widen it. */
   const near = jobsArr().filter(j => j.stage === 'skipped' && obj(j.skip).wouldChange);
   const nearBy = g => near.filter(j => obj(j.skip).gate === g).length;
-  const nearBits = [[nearBy('Seniority'), 'are more senior titles'], [nearBy('Posted'), 'were posted before your window'], [nearBy('Experience'), 'ask for more experience'], [nearBy('Location'), 'are somewhere else'], [nearBy('Pay'), 'pay below your floor']].filter(x => x[0]).map(x => x[0] + ' ' + x[1]);
+  const nearBits = [[nearBy('Seniority'), 'are more senior titles', 'is a more senior title'], [nearBy('Posted'), 'were posted before your window', 'was posted before your window'], [nearBy('Experience'), 'ask for more experience', 'asks for more experience'], [nearBy('Location'), 'are somewhere else', 'is somewhere else'], [nearBy('Pay'), 'pay below your floor', 'pays below your floor']].filter(x => x[0]).map(x => x[0] + ' ' + (x[0] === 1 ? x[2] : x[1]));
   const thin = state.loaded.jobs && state.win !== 'day' && all.length < 10 && near.length
     ? `<div class="panel thin"><p><b>${all.length === 1 ? 'One role fits' : all.length + ' roles fit'} every filter right now.</b> ${near.length} more came close${nearBits.length ? ': ' + esc(listJoin(nearBits)) : ''}. Each shows the one thing that ruled it out.</p><div class="ract" style="justify-content:flex-start"><button class="btn" data-act="tab" data-tab="skipped">See the near misses</button><button class="btn ghost" data-act="tab" data-tab="setup">Add job titles or widen filters</button></div></div>` : '';
-  return `<div class="sh"><h2>${esc(title)}</h2><p>${livesAbroad() ? `Roles where you live first${obj(state.settings).needsSponsorship ? ', employers with a record of sponsoring visas at the top' : ''}, then remote roles open worldwide.` : 'Remote worldwide roles first, then remote in India, then south India.'} ${brainReady() ? 'Scored on the next run.' : 'Fit ratings appear once your Career Brain is built.'}</p></div>${chips}${thin}<div class="panel">${cards ? `<div class="cards">${cards}</div>${more}` : none}</div>`;
+  return `<div class="sh"><h2>${esc(title)}</h2><p>${livesAbroad() ? `${obj(state.settings).workAbroad ? 'Roles in the places you chose first' : 'Roles where you live first'}${obj(state.settings).needsSponsorship ? ', employers with a record of sponsoring visas at the top' : ''}, then remote roles open worldwide.` : 'Remote worldwide roles first, then remote in India, then south India.'} ${brainReady() ? 'Scored on the next run.' : 'Fit ratings appear once your Career Brain is built.'}</p></div>${chips}${thin}<div class="panel">${cards ? `<div class="cards">${cards}</div>${more}` : none}</div>`;
 }
 
 function renderWaiting(){
@@ -2895,7 +3011,7 @@ function renderTodayDynamic(){
   const found = jobsArr().filter(j => j.stage === 'found' || !j.stage);
   const nDay = found.filter(j => inWindow(j, 'day')).length, nWeek = found.filter(j => inWindow(j, 'week')).length;
   const n = state.win === 'day' ? nDay : nWeek;
-  $('#hero-h').textContent = state.loaded.jobs ? (n ? `${n} fresh ${n === 1 ? 'role' : 'roles'} that fit your filters` : 'No fresh roles yet') : 'Fresh roles, checked against your filters';
+  $('#hero-h').innerHTML = state.loaded.jobs ? (n ? `<mark>${n} fresh ${n === 1 ? 'role' : 'roles'}</mark> that fit your filters` : 'No <mark>fresh roles</mark> yet') : '<mark>Fresh roles</mark>, checked against your filters';
   $('#hero-sub').textContent = `Roles for ${f.exp}${f.pay} ${f.locs}. Anything posted more than ${f.days} ${f.days === 1 ? 'day' : 'days'} ago, or already closed, is skipped.`;
   $('#n-day').textContent = nDay ? nDay : ''; $('#n-week').textContent = nWeek ? nWeek : '';
   const wk = document.querySelector('[data-w="week"]'); if (wk) wk.firstChild.textContent = `Last ${f.days} ${f.days === 1 ? 'day' : 'days'} `;
@@ -3285,7 +3401,7 @@ function guInterview(v){
     `Your part: keep Pro or Ultra, and send at least ${R.minApplications} applications in at least ${R.minWeeks} different weeks. Auto-apply counts; postings the scam check marks unsafe don't.`,
     `Our part: you're shortlisted for interviews for at least ${NI} different roles, or you reach a second round for one role.`,
     'An interview is a live conversation (phone, video or in person) with the employer or its recruiter about a role, recruiter screens included. Online tests and recorded one-way videos don\'t count. Interviews from anywhere count, and so does an invitation you decline. A second round is a further live interview for the same role, or an offer.',
-    `Fewer than ${NI} interviews and no second round by day ${R.days}: claim here within ${R.claimDays} days and get the full ${price} back. Plan fees aren't part of the refund.`];
+    `Fewer than ${NI} interviews and no second round by day ${R.days}: claim here within ${R.claimDays} days and get the full ${price} back. Plan fees aren't part of the refund. Terms and conditions apply.`];
   let body = '';
   const st = cur && cur.status;
   if (st === 'applied') body = `<div class="gustate"><span class="pill">${GU_STATUS.applied}</span><p class="small">Sent ${esc(fDay(cur.agreedAt))}. We'll email you within 2 working days. Roles you're aiming for: ${esc(obj(cur.application).roles || '')}</p></div>`;
@@ -3333,20 +3449,20 @@ function guJob(v){
     <details class="gudetails"><summary>How it works</summary><ul class="gurules"><li>Apply with the roles, cities and pay you want. We review every application and take on people we believe we can place, and tell you why if we can't.</li><li>Your partner proposes companies; nothing is sent until you approve each one.</li><li>The fee is split into three instalments from 30 days after you join, and cancelled if the employer ends the job within 90 days.</li></ul></details></section>`;
 }
 function renderGuarantee(){
-  const head = `<div class="hero" style="padding-bottom:6px"><div><h1>Guarantees</h1><p class="sub">For Pro and Ultra members, by application, and not part of any plan. Not enough interviews, your money back. Not placed, no fee.</p></div></div>`;
+  const head = `<div class="hero" style="padding-bottom:6px"><div><h1>Guarantees</h1><p class="sub">For Pro and Ultra members, by application, and not part of any plan. Not enough interviews, your money back. Not placed, no fee. <a href="/terms#guarantees" target="_blank" rel="noopener">Terms and conditions apply.</a></p></div></div>`;
   if (!cloud()) return head + `<div class="panel"><p class="small">Guarantees are for Pro and Ultra members on Propelo Cloud.</p></div>`;
   const v = state.guarantee;
   if (!v){ if (!state.guLoading){ state.guLoading = true; loadGuarantee(); } return head + '<div class="panel"><p class="small">Loading…</p></div>'; }
   if (!v.enabled) return head + `<div class="panel"><p class="small">Guarantees aren't offered on this server.</p></div>`;
   if (!state.concierge && obj(v.job).concierge && !state.ccLoading){ state.ccLoading = true; loadConcierge(); }
-  return head + `<div class="gugrid">${guInterview(v)}${guJob(v)}</div><p class="small" style="margin-top:18px"><a href="/terms#guarantees" target="_blank" rel="noopener">Guarantee terms</a></p>`;
+  return head + `<div class="gugrid">${guInterview(v)}${guJob(v)}</div><p class="small" style="margin-top:18px">Terms and conditions apply: <a href="/terms#guarantees" target="_blank" rel="noopener">read the guarantee terms</a>.</p>`;
 }
 /* Home: a quiet card with both options for Pro and Ultra members who haven't applied (the pop-up shows once). */
 function guHomeCard(){
   const v = state.guarantee; if (!v || !v.enabled || !v.planAllows) return '';
   const cur = obj(v.interview).current, cc = obj(obj(state.concierge).case);
   if ((cur && !['declined', 'ended', 'void'].includes(cur.status)) || (cc.status && cc.status !== 'closed')) return '';
-  return `<section class="card guhome"><div class="chead"><div><h2>Want us to stand behind your search?</h2><p class="muted">Interview Guarantee: ${esc(money(obj(v.interview).price, obj(v.interview).currency))} once, ${esc(obj(v.rules).minInterviews || 3)} interviews or a second round in ${esc(obj(v.rules).days)} days or your money back. Job Guarantee: nothing upfront, a fee only after you join. Both by application.</p></div><button class="btn solid" data-act="gu-offer">See both</button></div></section>`;
+  return `<section class="card guhome"><div class="chead"><div><h2>Want us to stand behind your search?</h2><p class="muted">Interview Guarantee: ${esc(money(obj(v.interview).price, obj(v.interview).currency))} once, ${esc(obj(v.rules).minInterviews || 3)} interviews or a second round in ${esc(obj(v.rules).days)} days or your money back. Job Guarantee: nothing upfront, a fee only after you join. Both by application. Terms and conditions apply.</p></div><button class="btn solid" data-act="gu-offer">See both</button></div></section>`;
 }
 /* The offer, once, for Pro and Ultra members who haven't applied: a pop-up with both options. */
 /* Company logos: the same ones the public job board shows (fetched from each company's own website). */
@@ -3416,6 +3532,7 @@ function openKit(j){
   add('Total experience (years)', a.experienceYears); add('Notice period', a.noticePeriod);
   if (a.servingNotice === 'Yes'){ add('Serving notice', 'Yes'); add('Last working day', a.lastWorkingDay); }
   add('Notice buyout', a.noticeBuyout);
+  add('Current salary', a.currentPay); add('Expected salary', a.expectedPay); add('Right to work', a.workAuth); add('Needs visa sponsorship', inIndiaMode(state.settings) ? '' : a.sponsorshipAbroad); add('Postal code', a.pinCode);
   add('Current CTC (LPA)', a.currentCtcLpa); add('Fixed pay (LPA)', a.fixedCtcLpa); add('Variable pay (LPA)', a.variableCtcLpa); add('Expected CTC (LPA)', a.expectedCtcLpa);
   add('Preferred cities', a.preferredCities); add('Open to relocating', a.relocate);
   add('Highest degree', a.degree); add('College', a.college); add('Graduation year', a.graduationYear); add('CGPA or percentage', a.cgpa); add('Branch', a.branch);
@@ -3583,13 +3700,19 @@ function renderCloud(){
           : state.mfaSetup ? `<p class="small">1. In your authenticator app (Google Authenticator, Microsoft Authenticator, 1Password and others), add an account with this key, or <a href="${esc(state.mfaSetup.uri)}">open it in the app</a> on this phone.</p><p class="small" style="font-family:ui-monospace,Menlo,monospace;word-break:break-all;user-select:all">${esc(state.mfaSetup.secret.replace(/(.{4})/g, '$1 ').trim())}</p><form id="mfa-on-form" class="acct-form" novalidate><input type="text" class="plain" name="code" inputmode="numeric" autocomplete="one-time-code" placeholder="2. Type the 6-digit code it shows" aria-label="Code from your authenticator app" required><div><button class="btn sm solid" type="submit">Turn on</button></div></form>`
           : `<p class="small">Ask for a code from an authenticator app as well as your password when you sign in.${me.isStaff ? ' <b>Staff and admin pages need this.</b>' : ''}</p><form id="mfa-setup-form" class="acct-form" novalidate><input type="password" name="password" autocomplete="current-password" placeholder="Your password" aria-label="Your password"><div><button class="btn sm solid" type="submit">Set up</button></div></form>`}
       </div></details>
-      <details><summary>Change password</summary><form id="pw-form" class="acct-form" novalidate>
+      ${me.phoneSignIn ? `<details${state.phoneAdd ? ' open' : ''}><summary>Mobile number for sign-in${me.phone ? ' (on)' : ''}</summary><div class="acct-form">
+        ${me.phone ? `<p class="small">You can sign in with <b>${esc(me.phone)}</b>: we text a code to it.</p><div><button class="btn sm ghost" data-act="phone-remove" type="button">Remove this number</button></div>`
+          : state.phoneAdd ? `<form id="phone-code-form" class="acct-form" novalidate><p class="small">We texted a code to ${esc(state.phoneAdd)}.</p><input type="text" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="Code" aria-label="Code" required><div class="btns"><button class="btn sm solid" type="submit">Confirm number</button><button class="btn sm ghost" type="button" data-act="phone-cancel">Use another number</button></div></form>`
+          : `<form id="phone-form" class="acct-form" novalidate><p class="small">Add a number to sign in with a texted code instead of your password. It is used for nothing else.</p><input type="tel" name="phone" autocomplete="tel" maxlength="24" placeholder="With country code, e.g. +44 7700 900123" aria-label="Mobile number" required><div><button class="btn sm solid" type="submit">Text me a code</button></div></form>`}
+      </div></details>` : ''}
+      ${me.hasPassword === false ? `<details><summary>Password</summary><div class="acct-form"><p class="small">You sign in with Google, GitHub or LinkedIn, so this account has no password. To add one, sign out and use "Forgot password" on the sign-in page with ${esc(me.email || 'your email')}.</p></div></details>`
+      : `<details><summary>Change password</summary><form id="pw-form" class="acct-form" novalidate>
         <input type="password" name="current" autocomplete="current-password" placeholder="Current password" aria-label="Current password" required>
         <input type="password" name="new" autocomplete="new-password" placeholder="New password, at least 10 characters" aria-label="New password" minlength="10" required>
-        <div><button class="btn sm solid" type="submit">Change password</button></div></form></details>
+        <div><button class="btn sm solid" type="submit">Change password</button></div></form></details>`}
       <details><summary>Delete account</summary><form id="del-form" class="acct-form" novalidate>
         <p class="small">This deletes your account, pipeline, application details, resumes and keys at once. It can't be undone. Export your data first if you want a copy.</p>
-        <input type="password" name="password" autocomplete="current-password" placeholder="Your password" aria-label="Your password" required>
+        ${me.hasPassword === false ? '' : '<input type="password" name="password" autocomplete="current-password" placeholder="Your password" aria-label="Your password" required>'}
         <input type="text" class="plain" name="confirm" placeholder="Type DELETE" aria-label="Type DELETE to confirm" autocomplete="off" required>
         <div><button class="btn sm" style="border-color:var(--bad);color:var(--bad)" type="submit">Delete my account</button></div></form></details>
     </div></div>`;
@@ -3598,7 +3721,8 @@ function renderCloud(){
 const inApp = /CareerOSApp/.test(navigator.userAgent || '');
 function inr(n){ return '₹' + Number(n || 0).toLocaleString('en-IN'); }
 function capMax(){ const p = state.me && state.me.plan; return p === 'ultra' ? 60 : 25; }
-function guessCur(){ try { return /Asia\/(Kolkata|Calcutta)/.test(Intl.DateTimeFormat().resolvedOptions().timeZone) ? 'INR' : 'USD'; } catch (e) { return 'INR'; } }
+/* Dollars for everyone (the checkout charges each buyer in their own currency); members who live and look for work in India see the India plans in rupees first. */
+function guessCur(){ return inIndiaMode(state.settings) ? 'INR' : 'USD'; }
 function refreshBilling(){ return api('api/billing').then(r => r.json()).then(b => { state.billing = b; if (state.me) state.me.ai = b.ai; state.sample = b.ai && b.ai.available ? makeServerSample() : null; render(); }).catch(() => {}); }
 function renderPlan(){
   const b = state.billing;
@@ -3608,7 +3732,8 @@ function renderPlan(){
   const until = sub && sub.currentEnd ? fDate.format(new Date(sub.currentEnd)) : '';
   const curs = arr(b.currencies).length ? arr(b.currencies) : ['INR'];
   const cur$ = curs.includes(state.planCur) ? state.planCur : (sub && sub.currency && curs.includes(sub.currency) ? sub.currency : (curs.includes(guessCur()) ? guessCur() : curs[0]));
-  const price = pl => cur$ === 'USD' ? (Number(pl.priceUsd) ? '$' + pl.priceUsd : '$0') : inr(pl.priceInr);
+  const usd$ = v => '$' + String(v).replace(/\.00$/, '');
+  const price = pl => cur$ === 'USD' ? (Number(pl.priceUsd) ? usd$(pl.priceUsd) : '$0') : inr(pl.priceInr);
   const paid = b.plan === 'pro' || b.plan === 'ultra';
   const prov = cur$ === 'USD' ? 'Secure checkout by Dodo Payments: cards, Apple Pay and Google Pay. Prices include tax where it applies.' : 'Secure checkout by Razorpay: UPI, cards and netbanking.';
   const cards = arr(b.plans).map(pl => {
@@ -3624,14 +3749,14 @@ function renderPlan(){
     }
     return `<article class="plan ${pl.id}${cur ? ' current' : ''}"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3 style="font-size:22px">${name}</h3>${cur ? '<span class="pill mine">Your plan</span>' : ''}</div>
       <div class="price">${price(pl)}${pl.priceInr ? '<small> / month</small>' : ''}</div>
-      <ul>${arr(pl.features).map(f => `<li>${esc(f)}</li>`).join('')}</ul>${action}</article>`;
+      <ul>${arr(cur$ === 'INR' && pl.featuresInr ? pl.featuresInr : pl.features).map(f => `<li>${esc(f)}</li>`).join('')}</ul>${action}</article>`;
   }).join('');
   // A pass: Pro for a fixed number of days, paid once. Shown only when the server sells it and this account has no subscription.
-  const ps = b.pass, psPrice = ps ? (cur$ === 'USD' ? '$' + ps.priceUsd : inr(ps.priceInr)) : '';
+  const ps = b.pass, psPrice = ps ? (cur$ === 'USD' ? usd$(ps.priceUsd) : inr(ps.priceInr)) : '';
   const passBox = ps && ps.onSale && !ps.blocked && arr(ps.currencies).includes(cur$) ? `<div class="panel" style="margin-top:14px;display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap">
       <div><b>Prefer to pay once? Pro pass, ${esc(ps.days)} days for ${esc(psPrice)}.</b><p class="small" style="margin:4px 0 0">${ps.running ? 'Your pass runs until ' + esc(fDate.format(new Date(ps.running.endsAt))) + '. Buying another adds its days to the end. ' : ''}Pay once by ${cur$ === 'USD' ? 'card' : 'UPI, card or netbanking'}. Nothing renews and there is nothing to cancel.</p></div>
       <button class="btn solid buy" data-act="buy-pass">Buy the ${esc(ps.days)}-day pass</button></div>` : '';
-  const curSwitch = curs.length > 1 ? `<div class="curseg" role="group" aria-label="Currency">${curs.map(x => `<button type="button" class="${x === cur$ ? 'on' : ''}" aria-pressed="${x === cur$}" data-act="plan-cur" data-cur="${x}">${x === 'INR' ? '₹ INR' : '$ USD'}</button>`).join('')}</div>` : '';
+  const curSwitch = curs.length > 1 ? `<div class="curseg" role="group" aria-label="Plan">${curs.map(x => `<button type="button" class="${x === cur$ ? 'on' : ''}" aria-pressed="${x === cur$}" data-act="plan-cur" data-cur="${x}">${x === 'INR' ? 'India plans, ₹' : 'Global plans, $'}</button>`).join('')}</div><p class="small" style="margin-top:8px">${cur$ === 'INR' ? 'India plans are for job-hunting inside India: rupee prices, a smaller AI allowance, everything else the same.' : 'Global plans carry the full AI allowance and are charged in your own currency at checkout.'}</p>` : '';
   const pct = ai.limit ? Math.min(100, Math.round(ai.used / ai.limit * 100)) : 0;
   const meter = own ? `<p class="small">AI actions run on your own ${esc(own.provider)} key: ${esc(ai.ownUsed || 0)} this month, no limit from us.</p>`
     : ai.hostedAvailable ? `<div style="display:grid;gap:8px"><div style="display:flex;justify-content:space-between;font-size:14px"><span><b>${esc(ai.used)}</b> of ${esc(ai.limit)} AI actions used this month</span><span class="muted">${esc(ai.left)} left</span></div><div class="meter" role="img" aria-label="${esc(pct)}% used"><i style="width:${pct}%"></i></div></div>`
@@ -3673,13 +3798,14 @@ function renderSetup(){
     ${cloud() ? `<label class="f" for="s-alerts">Job alerts by email <small>New roles that pass your filters</small><select id="s-alerts"${ro}>${[['off','Off'],['daily','Daily'],['weekly','Weekly']].map(([v, l]) => `<option value="${v}"${(s.alerts || 'off') === v ? ' selected' : ''}>${l}</option>`).join('')}</select></label>` : ''}
     <label class="f full" for="s-mode">How applications go out<select id="s-mode"${ro}><option value="auto-when-clear"${s.approvalMode === 'auto-when-clear' ? ' selected' : ''}>Auto-apply when every answer comes from my profile</option><option value="daily-batch"${s.approvalMode !== 'auto-when-clear' ? ' selected' : ''}>Daily batch: I approve each one</option></select></label>
     <label class="f" for="s-home">Where you live<select id="s-home"${ro}>${HOMES.map(([c, n]) => `<option value="${c}"${(s.homeCountry || 'IN') === c ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
-    <div class="full" role="group" aria-labelledby="s-loc-l" id="s-loc-in"${(s.homeCountry || 'IN') === 'IN' ? '' : ' hidden'}><span id="s-loc-l" class="groupl">Locations</span><div class="checks">${LOCATIONS.map((l, i) => `<label for="s-loc-${i}"><input type="checkbox" id="s-loc-${i}" value="${esc(l)}" ${arr(s.locations).includes(l) ? 'checked' : ''}${ro}>${esc(l)}</label>`).join('')}</div></div>
-    <div class="full formgrid" id="s-loc-world"${(s.homeCountry || 'IN') === 'IN' ? ' hidden' : ''} style="gap:12px"><label class="f" for="s-places">On-site or hybrid in <small>cities or countries, comma separated</small><input type="text" id="s-places" value="${esc(s.places || '')}" placeholder="London, Manchester"${ro}></label>
+    <label class="f" for="s-seek" id="s-seek-row"${(s.homeCountry || 'IN') === 'IN' ? '' : ' hidden'}>Where you want to work<select id="s-seek"${ro}><option value="home"${s.workAbroad ? '' : ' selected'}>In India</option><option value="abroad"${s.workAbroad ? ' selected' : ''}>In another country</option></select></label>
+    <div class="full" role="group" aria-labelledby="s-loc-l" id="s-loc-in"${inIndiaMode(s) ? '' : ' hidden'}><span id="s-loc-l" class="groupl">Locations</span><div class="checks">${LOCATIONS.map((l, i) => `<label for="s-loc-${i}"><input type="checkbox" id="s-loc-${i}" value="${esc(l)}" ${arr(s.locations).includes(l) ? 'checked' : ''}${ro}>${esc(l)}</label>`).join('')}</div></div>
+    <div class="full formgrid" id="s-loc-world"${inIndiaMode(s) ? ' hidden' : ''} style="gap:12px"><label class="f" for="s-places">On-site or hybrid in <small>countries or cities, comma separated</small><input type="text" id="s-places" value="${esc(s.places || '')}" placeholder="London, Manchester"${ro}></label>
       <label class="cccheck" for="s-remote" style="align-self:end"><input type="checkbox" id="s-remote"${s.remoteOk !== false ? ' checked' : ''}${ro}> Remote roles open to people where you live</label></div>
     <div class="full" role="group" aria-labelledby="s-fam-l"><span id="s-fam-l" class="groupl">Job families <small>Pick any to get roles in those families, not just engineering. Leave all off to go by target roles.</small></span><div class="checks">${FAMILIES.map((f, i) => `<label for="s-fam-${i}"><input type="checkbox" id="s-fam-${i}" value="${esc(f)}" ${arr(s.families).includes(f) ? 'checked' : ''}${ro}>${esc(f)}</label>`).join('')}</div></div>
     <label class="f full" for="s-roles">Target roles <small>Comma-separated. Leave empty to target every role your verified skills support.</small><input type="text" id="s-roles" value="${esc(arr(s.targetRoles).join(', '))}" placeholder="Filled in from your resume"${ro}></label>
     <label class="f" for="s-fit">Lowest fit to prepare<select id="s-fit"${ro}><option value="strong"${s.minFit === 'strong' ? ' selected' : ''}>Strong fit only</option><option value="good"${s.minFit === 'good' ? ' selected' : ''}>Good fit and above</option><option value="stretch"${s.minFit === 'stretch' ? ' selected' : ''}>Include stretch roles</option></select></label>
-    ${(s.homeCountry || 'IN') === 'IN' ? `<label class="f" for="s-sal">Salary floor <small>LPA, fixed CTC</small><input type="number" id="s-sal" min="0" step="0.5" value="${esc(s.salaryFloorLpa)}" placeholder="e.g. 4"${ro}></label>` : `<label class="f" for="s-sal-usd">Salary floor <small>US$ a year, fixed pay</small><input type="number" id="s-sal-usd" min="0" step="5000" value="${esc(s.salaryFloorUsd || '')}" placeholder="e.g. 90000"${ro}></label>`}
+    ${inIndiaMode(s) ? `<label class="f" for="s-sal">Salary floor <small>LPA, fixed CTC</small><input type="number" id="s-sal" min="0" step="0.5" value="${esc(s.salaryFloorLpa)}" placeholder="e.g. 4"${ro}></label>` : `<label class="f" for="s-sal-usd">Salary floor <small>US$ a year, fixed pay</small><input type="number" id="s-sal-usd" min="0" step="5000" value="${esc(s.salaryFloorUsd || '')}" placeholder="e.g. 90000"${ro}></label>`}
     <label class="f" for="s-visa" style="display:flex;gap:10px;align-items:flex-start"><input type="checkbox" id="s-visa" style="width:auto;margin-top:4px"${s.needsSponsorship ? ' checked' : ''}${ro}><span>I need visa sponsorship <small>For on-site roles in another country, or where you live on a visa: skip roles whose posting says it cannot sponsor, and UK employers that are not on the Home Office register of licensed sponsors. Roles that say nothing are kept and marked unclear.</small></span></label>
     <label class="f" for="s-stated" style="display:flex;gap:10px;align-items:flex-start"><input type="checkbox" id="s-stated" style="width:auto;margin-top:4px"${s.requireStatedPay ? ' checked' : ''}${ro}><span>Only roles with pay evidence <small>Keep a role only when its posting states pay at or above your floor, or public pay data for freshers at that company does (marked as an estimate). Other roles stay in the skip log.</small></span></label>
     <label class="f full" for="s-deal">Dealbreakers <small>Anything that should make the search skip a role</small><textarea id="s-deal" rows="3" placeholder="e.g. bond clauses, unpaid probation, night shifts"${ro}>${esc(s.dealbreakers)}</textarea></label>
@@ -3712,7 +3838,7 @@ function renderFoot(){
   const f = filterSummary();
   const cov = obj(settings().coverage), n = x => Number(x).toLocaleString('en-IN');
   return `<div><h4>Where it looks</h4><ul><li>${cov.companies ? n(cov.companies) + ' company career pages' : 'Company career pages'}</li><li>${cov.platforms ? n(cov.platforms) + ' job platforms' : 'Remote and Indian job boards'}</li><li>VC portfolio boards</li><li>Searches for new career pages</li></ul></div>
-    <div><h4>Your filters</h4><ul><li>For ${esc(f.exp)}</li><li>Posted in the last ${esc(f.days)} days</li><li>${esc(f.locs)}</li><li>${settings().salaryFloorLpa !== '' ? 'Pay floor ' + esc(settings().salaryFloorLpa) + ' LPA' + (settings().requireStatedPay ? ', stated in the posting' : '') : 'No pay floor'}</li><li>Up to ${esc(settings().dailyCap)} prepared a day</li></ul></div>
+    <div><h4>Your filters</h4><ul><li>For ${esc(f.exp)}</li><li>Posted in the last ${esc(f.days)} days</li><li>${esc(f.locs)}</li><li>${settings().salaryFloorLpa !== '' ? 'Pay floor ' + (livesAbroad() && settings().salaryFloorUsd ? '$' + Number(settings().salaryFloorUsd).toLocaleString('en-US') + ' a year' : esc(settings().salaryFloorLpa) + ' LPA') + (settings().requireStatedPay ? ', stated in the posting' : '') : 'No pay floor'}</li><li>Up to ${esc(settings().dailyCap)} prepared a day</li></ul></div>
     <div><h4>What it never does</h4><ul><li>Invent experience or numbers</li><li>Send LinkedIn messages</li><li>${autoMode() ? 'Guess an answer your profile can\'t back up' : 'Submit without your approval'}</li><li>Apply twice to one company in 6 months</li></ul></div>
     <div><h4>Privacy</h4><ul><li>Only you can read this pipeline, even if you share the link</li><li>Credentials never stored here</li>${cloud() ? '<li><a href="privacy">Privacy notice</a> · <a href="terms">Terms</a></li>' : ''}</ul></div>`;
 }
@@ -3833,7 +3959,7 @@ function renderDrawer(){
   dr.innerHTML = `
     <div class="dhead ${esc(j.stage || 'found')}">
       <div class="row1"><div style="min-width:0;display:grid;gap:6px"><span class="co">${esc(j.company)}</span><h2 id="d-title">${esc(j.title)}</h2></div><span style="display:flex;gap:8px;flex:none"><button class="xbtn" data-act="open-app" data-id="${esc(j.id)}">Full page</button><button class="xbtn" data-act="close" aria-label="Close">Close</button></span></div>
-      <div class="meta">${j.needsYou && !isApplied(j) ? '<span class="pill needs">Needs you</span>' : j.autoApply === 'queued' && !isApplied(j) ? '<span class="pill queued">Queued for auto-apply</span>' : ''}${j.location ? `<span>${I.pin}${esc(j.location)}</span>` : ''}${j.experience ? `<span>${I.spark}${esc(j.experience)}</span>` : ''}${j.salary ? `<span>${I.rupee}${esc(j.salary)}</span>` : ''}${postedText(j.postedAt) ? `<span>${I.clock}${esc(postedText(j.postedAt))}</span>` : ''}${parts.url ? `<a href="${esc(parts.url)}" target="_blank" rel="noopener"><span style="display:inline-flex;gap:5px;align-items:center">${I.link}Posting</span></a>` : ''}</div>
+      <div class="meta">${j.needsYou && !isApplied(j) ? '<span class="pill needs">Needs you</span>' : j.autoApply === 'queued' && !isApplied(j) ? '<span class="pill queued">Queued for auto-apply</span>' : ''}${j.location ? `<span>${I.pin}${esc(j.location)}</span>` : ''}${j.experience ? `<span>${I.spark}${esc(j.experience)}</span>` : ''}${j.salary ? `<span>${/₹|LPA|lakh/i.test(j.salary) ? I.rupee : I.pay}${esc(j.salary)}</span>` : ''}${postedText(j.postedAt) ? `<span>${I.clock}${esc(postedText(j.postedAt))}</span>` : ''}${parts.url ? `<a href="${esc(parts.url)}" target="_blank" rel="noopener"><span style="display:inline-flex;gap:5px;align-items:center">${I.link}Posting</span></a>` : ''}</div>
     </div>
     <div class="dbody">
       ${parts.body}
@@ -3957,7 +4083,7 @@ function localParse(text){
   const lines = String(text || '').split(/\r?\n/).map(l => l.trim());
   const first = lines.find(l => l && l.length <= 90) || '';
   const coM = text.match(/(?:^|\n)\s*(?:company|organisation|organization)\s*[:\-]\s*([^\n]{2,60})/i) || text.match(/\b(?:at|join)\s+([A-Z][A-Za-z0-9&.\-]+(?:\s+[A-Z][A-Za-z0-9&.\-]+){0,3})/);
-  const locM = text.match(/\b(Bengaluru|Bangalore|Hyderabad|Chennai|Pune|Mumbai|Delhi|Gurugram|Gurgaon|Noida|Kochi|Coimbatore|Remote[^\n,.;]{0,24})/i);
+  const locM = text.match(/\b(London|Manchester|Edinburgh|Glasgow|Birmingham|Bristol|Cambridge|Oxford|Leeds|Dublin|Amsterdam|Rotterdam|Berlin|Munich|Hamburg|Frankfurt|Paris|Toronto|Vancouver|Montreal|New York|San Francisco|Seattle|Austin|Boston|Chicago|Sydney|Melbourne|Singapore|Dubai|Bengaluru|Bangalore|Hyderabad|Chennai|Pune|Mumbai|Delhi|Gurugram|Gurgaon|Noida|Kochi|Coimbatore|Remote[^\n,.;]{0,24})/i);
   const payM = text.match(/(?:₹|INR|Rs\.?|\$|USD)\s?[\d.,]+\s?(?:[LKMk]|LPA|lakhs?)?(?:\s?[-–to]+\s?(?:₹|INR|Rs\.?|\$)?\s?[\d.,]+\s?(?:[LKMk]|LPA|lakhs?)?)?|\b\d{1,2}(?:\.\d)?\s?[-–]\s?\d{1,2}(?:\.\d)?\s?LPA\b/i);
   const expM = text.match(/\b(\d{1,2})\s*\+?\s*(?:[-–to]+\s*\d{1,2}\s*)?(?:years?|yrs?)\b/i);
   const mode = /\bremote\b/i.test(text) ? (/\bhybrid\b/i.test(text) ? 'hybrid' : 'remote') : /\bhybrid\b/i.test(text) ? 'hybrid' : /\bon-?site|in office\b/i.test(text) ? 'onsite' : '';
@@ -4521,6 +4647,7 @@ function upcoming(days){
 }
 /* The first minute: three answers, then real roles. Everything else in Settings can wait until the person
    has seen what the search finds for them. */
+const QS_PLACES = ['United States', 'United Kingdom', 'Canada', 'Germany', 'Netherlands', 'Ireland', 'Australia', 'United Arab Emirates', 'Singapore'];
 const QS_ROLES = ['Software Engineer', 'Data Analyst', 'Business Analyst', 'Product Manager', 'Marketing', 'Finance', 'Mechanical Engineer', 'Customer Success'];
 const hasFilters = () => { const s = obj(state.settings); return arr(s.targetRoles).length > 0 || arr(s.families).length > 0; };
 const needsQuickStart = () => cloud() && !!state.settings && !hasFilters();
@@ -4534,6 +4661,10 @@ function quickStartBlock(){
           <input type="text" id="qs-roles" maxlength="300" autocomplete="off" placeholder="e.g. Data Analyst, Business Analyst" required${ro}></label>
         <div class="full qs-chips" role="group" aria-label="Common roles">${QS_ROLES.map(r => `<button type="button" class="fchip" data-act="qs-role" data-r="${esc(r)}">${esc(r)}</button>`).join('')}</div>
         <label class="f" for="qs-home">Where you live<select id="qs-home"${ro}>${HOMES.map(([c, n]) => `<option value="${c}"${home === c ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
+        <label class="f" for="qs-seek">Where you want to work<select id="qs-seek"${ro}><option value="home">In the country I live in</option><option value="abroad">In another country</option></select></label>
+        <div class="full" id="qs-places-row" hidden><label class="f" for="qs-places">Countries or cities you want to work in <small>comma separated</small>
+          <input type="text" id="qs-places" maxlength="300" autocomplete="off" placeholder="e.g. United Kingdom, Germany, Dublin"${ro}></label>
+          <div class="qs-chips" role="group" aria-label="Common countries" style="margin-top:10px">${QS_PLACES.map(r => `<button type="button" class="fchip" data-act="qs-place" data-r="${esc(r)}">${esc(r)}</button>`).join('')}</div></div>
         <label class="f" for="qs-years">Years of work experience <small>0 if you are a fresher</small><input type="number" id="qs-years" min="0" max="50" step="0.5" value="0" inputmode="decimal"${ro}></label>
         <label class="full qs-check" for="qs-visa" id="qs-visa-row"${home === 'IN' ? ' hidden' : ''}><input type="checkbox" id="qs-visa"${ro}> <span>I need an employer to sponsor my visa to work there <small>We then put employers with a record of sponsoring first, and leave out roles that say they cannot.</small></span></label>
         <div class="full qs-go"><button class="btn solid" type="submit"${ro}>Show my matches</button><span class="small muted">Free. You can change every answer later in Settings.</span></div>
@@ -4773,7 +4904,7 @@ function tailorCta(j){
     ${!hasProfile() ? `<p class="warnline">Your profile is empty. <button class="linkish" data-act="tab" data-tab="profile">Fill it in first</button>.</p>` : ''}
     <span class="groupl">Cover letter tone</span><div class="toneRow"><div class="pseg" role="group" aria-label="Tone">${TONES.map(([v, l]) => `<button type="button" data-act="tone" data-v="${v}" aria-pressed="${tone === v}">${l}</button>`).join('')}</div><span class="muted">${esc((TONES.find(t => t[0] === tone) || TONES[0])[2])}</span></div>
     <div class="toneRow"><label class="f" for="tailor-lang" style="min-width:200px">Write it in<select id="tailor-lang">${Object.keys(LANGS).map(k => `<option value="${k}"${(state.tailorLang || obj(j.tailor).lang || 'en') === k ? ' selected' : ''}>${esc(LANGS[k])}</option>`).join('')}</select></label>${(state.tailorLang || obj(j.tailor).lang) === 'other' ? `<label class="f" for="tailor-lang-other">Which language?<input id="tailor-lang-other" type="text" value="${esc(state.tailorLangOther || obj(j.tailor).langOther || '')}" placeholder="e.g. Telugu"></label>` : ''}<span class="muted" style="align-self:end;padding-bottom:10px">${aiReady() ? 'Names, tools and numbers stay as they are.' : 'Other languages need Claude.'}</span></div>
-    <label class="f" for="tailor-notes">Anything I should know?<textarea id="tailor-notes" rows="3" placeholder="e.g. I'm moving to Bengaluru in January. Or: lean on my RAG work.">${esc(state.tailorNotes || obj(j.tailor).notes || '')}</textarea></label>
+    <label class="f" for="tailor-notes">Anything I should know?<textarea id="tailor-notes" rows="3" placeholder="e.g. I can start in January. Or: lean on my RAG work.">${esc(state.tailorNotes || obj(j.tailor).notes || '')}</textarea></label>
     <div><button class="btn solid" data-act="tailor-gen" data-id="${esc(j.id)}"${wr()}${busy ? ' disabled' : ''}>${busy ? '<span class="spin" aria-hidden="true"></span>' + esc(busy) + '…' : NI.wand + (obj(j.tailor).resume ? 'Tailor again' : 'Tailor resume, cover letter and email')}</button></div></section>`;
 }
 function matchList(m){
@@ -5030,7 +5161,7 @@ function renderNew(){
     ${hasProfile() && n.text ? scoreCard({jd: n.text, title: obj(parsed).title || ''}, prof(), {match: arr(n.match)}) : ''}
     ${matchList(arr(n.match))}
     <section class="card"><h2>Tailoring</h2><span class="groupl" style="margin-top:14px;display:block">Cover letter tone</span><div class="toneRow"><div class="pseg" role="group" aria-label="Tone">${TONES.map(([v, l]) => `<button type="button" data-act="na-tone" data-v="${v}" aria-pressed="${tone === v}">${l}</button>`).join('')}</div><span class="muted">${esc((TONES.find(t => t[0] === tone) || TONES[0])[2])}</span></div>
-      <label class="f" for="na-notes">Anything I should know?<textarea id="na-notes" data-na="notes" rows="3" placeholder="e.g. I'm relocating to Bengaluru in January. Or: lean on my RAG work.">${esc(n.notes || '')}</textarea></label>
+      <label class="f" for="na-notes">Anything I should know?<textarea id="na-notes" data-na="notes" rows="3" placeholder="e.g. I'm relocating in January. Or: lean on my RAG work.">${esc(n.notes || '')}</textarea></label>
       <label class="f" style="display:flex;gap:10px;align-items:center;font-weight:500;margin-top:12px"><input type="checkbox" data-na="tailorNow" style="width:auto"${n.tailorNow !== false ? ' checked' : ''}${hasProfile() ? '' : ' disabled'}>Write the resume, cover letter and email now${hasProfile() ? '' : ' (fill in your profile first)'}</label>
       <label class="f" style="display:flex;gap:10px;align-items:center;font-weight:500;margin-top:6px"><input type="checkbox" data-na="autoQueue" style="width:auto"${n.autoQueue ? ' checked' : ''}${safeUrl(n.url) ? '' : ' disabled'}>Queue it for auto-apply${safeUrl(n.url) ? '' : ' (add the posting link above first)'}</label>
       <div class="ract" style="justify-content:flex-start;margin-top:16px"><button class="btn solid" data-act="na-create"${wr()}${busy ? ' disabled' : ''}>${busy === 'create' ? '<span class="spin" aria-hidden="true"></span>Creating…' : 'Create application'}</button></div></section></div>`;
@@ -5621,6 +5752,7 @@ document.addEventListener('click', e => {
   if (act !== 'sheet' && sheetEntry && !el._replay){ closeSheets(() => { el._replay = true; el.click(); el._replay = false; }); return; }
   if (act !== 'sheet') closeSheetsUI();
   if (act === 'tab') setTab(el.dataset.tab);
+  else if (act === 'qs-place'){ const i = $('#qs-places'); if (i){ const have = i.value.split(',').map(x => x.trim()).filter(Boolean); if (!have.includes(el.dataset.r)) have.push(el.dataset.r); i.value = have.join(', '); el.setAttribute('aria-pressed', 'true'); state.qsDirty = true; } }
   else if (act === 'qs-role'){ const i = $('#qs-roles'); if (i){ const have = i.value.split(',').map(x => x.trim()).filter(Boolean); if (!have.includes(el.dataset.r)) have.push(el.dataset.r); i.value = have.join(', '); el.setAttribute('aria-pressed', 'true'); state.qsDirty = true; } }
   else if (act === 'sheet') toggleSheet(el.dataset.sheet);
   else if (act === 'window'){ if (state.win !== el.dataset.w){ state.win = el.dataset.w; state.freshLimit = FRESH_PAGE; state.enter = true; state.filterAnim = true; render(); } }
@@ -5701,6 +5833,8 @@ document.addEventListener('click', e => {
   else if (act === 'signout'){ api('api/auth/logout', {method: 'POST'}).catch(() => {}).finally(() => { location.href = 'login'; }); }
   else if (act === 'partner-leave'){ if (confirm('Leave ' + ((state.me.partner || {}).name || 'your consultancy') + '? They stop seeing your progress and your account goes back to your own plan.')) api('api/partner/leave', {method: 'POST'}).then(() => location.reload()).catch(e => toast(e.message || 'Could not leave. Try again.')); }
   else if (act === 'mfa-done'){ state.mfaCodes = null; render(); }
+  else if (act === 'phone-cancel'){ state.phoneAdd = ''; render(); }
+  else if (act === 'phone-remove'){ if (!confirm('Remove this number? You will sign in with your email or another option.')) return; api('api/me/phone', {method: 'DELETE'}).then(() => { state.me.phone = ''; acctSay('Number removed.'); }).catch(() => acctSay('Could not remove the number.', true)); }
   else if (act === 'signout-all'){ api('api/me/logout-all', {method: 'POST'}).catch(() => {}).finally(() => { location.href = 'login'; }); }
   else if (act === 'key-hide'){ state.newKey = null; render(); }
   else if (act === 'upgrade'){ el.disabled = true; const b = obj(state.billing), cs = arr(b.currencies); const cur = cs.includes(state.planCur) ? state.planCur : (cs.includes(guessCur()) ? guessCur() : cs[0]); cloudPost('api/billing/checkout', {plan: el.dataset.plan || 'pro', currency: cur}).then(d => { location.href = d.url; }).catch(d => { el.disabled = false; acctSay(d.error || 'Could not start the payment.', true, 'plan'); }); }
@@ -5765,7 +5899,7 @@ document.addEventListener('keydown', e => {
 });
 document.addEventListener('change', e => {
   const el = e.target;
-  if (el.closest && el.closest('#qs-form')){ state.qsDirty = true; if (el.id === 'qs-home'){ const row = $('#qs-visa-row'); if (row) row.hidden = el.value === 'IN'; } return; }
+  if (el.closest && el.closest('#qs-form')){ state.qsDirty = true; if (el.id === 'qs-home' || el.id === 'qs-seek'){ const away = $('#qs-seek').value === 'abroad', row = $('#qs-visa-row'), pl = $('#qs-places-row'); if (pl) pl.hidden = !away; if (row){ row.hidden = $('#qs-home').value === 'IN' && !away; if (away && el.id === 'qs-seek') $('#qs-visa').checked = true; } } return; }
   if (el.closest && el.closest('#settings-form')) state.formDirty = true;
   if (el.closest && el.closest('#applicant-form')) state.apDirty = true;
   if (el.classList && el.classList.contains('resume-file')){ const f = el.files && el.files[0]; el.value = ''; uploadResume(f); return; }
@@ -5845,6 +5979,18 @@ document.addEventListener('submit', e => {
       .catch(d => acctSay(d.error || 'Could not save the key.', true, 'ai'));
     return;
   }
+  if (e.target.id === 'phone-form'){
+    e.preventDefault(); const f = e.target, num = f.phone.value.trim();
+    cloudPost('api/me/phone/start', {phone: num}).then(() => { state.phoneAdd = num; acctSay(''); })
+      .catch(d => acctSay(d.error || "We couldn't send the code.", true));
+    return;
+  }
+  if (e.target.id === 'phone-code-form'){
+    e.preventDefault(); const f = e.target;
+    cloudPost('api/me/phone/verify', {phone: state.phoneAdd, code: f.code.value}).then(d => { state.phoneAdd = ''; state.me.phone = d.phone; acctSay('Your number is added. You can sign in with it.'); })
+      .catch(d => acctSay(d.error || "That code didn't work.", true));
+    return;
+  }
   if (e.target.id === 'mfa-setup-form'){
     e.preventDefault(); const f = e.target;
     cloudPost('api/me/mfa/setup', {password: f.password.value}).then(d => { state.mfaSetup = d; acctSay(''); })
@@ -5872,7 +6018,7 @@ document.addEventListener('submit', e => {
   if (e.target.id === 'del-form'){
     e.preventDefault(); const f = e.target;
     if (f.confirm.value !== 'DELETE'){ acctSay('Type DELETE to confirm.', true); return; }
-    cloudPost('api/me/delete', {password: f.password.value, confirm: f.confirm.value}).then(() => { location.href = 'login'; })
+    cloudPost('api/me/delete', {password: f.password ? f.password.value : '', confirm: f.confirm.value}).then(() => { location.href = 'login'; })
       .catch(d => acctSay(d.error || 'Could not delete your account.', true));
     return;
   }
@@ -5902,11 +6048,13 @@ document.addEventListener('submit', e => {
     const roles = $('#qs-roles').value.split(',').map(x => x.trim()).filter(Boolean).slice(0, 12);
     if (!roles.length){ toast('Type at least one job title.'); $('#qs-roles').focus(); return; }
     const home = $('#qs-home').value || 'IN', y = Math.max(0, Math.min(50, Number($('#qs-years').value) || 0));
+    const away = $('#qs-seek').value === 'abroad', wanted = $('#qs-places').value.trim().slice(0, 300);
+    if (away && !wanted){ toast('Name at least one country or city you want to work in.'); $('#qs-places').focus(); return; }
     const next = Object.assign({}, settings(), {
       targetRoles: roles, families: [], homeCountry: home, yearsExperience: y, experienceLevels: [], maxRequiredYears: stretchOf(y),
-      places: home === 'IN' ? '' : (HOMES.find(([c]) => c === home) || [home, home])[1], remoteOk: true,
+      places: away ? wanted : home === 'IN' ? '' : (HOMES.find(([c]) => c === home) || [home, home])[1], workAbroad: away && home === 'IN', remoteOk: true,
       locations: ['South India (any work mode)', 'Rest of India (any work mode)', 'Remote worldwide (first priority)'],
-      needsSponsorship: home !== 'IN' && $('#qs-visa').checked, timezone: TZ, setupAt: nowIso(), updatedAt: nowIso()
+      needsSponsorship: (home !== 'IN' || away) && $('#qs-visa').checked, timezone: TZ, setupAt: nowIso(), updatedAt: nowIso()
     });
     if (document.activeElement) document.activeElement.blur();
     enqueue('settings/profile', () => state.db.doc('settings/profile').set(next)).then(() => { state.qsDirty = false; state.settings = next; startFinding(); setTab('today'); render(); }).catch(() => {});
@@ -5927,7 +6075,7 @@ document.addEventListener('submit', e => {
     maxPostingAgeDays: Number($('#s-age').value) || 25, approvalMode: $('#s-mode').value, targetRoles: roles, families: fams, locations: locs, dailyCap: cap, minFit: $('#s-fit').value,
     salaryFloorLpa: sal === '' ? '' : Number(sal), requireStatedPay: !!($('#s-stated') && $('#s-stated').checked), needsSponsorship: !!($('#s-visa') && $('#s-visa').checked), dealbreakers: $('#s-deal').value.trim(), updatedAt: nowIso(),
     ...(usdFloor !== null ? {salaryFloorUsd: usdFloor === '' ? '' : Number(usdFloor)} : {}),
-    homeCountry: home, places: $('#s-places') ? $('#s-places').value.trim().slice(0, 300) : '', remoteOk: $('#s-remote') ? $('#s-remote').checked : true, timezone: TZ,
+    homeCountry: home, workAbroad: home === 'IN' && !!$('#s-seek') && $('#s-seek').value === 'abroad', places: $('#s-places') ? $('#s-places').value.trim().slice(0, 300) : '', remoteOk: $('#s-remote') ? $('#s-remote').checked : true, timezone: TZ,
     ...($('#s-alerts') ? {alerts: $('#s-alerts').value} : {})
   });
   if (document.activeElement) document.activeElement.blur();
@@ -6001,7 +6149,7 @@ document.addEventListener('click', e => {
 document.addEventListener('input', e => {
   const el = e.target;
   if (el.dataset && el.dataset.pf){ const kind = el.dataset.kind, v = el.value; const val = kind === 'bool' ? el.checked : kind === 'lines' ? v.split(/\n/).map(x => x.trim()).filter(Boolean) : kind === 'csv' ? v.split(',').map(x => x.trim()).filter(Boolean) : v; setPath(draft(), el.dataset.pf, val); if (!state.profDirty){ state.profDirty = true; const sb = $('[data-act="pf-save"]'); if (sb) sb.disabled = !state.canWrite; } }
-  else if (el.id === 's-home'){ const india = el.value === 'IN'; const a = $('#s-loc-in'), b = $('#s-loc-world'); if (a) a.hidden = !india; if (b) b.hidden = india; }
+  else if (el.id === 's-home' || el.id === 's-seek'){ const inIndia = $('#s-home').value === 'IN', india = inIndia && (!$('#s-seek') || $('#s-seek').value !== 'abroad'); const a = $('#s-loc-in'), b = $('#s-loc-world'), k = $('#s-seek-row'); if (k) k.hidden = !inIndia; if (a) a.hidden = !india; if (b) b.hidden = india; }
   else if (el.id === 'cc-calc'){ state.ccCalc = el.value; const o = $('#cc-out'); if (o) o.innerHTML = ccOut(obj(obj(state.concierge).fee), el.value); return; }
   else if (el.dataset && el.dataset.tl === 'prepId'){ state.tl.prepId = el.value; state.tl.typing = false; state.tl.render = true; render(); return; }
   else if (el.id === 'ct-q'){ state.ctQ = el.value; clearTimeout(state.ctT); state.ctT = setTimeout(() => { const pos = el.selectionStart; render(); requestAnimationFrame(() => { const q = $('#ct-q'); if (q){ q.focus(); try { q.setSelectionRange(pos, pos); } catch(e){} } }); }, 200); return; }

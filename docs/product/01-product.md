@@ -33,10 +33,10 @@ sponsorship and, for UK roles, whether the employer is on the Home Office sponso
 
 | customer | what they buy | status |
 | --- | --- | --- |
-| Job seekers in India (freshers, early-career) | Free; Pro ₹499 / Ultra ₹1,199 a month; Interview Guarantee ₹4,999; Job Guarantee (8% of salary after joining) | Built |
-| Job seekers abroad (incl. Indian graduates on post-study visas) | Same plans in dollars ($22.50 / $48.50) | Built |
-| Study-abroad consultancies and college placement cells | Branded portal with student seats: Starter ₹14,999 (25), Growth ₹29,999 (50), Plus ₹44,999 (100) per 30 days | Built in 2.8; no customers yet |
-| Recruiting agencies | Filtered roles feed (CSV/JSON, key) ₹4,999 / $99 per 30 days | Built in 2.8; no customers yet |
+| Job seekers in India looking for work in India | Free; India plans Pro ₹799 / Ultra ₹1,999 a month (smaller AI allowance); Interview Guarantee $59; Job Guarantee (8% of salary after joining) | Built |
+| Job seekers abroad, and people in India looking for work abroad (incl. Indian graduates on post-study visas) | Global plans: Pro $39 / Ultra $79 a month, charged in local currency | Built |
+| Study-abroad consultancies and college placement cells | Branded portal with student seats: Starter $325 (25), Growth $625 (50), Plus $1,225 (100) per 30 days | Built in 2.8; no customers yet |
+| Recruiting agencies | Filtered roles feed (CSV/JSON, key) $99 per 30 days | Built in 2.8; no customers yet |
 
 ## The problem it solves
 

@@ -42,7 +42,7 @@ from .. import followups, llm
 from ..dedupe import canonical_url, company_key
 from ..scamcheck import check as scam_check
 from . import mailer as mail
-from . import linkedin as li_auth
+from . import oauth, phone
 from . import autosend, concierge, guarantee, mailbox, mfa, partners, passes, plans, repo, security
 from .config import Config
 from .db import Database, now_iso
@@ -369,11 +369,9 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
         q = (request.query_params.get("currency") or "").upper()
         if q in plans.CURRENCIES:
             return q
-        country = request.headers.get("cf-ipcountry", "") or request.headers.get("x-country", "")
-        if country and country.upper() not in ("XX", "T1"):
-            return plans.currency_for(country)
-        # No country from the edge: rupees, unless only dollar payments are switched on.
-        return "USD" if cfg.dodo_enabled and not cfg.razorpay_enabled else "INR"
+        # Dollars for everyone (Dodo charges each buyer in their own currency). Rupees only where a server takes
+        # payments through Razorpay alone.
+        return "INR" if cfg.razorpay_enabled and not cfg.dodo_enabled else "USD"
 
     # ------------------------------------------------------------ pages
     @app.get("/", include_in_schema=False)
@@ -420,13 +418,14 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
 
     @app.get("/pricing", include_in_schema=False)
     def pricing(request: Request):
-        # Rendered on the server from the live plan settings, so the page never waits on a fetch.
-        cur = guess_currency(request)
+        # Rendered on the server from the live plan settings, so the page never waits on a fetch. Prices are in
+        # US dollars only; the checkout charges each buyer in their own currency.
+        def _money(usd: str) -> str:
+            return usd[:-3] if str(usd).endswith(".00") else str(usd)
         cards = []
         for pl in plans.catalog(cfg):
-            per = "<small> / month</small>" if pl["priceInr"] else ""
-            price = (f'<span class="inr">₹{pl["priceInr"]:,}{per}</span>'
-                     f'<span class="usd">${pl["priceUsd"] if pl["priceInr"] else "0"}{per}</span>')
+            per = "<small> / month</small>" if pl["id"] != "free" else ""
+            price = f'${_money(pl["priceUsd"]) if pl["id"] != "free" else "0"}{per}'
             items = "".join(f"<li>{html_escape(f)}</li>" for f in pl["features"])
             cls = "btn" if pl["id"] != "free" else "btn light"
             # A paid card goes straight to checkout: create the account, confirm the email, and the payment page opens.
@@ -438,22 +437,30 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
         offer = passes.offer(cfg)
         if offer and offer["currencies"]:
             cards.append('<article class="plan pass"><h2>Pro pass</h2>'
-                         f'<div class="price"><span class="inr">₹{offer["priceInr"]:,}<small> once</small></span><span class="usd">${offer["priceUsd"]}<small> once</small></span></div>'
-                         f'<ul><li>Everything in Pro for {offer["days"]} days</li><li>Pay once by UPI or card</li><li>Nothing renews, nothing to cancel</li></ul>'
+                         f'<div class="price">${_money(offer["priceUsd"])}<small> once</small></div>'
+                         f'<ul><li>Everything in Pro for {offer["days"]} days</li><li>Pay once, in your own currency</li><li>Nothing renews, nothing to cancel</li></ul>'
                          '<a class="btn" href="/signup?next=%2Fapp%3Fbuy%3Dpass">Get the pass</a></article>')
         extras = ""
         for ad in plans.addons(cfg):
             if ad["priceInr"]:
-                price = f'<span class="inr">₹{ad["priceInr"]:,}</span><span class="usd">${ad["priceUsd"]}</span>'
+                price = f'<span>${_money(ad["priceUsd"])}</span>'
             else:
                 price = '<span>No upfront fee</span>'
             extras += (f'<article class="addon"><div><h3>{html_escape(ad["name"])}</h3><p>{html_escape(ad["line"])}</p></div>'
                        f'<p class="aprice">{price}<small>{html_escape(ad["when"])}</small></p></article>')
         if extras:
             extras = ('<section class="addons"><h2>Guarantees for Pro and Ultra members</h2><p class="note">Not part of any plan. Apply in the app; '
-                      'a person on our team reviews every application. <a href="/terms#guarantees">Guarantee terms</a></p>' + extras + '</section>')
+                      'a person on our team reviews every application. Terms and conditions apply: <a href="/terms#guarantees">read the guarantee terms</a>.</p>' + extras + '</section>')
+        india = ""
+        if cfg.razorpay_enabled:
+            pro, ultra = plans.plan_info(cfg, "pro"), plans.plan_info(cfg, "ultra")
+            india = ('<div><h3>Job-hunting inside India?</h3><p>Take the India plans: Pro at ₹{:,} and Ultra at ₹{:,} a month, paid by UPI, card or netbanking. '
+                     'They have everything in the global plans with a smaller AI allowance ({} and {} actions a month). Pick them in Settings, Plan, '
+                     'once "Where you want to work" is India. Looking for work abroad? Take the global plans.</p></div>').format(
+                         pro["priceInr"], ultra["priceInr"], pro["aiCreditsInr"], ultra["aiCreditsInr"])
         text = (STATIC / "pricing.html").read_text(encoding="utf-8").replace("<!--PLANS-->", "".join(cards)).replace("<!--ADDONS-->", extras) \
-            .replace('<body data-cur="INR">', f'<body data-cur="{cur}">', 1).replace("<script>", f'<script nonce="{request.state.nonce}">') \
+            .replace("<!--INDIA-->", india) \
+            .replace("<script>", f'<script nonce="{request.state.nonce}">') \
             .replace("</title>", f'</title>\n<link rel="canonical" href="{cfg.public_url}/pricing">', 1)
         return HTMLResponse(text)
 
@@ -621,47 +628,127 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
         set_session_cookie(response, token)
         return {"ok": True, "user": repo.public_user(user)}
 
-    # ------------------------------------------------------------ Sign in with LinkedIn (OpenID Connect)
-    LI_STATE = "propelo_li_state"
+    # ------------------------------------------------------------ Sign in with Google, GitHub or LinkedIn
+    # Cookie names and return addresses come from this fixed table, never from the request.
+    OAUTH_COOKIE = {k: f"propelo_{k}_state" for k in oauth.PROVIDERS}
+    OAUTH_BACK = {k: {why: f"/login#error={k}_{why}" for why in ("cancelled", "state", "failed", "no_email")} for k in oauth.PROVIDERS}
+    LOGIN_ERROR = {"closed": "/login#error=closed", "disabled": "/login#error=disabled"}
 
-    def li_redirect_uri() -> str:
-        return f"{cfg.public_url}/api/auth/linkedin/callback"
+    def known_provider(provider: str) -> str:
+        """The provider's own key from the table, or 404 for anything else."""
+        if provider not in oauth.PROVIDERS:
+            raise err(404, "Not found.")
+        return oauth.PROVIDERS[provider].key
+
+    def oauth_cookie(provider: str) -> str:
+        return OAUTH_COOKIE[provider]
+
+    def oauth_redirect_uri(provider: str) -> str:
+        return f"{cfg.public_url}/api/auth/{provider}/callback"
+
+    def oauth_ready(provider: str) -> tuple[str, str]:
+        cid, secret = cfg.oauth_keys(provider)
+        if not cid:
+            label = oauth.PROVIDERS[provider].label if provider in oauth.PROVIDERS else "that service"
+            raise err(404, f"Sign in with {label} isn't set up on this server.", "not_configured")
+        return cid, secret
 
     @app.get("/api/auth/providers")
     def auth_providers():
-        return {"linkedin": cfg.linkedin_enabled}
+        return dict({p: bool(cfg.oauth_keys(p)[0]) for p in oauth.PROVIDERS}, phone=cfg.phone_enabled)
 
-    @app.get("/api/auth/linkedin/start")
-    def linkedin_start():
-        if not cfg.linkedin_enabled:
-            raise err(404, "Sign in with LinkedIn isn't set up on this server.", "not_configured")
+    # ------------------------------------------------------------ Sign in with a mobile number (Twilio Verify)
+    app.state.phone = phone.Verify(cfg)
+
+    def phone_ready() -> None:
+        if not cfg.phone_enabled:
+            raise err(404, "Sign in with a mobile number isn't set up on this server.", "not_configured")
+
+    def phone_number(body: dict) -> str:
+        num = phone.normalize(str(body.get("phone") or "")[:40])
+        if not num:
+            raise err(400, "Enter the number with its country code, starting with +, for example +44 7700 900123.", "bad_phone")
+        return num
+
+    @app.post("/api/auth/phone/start", status_code=202, dependencies=[Depends(csrf)])
+    def phone_start(request: Request, body: dict = Body(default={})):
+        """Texts a code, but only to a number already confirmed on an account. The answer is the same either way."""
+        phone_ready()
+        num, ip = phone_number(body), client_ip(request)
+        with db.tx() as c:
+            limited(c, "phone-ip:" + security.ip_key(ip), 10, 3600)
+            limited(c, "phone-to:" + num, 5, 3600)
+            user = repo.user_by_phone(c, num)
+        if user and not user["disabled_at"]:
+            try:
+                app.state.phone.send(num)
+            except phone.PhoneError as e:
+                log.warning(json.dumps({"event": "phone-send-failed", "error": str(e)[:200]}))
+                raise err(502, "We couldn't send the code. Try again in a minute.", "phone_failed")
+        return {"ok": True, "message": "If this number is on a Propelo account, a code is on its way. New here? Create your account "
+                                       "first, then add your number in Settings."}
+
+    @app.post("/api/auth/phone/verify", dependencies=[Depends(csrf)])
+    def phone_verify(request: Request, response: Response, body: dict = Body(default={})):
+        phone_ready()
+        num, ip = phone_number(body), client_ip(request)
+        with db.tx() as c:  # its own transaction, so a wrong code still counts toward the limit
+            limited(c, "phone-check:" + num, 8, 900)
+            user = repo.user_by_phone(c, num)
+        bad = err(401, "That code didn't work. Use the newest code we texted, or ask for a new one.", "bad_code")
+        if not user or user["disabled_at"]:
+            raise bad
+        try:
+            ok = app.state.phone.check(num, str(body.get("code") or ""))
+        except phone.PhoneError as e:
+            log.warning(json.dumps({"event": "phone-check-failed", "error": str(e)[:200]}))
+            raise err(502, "We couldn't check the code. Try again in a minute.", "phone_failed")
+        with db.tx() as c:
+            if not ok:
+                repo.audit(c, user["id"], "login-phone-failed", ip)
+                raise bad
+            if mfa.enabled(user):
+                return {"ok": False, "mfa": True, "ticket": mfa.ticket(cfg, user["id"], "phone")}
+            token = repo.create_session(c, user["id"], cfg.session_ttl_days, ip, request.headers.get("user-agent", ""))
+            repo.audit(c, user["id"], "login-phone", ip)
+        set_session_cookie(response, token)
+        return {"ok": True, "user": repo.public_user(user)}
+
+    @app.get("/api/auth/{provider}/start")
+    def oauth_start(provider: str):
+        provider = known_provider(provider)
+        cid, _ = oauth_ready(provider)
         state = secrets.token_urlsafe(24)
-        resp = RedirectResponse(li_auth.authorize_url(cfg.linkedin_client_id, li_redirect_uri(), state), status_code=303)
-        resp.set_cookie(LI_STATE, state, max_age=600, httponly=True, secure=cfg.secure_cookies, samesite="lax", path="/api/auth/linkedin")
+        resp = RedirectResponse(oauth.authorize_url(provider, cid, oauth_redirect_uri(provider), state), status_code=303)
+        resp.set_cookie(oauth_cookie(provider), state, max_age=600, httponly=True, secure=cfg.secure_cookies, samesite="lax", path=f"/api/auth/{provider}")
         return resp
 
-    @app.get("/api/auth/linkedin/callback")
-    def linkedin_callback(request: Request, code: str = "", state: str = "", error: str = ""):
-        def back(msg: str):
-            resp = RedirectResponse(f"/login#error={msg}", status_code=303)
-            resp.delete_cookie(LI_STATE, path="/api/auth/linkedin")
+    @app.get("/api/auth/{provider}/callback")
+    def oauth_callback(provider: str, request: Request, code: str = "", state: str = "", error: str = ""):
+        provider = known_provider(provider)
+        cid, secret = oauth_ready(provider)
+        cookie, path = oauth_cookie(provider), f"/api/auth/{provider}"
+
+        def done(resp):
+            resp.delete_cookie(cookie, path=path)
             return resp
-        if not cfg.linkedin_enabled:
-            raise err(404, "Sign in with LinkedIn isn't set up on this server.", "not_configured")
-        expected = request.cookies.get(LI_STATE, "")
+
+        def back(why: str):
+            return done(RedirectResponse(OAUTH_BACK[provider].get(why) or LOGIN_ERROR.get(why) or "/login", status_code=303))
+        expected = request.cookies.get(cookie, "")
         if error or not code or not expected or not secrets.compare_digest(expected, state):
-            return back("linkedin_cancelled" if error else "linkedin_state")
+            return back("cancelled" if error else "state")
         ip = client_ip(request)
         with db.tx() as c:
-            limited(c, "linkedin:" + security.ip_key(ip), 30, 3600)
+            limited(c, f"{provider}:" + security.ip_key(ip), 30, 3600)
         try:
-            info = li_auth.userinfo(li_auth.exchange(code, li_redirect_uri(), cfg.linkedin_client_id, cfg.linkedin_client_secret))
+            who = oauth.identity(provider, oauth.exchange(provider, code, oauth_redirect_uri(provider), cid, secret))
         except Exception:  # noqa: BLE001  a refused or expired code
-            return back("linkedin_failed")
-        email = security.normalize_email(str(info.get("email") or ""))
-        if not security.valid_email(email) or info.get("email_verified") is False:
-            return back("linkedin_no_email")
-        name = str(info.get("name") or "").strip()[:80]
+            return back("failed")
+        email = security.normalize_email(who["email"])
+        if not security.valid_email(email) or not who["verified"]:
+            return back("no_email")
+        name = who["name"].strip()[:80]
         with db.tx() as c:
             user = repo.user_by_email(c, email)
             if user and user["disabled_at"]:
@@ -669,21 +756,23 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
             if not user:
                 if not cfg.signup_allowed(email):
                     return back("closed")
-                # No password: this account signs in with LinkedIn (or sets one through "Forgot password").
-                uid = repo.create_user(c, email, name, "!linkedin", is_admin=bool(cfg.bootstrap_admin_email) and email == cfg.bootstrap_admin_email)
+                # No password: this account signs in with the provider (or sets one through "Forgot password").
+                uid = repo.create_user(c, email, name, "!" + provider, is_admin=bool(cfg.bootstrap_admin_email) and email == cfg.bootstrap_admin_email)
                 repo.enqueue(c, "match_user", user_id=uid, dedupe_key=f"match:{uid}", max_attempts=3)
-                repo.audit(c, uid, "signup-linkedin", ip)
+                repo.audit(c, uid, f"signup-{provider}", ip)
             else:
                 uid = user["id"]
+                if not user["email_verified_at"]:
+                    # Someone typed this address into the sign-up form but never confirmed it. The provider has now shown
+                    # who owns it, so the password that stranger chose must not open the account.
+                    c.execute("UPDATE users SET password_hash = ? WHERE id = ?", ("!" + provider, uid))
+                    c.execute("DELETE FROM sessions WHERE user_id = ?", (uid,))
             c.execute("UPDATE users SET email_verified_at = COALESCE(email_verified_at, ?), updated_at = ? WHERE id = ?", (now_iso(), now_iso(), uid))
             if user and mfa.enabled(user):
-                resp = RedirectResponse(f"/login#mfa={mfa.ticket(cfg, uid, 'linkedin')}", status_code=303)
-                resp.delete_cookie(LI_STATE, path="/api/auth/linkedin")
-                return resp
+                return done(RedirectResponse(f"/login#mfa={mfa.ticket(cfg, uid, provider)}", status_code=303))
             token = repo.create_session(c, uid, cfg.session_ttl_days, ip, request.headers.get("user-agent", ""))
-            repo.audit(c, uid, "login-linkedin", ip)
-        resp = RedirectResponse("/app", status_code=303)
-        resp.delete_cookie(LI_STATE, path="/api/auth/linkedin")
+            repo.audit(c, uid, f"login-{provider}", ip)
+        resp = done(RedirectResponse("/app", status_code=303))
         set_session_cookie(resp, token)
         return resp
 
@@ -755,7 +844,7 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
             partner_admin = bool(partners.admin_partners(c, p.uid))
         quota = plans.plan_info(cfg, plan)["storageMb"]
         return dict(repo.public_user(p.user), via=p.kind, plan=plan, ai=ai, billing=cfg.billing_enabled,
-                    partner=partners.branding(seat), partnerAdmin=partner_admin, supportEmail=cfg.support_email,
+                    partner=partners.branding(seat), partnerAdmin=partner_admin, supportEmail=cfg.support_email, phoneSignIn=cfg.phone_enabled,
                     storage={"usedBytes": used, "quotaBytes": quota * 1024 * 1024}, jobsSite=cfg.jobs_site_url,
                     feed={"generatedAt": state.get("generatedAt"), "inventory": state.get("records"), "companies": state.get("companies")})
 
@@ -764,6 +853,52 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
         name = str(body.get("name", p.user["name"])).strip()[:80]
         with db.tx() as c:
             c.execute("UPDATE users SET name = ?, updated_at = ? WHERE id = ?", (name, now_iso(), p.uid))
+        return {"ok": True}
+
+    @app.post("/api/me/phone/start")
+    def my_phone_start(request: Request, body: dict = Body(default={}), p: Principal = Depends(session_only)):
+        """Texts a code to the number a signed-in member is adding."""
+        phone_ready()
+        num = phone_number(body)
+        with db.tx() as c:
+            limited(c, "phone-add:" + p.uid, 5, 3600)
+            limited(c, "phone-add-ip:" + security.ip_key(client_ip(request)), 10, 3600)
+            other = repo.user_by_phone(c, num)
+            if other and other["id"] != p.uid:
+                raise err(409, "That number is on another Propelo account.", "phone_taken")
+        try:
+            app.state.phone.send(num)
+        except phone.PhoneError as e:
+            log.warning(json.dumps({"event": "phone-send-failed", "error": str(e)[:200]}))
+            raise err(502, "We couldn't send the code. Check the number and try again.", "phone_failed")
+        return {"ok": True}
+
+    @app.post("/api/me/phone/verify")
+    def my_phone_verify(request: Request, body: dict = Body(default={}), p: Principal = Depends(session_only)):
+        phone_ready()
+        num = phone_number(body)
+        with db.tx() as c:
+            limited(c, "phone-add-check:" + p.uid, 8, 900)
+        try:
+            ok = app.state.phone.check(num, str(body.get("code") or ""))
+        except phone.PhoneError:
+            raise err(502, "We couldn't check the code. Try again in a minute.", "phone_failed")
+        if not ok:
+            raise err(400, "That code didn't work. Use the newest code we texted.", "bad_code")
+        with db.tx() as c:
+            other = repo.user_by_phone(c, num)
+            if other and other["id"] != p.uid:
+                raise err(409, "That number is on another Propelo account.", "phone_taken")
+            c.execute("UPDATE users SET phone = ?, phone_verified_at = ?, updated_at = ? WHERE id = ?", (num, now_iso(), now_iso(), p.uid))
+            repo.audit(c, p.uid, "phone-added", client_ip(request))
+            user = repo.user_by_id(c, p.uid)
+        return {"ok": True, "phone": repo.public_user(user)["phone"]}
+
+    @app.delete("/api/me/phone")
+    def my_phone_remove(request: Request, p: Principal = Depends(session_only)):
+        with db.tx() as c:
+            c.execute("UPDATE users SET phone = NULL, phone_verified_at = NULL, updated_at = ? WHERE id = ?", (now_iso(), p.uid))
+            repo.audit(c, p.uid, "phone-removed", client_ip(request))
         return {"ok": True}
 
     @app.get("/api/me/mfa")
@@ -859,7 +994,7 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
                 "computerKeys": repo.list_api_tokens(c, p.uid),
                 "sessions": c.all("SELECT created_at, last_seen_at, expires_at, revoked_at, user_agent FROM sessions WHERE user_id = ?", (p.uid,)),
                 "securityEvents": c.all("SELECT at, kind, detail FROM audit_events WHERE user_id = ? ORDER BY at", (p.uid,)),
-                "plan": {k: v for k, v in plans.billing_view(c, cfg, p.user).items() if k != "plans"},
+                "plan": {k: v for k, v in plans.billing_view(c, cfg, p.user, member_settings(c, p.uid)).items() if k != "plans"},
                 "aiKey": plans.public_key(c, p.uid),
                 "aiUsage": c.all("SELECT period, hosted, own FROM ai_usage WHERE user_id = ? ORDER BY period", (p.uid,)),
                 "featureUsage": c.all("SELECT period, feature, count FROM feature_usage WHERE user_id = ? ORDER BY period", (p.uid,)),
@@ -869,8 +1004,10 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
 
     @app.post("/api/me/delete")
     def delete_account(response: Response, body: dict = Body(default={}), p: Principal = Depends(session_only)):
-        if str(body.get("confirm", "")) != "DELETE" or not security.verify_password(str(body.get("password", "")), p.user["password_hash"]):
-            raise err(400, "Type DELETE and enter your password to delete your account.", "confirm")
+        # An account made with Google, GitHub or LinkedIn has no password: typing DELETE in a signed-in session is the check.
+        has_password = not str(p.user["password_hash"]).startswith("!")
+        if str(body.get("confirm", "")) != "DELETE" or (has_password and not security.verify_password(str(body.get("password", "")), p.user["password_hash"])):
+            raise err(400, "Type DELETE and enter your password to delete your account." if has_password else "Type DELETE to delete your account.", "confirm")
         with db.tx() as c:
             c.execute("DELETE FROM users WHERE id = ?", (p.uid,))  # cascades to every per-user table
         storage.delete_user(p.uid)
@@ -1409,6 +1546,15 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
     def provider_for(currency: str):
         return app.state.razorpay if currency == "INR" else app.state.dodo
 
+    def member_settings(c, uid: str) -> dict:
+        d = repo.get_doc(c, uid, "settings", "profile")
+        return (d or {}).get("data", d) if isinstance(d, dict) else {}
+
+    def rupees_allowed(c, uid: str) -> bool:
+        """The India plans are for members who live in India and look for work there."""
+        s = plans.subscription(c, uid)
+        return plans.india_mode(member_settings(c, uid)) or bool(s and s["currency"] == "INR")
+
     @app.get("/api/plans")
     def plan_catalog(request: Request):
         return {"plans": plans.catalog(cfg), "addons": plans.addons(cfg), "checkoutEnabled": cfg.billing_enabled, "currency": guess_currency(request),
@@ -1417,7 +1563,7 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
     @app.get("/api/billing")
     def billing(p: Principal = Depends(session_only)):
         with db.tx() as c:
-            return dict(plans.billing_view(c, cfg, p.user), ai=plans.ai_status(c, cfg, p.user),
+            return dict(plans.billing_view(c, cfg, p.user, member_settings(c, p.uid)), ai=plans.ai_status(c, cfg, p.user),
                         features=plans.feature_usage(c, cfg, p.uid, plans.plan_of(c, p.user)), **{"pass": passes.view(c, cfg, p.user)})
 
     @app.post("/api/billing/pass")
@@ -1428,6 +1574,8 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
             raise err(400, "Pay in INR or USD.", "bad_currency")
         with db.tx() as c:
             limited(c, f"checkout:{p.uid}", 10, 3600)
+            if currency == "INR" and not rupees_allowed(c, p.uid):
+                raise err(400, "Rupee prices are for members who live in India and look for work there.", "inr_not_for_you")
             why = "Passes aren't on sale right now." if not cfg.pass_enabled else passes.can_buy(c, p.user)
         if why:
             raise err(409 if cfg.pass_enabled else 503, why, "pass_unavailable")
@@ -1461,6 +1609,9 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
             raise err(503, f"Payments in {currency} aren't switched on yet.{hint}", "billing_off")
         with db.tx() as c:
             limited(c, f"checkout:{p.uid}", 10, 3600)
+            if currency == "INR" and not rupees_allowed(c, p.uid):
+                raise err(400, "Rupee prices are for members who live in India and look for work there. Pay in dollars, "
+                               "or set where you want to work to India in Settings.", "inr_not_for_you")
             s = plans.subscription(c, p.uid)
             current = plans.plan_of(c, p.user) if not p.user.get("is_admin") else plans._paid_plan(s)
             if current == plan and not (s and (s["status"] == "cancelled" or s["cancel_at_period_end"])):
@@ -1495,7 +1646,7 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
                 c.execute("UPDATE subscriptions SET cancel_at_period_end = 1, pending_plan = NULL, pending_provider = NULL, "
                           "pending_sub_id = NULL, updated_at = ? WHERE user_id = ?", (now_iso(), p.uid))
             repo.audit(c, p.uid, "plan-cancelled", client_ip(request), {"provider": s["provider"], "plan": s["plan"]})
-            return plans.billing_view(c, cfg, p.user)
+            return plans.billing_view(c, cfg, p.user, member_settings(c, p.uid))
 
     @app.post("/api/billing/portal")
     async def billing_portal(request: Request, p: Principal = Depends(session_only)):
@@ -2377,7 +2528,7 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
                 ok, why = plans.take_feature(c, cfg, p.uid, plan, feature)
                 if not ok:
                     raise err(402, why, "plan_limit")
-                limit = plans.plan_info(cfg, plan)["aiCredits"]
+                limit = plans.ai_limit(c, cfg, p.user, plan)
                 if not plans.take_credit(c, p.uid, "hosted", limit):
                     hint = "Upgrade to Pro or add your own key in Settings." if plan == "free" else "Add your own key in Settings to keep going."
                     raise err(402, f"You've used this month's {limit} AI actions. {hint}", "ai_quota")
@@ -2452,7 +2603,7 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
             return {"id": u["id"], "email": u["email"], "name": u["name"], "createdAt": u["created_at"], "lastLoginAt": u["last_login_at"],
                     "verified": bool(u["email_verified_at"]), "disabled": bool(u["disabled_at"]), "isAdmin": bool(u["is_admin"]),
                     "isStaff": bool(u.get("is_staff")), "mfa": mfa.enabled(u), "plan": plans.plan_of(c, u), "sessions": sessions,
-                    "partner": partners.branding(seat), "signIn": "LinkedIn only" if str(u["password_hash"]).startswith("!") else "password"}
+                    "partner": partners.branding(seat), "signIn": (oauth.PROVIDERS[str(u["password_hash"])[1:]].label + " only" if str(u["password_hash"])[1:] in oauth.PROVIDERS else "no password") if str(u["password_hash"]).startswith("!") else "password"}
 
     @app.post("/api/admin/disable")
     def admin_disable(request: Request, body: dict = Body(...), p: Principal = Depends(admin_only)):

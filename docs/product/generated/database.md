@@ -6,7 +6,7 @@ Generated from `propelo/cloud/migrations/*.sql`. Do not edit by hand.
 
 ## users
 
-`id`, `email`, `name`, `password_hash`, `email_verified_at`, `is_admin`, `disabled_at`, `created_at`, `updated_at`, `last_login_at`, `password_changed_at`, `is_staff (0005_concierge)`, `mfa_secret (0011_mfa)`, `mfa_enabled_at (0011_mfa)`, `mfa_recovery (0011_mfa)`, `mfa_last_step (0011_mfa)`, `signup_source (0013_growth)`
+`id`, `email`, `name`, `password_hash`, `email_verified_at`, `is_admin`, `disabled_at`, `created_at`, `updated_at`, `last_login_at`, `password_changed_at`, `is_staff (0005_concierge)`, `mfa_secret (0011_mfa)`, `mfa_enabled_at (0011_mfa)`, `mfa_recovery (0011_mfa)`, `mfa_last_step (0011_mfa)`, `signup_source (0013_growth)`, `phone (0016_phone)`, `phone_verified_at (0016_phone)`
 
 ## sessions
 

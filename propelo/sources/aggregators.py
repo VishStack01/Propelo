@@ -220,6 +220,25 @@ def hn_who_is_hiring() -> list[Job]:
     return out
 
 
+# Arbeitnow runs one site per country; the address says which. Its own .com site is German.
+_ARBEITNOW_TLD = {"com": "Germany", "de": "Germany", "fr": "France", "nl": "Netherlands", "es": "Spain", "it": "Italy",
+                  "at": "Austria", "ch": "Switzerland", "be": "Belgium", "pl": "Poland", "pt": "Portugal", "ie": "Ireland"}
+
+
+def arbeitnow_location(where: str, url: str) -> str:
+    """The posting's place with its country. A place that already names a country keeps it ("paris, Île-de-France,
+    France" stays French); otherwise the country of the Arbeitnow site the posting is on is added."""
+    from .. import countries
+    where = where.strip()
+    if where and countries.resolve(where):
+        return where
+    m = re.match(r"https?://(?:www\.)?arbeitnow\.([a-z.]+)/", url or "")
+    country = _ARBEITNOW_TLD.get(m.group(1)) if m else None
+    if not country:
+        return where
+    return f"{where}, {country}" if where else country
+
+
 def arbeitnow(pages: int = 3) -> list[Job]:
     out = []
     for page in range(1, pages + 1):
@@ -229,10 +248,10 @@ def arbeitnow(pages: int = 3) -> list[Job]:
             if it.get("remote"):
                 out.append(_remote_job(it.get("company_name"), it.get("title"), it.get("url"), "Arbeitnow", it.get("location") or "",
                                        text, _epoch(it.get("created_at")), "", it.get("slug")))
-            else:  # on-site roles in Germany: kept by the scan only when it covers on-site roles worldwide
+            else:  # on-site roles: kept by the scan only when it covers on-site roles worldwide
                 where = (it.get("location") or "").strip()
                 out.append(Job(company=(it.get("company_name") or "").strip(), title=(it.get("title") or "").strip(), url=it.get("url") or "",
-                               source="Arbeitnow", location=f"{where}, Germany" if where and "germany" not in where.lower() else (where or "Germany"),
+                               source="Arbeitnow", location=arbeitnow_location(where, it.get("url") or ""),
                                work_mode="", description=text, posted_at=_epoch(it.get("created_at")), req_id=str(it.get("slug") or "")))
         if not (data.get("links") or {}).get("next"):
             break

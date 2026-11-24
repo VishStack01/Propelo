@@ -201,7 +201,7 @@ def _gate_location_elsewhere(job: Job, s: Settings) -> tuple[Check, str]:
 
 def gate_location(job: Job, s: Settings) -> tuple[Check, str]:
     p = s.location
-    if (p.home or "IN") != "IN":
+    if p.by_places:
         return _gate_location_elsewhere(job, s)
     mode = job.work_mode
     where = geo.classify(job.location)
@@ -283,12 +283,12 @@ def gate_pay(job: Job, s: Settings) -> tuple[Check, extract.Salary | None]:
 _REGION_LOC = {"remote-global": "remote-open", "remote-india": "remote-india", "south-india": "india"}
 
 
-def gate_work_auth(job: Job, region: str, home: str = "IN") -> Check:
+def gate_work_auth(job: Job, region: str, home: str = "IN", by_places: bool = False) -> Check:
     """Citizenship, security clearance or local work authorization for a country other than where the
     person lives rules a role out, however well it fits."""
     f = _facts(job)
     wa = (f.get("workAuth") or {}) if f is not None and "loc" in f else signals.work_authorization(job.description)
-    if (home or "IN") != "IN":
+    if (home or "IN") != "IN" or by_places:
         if not wa:
             return Check("Work authorization", True, "No restriction stated")
         needs = countries.named(wa.get("country") or "")
@@ -319,7 +319,10 @@ def gate_sponsorship(job: Job, region: str, s: Settings) -> Check | None:
     if not s.needs_sponsorship:
         return None
     f = _facts(job)
-    if (s.location.home or "IN") != "IN":
+    if s.location.elsewhere:
+        # Living in India, looking abroad: an office role in a chosen country needs a visa; remote work from India does not.
+        on_site_abroad = region == "local" and "IN" not in countries.resolve(job.location or "")
+    elif (s.location.home or "IN") != "IN":
         # Someone on a visa where they live needs sponsorship for any role based there, in an office or remote.
         on_site_abroad = region in ("local", "remote-local")
     else:
@@ -359,7 +362,7 @@ def evaluate(job: Job, s: Settings, now: datetime | None = None) -> Decision:
     checks += [fresh, gate_open(job, now.date())]
     loc, region = gate_location(job, s)
     pay, sal = gate_pay(job, s)
-    checks += [loc, gate_work_auth(job, region, s.location.home), pay, gate_dealbreakers(job, s)]
+    checks += [loc, gate_work_auth(job, region, s.location.home, s.location.by_places), pay, gate_dealbreakers(job, s)]
     visa = gate_sponsorship(job, region, s)
     if visa is not None:
         checks.append(visa)

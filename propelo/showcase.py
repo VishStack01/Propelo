@@ -112,7 +112,7 @@ def roles(records: list[dict], logos: dict[str, str], now: datetime, k: int = 5)
                        "pay": f.get("salaryQuote") or "", "whereQuote": f.get("locQuote") or ""})
         if len(picked) >= k:
             break
-    order = {"india": 0, "remote": 1, "abroad": 2}  # India first, then remote, then the rest of the world
+    order = {"abroad": 0, "remote": 1, "india": 2}  # the rest of the world first, then remote, then India
     return sorted(picked, key=lambda x: order[x["kind"]])
 
 
@@ -131,7 +131,7 @@ def strip_html(tops: list[dict], openings: int) -> str:
                     f'<b>{html.escape(t["name"])}</b><small>{t["count"]:,} open {"role" if t["count"] == 1 else "roles"}</small></a>' for t in tops)
     return (f'<section id="companies" class="trust"><div class="wrap"><div class="pills reveal"><span class="pill">Hiring now</span>'
             f'<span class="pill">From their own career pages</span></div>'
-            f'<h2 class="lede" style="margin-top:28px">Open roles right now at companies like these, in India and around the world.</h2>'
+            f'<h2 class="lede" style="margin-top:28px">Open roles right now at companies like these, around the world.</h2>'
             f'<div class="tgrid reveal">{items}</div>'
             f'<p class="fine">Counts from the last scan of {openings:,} open roles. Logos belong to their companies and link to their roles on the '
             f'job board; Propelo isn\'t affiliated with them.</p></div></section>')

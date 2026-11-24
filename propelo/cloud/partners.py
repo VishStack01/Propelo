@@ -469,10 +469,11 @@ PILOT_DAYS = 30
 PILOT_SEATS = 25
 # Prices in minor units (paise, cents). Prepaid for 30 days; nothing renews by itself.
 BUSINESS_PLANS = {
-    "consultancy-starter": {"kind": "consultancy", "name": "Starter Pack", "seats": 25, "INR": 1_499_900, "USD": 15_900},
-    "consultancy-growth": {"kind": "consultancy", "name": "Growth", "seats": 50, "INR": 2_999_900, "USD": 31_900},
-    "consultancy-plus": {"kind": "consultancy", "name": "Plus Pack", "seats": 100, "INR": 4_499_900, "USD": 47_900},
-    "agency-feed": {"kind": "agency", "name": "Agency roles feed", "seats": 0, "INR": 499_900, "USD": 9_900},
+    # Rupee prices match the dollar prices (at about ₹88 to the dollar): every seat carries the global Pro allowance.
+    "consultancy-starter": {"kind": "consultancy", "name": "Starter Pack", "seats": 25, "INR": 2_859_900, "USD": 32_500},
+    "consultancy-growth": {"kind": "consultancy", "name": "Growth", "seats": 50, "INR": 5_499_900, "USD": 62_500},
+    "consultancy-plus": {"kind": "consultancy", "name": "Plus Pack", "seats": 100, "INR": 10_779_900, "USD": 122_500},
+    "agency-feed": {"kind": "agency", "name": "Agency roles feed", "seats": 0, "INR": 869_900, "USD": 9_900},
 }
 
 

@@ -26,6 +26,14 @@ class LocationPolicy:
     home: str = "IN"
     places: list = field(default_factory=list)
     remote_ok: bool = True
+    # Someone living in India who wants to work in another country: the same rules as a member abroad
+    # (on-site roles in `places`, remote roles open to India), instead of the India regions above.
+    elsewhere: bool = False
+
+    @property
+    def by_places(self) -> bool:
+        """True when roles are judged against `places` and `home`, not against the India regions."""
+        return (self.home or "IN") != "IN" or self.elsewhere
 
 
 @dataclass
