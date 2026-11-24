@@ -11,30 +11,73 @@ rewrites anything itself.
 
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import asdict, dataclass
+from pathlib import Path
 
-# (pattern, why, what to do instead)
-PHRASES = [
-    (r"\bI am writing to (express|apply|convey)\b", "a stock opener", "open with their problem or your proof point"),
-    (r"\b(I am|I'm) (excited|thrilled|delighted) to apply\b", "a stock opener", "say what you'd work on there"),
-    (r"\bI believe I (would be|am) a (great|perfect|strong|good) fit\b", "a claim with no proof", "show the fit with one result"),
-    (r"\bperfect (fit|match|candidate)\b", "a claim with no proof", "show the fit with one result"),
-    (r"\bpassionate about\b", "filler", "name what you built"),
-    (r"\bresults[- ]driven\b|\bdetail[- ]oriented\b|\bself[- ]starter\b|\bgo[- ]getter\b|\bteam player\b|\bhard[- ]working\b", "an unprovable adjective", "replace it with something you did"),
-    (r"\bfast[- ]paced (environment|world|team)\b", "filler", "cut it"),
-    (r"\b(think|thinking) outside the box\b|\bhit the ground running\b|\bgame[- ]changer\b|\bmove the needle\b", "a cliché", "say it plainly"),
-    (r"\bleverag(e|ed|es|ing)\b", "jargon", "use 'use'"),
-    (r"\bspearhead(ed|ing|s)?\b", "jargon", "use 'led' or 'started'"),
-    (r"\bsynerg(y|ies|istic)\b", "jargon", "cut it"),
-    (r"\bcutting[- ]edge\b|\bstate[- ]of[- ]the[- ]art\b|\bworld[- ]class\b|\bbest[- ]in[- ]class\b", "hype", "name the actual thing"),
-    (r"\bdelve\b|\btapestry\b|\btestament to\b|\bin today's (fast[- ]paced|digital|ever[- ]changing)\b|\bever[- ]evolving\b|\bnavigat(e|ing) the complexities\b",
-     "sounds machine-written", "rewrite it in your own words"),
-    (r"\bseamless(ly)?\b|\brobust\b|\bsynergize\b|\bholistic\b", "vague", "say what it does or how well"),
-    (r"\bresponsible for\b", "describes a duty, not a result", "say what you did and what changed"),
-    (r"\bThank you for (your time and )?consideration\b", "a stock closer", "end with one clear ask"),
-    (r"\bI look forward to hearing from you\b", "a stock closer", "end with one clear ask"),
-]
+# 142 phrases that make writing sound machine-made or empty, each with why and what to do instead. Some have a safe
+# plain replacement ("spearheaded" -> "led", "utilised" -> "used") or are a word that can simply go ("robust",
+# "successfully"); clean() applies those to AI drafts. The dashboard runs the same rules (scripts/sync_slop_rules.py).
+RULES = json.loads((Path(__file__).parent / "data" / "slop_rules.json").read_text(encoding="utf-8"))["rules"]
+_FLAGS = re.IGNORECASE | re.MULTILINE
+
+
+def _find_rx(r: dict) -> re.Pattern:
+    return re.compile(r["pattern"] if "pattern" in r else r"\b" + re.escape(r["delete"]) + r"\b", _FLAGS)
+
+
+for _r in RULES:
+    _r["_find"] = _find_rx(_r)
+    if "delete" in _r:
+        # The word, with an "a"/"an" before it and the first letter of the next word, so both can be put right.
+        _r["_del"] = re.compile(r"(?:\b(an?)\s+)?\b" + re.escape(_r["delete"]) + r"\s+([A-Za-z])(?=([A-Za-z]*))", _FLAGS)
+
+# Kept for callers that list the phrases: (pattern, why, instead).
+PHRASES = [(r["_find"].pattern, r["why"], r["instead"]) for r in RULES]
+
+_CONSONANT_SOUND = re.compile(r"^(uni|use|usa|usu|uti|ure|uro|one|once|eu|ewe)", re.I)
+_SILENT_H = re.compile(r"^(hour|honest|honou?r|heir)", re.I)
+_VOWEL_LETTER_NAME = set("AEFHILMNORSX")
+
+
+def article(word: str) -> str:
+    """'a' or 'an' for the word that follows, by sound: an API, a GPU, an hour, a user."""
+    if len(word) > 1 and word.isupper():
+        return "an" if word[0] in _VOWEL_LETTER_NAME else "a"
+    if _SILENT_H.match(word):
+        return "an"
+    if word[:1].lower() in "aeiou" and not _CONSONANT_SOUND.match(word):
+        return "an"
+    return "a"
+
+
+def clean(text: str) -> tuple[str, list[dict]]:
+    """Apply the safe fixes to a draft. Returns (new text, [{"from", "to"}]). Never adds a fact; only swaps a word for
+    a plainer one or drops an empty one."""
+    fixed: list[dict] = []
+    text = text or ""
+    for r in RULES:
+        if "fix" in r:
+            def swap(m: re.Match, r=r) -> str:
+                out, was = r["fix"], m.group(0)
+                if was.lstrip()[:1].isupper() and out[:1].isalpha():
+                    out = out[:1].upper() + out[1:]
+                fixed.append({"from": was.strip(), "to": out.strip()})
+                return out
+            text = r["_find"].sub(swap, text)
+        elif "delete" in r:
+            def drop(m: re.Match, r=r) -> str:
+                art, first, rest = m.group(1), m.group(2), m.group(3)
+                fixed.append({"from": r["delete"], "to": ""})
+                if art:
+                    a = article(first + rest)
+                    return (a[:1].upper() + a[1:] if art[:1].isupper() else a) + " " + first
+                return first.upper() if m.group(0)[:1].isupper() else first
+            text = r["_del"].sub(drop, text)
+    text = re.sub(r",\s*,", ",", text)
+    text = re.sub(r"^, *", "", text, flags=re.MULTILINE)
+    return text, fixed
 
 
 @dataclass
@@ -51,11 +94,12 @@ class Finding:
 def check(text: str, banned: list[str] | None = None) -> list[Finding]:
     out: list[Finding] = []
     lines = (text or "").splitlines() or [""]
-    rules = list(PHRASES) + [(rf"\b{re.escape(w)}\w*\b", "on your banned-words list", "use your own word") for w in (banned or []) if w.strip()]
+    rules = [(r["_find"], r["why"], r["instead"]) for r in RULES if r.get("pattern") != r"\s*—\s*"]
+    rules += [(re.compile(rf"\b{re.escape(w)}\w*\b", re.I), "on your banned-words list", "use your own word") for w in (banned or []) if w.strip()]
     for n, line in enumerate(lines, 1):
         spans: list[tuple[int, int]] = []
         for rx, why, instead in rules:
-            for m in re.finditer(rx, line, re.I):
+            for m in rx.finditer(line):
                 if any(a <= m.start() and m.end() <= b for a, b in spans):
                     continue  # already flagged as part of a longer phrase
                 spans.append(m.span())
