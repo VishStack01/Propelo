@@ -114,6 +114,111 @@ def agency(text: str) -> str:
     return quote_around(text, *m.span()) if m else ""
 
 
+# ---------------------------------------------------------------- languages other than English
+
+LANGUAGES = ("Dutch", "German", "French", "Spanish", "Italian", "Portuguese", "Polish", "Swedish", "Danish", "Norwegian",
+             "Finnish", "Irish", "Japanese", "Mandarin", "Cantonese", "Korean", "Arabic", "Turkish", "Russian", "Czech",
+             "Hungarian", "Romanian", "Greek", "Hebrew", "Flemish")
+_LANG = r"(?P<{g}>" + "|".join(LANGUAGES) + r")"
+_BOTH = r"(?:English\s*(?:and|&|,)\s*)?"  # "fluent in English and Dutch"
+_SPOKEN = r"(?:(?:written and (?:spoken|verbal)|spoken and written|verbal and written|written|spoken)\s+)?"
+_REQUIRED = re.compile(
+    # "fluent Dutch", "fluent in German", "native French speaker", "C1 Dutch", "proficiency in Spanish"
+    r"\b(?:fluent|fluency|fluently|native|mother[- ]tongue|proficient|proficiency|business[- ]fluent|C1|C2)\s+(?:(?:in|level|speaker of)\s+)?" + _SPOKEN + _BOTH + _LANG.format(g="l1") + r"\b"
+    # "excellent command of German", "strong written and verbal communication skills in English and Dutch"
+    r"|\b(?:excellent|strong|very good|good|full|working|advanced|professional|business[- ]level|solid|outstanding)\s+(?:[\w-]+\s+){0,4}?"
+    r"(?:command|knowledge|skills|level|proficiency|understanding)\s+(?:of|in)\s+(?:the\s+)?" + _SPOKEN + _BOTH + _LANG.format(g="l2") + r"\b"
+    # "excellent Dutch language skills", "good written German"
+    r"|\b(?:excellent|strong|very good|good|full|working|advanced|professional|business[- ]level|solid|outstanding)\s+" + _SPOKEN + _BOTH + _LANG.format(g="l3") +
+    r"\s+(?:language\s+)?(?:skills|knowledge|proficiency|communication)\b"
+    # "Dutch is required", "German language skills are essential", "French (mandatory)"
+    r"|\b" + _LANG.format(g="l4") + r"(?:\s*(?:and|&)\s*English)?\s+(?:\(\s*)?(?:language\s+)?(?:skills\s+)?(?:is\s+|are\s+)?(?:required|essential|mandatory|a must|a requirement)\b"
+    # "Dutch is a plus", "knowledge of German would be an advantage"
+    r"|\b" + _LANG.format(g="l6") + r"\s+(?:language\s+)?(?:skills\s+)?(?:is|are|would be|will be)\s+(?:a\s+|an\s+)?(?:big\s+|real\s+)?(?:plus|bonus|advantage|asset|nice[- ]to[- ]have)\b"
+    # "you speak Dutch", "speaking fluent German"
+    r"|\bspeak(?:s|ing)?\s+(?:fluent\s+|native[- ]level\s+|fluently\s+)?" + _BOTH + _LANG.format(g="l5") + r"\b(?!\s+(?:customers|clients|users|markets?|speakers))"
+    # The same requirement written in Dutch.
+    r"|\b(?:vloeiend|goed|uitstekend)\s+(?:\w+\s+){0,2}?(?P<n1>Nederlands)\b|\bbeheersing van (?:de |het )?(?P<n2>Nederlands|Nederlandse taal)\b"
+    r"|\b(?P<n3>Nederlands)(?:e taal)? (?:is )?(?:een )?(?:vereist|vereiste|must|pré)\b|\bje spreekt (?:\w+ ){0,2}?(?P<n4>Nederlands)\b",
+    re.I)
+# A role named for the language it is done in: "German Speaking Customer Support Agent". Read in the title only:
+# in a description the same words usually describe the customers.
+_TITLE_LANG = re.compile(r"\b" + _LANG.format(g="t") + r"[- ]speak(?:ing|er)\b|\(\s*" + _LANG.format(g="u") + r"\s*\)|\b(?:fluent|native)\s+" + _LANG.format(g="v") + r"\b", re.I)
+_PLUS = re.compile(r"\b(?:a plus|plus\b|a bonus|bonus|an advantage|advantageous|nice[- ]to[- ]have|desirable|desired|preferred|beneficial|helpful|"
+                   r"welcome|not required|not essential|not necessary|not a must|pré)\b", re.I)
+_NOT_NEEDED = re.compile(
+    r"\b(?:no|without(?: any)?)\s+" + _LANG.format(g="l1") + r"\s+(?:language\s+)?(?:skills\s+)?(?:is\s+)?(?:required|needed|necessary)\b"
+    r"|\b" + _LANG.format(g="l2") + r"\s+(?:language\s+)?(?:skills\s+)?(?:is|are)\s+not\s+(?:required|needed|necessary|a requirement|mandatory)\b"
+    r"|\b(?:don't|do not|doesn't|does not|no|without the) need to (?:speak|know)\s+" + _LANG.format(g="l3") + r"\b"
+    r"|\b(?:you\s+)?(?:don't|do not)\s+(?:have to\s+)?(?:speak|know)\s+" + _LANG.format(g="l4") + r"\b",
+    re.I)
+# Words that are frequent in one language and rare in English, to tell a posting written in that language.
+_STOP = {
+    "Dutch": {"het", "een", "van", "je", "jij", "jouw", "wij", "onze", "zijn", "voor", "met", "naar", "bij", "ook", "niet", "wordt", "worden",
+              "hebben", "ervaring", "werkzaamheden", "functie", "vacature", "bent", "deze", "zich", "kun", "kunt", "jaar", "wat", "heb", "hebt", "binnen"},
+    "German": {"und", "der", "die", "das", "mit", "für", "wir", "sie", "ist", "nicht", "auf", "bei", "eine", "einer", "zu", "von", "ihre", "deine",
+               "du", "dich", "dein", "unsere", "unser", "werden", "sind", "bist", "erfahrung", "kenntnisse"},
+    "French": {"et", "les", "des", "une", "vous", "nous", "pour", "avec", "est", "dans", "sur", "votre", "notre", "du", "au", "aux", "sont",
+               "être", "poste", "expérience", "connaissances", "équipe"},
+}
+_EN = {"the", "and", "to", "of", "a", "in", "you", "we", "our", "for", "with", "is", "are", "will", "be", "your", "on", "as", "this", "that",
+       "have", "an", "or", "at", "by", "from", "experience", "team", "work"}
+_WORD = re.compile(r"[a-zà-ÿ]+", re.I)
+
+
+def written_in(text: str) -> str:
+    """The language a posting is written in, when it clearly isn't English: "Dutch", "German", "French" or ""."""
+    words = [w.lower() for w in _WORD.findall(text or "")[:1500]]
+    if len(words) < 40:
+        return ""
+    en = sum(1 for w in words if w in _EN)
+    best, n = "", 0
+    for lang, stop in _STOP.items():
+        k = sum(1 for w in words if w in stop)
+        if k > n:
+            best, n = lang, k
+    return best if n >= 12 and n > 1.5 * en else ""
+
+
+def _lang_of(m: re.Match) -> str:
+    raw = next((v for v in m.groupdict().values() if v), "")
+    return "Dutch" if raw.lower().startswith("nederland") or raw.lower() == "flemish" else raw.title()
+
+
+def language_need(text: str, title: str = "") -> dict:
+    """What the posting asks of a language other than English: {"lang", "need", "quote"}, need one of
+    "required" (asked for in so many words), "posting" (the posting itself is written in it), "plus" (welcome,
+    not required) or "not-needed" (says you don't need it). {} when it names none."""
+    text, title = text or "", title or ""
+    m = _NOT_NEEDED.search(text)
+    if m:
+        return {"lang": _lang_of(m), "need": "not-needed", "quote": quote_around(text, *m.span())}
+    m = _TITLE_LANG.search(title)
+    if m and _lang_of(m) != "Irish":
+        return {"lang": _lang_of(m), "need": "required", "quote": title}
+    plus = None
+    for m in _REQUIRED.finditer(text):
+        lang = _lang_of(m)
+        # The rest of the same clause, either side: "Fluent Dutch is a must; German is a plus" has two.
+        after = re.split(r"[.;\n•|]", text[m.end():m.end() + 60], maxsplit=1)[0]
+        before = re.split(r"[.;\n•|]", text[max(0, m.start() - 40):m.start()])[-1]
+        found = {"lang": lang, "need": "plus" if _PLUS.search(m.group(0) + " " + after + " " + before) else "required", "quote": quote_around(text, *m.span())}
+        if found["need"] == "required":
+            return found
+        plus = plus or found
+    lang = written_in(text)
+    if lang:
+        return {"lang": lang, "need": "posting", "quote": quote_around(text, 0, min(len(text), 80))}
+    return plus or {}
+
+
+def speaks(lang: str, languages) -> bool:
+    """True when `lang` is among the languages the person works in. Flemish is Dutch."""
+    want = {"flemish": "dutch"}.get(lang.lower(), lang.lower())
+    return any({"flemish": "dutch", "nederlands": "dutch", "deutsch": "german", "français": "french", "francais": "french"}.get(
+        str(x).strip().lower(), str(x).strip().lower()) == want for x in languages or [])
+
+
 # ---------------------------------------------------------------- archetypes
 
 ARCHETYPES = [

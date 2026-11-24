@@ -129,3 +129,38 @@ def test_gate_for_someone_on_a_uk_visa_uses_the_register():
         d = evaluate(j, s, now=now)
         vs = [c for c in d.checks if c.gate == "Visa sponsorship"]
         assert vs and vs[0].passed is ok, (company, [c.to_dict() for c in d.checks])
+
+
+def test_euro_salaries_monthly_and_yearly():
+    assert sponsors.euro_salary("Salary: €3.500 - €4.500 bruto per maand") == {"amount": 4500, "per": "month", "quote": "Salary: €3.500 - €4.500 bruto per maand"}
+    assert sponsors.euro_salary("€45,000 - €55,000 per year")["amount"] == 55000
+    assert sponsors.euro_salary("EUR 38k")["amount"] == 38000
+    assert sponsors.euro_salary("€14.50 per hour") == {} and sponsors.euro_salary("no pay given") == {}
+
+
+def test_irish_permit_minimums():
+    line = sponsors.ie_salary_line
+    assert line("€45,000 - €55,000 per year")["status"] == "csep"
+    assert line("€38,000 a year")["status"] == "csep-graduate"
+    assert line("€36,700 per annum")["status"] == "gep"
+    assert line("Salary €35,000")["status"] == "gep-graduate"
+    assert line("€30,000")["status"] == "below"
+
+
+def test_dutch_highly_skilled_migrant_criteria():
+    line = sponsors.nl_salary_line
+    assert line("€6.000 bruto per maand")["status"] == "30plus"
+    assert line("€3.500 - €4.500 per month")["status"] == "under30"
+    assert line("€3.200 per maand")["status"] == "reduced"
+    low = line("€2.800,- per maand")
+    assert low["status"] == "below" and not low["fromYear"]
+    year = line("€48,000 per year")
+    assert year["status"] == "reduced" and year["amount"] == 4000 and year["fromYear"]
+
+
+def test_visa_facts_and_label_for_ireland_and_the_netherlands():
+    ie = sponsors.visa_facts("Acme", "Dublin, Ireland", "We pay €45,000 a year.")
+    assert ie["ieSalary"]["status"] == "csep" and "Critical Skills" in sponsors.label(ie)
+    nl = sponsors.visa_facts("Acme", "Amsterdam, Netherlands", "", "€3.500 - €4.500 per month")
+    assert nl["nlSalary"]["status"] == "under30" and "under-30s" in sponsors.label(nl)
+    assert "ieSalary" not in sponsors.visa_facts("Acme", "London, United Kingdom", "€45,000")

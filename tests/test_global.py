@@ -230,3 +230,17 @@ def test_arbeitnow_places_keep_their_own_country():
     assert arbeitnow_location("Berlin", "https://www.arbeitnow.com/jobs/x") == "Berlin"
     assert arbeitnow_location("", "https://www.arbeitnow.com/jobs/x") == "Germany"
     assert arbeitnow_location("Somewhere", "https://example.com/jobs/x") == "Somewhere"
+
+
+def test_pay_below_irish_or_dutch_permit_minimums_is_skipped_for_someone_who_needs_a_visa():
+    doc = {"homeCountry": "IN", "workAbroad": True, "places": "Ireland, Netherlands", "targetRoles": ["backend"], "needsSponsorship": True}
+    s = feed.settings_from_dashboard(doc)
+    low_ie = gates.gate_sponsorship(_job(location="Dublin, Ireland", mode="onsite", desc="Salary €30,000 a year."), "local", s)
+    assert low_ie is not None and not low_ie.passed and "Irish employment permit" in low_ie.value and "€30,000" in low_ie.quote
+    ok_ie = gates.gate_sponsorship(_job(location="Dublin, Ireland", mode="onsite", desc="Salary €45,000 a year."), "local", s)
+    assert ok_ie.passed and "Critical Skills" in ok_ie.value
+    low_nl = gates.gate_sponsorship(_job(location="Amsterdam, Netherlands", mode="onsite", desc="€2.800 bruto per maand."), "local", s)
+    assert low_nl is not None and not low_nl.passed and "highly skilled migrant" in low_nl.value
+    # An annual Dutch figure may include holiday pay, so it is shown but never used to skip.
+    year_nl = gates.gate_sponsorship(_job(location="Amsterdam, Netherlands", mode="onsite", desc="€30,000 per year."), "local", s)
+    assert year_nl.passed
