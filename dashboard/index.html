@@ -1281,6 +1281,15 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
 .card.anyjob .btn.btn.btn{background:#151515;color:#FAF3E6;box-shadow:none;border-color:#151515;padding:12px 22px;font-size:15px}
 .card.anyjob .btn.btn.btn:hover{background:#151515;box-shadow:none;opacity:.9}
 @media (max-width:900px){.sources{font-size:16px;margin:16px 0 28px;padding:14px 0}}
+/* Page titles read the same on every tab: the highlighted word, no icon beside it */
+.phead h1 > svg{display:none}
+/* "Found a job somewhere else?" is a quiet card: colour stays with the best fit and the four tiles */
+.card.anyjob{background:var(--panel);box-shadow:inset 0 0 0 1px var(--line);color:var(--ink);border-radius:var(--r-xl);padding:clamp(22px,3vw,34px)}
+.card.anyjob .chead{margin-bottom:0}
+.card.anyjob h2{color:var(--ink);font-size:clamp(22px,2.4vw,28px);font-weight:500;letter-spacing:-.02em}.card.anyjob .muted{color:var(--ink-2)}
+.card.anyjob .btn.btn.btn{background:var(--btn);color:var(--btn-ink);border-color:var(--btn);padding:10px 18px;font-size:14px}
+.vclock{margin-top:22px}
+.vclock.empty-clock .chead{margin-bottom:0;align-items:center}
 /* Visa-Clock: the count is a note pinned to the board; its paper is the urgency (lilac, then yellow, then pink) */
 .vclock{display:grid;grid-template-columns:minmax(170px,212px) minmax(0,1fr);gap:clamp(20px,3vw,36px);align-items:start}
 .vclock.empty-clock{display:block}
@@ -1308,7 +1317,7 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
 .vc-src a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--pink);text-underline-offset:3px}
 #vc-top:empty{display:none}
 .vcpill{display:inline-flex;align-items:center;gap:5px;border:0;border-radius:999px;padding:5px 11px;margin-right:10px;font:inherit;font-size:13px;background:var(--lav);color:var(--on-pastel);cursor:pointer;white-space:nowrap}
-.vcpill b{font-weight:600;font-variant-numeric:tabular-nums}
+.topbar .vcpill b,.vcpill b{font-weight:600;font-variant-numeric:tabular-nums;color:inherit}
 .vcpill.t-soon{background:var(--yellow)} .vcpill.t-urgent,.vcpill.t-over{background:var(--pink)}
 .vfields{gap:12px} .vfields:empty{display:none} .vf-check{align-self:end;min-height:44px;align-items:center}
 @media (max-width:720px){.vclock{grid-template-columns:1fr;gap:20px}.vc-note{max-width:250px;margin-left:4px}}
@@ -1353,7 +1362,12 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
     "AI Engineer",
     "Data Scientist",
     "ML Engineer"
-   ]
+   ],
+   "visa": {
+    "status": "uk-graduate",
+    "permitEnd": "2027-09-30"
+   },
+   "jobMode": "career"
   },
   "inboxCheck": {
    "lastCheckedAtHoursAgo": 2,
@@ -2297,7 +2311,8 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
    "status": "done"
   }
  }
-}</script>
+}
+</script>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <symbol id="s-mark" viewBox="0 0 100 100"><circle cx="34" cy="20" r="11"/><path d="M14 86 C14 58 30 44 52 44 L52 60 C38 60 30 70 30 86 Z"/><path d="M48 30 L86 30 L86 68 L72 68 L72 54 L56 70 L46 60 L62 44 L48 44 Z"/></symbol>
   <symbol id="s-heart" viewBox="0 0 100 100"><path d="M50 92 C22 72 2 54 2 32 C2 16 14 6 28 6 C38 6 46 11 50 19 C54 11 62 6 72 6 C86 6 98 16 98 32 C98 54 78 72 50 92 Z"/></symbol>
@@ -2740,7 +2755,7 @@ function warmList(people){
 
 /* ---------- small renderers ---------- */
 function freshPill(j){ const t = postedText(j.postedAt); if (!t) return ''; const h = age(j); return `<span class="pill${h < 72 ? ' fresh' : ''}">${esc(t)}</span>`; }
-function pay20(j){ if (j.payTier) return j.payTier === '20+'; const v = String(obj(arr(j.checks).find(x => obj(x).gate === 'Pay')).value || ''); if (/^Not stated/i.test(v)) return false; const n = v.match(/[\d.]+(?=\s*LPA)/g); return !!n && Number(n[n.length - 1]) >= 20; }
+function pay20(j){ if (!inIndiaMode(state.settings)) return false; if (j.payTier) return j.payTier === '20+'; const v = String(obj(arr(j.checks).find(x => obj(x).gate === 'Pay')).value || ''); if (/^Not stated/i.test(v)) return false; const n = v.match(/[\d.]+(?=\s*LPA)/g); return !!n && Number(n[n.length - 1]) >= 20; }
 /* Referral finder: people-search links the user opens in their own signed-in browser, and a drafted note.
    Mirrors propelo/referrals.py; Propelo never signs in to LinkedIn or sends anything there. */
 function collegeWords(c){ return String(c || '').toLowerCase().replace(/\b(university|institute|of|technology|college|engineering|the|and|deemed|to|be)\b/g, ' ').match(/[a-z]{3,}/g)?.slice(0, 2) || []; }
@@ -3172,7 +3187,7 @@ function renderPipeline(){
   const csvBtns = `<button class="btn sm" data-act="csv-export">Export CSV</button>${state.canWrite ? '<label class="btn sm filebtn">Import CSV<input type="file" class="csv-file" accept=".csv,text/csv" aria-label="Import applications from a CSV file"></label>' : ''}`;
   return `<div class="phead"><h1>${NI.case}<span>Applications</span></h1><div class="ract">${views}${csvBtns}<button class="btn solid" data-act="tab" data-tab="new">${NI.plus}New application</button></div></div>
     <p class="lede">${esc(say)}</p>
-    <div class="filters"><input type="search" id="pipe-q" class="search" style="margin-left:0" placeholder="Search company or role" value="${esc(state.q)}" aria-label="Search company or role">${chips}<button class="fchip" data-act="pay20" aria-pressed="${!!state.pay20}" title="Roles whose posting states 20 LPA or more">20 LPA+ <span class="c">${n20}</span></button>${board && state.canWrite ? '<span class="muted draghint">Drag a card to change its stage</span>' : ''}</div>
+    <div class="filters"><input type="search" id="pipe-q" class="search" style="margin-left:0" placeholder="Search company or role" value="${esc(state.q)}" aria-label="Search company or role">${chips}${inIndiaMode(state.settings) ? `<button class="fchip" data-act="pay20" aria-pressed="${!!state.pay20}" title="Roles whose posting states 20 LPA or more">20 LPA+ <span class="c">${n20}</span></button>` : ''}${board && state.canWrite ? '<span class="muted draghint">Drag a card to change its stage</span>' : ''}</div>
     ${board ? (state.loaded.jobs ? renderBoard(list) : empty('Loading', 'Reading your pipeline.')) : `<div class="panel">${rows ? `<div class="tablewrap"><table class="grid"><thead><tr><th>Role</th><th>Stage</th><th>Location</th><th>Experience</th><th>Posted</th><th>Fit</th></tr></thead><tbody>${rows}</tbody></table></div>` : empty(state.loaded.jobs ? 'No roles here yet' : 'Loading', state.loaded.jobs ? 'The search adds roles as it finds them, and you can add your own with New application. Roles it turns down go to Skipped, with the reason.' : 'Reading your pipeline.')}</div>`}`;
 }
 
@@ -3247,6 +3262,7 @@ async function importCsv(file){
 }
 
 /* ---------- Outreach ---------- */
+const OUTREACH_EMPTY = {referral: 'No referral notes yet', email: 'No email drafts yet', linkedin: 'No LinkedIn notes yet', followup: 'No follow-ups due'};
 function renderOutreach(){
   const todos = outreachTodos();
   const groups = [['referral','Referral notes to send','After each application, Claude finds junior and associate engineers at the company from public pages and drafts a note for each. Open their profile in your browser, paste the note, send it yourself.'],['email','Emails in your Gmail drafts','Written from your brain and the company brief. Review them, then send from Gmail.'],['linkedin','LinkedIn notes to send','Copy, paste and send them yourself. LinkedIn restricts accounts that automate messages.'],['followup','Follow-ups due','Each follow-up adds something new instead of just checking in.']];
@@ -3258,7 +3274,7 @@ function renderOutreach(){
   }
   sent.sort((a, b) => (toDate(b.at) || 0) - (toDate(a.at) || 0));
   return `<div class="hero" style="padding-bottom:6px"><div><h1>Outreach</h1><p class="sub">Referral notes, and messages to hiring managers and recruiters. Propelo drafts them; you send them${cloud() ? ', or turn on automatic recruiter emails below' : ''}.</p></div></div>` + renderAutoSend() +
-    groups.map(([k, title, sub]) => { const items = todos.filter(t => t.kind === k); return `<div class="section" style="padding-top:28px"><div class="sh"><h2 style="font-size:24px">${title}</h2><p>${items.length ? items.length + ' to send' : sub}</p></div>${items.length ? `<div class="panel"><div class="rows">${items.map(todoRow).join('')}</div></div>` : ''}</div>`; }).join('') +
+    groups.map(([k, title, sub]) => { const items = todos.filter(t => t.kind === k); return `<div class="section" style="padding-top:28px"><div class="sh"><h2 style="font-size:24px">${title}</h2><p>${items.length ? items.length + ' to send' : ''}</p></div>${items.length ? `<div class="panel"><div class="rows">${items.map(todoRow).join('')}</div></div>` : empty(OUTREACH_EMPTY[k], esc(sub))}</div>`; }).join('') +
     renderWarm() +
     `<div class="section" style="padding-top:28px"><div class="sh"><h2 style="font-size:24px">Sent</h2><p>${sent.length ? sent.length + ' sent' : 'Nothing sent yet.'}</p></div>${sent.length ? `<div class="panel"><div class="rows">${sent.slice(0, 40).map(s => `<div class="todo"><span class="ic">${I.check.replace('<svg', '<svg class="i"')}</span><div class="tx">${esc(s.ch)} to ${s.c.name ? esc(s.c.name) : 'contact'} at <b>${esc(s.j.company)}</b><small>${esc(when(s.at)) || 'Sent'}</small></div><div class="ract"><button class="btn sm ghost" data-act="open" data-id="${esc(s.j.id)}">Open</button></div></div>`).join('')}</div></div>` : ''}</div>`;
 }
@@ -3337,7 +3353,7 @@ function renderAsk(){
     <div class="askthread">${msgs || !ai ? msgs : `<div class="askstart">${ASK_STARTERS.map(q => `<button class="chip" data-act="ask-q" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div>`}
     ${a.busy ? '<div class="askmsg bot"><div class="bubble"><span class="spin" aria-hidden="true"></span>Thinking…</div></div>' : ''}</div>
     ${ai ? `<form id="ask-form" class="askbar" novalidate><textarea name="q" rows="2" placeholder="Ask about your roles, follow-ups or next steps" aria-label="Your question"${a.busy ? ' disabled' : ''}></textarea><button class="btn solid" type="submit"${a.busy ? ' disabled' : ''}>Ask</button></form>`
-      : '<p class="muted">Ask Propelo needs AI. Add your own key, or use the monthly allowance on a paid plan, in Settings.</p>'}`;
+      : `<p class="muted">Ask Propelo needs AI. ${cloud() ? 'Pro and Ultra include a monthly allowance and let you use your own key; see Settings.' : 'Add your own AI key in Settings.'}</p>`}`;
 }
 const ASK_TABS = ['today','pipeline','outreach','contacts','calendar','tools','setup','profile','auto','inbox','skipped'];
 async function askRun(q){
@@ -3366,7 +3382,7 @@ CONTEXT:\n${JSON.stringify(askContext()).slice(0, 14000)}\nPROFILE:\n${JSON.stri
 /* ---------- LinkedIn profile review (Ultra, or any plan with your own key). You paste the text: nothing is read from LinkedIn ---------- */
 async function linkedinReview(){
   const t = state.tl;
-  if (!aiReady()){ toast('LinkedIn review needs AI. Add your own key in Settings, or use Ultra.'); return; }
+  if (!aiReady()){ toast(cloud() ? 'LinkedIn review needs AI: part of Pro and Ultra. See Settings.' : 'LinkedIn review needs AI. Add your own key in Settings.'); return; }
   if (!String(t.liHeadline || '').trim() && !String(t.liAbout || '').trim() && !String(t.liExp || '').trim()){ toast('Paste at least your headline or About section.'); return; }
   t.busy = 'linkedin'; t.li = null; t.render = true; render();
   const prompt = `You review a candidate's LinkedIn profile text for the roles they target, the way a recruiter scanning search results would.
@@ -3407,7 +3423,7 @@ function prepRoles(){ return jobsArr().filter(j => ['applied','assessment','scre
 async function prepRun(){
   const t = state.tl, j = state.jobs.get(t.prepId);
   if (!j){ toast('Pick a role first.'); return; }
-  if (!aiReady()){ toast('Interview prep needs AI. Add your own key in Settings, or use your plan\'s allowance.'); return; }
+  if (!aiReady()){ toast(cloud() ? 'Interview prep needs AI: part of Pro and Ultra. See Settings.' : 'Interview prep needs AI. Add your own key in Settings.'); return; }
   t.busy = 'prep'; t.render = true; render();
   const prompt = `You prepare a candidate for an interview for one role. Build a one-page prep sheet.
 ${RULES}
@@ -3936,7 +3952,7 @@ function renderSetup(){
   return `<div class="hero" style="padding-bottom:18px"><div><h1>Settings</h1><p class="sub">Your plan, what the search knows about you, the filters it applies, and what it has done.</p></div></div>
   ${cloud() ? renderPlan() : ''}
   <div class="setup">
-    <div style="display:grid;gap:34px;min-width:0;padding-top:20px">${renderApplicantForm()}${renderVisaPanel()}${brain}<div><div class="sh"><h2 style="font-size:24px">Preferences</h2><p>The daily run reads these.</p></div><div class="panel">${form}</div></div></div>
+    <div style="display:grid;gap:34px;min-width:0;padding-top:20px">${renderVisaPanel()}${renderApplicantForm()}${brain}<div><div class="sh"><h2 style="font-size:24px">Preferences</h2><p>The daily run reads these.</p></div><div class="panel">${form}</div></div></div>
     <div style="display:grid;gap:34px;min-width:0;padding-top:20px">
       ${renderCloud()}
       <div><div class="sh"><h2 style="font-size:24px">Ground rules</h2></div><div class="panel"><ul class="checklist">
@@ -5272,7 +5288,7 @@ function renderAnswers(){
   return `<section class="card"><h2>Saved answers</h2><p class="muted" style="margin:6px 0 14px">Answers you've approved. Propelo Autofill fills them into matching questions, and outlines each one so you check it before you submit. An answer tied to a company is only used for that company.</p>
     ${ro ? '' : `<div class="toolform"><label class="f" for="tl-aq">Question<input id="tl-aq" type="text" data-tl="aq" value="${esc(t.aq || '')}" placeholder="e.g. Why do you want to work here?"></label>
       <label class="f" for="tl-aa">Your answer<textarea id="tl-aa" data-tl="aa" rows="4">${esc(t.aa || '')}</textarea></label>
-      <label class="f" for="tl-aco">Only for this company <small>Leave empty to use it anywhere</small><input id="tl-aco" type="text" data-tl="aco" value="${esc(t.aco || '')}" placeholder="e.g. Razorpay"></label>
+      <label class="f" for="tl-aco">Only for this company <small>Leave empty to use it anywhere</small><input id="tl-aco" type="text" data-tl="aco" value="${esc(t.aco || '')}" placeholder="e.g. Monzo"></label>
       <div class="ract" style="justify-content:flex-start"><button class="btn solid" data-act="ans-add">Save answer</button></div></div>`}</section>
     <section class="card">${rows ? `<div class="anslist">${rows}</div>` : '<p class="muted">No saved answers yet. Write one here, or press Save to my answers under a Form answer draft.</p>'}</section>`;
 }
@@ -5310,7 +5326,7 @@ function renderTools(){
   const seg = TOOLS.map(([k, l]) => `<button type="button" data-act="tl-tool" data-v="${k}" aria-pressed="${t.tool === k}">${l}</button>`).join('');
   const field = (k, l, ph, rows) => rows ? `<label class="f" for="tl-${k}">${l}<textarea id="tl-${k}" data-tl="${k}" rows="${rows}" placeholder="${esc(ph || '')}">${esc(t[k] || '')}</textarea></label>`
     : `<label class="f" for="tl-${k}">${l}<input id="tl-${k}" type="text" data-tl="${k}" value="${esc(t[k] || '')}" placeholder="${esc(ph || '')}"></label>`;
-  const who = `<div class="formgrid">${field('company', 'Company', 'e.g. Razorpay')}${field('role', 'Role', 'e.g. Associate Product Manager')}</div>`;
+  const who = `<div class="formgrid">${field('company', 'Company', 'e.g. Monzo')}${field('role', 'Role', 'e.g. Associate Product Manager')}</div>`;
   const aiNote = aiReady() ? '' : '<p class="muted" style="font-size:13.5px">AI is off, so this uses a template filled from your profile. Add a key in Settings for a written draft.</p>';
   let form = '';
   if (t.tool === 'cover') form = `${who}${field('posting', 'The posting <small>Optional, but the letter is better with it</small>', 'Paste the job description', 6)}<span class="groupl">Tone</span><div class="toneRow"><div class="pseg" role="group" aria-label="Tone">${TONES.map(([v, l]) => `<button type="button" data-act="tl-tone" data-v="${v}" aria-pressed="${t.tone === v}">${l}</button>`).join('')}</div></div>${field('notes', 'Anything I should know?', 'e.g. lean on my RAG project', 2)}`;
@@ -5512,6 +5528,8 @@ function applyTheme(){
 
 /* ---------- Auto-apply page ---------- */
 const RUN_TIMES = [[9, 40], [12, 40], [15, 40], [18, 40], [21, 40]];
+/* The member's time zone as a reader would say it ("London time", "New York time"), for times shown or written in their messages. */
+const tzName = () => { const city = String(TZ || '').split('/').pop().replace(/_/g, ' '); return city && city !== 'UTC' ? city + ' time' : 'UTC'; };
 function nextRunText(){
   const parts = new Intl.DateTimeFormat('en-GB', {timeZone: TZ, hour: 'numeric', minute: 'numeric', hour12: false}).formatToParts(new Date());
   const h = Number(parts.find(x => x.type === 'hour').value), m = Number(parts.find(x => x.type === 'minute').value), now = h * 60 + m;
@@ -5560,7 +5578,7 @@ function renderAutoPage(){
       ${queued.length ? `<div class="evlist">${queued.map(j => row(j, `<button class="btn sm ghost" data-act="unqueue" data-id="${esc(j.id)}"${ro}>Remove</button>`)).join('')}</div>` : `<p class="muted">Nothing queued. Press <b>Auto-apply</b> on any role in Applications or Fresh roles.</p>`}</section>
     <section class="card"><div class="chead"><div><h2>Sent by auto-apply</h2><p class="muted">With the confirmation it saw and the resume it attached.</p></div></div>
       ${sent.length ? `<div class="evlist">${sent.map(j => row(j, `<span class="pill strong">Applied</span>`)).join('')}</div>` : `<p class="muted">Nothing sent yet.</p>`}</section></div>
-  <section class="card" style="margin-top:20px"><div class="chead"><div><h2>Run log</h2><p class="muted">Every run, ${RUN_TIMES.map(([h, m]) => (h % 12 || 12) + ':' + m + (h < 12 ? ' am' : ' pm')).join(', ')} IST.</p></div></div>
+  <section class="card" style="margin-top:20px"><div class="chead"><div><h2>Run log</h2><p class="muted">Every run, ${RUN_TIMES.map(([h, m]) => (h % 12 || 12) + ':' + m + (h < 12 ? ' am' : ' pm')).join(', ')}, ${esc(tzName())}.</p></div></div>
     ${runs.length ? `<div class="rows">${runs.map(x => `<div class="runrow"><span class="when">${esc(when(x.startedAt))}</span><span>${esc(x.summary || '')}</span></div>`).join('')}</div>` : '<p class="muted">No runs yet.</p>'}</section>`;
 }
 
@@ -5578,7 +5596,7 @@ function patchInbox(id, patch, okMsg){
 function localReply(m){
   const a = applicant(), name = personName() || a.fullName || '', first = String(m.fromName || '').split(/\s+/)[0];
   const hi = first ? `Hi ${first},` : 'Hi,';
-  const slots = arr(m.slots).length ? 'I am free at any of these times (IST):\n' + arr(m.slots).map(s => '- ' + s).join('\n') : 'I am free at these times (IST): [add two or three times that suit you]';
+  const slots = arr(m.slots).length ? `I am free at any of these times (${tzName()}):\n` + arr(m.slots).map(s => '- ' + s).join('\n') : `I am free at these times (${tzName()}): [add two or three times that suit you]`;
   const body = {interview: `Thank you for the invitation. I'd be glad to interview for the role.\n\n${slots}\n\nPlease let me know what works, or send a scheduling link.`,
     'recruiter-reply': `Thanks for reaching out. I'm interested and happy to talk.\n\n${slots}`,
     assessment: `Thank you. I've received the assessment and will complete it by [the date you'll finish].`,

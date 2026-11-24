@@ -35,7 +35,12 @@
     "AI Engineer",
     "Data Scientist",
     "ML Engineer"
-   ]
+   ],
+   "visa": {
+    "status": "uk-graduate",
+    "permitEnd": "2027-09-30"
+   },
+   "jobMode": "career"
   },
   "inboxCheck": {
    "lastCheckedAtHoursAgo": 2,
