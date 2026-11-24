@@ -43,6 +43,7 @@ layouts checked at 390, 820 and 1280 px with no sideways scrolling (audit 22 Nov
 - **States per tab:** loading skeleton, empty with the next step, error with retry, success toast.
 - **Security:** all reads scoped to the session's user (IDOR probes passed), CSRF on writes, uploads PDF/DOCX only with size caps.
 - **Acceptance:** each tab renders with an empty account and with seeded data; no console errors (one known: 404s for empty docs, R-030).
+- **Home, hours this week:** for a student visa with a weekly limit, in part-time mode or once a shift is logged: this week's hours against the limit (20; 40 in the Irish holiday periods; 16, or none in the Dutch summer; none in a week marked as university vacation), a warning 2 hours before the limit and when over it, the week's shifts, and a form to log one. Weekly limits come from `visaclock.weekly_cap` (tests compare the dashboard).
 - **Home, Visa-Clock:** with a visa and its date set, Home shows the countdown note (lilac, yellow inside 90 days or 30 days of a day limit, pink inside 30 or 14), the dates, the work allowed today, the next step and the sources; with a date missing it says which; with no visa it offers "Add your visa". Students on a visa with term-time work rights see the Sponsored career / Part-time while studying switch. The same numbers come from `propelo/visaclock.py` (tests compare them).
 
 ### Business account · /partner
