@@ -195,3 +195,28 @@ def test_unclear_remote_roles_come_after_roles_known_to_be_open_in_india_too():
     india = feed.settings_from_dashboard({"targetRoles": ["backend"]})
     kept = feed.match(iter([rec(1, "Remote", {}), rec(2, "Remote, Worldwide", {})]), india, [], None, now)["kept"]
     assert [i for i, _ in kept] == ["u2", "u1"] and {d["region"] for _, d in kept} == {"remote-global"}
+
+
+def test_someone_in_india_looking_abroad_gets_roles_in_the_countries_they_chose():
+    doc = {"homeCountry": "IN", "workAbroad": True, "places": "United Kingdom, Germany", "targetRoles": ["backend"], "needsSponsorship": True}
+    s = feed.settings_from_dashboard(doc)
+    assert s.location.by_places and s.location.elsewhere and s.location.home == "IN"
+    # An office role in a chosen country is kept; one in a country they did not choose is not.
+    chk, region = gates.gate_location(_job(location="London, United Kingdom", mode="onsite"), s)
+    assert chk.passed and region == "local"
+    assert not gates.gate_location(_job(location="Toronto, Canada", mode="onsite"), s)[0].passed
+    # Remote roles open to India stay; remote roles for another country only do not.
+    assert gates.gate_location(_job(location="Remote - India"), s)[1] == "remote-local"
+    assert not gates.gate_location(_job(location="Remote - United States"), s)[0].passed
+    # A posting that refuses sponsorship rules out the office role abroad, but not remote work from India.
+    refuses = "We are unable to sponsor visas for this role."
+    out = gates.gate_sponsorship(_job(location="Berlin, Germany", mode="onsite", desc=refuses), "local", s)
+    assert out is not None and not out.passed
+    assert gates.gate_sponsorship(_job(location="Remote - India", desc=refuses), "remote-local", s) is None
+
+
+def test_india_rules_stay_until_a_place_abroad_is_named():
+    s = feed.settings_from_dashboard({"homeCountry": "IN", "workAbroad": True, "places": "", "targetRoles": ["backend"]})
+    assert not s.location.by_places
+    s = feed.settings_from_dashboard({"homeCountry": "IN", "places": "United Kingdom", "targetRoles": ["backend"]})
+    assert not s.location.by_places

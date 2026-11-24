@@ -185,7 +185,7 @@
         var applicant = {};
         ["fullName", "email", "phone", "city", "linkedin", "github", "portfolio", "currentTitle", "currentCompany", "experienceYears", "noticePeriod",
           "currentCtcLpa", "expectedCtcLpa", "degree", "college", "graduationYear", "cgpa", "branch", "backlogs", "state", "pinCode",
-          "workAuthIndia", "sponsorshipAbroad", "relocate", "howHeard", "servingNotice", "lastWorkingDay", "noticeBuyout",
+          "workAuthIndia", "workAuth", "expectedPay", "currentPay", "sponsorshipAbroad", "relocate", "howHeard", "servingNotice", "lastWorkingDay", "noticeBuyout",
         "fixedCtcLpa", "variableCtcLpa", "bondOk", "currentlyEmployed", "gapReason", "shiftsOk", "officeOk", "preferredCities"].forEach(function (k) { if (a[k] !== undefined && a[k] !== null && a[k] !== "") applicant[k] = a[k]; });
         var answers = (a.answers || []).filter(function (x) { return x && x.q && x.a; }).map(function (x) { return { q: x.q, a: x.a, company: x.company || "" }; });
         return exec(S.tab.id, true, function (data) { return window.__propeloFill(data); }, [{ applicant: applicant, resume: resume, answers: answers, company: (S.page && S.page.company) || "" }]);

@@ -79,10 +79,12 @@ def settings_from_dashboard(doc: dict) -> Settings:
     if doc.get("companyBlocklist"):
         s.company_blocklist = list(doc["companyBlocklist"])
     home = str(doc.get("homeCountry") or "IN").upper()[:2]
-    if home != "IN":
-        raw = doc.get("places") or []
-        places = [x.strip() for x in (raw if isinstance(raw, list) else re.split(r"[,;\n]", str(raw))) if str(x).strip()][:20]
-        s.location = LocationPolicy(home=home, places=places, remote_ok=doc.get("remoteOk", True) is not False,
+    raw = doc.get("places") or []
+    places = [x.strip() for x in (raw if isinstance(raw, list) else re.split(r"[,;\n]", str(raw))) if str(x).strip()][:20]
+    # In India and looking abroad: only once they have said where, otherwise the India rules still apply.
+    seeking = home == "IN" and bool(doc.get("workAbroad")) and bool(places)
+    if home != "IN" or seeking:
+        s.location = LocationPolicy(home=home, places=places, remote_ok=doc.get("remoteOk", True) is not False, elsewhere=seeking,
                                     keep_unclear_remote=True, south_india="never", rest_of_india="never", abroad="remote")
         return s
     locs = " ".join(doc.get("locations") or []).lower()
@@ -288,7 +290,7 @@ def match(records, settings: Settings, known: list[tuple[str, dict]], summary: d
                 doc["skip"]["wouldChange"] = "Allowing roles that don't state pay."
             skipped.append((r["id"], doc))
     order = {"remote-global": 0, "remote-india": 1, "remote-local": 1, "south-india": 2, "local": 2, "remote-unclear": 3}
-    abroad = (settings.location.home or "IN") != "IN"
+    abroad = settings.location.by_places
     if abroad:
         # Someone living abroad is looking for work where they live: roles there first, then remote roles
         # open to the world, and last the remote roles that don't say who can apply.

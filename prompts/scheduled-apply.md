@@ -31,7 +31,7 @@ SAFETY
 2. READ STATE
 - Artifact read {{DASHBOARD_URL}} once (so this session may upload resume files to it).
 - settings/profile: stop (log the run) if approvalMode is "paused". dailyCap defaults to 8.
-- profile/applicant: stop and log "Auto-apply needs your application details" if any of fullName, email, phone, city, experienceYears, noticePeriod, workAuthIndia is empty, or there is no resume.id.
+- profile/applicant: stop and log "Auto-apply needs your application details" if any of fullName, email, phone, city, experienceYears is empty, or there is no resume.id. Then read settings/profile: when homeCountry is "IN" and workAbroad is not true, noticePeriod and workAuthIndia must also be filled; otherwise workAuth must be.
 - brain/status and, if state is "ready", brain/brain (the Career Brain JSON; it may not exist).
 - jobs: ArtifactData list collection "jobs", query.limit 1000, out_dir jobs/. Count today's applications: appliedAt on today's date in Asia/Kolkata. Left = dailyCap − that; stop when Left is 0. This run handles at most min(Left, 8) roles.
 - Writes to a job: always ArtifactData update with the version you read as if_version. Arrays replace whole, so a new timeline is the existing timeline plus the new event.

@@ -46,6 +46,7 @@
     ["degree", /degree|qualification|education level/i],
     ["college", /college|university|school|institut/i],
     ["workAuthIndia", /(authori[sz]ed|eligible|legally (allowed|permitted)).{0,40}work.{0,40}india|work (authori[sz]ation|permit).{0,30}india/i],
+    ["workAuth", /(authori[sz]ed|eligible|legally (allowed|permitted|entitled)|(legal )?right) to work|work (authori[sz]ation|eligibility)/i],
     ["sponsorshipAbroad", /sponsor/i],
     ["relocate", /relocat/i],
     ["city", /\bcity\b|current location|where are you (based|located)|^location\b|\blocation$|town/i],
@@ -54,7 +55,7 @@
   ];
   // Questions about someone else (a referrer, a reference, an emergency contact) are never filled with your details.
   var OTHER_PERSON = /referr(er|ed by|ing employee)|\breference\b|emergency|guardian|father|mother|spouse|parent|recruiter'?s|manager'?s|employee'?s/i;
-  var CHOICE_KEYS = { workAuthIndia: 1, sponsorshipAbroad: 1, relocate: 1, noticePeriod: 1, degree: 1, backlogs: 1, servingNotice: 1, noticeBuyout: 1,
+  var CHOICE_KEYS = { workAuth: 1, workAuthIndia: 1, sponsorshipAbroad: 1, relocate: 1, noticePeriod: 1, degree: 1, backlogs: 1, servingNotice: 1, noticeBuyout: 1,
     bondOk: 1, currentlyEmployed: 1, shiftsOk: 1, officeOk: 1, preferredCities: 1 };
   var CTC = { expectedCtcLpa: 1, currentCtcLpa: 1, fixedCtcLpa: 1, variableCtcLpa: 1 };
   var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -154,6 +155,11 @@
     if (key === "firstName" && !v) v = parts.length > 1 ? parts.slice(0, -1).join(" ") : (parts[0] || "");
     if (key === "lastName" && !v) v = parts.length > 1 ? parts[parts.length - 1] : "";
     if (key === "sponsorshipAbroad" && /not applicable/i.test(v || "")) v = "No";
+    // Someone applying outside India keeps pay as text with its currency: it goes into free-text boxes only, never a number box.
+    if ((key === "expectedCtcLpa" || key === "currentCtcLpa") && (v === undefined || v === null || v === "") && (!el || (el.tagName !== "SELECT" && el.type !== "number")))
+      v = (key === "expectedCtcLpa" ? a.expectedPay : a.currentPay) || "";
+    // "Are you authorised to work in the UK?": yes for a citizen, resident or visa holder. Someone who needs sponsorship answers it themselves.
+    if (key === "workAuth" && v) v = /sponsor/i.test(v) ? "" : "Yes";
     if ((key === "expectedCtcLpa" || key === "currentCtcLpa") && v !== undefined && v !== null && v !== "") v = String(v);
     if (key === "experienceYears" && v !== undefined && v !== null && v !== "") v = String(v);
     if (key === "graduationYear" && v) v = String(v);

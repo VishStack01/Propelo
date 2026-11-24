@@ -2,6 +2,16 @@
 
 All notable changes to Propelo. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses [semantic versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **"Where you want to work".** The first-run questions and Settings now ask it. Someone living in India who picks another country names the countries or cities, and is matched like a member abroad: office roles in those places, remote roles open to India, and the visa sponsorship check on the office roles. Until a place is named, the India rules stay.
+- **Application details follow that answer.** For work outside India the form asks salary with its currency, postal code, university, and "your right to work where you are applying" instead of LPA, PIN code, backlogs and notice buyout. The browser extension fills the new answers into free-text boxes and "authorised to work" questions.
+- **Sign in with Google and GitHub**, next to LinkedIn and email, each shown only when its keys are set. The sign-in and sign-up page is rebuilt in the website's style, with the providers' own logos.
+
+### Fixed
+- A provider sign-in on an address someone else typed into the sign-up form but never confirmed now removes that person's password and sessions.
+
 ## [2.16.2] - 2026-11-24
 
 ### Fixed

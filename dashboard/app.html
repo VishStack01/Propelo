@@ -1466,7 +1466,10 @@ const REGION = {'remote-global':[0,'Remote worldwide','pill world'],'remote-indi
 /* Someone living abroad is looking for work where they live: roles there first, then remote roles open to the
    world, and last the remote roles that don't say who can apply. India keeps remote worldwide first. */
 const ABROAD_RANK = {'local': 0, 'remote-local': 0, 'remote-global': 1, 'remote-unclear': 2};
-const livesAbroad = () => String(obj(state.settings).homeCountry || 'IN') !== 'IN';
+/* India rules apply only to someone who lives in India and wants to work there. Everyone else (living abroad, or in India
+   and looking abroad) is matched against the places they chose. */
+const inIndiaMode = s => String(obj(s).homeCountry || 'IN') === 'IN' && !obj(s).workAbroad;
+const livesAbroad = () => !inIndiaMode(state.settings);
 const regionRank = j => livesAbroad() ? (j.region in ABROAD_RANK ? ABROAD_RANK[j.region] : 3) : (REGION[j.region] || [3])[0];
 function sponsorRank(j){
   if (!obj(state.settings).needsSponsorship) return 0;
@@ -1532,10 +1535,10 @@ function filterSummary(){
   const exp = y === '' ? 'any experience' : y === 0 ? 'freshers' : `${y} ${y === 1 ? 'year' : 'years'} of experience (asking up to ${stretchOf(y)})`;
   const home = String(s.homeCountry || 'IN');
   const homeName = (HOMES.find(h => h[0] === home) || [home, home])[1];
-  const locs = home === 'IN' ? arr(s.locations).map(l => LOC_SHORT[l] || l)
+  const locs = inIndiaMode(s) ? arr(s.locations).map(l => LOC_SHORT[l] || l)
     : [s.remoteOk !== false ? `remote roles open to ${homeName}` : '', String(s.places || '').trim() ? 'on-site or hybrid in ' + String(s.places).trim() : ''];
   const floor = Number(s.salaryFloorLpa) || 0;
-  const pay = floor ? ` paying ${String(s.homeCountry || 'IN') !== 'IN' && s.salaryFloorUsd ? '$' + Number(s.salaryFloorUsd).toLocaleString('en-US') + ' a year' : floor + ' LPA'} or more${s.requireStatedPay ? ' (stated on the posting)' : ''}` : '';
+  const pay = floor ? ` paying ${!inIndiaMode(s) && s.salaryFloorUsd ? '$' + Number(s.salaryFloorUsd).toLocaleString('en-US') + ' a year' : floor + ' LPA'} or more${s.requireStatedPay ? ' (stated on the posting)' : ''}` : '';
   return {exp, locs: listJoin(locs) || 'any location', days: s.maxPostingAgeDays, pay};
 }
 
@@ -1774,11 +1777,14 @@ function renderTiers(){
 }
 
 /* ---------- Auto-apply ---------- */
-const AP_REQUIRED = [['fullName','Full name'],['email','Email'],['phone','Phone'],['city','City'],['experienceYears','Total experience'],['noticePeriod','Notice period'],['workAuthIndia','Work authorization in India']];
+const AP_BASE = [['fullName','Full name'],['email','Email'],['phone','Phone'],['city','City'],['experienceYears','Total experience']];
+const WORK_AUTH = ['Citizen or permanent resident', 'Work visa that lets me change employer', 'Student or graduate visa with work rights', 'I need the employer to sponsor a visa'];
+/* What a form is certain to ask differs by where the work is: Indian forms ask notice period; forms abroad ask your right to work there. */
+const apRequired = () => AP_BASE.concat(inIndiaMode(state.settings) ? [['noticePeriod','Notice period'],['workAuthIndia','Work authorization in India']] : [['workAuth','Your right to work there']]);
 const NOTICE = ['Immediate','15 days','30 days','45 days','60 days','90 days'];
 function applicant(){ return obj(state.applicant); }
 const lc1 = x => x.charAt(0).toLowerCase() + x.slice(1);
-function apMissing(){ const a = applicant(); return AP_REQUIRED.filter(([k]) => a[k] === undefined || a[k] === null || String(a[k]).trim() === '').map(x => x[1]); }
+function apMissing(){ const a = applicant(); return apRequired().filter(([k]) => a[k] === undefined || a[k] === null || String(a[k]).trim() === '').map(x => x[1]); }
 function runnerLinked(){ const r = obj(state.runner); const t = toDate(r.lastSeenAt); return !!(r.linked && t && (Date.now() - t) < 7 * 864e5); }
 function autoOn(){ return settings().approvalMode === 'auto-when-clear'; }
 function appliedToday(){ const k = fKey.format(new Date()); return jobsArr().filter(j => j.appliedAt && toDate(j.appliedAt) && fKey.format(toDate(j.appliedAt)) === k).length; }
@@ -1821,9 +1827,9 @@ function renderAutoApply(inPage){
     </div>${waitHtml}`;
 }
 function renderApplicantForm(){
-  const a = applicant(), res = obj(a.resume), ro = wr();
-  const inp = (id, label, type, opts) => { opts = opts || {}; const req = AP_REQUIRED.some(x => x[0] === id); return `<label class="f${opts.full ? ' full' : ''}" for="ap-${id}">${label}${req ? ' <span class="req" aria-hidden="true">*</span>' : ''}${opts.hint ? ` <small>${opts.hint}</small>` : ''}<input type="${type}" id="ap-${id}" name="${id}" value="${esc(a[id] ?? '')}"${opts.ph ? ` placeholder="${esc(opts.ph)}"` : ''}${opts.attrs || ''}${req ? ' required' : ''}${ro}></label>`; };
-  const sel = (id, label, options, def) => { const req = AP_REQUIRED.some(x => x[0] === id); const cur = a[id] ?? def ?? ''; return `<label class="f" for="ap-${id}">${label}${req ? ' <span class="req" aria-hidden="true">*</span>' : ''}<select id="ap-${id}" name="${id}"${ro}>${req && !cur ? '<option value="">Choose</option>' : ''}${options.map(o => `<option${o === cur ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select></label>`; };
+  const a = applicant(), res = obj(a.resume), ro = wr(), india = inIndiaMode(state.settings);
+  const inp = (id, label, type, opts) => { opts = opts || {}; const req = apRequired().some(x => x[0] === id); return `<label class="f${opts.full ? ' full' : ''}" for="ap-${id}"><span>${label}${req ? ' <span class="req" aria-hidden="true">*</span>' : ''}</span>${opts.hint ? ` <small>${opts.hint}</small>` : ''}<input type="${type}" id="ap-${id}" name="${id}" value="${esc(a[id] ?? '')}"${opts.ph ? ` placeholder="${esc(opts.ph)}"` : ''}${opts.attrs || ''}${req ? ' required' : ''}${ro}></label>`; };
+  const sel = (id, label, options, def) => { const req = apRequired().some(x => x[0] === id); const cur = a[id] ?? def ?? ''; return `<label class="f" for="ap-${id}"><span>${label}${req ? ' <span class="req" aria-hidden="true">*</span>' : ''}</span><select id="ap-${id}" name="${id}"${ro}>${req && !cur ? '<option value="">Choose</option>' : ''}${options.map(o => `<option${o === cur ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select></label>`; };
   const upload = state.assets && state.canWrite ? `<label class="btn filebtn">${state.uploading ? 'Uploading…' : res.id ? 'Replace PDF' : 'Upload PDF'}<input type="file" class="resume-file" accept="application/pdf" aria-label="Upload your resume as a PDF"${state.uploading ? ' disabled' : ''}></label>` : `<span class="small">Open this page in Claude, signed in, to upload.</span>`;
   return `<div id="apply-details"><div class="sh"><h2 style="font-size:24px">Application details</h2><p>What auto-apply puts into application forms. Only you can read this.</p></div>
     <div class="panel" style="display:grid;gap:22px">
@@ -1831,31 +1837,31 @@ function renderApplicantForm(){
       <form id="applicant-form" class="formgrid" novalidate>
         ${inp('fullName', 'Full name', 'text', {attrs: ' autocomplete="name"'})}
         ${inp('email', 'Email', 'email', {attrs: ' autocomplete="email"'})}
-        ${inp('phone', 'Phone', 'tel', {ph: '+91 98xxxxxxx', attrs: ' autocomplete="tel"'})}
-        ${inp('city', 'City', 'text', {ph: 'e.g. Bengaluru'})}
+        ${inp('phone', 'Phone', 'tel', {ph: india ? '+91 98xxxxxxx' : 'With country code, e.g. +44 7xxx xxxxxx', attrs: ' autocomplete="tel"'})}
+        ${inp('city', 'City', 'text', {ph: india ? 'e.g. Bengaluru' : 'Where you live now'})}
         ${inp('linkedin', 'LinkedIn profile', 'url', {ph: 'https://www.linkedin.com/in/…'})}
         ${inp('github', 'GitHub', 'url', {ph: 'https://github.com/…'})}
         ${inp('portfolio', 'Portfolio or website', 'url', {ph: 'https://…', full: true})}
         ${inp('currentTitle', 'Current title', 'text', {ph: 'e.g. AI Product Designer'})}
         ${inp('currentCompany', 'Current company', 'text')}
         ${inp('experienceYears', 'Total experience', 'number', {hint: 'years, e.g. 1.5', attrs: ' min="0" max="40" step="0.5"'})}
-        ${sel('noticePeriod', 'Notice period', NOTICE)}
-        ${inp('currentCtcLpa', 'Current CTC', 'number', {hint: 'LPA, optional', attrs: ' min="0" step="0.1"'})}
-        ${inp('expectedCtcLpa', 'Expected CTC', 'number', {hint: 'LPA', attrs: ' min="0" step="0.1"'})}
-        ${inp('degree', 'Highest degree', 'text', {ph: 'e.g. B.Tech, Computer Science'})}
-        ${inp('college', 'College', 'text')}
+        ${india ? sel('noticePeriod', 'Notice period', NOTICE) : sel('noticePeriod', 'When you can start', ['Prefer not to say'].concat(NOTICE), 'Prefer not to say')}
+        ${india ? inp('currentCtcLpa', 'Current CTC', 'number', {hint: 'LPA, optional', attrs: ' min="0" step="0.1"'}) : inp('currentPay', 'Current salary', 'text', {hint: 'with currency, optional', ph: 'e.g. £38,000 a year'})}
+        ${india ? inp('expectedCtcLpa', 'Expected CTC', 'number', {hint: 'LPA', attrs: ' min="0" step="0.1"'}) : inp('expectedPay', 'Expected salary', 'text', {hint: 'with currency', ph: 'e.g. £45,000 to £50,000 a year'})}
+        ${inp('degree', 'Highest degree', 'text', {ph: india ? 'e.g. B.Tech, Computer Science' : 'e.g. MSc, Data Science'})}
+        ${inp('college', india ? 'College' : 'University', 'text')}
         ${inp('graduationYear', 'Graduation year', 'number', {attrs: ' min="1980" max="2035"'})}
-        ${inp('cgpa', 'CGPA or percentage', 'text', {ph: 'e.g. 8.2/10 or 78%', hint: 'optional'})}
-        ${inp('branch', 'Branch or specialisation', 'text', {ph: 'e.g. Computer Science'})}
-        ${sel('backlogs', 'Active backlogs, if a form asks', ['Prefer not to say', 'None', '1', '2', '3 or more'], 'Prefer not to say')}
-        ${inp('state', 'State', 'text', {ph: 'e.g. Karnataka'})}
-        ${inp('pinCode', 'PIN code', 'text', {ph: '6 digits', attrs: ' inputmode="numeric" maxlength="6" pattern="[0-9]{6}"'})}
-        ${sel('workAuthIndia', 'Authorized to work in India', ['Yes', 'No'])}
-        ${sel('sponsorshipAbroad', 'Need visa sponsorship for roles abroad', ['Not applicable, remote only', 'Yes', 'No'], 'Not applicable, remote only')}
-        ${sel('relocate', 'Open to relocating', ['Yes', 'Within south India', 'No'], 'Within south India')}
+        ${inp('cgpa', india ? 'CGPA or percentage' : 'Grade or GPA', 'text', {ph: india ? 'e.g. 8.2/10 or 78%' : 'e.g. Merit, 3.6/4.0', hint: 'optional'})}
+        ${inp('branch', india ? 'Branch or specialisation' : 'Field of study', 'text', {ph: 'e.g. Computer Science'})}
+        ${india ? sel('backlogs', 'Active backlogs, if a form asks', ['Prefer not to say', 'None', '1', '2', '3 or more'], 'Prefer not to say') : ''}
+        ${inp('state', india ? 'State' : 'State, province or region', 'text', {ph: india ? 'e.g. Karnataka' : ''})}
+        ${india ? inp('pinCode', 'PIN code', 'text', {ph: '6 digits', attrs: ' inputmode="numeric" maxlength="6" pattern="[0-9]{6}"'}) : inp('pinCode', 'Postal code', 'text', {attrs: ' maxlength="12" autocomplete="postal-code"'})}
+        ${india ? sel('workAuthIndia', 'Authorized to work in India', ['Yes', 'No']) : sel('workAuth', 'Your right to work where you are applying', WORK_AUTH)}
+        ${india ? sel('sponsorshipAbroad', 'Need visa sponsorship for roles abroad', ['Not applicable, remote only', 'Yes', 'No'], 'Not applicable, remote only') : sel('sponsorshipAbroad', 'Will you need visa sponsorship, now or later', ['Yes', 'No'], obj(state.settings).needsSponsorship ? 'Yes' : 'No')}
+        ${india ? sel('relocate', 'Open to relocating', ['Yes', 'Within south India', 'No'], 'Within south India') : sel('relocate', 'Open to relocating', ['Yes', 'No'], 'Yes')}
         ${sel('gender', 'Gender, for optional diversity questions', ['Prefer not to say', 'Woman', 'Man', 'Non-binary'], 'Prefer not to say')}
         ${inp('howHeard', '"How did you hear about us?"', 'text', {ph: "Company careers page", full: true})}
-        <div class="full apsub"><b>Questions Indian employers ask</b><small>Filled only when a form asks, and only with what you put here. "Prefer not to say" leaves the question for you.</small></div>
+        ${india ? `<div class="full apsub"><b>Questions Indian employers ask</b><small>Filled only when a form asks, and only with what you put here. "Prefer not to say" leaves the question for you.</small></div>
         ${sel('currentlyEmployed', 'Currently working', ['Prefer not to say', 'Yes', 'No'], 'Prefer not to say')}
         ${sel('servingNotice', 'Serving notice now', ['No', 'Yes'], 'No')}
         ${inp('lastWorkingDay', 'Last working day', 'date', {hint: 'if serving notice'})}
@@ -1865,9 +1871,10 @@ function renderApplicantForm(){
         ${inp('preferredCities', 'Preferred cities', 'text', {ph: 'Bengaluru, Hyderabad, Remote'})}
         ${sel('officeOk', 'Working from the office', ['Prefer not to say', 'Yes', 'Hybrid only', 'Remote only'], 'Prefer not to say')}
         ${sel('shiftsOk', 'Night or rotational shifts', ['Prefer not to say', 'Yes', 'No'], 'Prefer not to say')}
-        ${sel('bondOk', 'Willing to sign a service bond', ['Prefer not to say', 'Yes', 'No'], 'Prefer not to say')}
+        ${sel('bondOk', 'Willing to sign a service bond', ['Prefer not to say', 'Yes', 'No'], 'Prefer not to say')}` : `${sel('currentlyEmployed', 'Currently working', ['Prefer not to say', 'Yes', 'No'], 'Prefer not to say')}
+        ${sel('officeOk', 'Working from the office', ['Prefer not to say', 'Yes', 'Hybrid only', 'Remote only'], 'Prefer not to say')}`}
         <label class="f full" for="ap-gapReason">A gap in your career, in a sentence <small>optional, used only when a form asks</small><textarea id="ap-gapReason" name="gapReason" rows="2" maxlength="400" placeholder="e.g. Six months in 2024 caring for a family member; kept up with a course in data engineering."${ro}>${esc(a.gapReason || '')}</textarea></label>
-        <p class="never full">Never stored or asked for: passwords, one-time codes, Aadhaar, PAN, bank details, passport, date of birth. You sign in to job sites yourself in the Claude desktop app's browser.</p>
+        <p class="never full">Never stored or asked for: passwords, one-time codes, national ID or tax numbers (Aadhaar, PAN, SSN, National Insurance), bank details, passport, date of birth. You sign in to job sites yourself in the Claude desktop app's browser.</p>
         <div class="full"><button class="btn solid" type="submit"${ro}>Save details</button></div>
       </form>
     </div></div>`;
@@ -1962,7 +1969,7 @@ function renderFresh(){
   const nearBits = [[nearBy('Seniority'), 'are more senior titles'], [nearBy('Posted'), 'were posted before your window'], [nearBy('Experience'), 'ask for more experience'], [nearBy('Location'), 'are somewhere else'], [nearBy('Pay'), 'pay below your floor']].filter(x => x[0]).map(x => x[0] + ' ' + x[1]);
   const thin = state.loaded.jobs && state.win !== 'day' && all.length < 10 && near.length
     ? `<div class="panel thin"><p><b>${all.length === 1 ? 'One role fits' : all.length + ' roles fit'} every filter right now.</b> ${near.length} more came close${nearBits.length ? ': ' + esc(listJoin(nearBits)) : ''}. Each shows the one thing that ruled it out.</p><div class="ract" style="justify-content:flex-start"><button class="btn" data-act="tab" data-tab="skipped">See the near misses</button><button class="btn ghost" data-act="tab" data-tab="setup">Add job titles or widen filters</button></div></div>` : '';
-  return `<div class="sh"><h2>${esc(title)}</h2><p>${livesAbroad() ? `Roles where you live first${obj(state.settings).needsSponsorship ? ', employers with a record of sponsoring visas at the top' : ''}, then remote roles open worldwide.` : 'Remote worldwide roles first, then remote in India, then south India.'} ${brainReady() ? 'Scored on the next run.' : 'Fit ratings appear once your Career Brain is built.'}</p></div>${chips}${thin}<div class="panel">${cards ? `<div class="cards">${cards}</div>${more}` : none}</div>`;
+  return `<div class="sh"><h2>${esc(title)}</h2><p>${livesAbroad() ? `${obj(state.settings).workAbroad ? 'Roles in the places you chose first' : 'Roles where you live first'}${obj(state.settings).needsSponsorship ? ', employers with a record of sponsoring visas at the top' : ''}, then remote roles open worldwide.` : 'Remote worldwide roles first, then remote in India, then south India.'} ${brainReady() ? 'Scored on the next run.' : 'Fit ratings appear once your Career Brain is built.'}</p></div>${chips}${thin}<div class="panel">${cards ? `<div class="cards">${cards}</div>${more}` : none}</div>`;
 }
 
 function renderWaiting(){
@@ -2531,6 +2538,7 @@ function openKit(j){
   add('Total experience (years)', a.experienceYears); add('Notice period', a.noticePeriod);
   if (a.servingNotice === 'Yes'){ add('Serving notice', 'Yes'); add('Last working day', a.lastWorkingDay); }
   add('Notice buyout', a.noticeBuyout);
+  add('Current salary', a.currentPay); add('Expected salary', a.expectedPay); add('Right to work', a.workAuth); add('Needs visa sponsorship', inIndiaMode(state.settings) ? '' : a.sponsorshipAbroad); add('Postal code', a.pinCode);
   add('Current CTC (LPA)', a.currentCtcLpa); add('Fixed pay (LPA)', a.fixedCtcLpa); add('Variable pay (LPA)', a.variableCtcLpa); add('Expected CTC (LPA)', a.expectedCtcLpa);
   add('Preferred cities', a.preferredCities); add('Open to relocating', a.relocate);
   add('Highest degree', a.degree); add('College', a.college); add('Graduation year', a.graduationYear); add('CGPA or percentage', a.cgpa); add('Branch', a.branch);
@@ -2788,13 +2796,14 @@ function renderSetup(){
     ${cloud() ? `<label class="f" for="s-alerts">Job alerts by email <small>New roles that pass your filters</small><select id="s-alerts"${ro}>${[['off','Off'],['daily','Daily'],['weekly','Weekly']].map(([v, l]) => `<option value="${v}"${(s.alerts || 'off') === v ? ' selected' : ''}>${l}</option>`).join('')}</select></label>` : ''}
     <label class="f full" for="s-mode">How applications go out<select id="s-mode"${ro}><option value="auto-when-clear"${s.approvalMode === 'auto-when-clear' ? ' selected' : ''}>Auto-apply when every answer comes from my profile</option><option value="daily-batch"${s.approvalMode !== 'auto-when-clear' ? ' selected' : ''}>Daily batch: I approve each one</option></select></label>
     <label class="f" for="s-home">Where you live<select id="s-home"${ro}>${HOMES.map(([c, n]) => `<option value="${c}"${(s.homeCountry || 'IN') === c ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
-    <div class="full" role="group" aria-labelledby="s-loc-l" id="s-loc-in"${(s.homeCountry || 'IN') === 'IN' ? '' : ' hidden'}><span id="s-loc-l" class="groupl">Locations</span><div class="checks">${LOCATIONS.map((l, i) => `<label for="s-loc-${i}"><input type="checkbox" id="s-loc-${i}" value="${esc(l)}" ${arr(s.locations).includes(l) ? 'checked' : ''}${ro}>${esc(l)}</label>`).join('')}</div></div>
-    <div class="full formgrid" id="s-loc-world"${(s.homeCountry || 'IN') === 'IN' ? ' hidden' : ''} style="gap:12px"><label class="f" for="s-places">On-site or hybrid in <small>cities or countries, comma separated</small><input type="text" id="s-places" value="${esc(s.places || '')}" placeholder="London, Manchester"${ro}></label>
+    <label class="f" for="s-seek" id="s-seek-row"${(s.homeCountry || 'IN') === 'IN' ? '' : ' hidden'}>Where you want to work<select id="s-seek"${ro}><option value="home"${s.workAbroad ? '' : ' selected'}>In India</option><option value="abroad"${s.workAbroad ? ' selected' : ''}>In another country</option></select></label>
+    <div class="full" role="group" aria-labelledby="s-loc-l" id="s-loc-in"${inIndiaMode(s) ? '' : ' hidden'}><span id="s-loc-l" class="groupl">Locations</span><div class="checks">${LOCATIONS.map((l, i) => `<label for="s-loc-${i}"><input type="checkbox" id="s-loc-${i}" value="${esc(l)}" ${arr(s.locations).includes(l) ? 'checked' : ''}${ro}>${esc(l)}</label>`).join('')}</div></div>
+    <div class="full formgrid" id="s-loc-world"${inIndiaMode(s) ? ' hidden' : ''} style="gap:12px"><label class="f" for="s-places">On-site or hybrid in <small>countries or cities, comma separated</small><input type="text" id="s-places" value="${esc(s.places || '')}" placeholder="London, Manchester"${ro}></label>
       <label class="cccheck" for="s-remote" style="align-self:end"><input type="checkbox" id="s-remote"${s.remoteOk !== false ? ' checked' : ''}${ro}> Remote roles open to people where you live</label></div>
     <div class="full" role="group" aria-labelledby="s-fam-l"><span id="s-fam-l" class="groupl">Job families <small>Pick any to get roles in those families, not just engineering. Leave all off to go by target roles.</small></span><div class="checks">${FAMILIES.map((f, i) => `<label for="s-fam-${i}"><input type="checkbox" id="s-fam-${i}" value="${esc(f)}" ${arr(s.families).includes(f) ? 'checked' : ''}${ro}>${esc(f)}</label>`).join('')}</div></div>
     <label class="f full" for="s-roles">Target roles <small>Comma-separated. Leave empty to target every role your verified skills support.</small><input type="text" id="s-roles" value="${esc(arr(s.targetRoles).join(', '))}" placeholder="Filled in from your resume"${ro}></label>
     <label class="f" for="s-fit">Lowest fit to prepare<select id="s-fit"${ro}><option value="strong"${s.minFit === 'strong' ? ' selected' : ''}>Strong fit only</option><option value="good"${s.minFit === 'good' ? ' selected' : ''}>Good fit and above</option><option value="stretch"${s.minFit === 'stretch' ? ' selected' : ''}>Include stretch roles</option></select></label>
-    ${(s.homeCountry || 'IN') === 'IN' ? `<label class="f" for="s-sal">Salary floor <small>LPA, fixed CTC</small><input type="number" id="s-sal" min="0" step="0.5" value="${esc(s.salaryFloorLpa)}" placeholder="e.g. 4"${ro}></label>` : `<label class="f" for="s-sal-usd">Salary floor <small>US$ a year, fixed pay</small><input type="number" id="s-sal-usd" min="0" step="5000" value="${esc(s.salaryFloorUsd || '')}" placeholder="e.g. 90000"${ro}></label>`}
+    ${inIndiaMode(s) ? `<label class="f" for="s-sal">Salary floor <small>LPA, fixed CTC</small><input type="number" id="s-sal" min="0" step="0.5" value="${esc(s.salaryFloorLpa)}" placeholder="e.g. 4"${ro}></label>` : `<label class="f" for="s-sal-usd">Salary floor <small>US$ a year, fixed pay</small><input type="number" id="s-sal-usd" min="0" step="5000" value="${esc(s.salaryFloorUsd || '')}" placeholder="e.g. 90000"${ro}></label>`}
     <label class="f" for="s-visa" style="display:flex;gap:10px;align-items:flex-start"><input type="checkbox" id="s-visa" style="width:auto;margin-top:4px"${s.needsSponsorship ? ' checked' : ''}${ro}><span>I need visa sponsorship <small>For on-site roles in another country, or where you live on a visa: skip roles whose posting says it cannot sponsor, and UK employers that are not on the Home Office register of licensed sponsors. Roles that say nothing are kept and marked unclear.</small></span></label>
     <label class="f" for="s-stated" style="display:flex;gap:10px;align-items:flex-start"><input type="checkbox" id="s-stated" style="width:auto;margin-top:4px"${s.requireStatedPay ? ' checked' : ''}${ro}><span>Only roles with pay evidence <small>Keep a role only when its posting states pay at or above your floor, or public pay data for freshers at that company does (marked as an estimate). Other roles stay in the skip log.</small></span></label>
     <label class="f full" for="s-deal">Dealbreakers <small>Anything that should make the search skip a role</small><textarea id="s-deal" rows="3" placeholder="e.g. bond clauses, unpaid probation, night shifts"${ro}>${esc(s.dealbreakers)}</textarea></label>
@@ -3636,6 +3645,7 @@ function upcoming(days){
 }
 /* The first minute: three answers, then real roles. Everything else in Settings can wait until the person
    has seen what the search finds for them. */
+const QS_PLACES = ['United States', 'United Kingdom', 'Canada', 'Germany', 'Netherlands', 'Ireland', 'Australia', 'United Arab Emirates', 'Singapore'];
 const QS_ROLES = ['Software Engineer', 'Data Analyst', 'Business Analyst', 'Product Manager', 'Marketing', 'Finance', 'Mechanical Engineer', 'Customer Success'];
 const hasFilters = () => { const s = obj(state.settings); return arr(s.targetRoles).length > 0 || arr(s.families).length > 0; };
 const needsQuickStart = () => cloud() && !!state.settings && !hasFilters();
@@ -3649,6 +3659,10 @@ function quickStartBlock(){
           <input type="text" id="qs-roles" maxlength="300" autocomplete="off" placeholder="e.g. Data Analyst, Business Analyst" required${ro}></label>
         <div class="full qs-chips" role="group" aria-label="Common roles">${QS_ROLES.map(r => `<button type="button" class="fchip" data-act="qs-role" data-r="${esc(r)}">${esc(r)}</button>`).join('')}</div>
         <label class="f" for="qs-home">Where you live<select id="qs-home"${ro}>${HOMES.map(([c, n]) => `<option value="${c}"${home === c ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></label>
+        <label class="f" for="qs-seek">Where you want to work<select id="qs-seek"${ro}><option value="home">In the country I live in</option><option value="abroad">In another country</option></select></label>
+        <div class="full" id="qs-places-row" hidden><label class="f" for="qs-places">Countries or cities you want to work in <small>comma separated</small>
+          <input type="text" id="qs-places" maxlength="300" autocomplete="off" placeholder="e.g. United Kingdom, Germany, Dublin"${ro}></label>
+          <div class="qs-chips" role="group" aria-label="Common countries" style="margin-top:10px">${QS_PLACES.map(r => `<button type="button" class="fchip" data-act="qs-place" data-r="${esc(r)}">${esc(r)}</button>`).join('')}</div></div>
         <label class="f" for="qs-years">Years of work experience <small>0 if you are a fresher</small><input type="number" id="qs-years" min="0" max="50" step="0.5" value="0" inputmode="decimal"${ro}></label>
         <label class="full qs-check" for="qs-visa" id="qs-visa-row"${home === 'IN' ? ' hidden' : ''}><input type="checkbox" id="qs-visa"${ro}> <span>I need an employer to sponsor my visa to work there <small>We then put employers with a record of sponsoring first, and leave out roles that say they cannot.</small></span></label>
         <div class="full qs-go"><button class="btn solid" type="submit"${ro}>Show my matches</button><span class="small muted">Free. You can change every answer later in Settings.</span></div>
@@ -4736,6 +4750,7 @@ document.addEventListener('click', e => {
   if (act !== 'sheet' && sheetEntry && !el._replay){ closeSheets(() => { el._replay = true; el.click(); el._replay = false; }); return; }
   if (act !== 'sheet') closeSheetsUI();
   if (act === 'tab') setTab(el.dataset.tab);
+  else if (act === 'qs-place'){ const i = $('#qs-places'); if (i){ const have = i.value.split(',').map(x => x.trim()).filter(Boolean); if (!have.includes(el.dataset.r)) have.push(el.dataset.r); i.value = have.join(', '); el.setAttribute('aria-pressed', 'true'); state.qsDirty = true; } }
   else if (act === 'qs-role'){ const i = $('#qs-roles'); if (i){ const have = i.value.split(',').map(x => x.trim()).filter(Boolean); if (!have.includes(el.dataset.r)) have.push(el.dataset.r); i.value = have.join(', '); el.setAttribute('aria-pressed', 'true'); state.qsDirty = true; } }
   else if (act === 'sheet') toggleSheet(el.dataset.sheet);
   else if (act === 'window'){ if (state.win !== el.dataset.w){ state.win = el.dataset.w; state.freshLimit = FRESH_PAGE; state.enter = true; state.filterAnim = true; render(); } }
@@ -4880,7 +4895,7 @@ document.addEventListener('keydown', e => {
 });
 document.addEventListener('change', e => {
   const el = e.target;
-  if (el.closest && el.closest('#qs-form')){ state.qsDirty = true; if (el.id === 'qs-home'){ const row = $('#qs-visa-row'); if (row) row.hidden = el.value === 'IN'; } return; }
+  if (el.closest && el.closest('#qs-form')){ state.qsDirty = true; if (el.id === 'qs-home' || el.id === 'qs-seek'){ const away = $('#qs-seek').value === 'abroad', row = $('#qs-visa-row'), pl = $('#qs-places-row'); if (pl) pl.hidden = !away; if (row){ row.hidden = $('#qs-home').value === 'IN' && !away; if (away && el.id === 'qs-seek') $('#qs-visa').checked = true; } } return; }
   if (el.closest && el.closest('#settings-form')) state.formDirty = true;
   if (el.closest && el.closest('#applicant-form')) state.apDirty = true;
   if (el.classList && el.classList.contains('resume-file')){ const f = el.files && el.files[0]; el.value = ''; uploadResume(f); return; }
@@ -5017,11 +5032,13 @@ document.addEventListener('submit', e => {
     const roles = $('#qs-roles').value.split(',').map(x => x.trim()).filter(Boolean).slice(0, 12);
     if (!roles.length){ toast('Type at least one job title.'); $('#qs-roles').focus(); return; }
     const home = $('#qs-home').value || 'IN', y = Math.max(0, Math.min(50, Number($('#qs-years').value) || 0));
+    const away = $('#qs-seek').value === 'abroad', wanted = $('#qs-places').value.trim().slice(0, 300);
+    if (away && !wanted){ toast('Name at least one country or city you want to work in.'); $('#qs-places').focus(); return; }
     const next = Object.assign({}, settings(), {
       targetRoles: roles, families: [], homeCountry: home, yearsExperience: y, experienceLevels: [], maxRequiredYears: stretchOf(y),
-      places: home === 'IN' ? '' : (HOMES.find(([c]) => c === home) || [home, home])[1], remoteOk: true,
+      places: away ? wanted : home === 'IN' ? '' : (HOMES.find(([c]) => c === home) || [home, home])[1], workAbroad: away && home === 'IN', remoteOk: true,
       locations: ['South India (any work mode)', 'Rest of India (any work mode)', 'Remote worldwide (first priority)'],
-      needsSponsorship: home !== 'IN' && $('#qs-visa').checked, timezone: TZ, setupAt: nowIso(), updatedAt: nowIso()
+      needsSponsorship: (home !== 'IN' || away) && $('#qs-visa').checked, timezone: TZ, setupAt: nowIso(), updatedAt: nowIso()
     });
     if (document.activeElement) document.activeElement.blur();
     enqueue('settings/profile', () => state.db.doc('settings/profile').set(next)).then(() => { state.qsDirty = false; state.settings = next; startFinding(); setTab('today'); render(); }).catch(() => {});
@@ -5042,7 +5059,7 @@ document.addEventListener('submit', e => {
     maxPostingAgeDays: Number($('#s-age').value) || 25, approvalMode: $('#s-mode').value, targetRoles: roles, families: fams, locations: locs, dailyCap: cap, minFit: $('#s-fit').value,
     salaryFloorLpa: sal === '' ? '' : Number(sal), requireStatedPay: !!($('#s-stated') && $('#s-stated').checked), needsSponsorship: !!($('#s-visa') && $('#s-visa').checked), dealbreakers: $('#s-deal').value.trim(), updatedAt: nowIso(),
     ...(usdFloor !== null ? {salaryFloorUsd: usdFloor === '' ? '' : Number(usdFloor)} : {}),
-    homeCountry: home, places: $('#s-places') ? $('#s-places').value.trim().slice(0, 300) : '', remoteOk: $('#s-remote') ? $('#s-remote').checked : true, timezone: TZ,
+    homeCountry: home, workAbroad: home === 'IN' && !!$('#s-seek') && $('#s-seek').value === 'abroad', places: $('#s-places') ? $('#s-places').value.trim().slice(0, 300) : '', remoteOk: $('#s-remote') ? $('#s-remote').checked : true, timezone: TZ,
     ...($('#s-alerts') ? {alerts: $('#s-alerts').value} : {})
   });
   if (document.activeElement) document.activeElement.blur();
@@ -5116,7 +5133,7 @@ document.addEventListener('click', e => {
 document.addEventListener('input', e => {
   const el = e.target;
   if (el.dataset && el.dataset.pf){ const kind = el.dataset.kind, v = el.value; const val = kind === 'bool' ? el.checked : kind === 'lines' ? v.split(/\n/).map(x => x.trim()).filter(Boolean) : kind === 'csv' ? v.split(',').map(x => x.trim()).filter(Boolean) : v; setPath(draft(), el.dataset.pf, val); if (!state.profDirty){ state.profDirty = true; const sb = $('[data-act="pf-save"]'); if (sb) sb.disabled = !state.canWrite; } }
-  else if (el.id === 's-home'){ const india = el.value === 'IN'; const a = $('#s-loc-in'), b = $('#s-loc-world'); if (a) a.hidden = !india; if (b) b.hidden = india; }
+  else if (el.id === 's-home' || el.id === 's-seek'){ const inIndia = $('#s-home').value === 'IN', india = inIndia && (!$('#s-seek') || $('#s-seek').value !== 'abroad'); const a = $('#s-loc-in'), b = $('#s-loc-world'), k = $('#s-seek-row'); if (k) k.hidden = !inIndia; if (a) a.hidden = !india; if (b) b.hidden = india; }
   else if (el.id === 'cc-calc'){ state.ccCalc = el.value; const o = $('#cc-out'); if (o) o.innerHTML = ccOut(obj(obj(state.concierge).fee), el.value); return; }
   else if (el.dataset && el.dataset.tl === 'prepId'){ state.tl.prepId = el.value; state.tl.typing = false; state.tl.render = true; render(); return; }
   else if (el.id === 'ct-q'){ state.ctQ = el.value; clearTimeout(state.ctT); state.ctT = setTimeout(() => { const pos = el.selectionStart; render(); requestAnimationFrame(() => { const q = $('#ct-q'); if (q){ q.focus(); try { q.setSelectionRange(pos, pos); } catch(e){} } }); }, 200); return; }
