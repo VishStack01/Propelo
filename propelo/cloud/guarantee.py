@@ -4,8 +4,8 @@ shortlisted for GUARANTEE_MIN_INTERVIEWS interviews (3) or a second round with o
 Who and how
   - Only Pro and Ultra members can apply. Nobody is enrolled directly: the member applies (target roles, a note,
     the guarantee terms accepted), and a person on the team reviews it and accepts or declines with a reason.
-  - Once accepted, the member pays GUARANTEE_INTERVIEW_PRICE_INR (or _USD_CENTS) once, through a Razorpay payment
-    link or a Dodo checkout. The GUARANTEE_DAYS window starts when the payment webhook arrives. An acceptance
+  - Once accepted, the member pays GUARANTEE_INTERVIEW_PRICE_USD_CENTS ($59) once, through a Dodo checkout (in
+    their own currency). The GUARANTEE_DAYS window starts when the payment webhook arrives. An acceptance
     that isn't paid within 7 days lapses.
   - For the window, keep the plan active and send at least GUARANTEE_MIN_APPS applications through Propelo (or
     marked as applied) in at least GUARANTEE_MIN_WEEKS different weeks. Applications to postings the scam check
@@ -18,9 +18,6 @@ Who and how
     2026-11-22 keep their promise of one interview.
   - Short of that by the end, with the activity done: claim within GUARANTEE_CLAIM_DAYS. A person checks it and
     the price paid is refunded to the original payment method. Once per account.
-
-The Job Guarantee has no upfront price and isn't handled here: it is a Concierge application (concierge.py)
-that the team reviews and accepts or declines, paid only by the placement fee after the member joins.
 
 It promises money back, never a job.
 """
@@ -72,9 +69,9 @@ def days_for(cfg: Config, kind: str = "interview") -> int:
     return cfg.guarantee_days
 
 
-def price_for(cfg: Config, kind: str, currency: str) -> int:
-    """The one-time price in minor units (paise or cents)."""
-    return cfg.guarantee_interview_usd_cents if currency == "USD" else cfg.guarantee_interview_inr * 100
+def price_for(cfg: Config, kind: str, currency: str = "USD") -> int:
+    """The one-time price in cents."""
+    return cfg.guarantee_interview_usd_cents
 
 
 def refund_estimate(cfg: Config, plan: str, currency: str, days: int, price: int = 0) -> int:
@@ -83,8 +80,7 @@ def refund_estimate(cfg: Config, plan: str, currency: str, days: int, price: int
 
 
 def _currency(c: Conn, uid: str) -> str:
-    s = plans.subscription(c, uid) or {}
-    return "USD" if str(s.get("currency") or "INR").upper() == "USD" else "INR"
+    return "USD"  # members pay in dollars (charged in their own currency at checkout)
 
 
 def _set(c: Conn, g: dict, status: str, reason: str | None = None, **extra) -> dict:
@@ -266,25 +262,13 @@ def review(c: Conn, staff_uid: str, gid: str, decision: str, note: str) -> dict:
     return g
 
 
-def _payer(cfg: Config, currency: str) -> str:
-    if currency == "USD":
-        return "dodo" if cfg.dodo_enabled and cfg.dodo_product_guarantee else ""
-    return "razorpay" if cfg.razorpay_key_id and cfg.razorpay_key_secret else ""
+def _payer(cfg: Config, currency: str = "USD") -> str:
+    return "dodo" if cfg.dodo_enabled and cfg.dodo_product_guarantee else ""
 
 
 def checkout(cfg: Config, user: dict, g: dict, post=None) -> dict:
-    """A one-time payment: a Razorpay payment link in rupees, a Dodo checkout in dollars. Returns {provider, id, url}.
+    """A one-time payment through a Dodo checkout. Returns {provider, id, url}.
     The guarantee starts on the provider's paid webhook, never on this call."""
-    if _payer(cfg, g["currency"]) == "razorpay":
-        post = post or plans._post
-        r = post(f"{plans.RAZORPAY_API}/payment_links", {
-            "amount": int(g["price"]), "currency": "INR", "accept_partial": False, "description": f"Propelo Interview Guarantee ({cfg.guarantee_days} days)",
-            "customer": {"name": (user.get("name") or "")[:80], "email": user["email"][:120]}, "notify": {"email": True, "sms": False},
-            "reference_id": g["id"][:40], "callback_url": f"{cfg.public_url}/app#guarantee", "callback_method": "get",
-            "notes": {"user_id": user["id"], "guarantee_id": g["id"]}}, cfg.razorpay_key_id, cfg.razorpay_key_secret)
-        if not str(r.get("id", "")).startswith("plink_") or not str(r.get("short_url", "")).startswith("https://"):
-            raise GuaranteeError("Razorpay returned an unexpected payment link.")
-        return {"provider": "razorpay", "id": r["id"], "url": r["short_url"]}
     if _payer(cfg, g["currency"]) == "dodo":
         d = plans.Dodo(cfg, post)
         r = d.call("POST", f"{d.base}/checkouts", {"product_cart": [{"product_id": cfg.dodo_product_guarantee, "quantity": 1}],

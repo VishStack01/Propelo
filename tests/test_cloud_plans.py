@@ -1,4 +1,4 @@
-"""Plans, Razorpay billing, AI metering and users' own keys in Propelo Cloud."""
+"""Plans, dollar billing through Dodo, older rupee subscriptions, AI metering and members' own keys in Propelo Cloud."""
 
 import hashlib
 import hmac
@@ -34,13 +34,29 @@ def fake_model(monkeypatch):
 
 
 def _billing_on(cloud, posts):
+    """Razorpay keys, as a server that takes rupee links from consultancies has them."""
     cloud.cfg.razorpay_key_id, cloud.cfg.razorpay_key_secret = "rzp_test_x", "secret"
-    cloud.cfg.razorpay_webhook_secret, cloud.cfg.razorpay_plan_pro = "whsec", "plan_TEST1234567890"
+    cloud.cfg.razorpay_webhook_secret = "whsec"
 
     def post(url, body, kid, ksec):
         posts.append((url, body, kid))
-        return dict(SUB) if url.endswith("/subscriptions") else {"id": SUB["id"], "status": "active"}
+        return {"id": SUB["id"], "status": "active"}
     cloud.app.state.razorpay.post = post
+
+
+def _older_rupee_subscription(cloud, uid, sub_id=None, plan="pro"):
+    """A rupee subscription started before members moved to dollars."""
+    from propelo.cloud import plans
+    with cloud.db.tx() as t:
+        plans.start_checkout(t, uid, {"id": sub_id or SUB["id"], "status": "created"}, plan, "razorpay", "INR")
+
+
+def _pro(cloud, email="asha@example.com", until=None):
+    """Grant Pro directly, as an operator would."""
+    from propelo.cloud import plans
+    with cloud.db.tx() as t:
+        uid = t.one("SELECT id FROM users WHERE email = ?", (email,))["id"]
+        plans.grant(t, uid, "test", until)
 
 
 def _hook(cloud, event, eid="evt_1", secret="whsec"):
@@ -62,8 +78,8 @@ def test_new_accounts_are_free_and_see_the_catalog(cloud):
     me = c.get("/api/me").json()
     assert me["plan"] == "free" and me["ai"]["source"] == "none" and me["ai"]["available"] is False
     cat = cloud.client().get("/api/plans").json()
-    assert [p["id"] for p in cat["plans"]] == ["free", "pro", "ultra"] and cat["plans"][1]["priceInr"] == cloud.cfg.pro_price_inr
-    assert cat["checkoutEnabled"] is False
+    assert [p["id"] for p in cat["plans"]] == ["free", "pro", "ultra"] and cat["plans"][1]["priceUsd"] == "39.00"
+    assert cat["checkoutEnabled"] is False and cat["currency"] == "USD"
     assert c.post("/api/billing/checkout").status_code == 503
 
 
@@ -78,7 +94,7 @@ def test_hosted_ai_is_metered_by_plan(cloud, monkeypatch, fake_model):
     assert c.post("/api/ai", json={"prompt": "FAIL"}).status_code == 502  # a failed call isn't counted
     assert c.post("/api/ai", json={"prompt": "hi"}).json()["text"] == "OK"
     r = c.post("/api/ai", json={"prompt": "hi"})
-    assert r.status_code == 402 and r.json()["code"] == "ai_quota" and "Upgrade to Pro" in r.json()["error"]
+    assert r.status_code == 402 and r.json()["code"] == "ai_quota" and "Pro and Ultra include more" in r.json()["error"]
     assert c.get("/api/billing").json()["ai"]["left"] == 0
     # computer keys can't spend AI
     k = cloud.client()
@@ -86,8 +102,25 @@ def test_hosted_ai_is_metered_by_plan(cloud, monkeypatch, fake_model):
     assert k.post("/api/ai", json={"prompt": "hi"}).status_code == 403
 
 
+def test_own_key_is_for_pro_and_ultra(cloud, fake_model):
+    c = cloud.user()
+    key = "sk-proj-abcdefghijklmnopqrstuvwxyz1234"
+    r = c.put("/api/me/ai-key", json={"provider": "openai", "key": key})
+    assert r.status_code == 402 and r.json()["code"] == "plan_limit" and "Pro and Ultra" in r.json()["error"]
+    assert c.get("/api/billing").json()["ai"]["ownKeyAllowed"] is False
+    _pro(cloud)
+    assert c.put("/api/me/ai-key", json={"provider": "openai", "key": key}).status_code == 200
+    assert c.post("/api/ai", json={"prompt": "hi"}).json()["source"] == "own"
+    # Back on Free, a saved key stays saved but isn't used.
+    _pro(cloud, until="2000-01-01T00:00:00Z")
+    me = c.get("/api/me").json()
+    assert me["plan"] == "free" and me["ai"]["source"] == "none" and me["ai"]["ownKey"]["hint"] == "…1234"
+    assert c.post("/api/ai", json={"prompt": "hi"}).status_code == 503
+
+
 def test_own_key_is_encrypted_and_unmetered(cloud, fake_model):
     c = cloud.user()
+    _pro(cloud)
     key = "sk-proj-abcdefghijklmnopqrstuvwxyz1234"
     r = c.put("/api/me/ai-key", json={"provider": "openai", "key": key, "baseUrl": "https://openrouter.ai/api/v1"})
     assert r.status_code == 200 and r.json()["ownKey"]["hint"] == "…1234"
@@ -95,7 +128,7 @@ def test_own_key_is_encrypted_and_unmetered(cloud, fake_model):
         stored = t.one("SELECT secret FROM ai_keys")["secret"]
     assert key not in stored and "abcdefgh" not in stored
     assert key not in json.dumps(c.get("/api/billing").json()) and key not in c.get("/api/me/export").text
-    cloud.cfg.free_ai_credits = 0
+    cloud.cfg.pro_ai_credits = 0
     for _ in range(3):
         assert c.post("/api/ai", json={"prompt": "hi"}).json()["source"] == "own"
     assert fake_model[-1]["provider"] == "openai" and fake_model[-1]["base"] == "https://openrouter.ai/api/v1"
@@ -116,24 +149,34 @@ def test_own_key_is_encrypted_and_unmetered(cloud, fake_model):
     {"provider": "openai", "key": "short"},
 ])
 def test_own_key_rejects_unsafe_settings(cloud, body):
-    assert cloud.user().put("/api/me/ai-key", json=body).status_code == 400
+    c = cloud.user()
+    _pro(cloud)
+    assert c.put("/api/me/ai-key", json=body).status_code == 400
 
 
-def test_checkout_webhooks_and_cancel(cloud):
+def test_members_pay_in_dollars_only(cloud):
     posts = []
     _billing_on(cloud, posts)
     c = cloud.user()
-    r = c.post("/api/billing/checkout")
-    assert r.status_code == 200 and r.json()["url"] == SUB["short_url"]
-    url, body, kid = posts[0]
-    assert url.endswith("/v1/subscriptions") and body["plan_id"] == "plan_TEST1234567890" and body["notes"]["user_id"] == c.uid
+    for body in ({"plan": "pro", "currency": "INR"}, {"plan": "ultra", "currency": "GBP"}):
+        r = c.post("/api/billing/checkout", json=body)
+        assert r.status_code == 400 and r.json()["code"] == "bad_currency" and "US dollars" in r.json()["error"]
+    assert c.post("/api/billing/pass", json={"currency": "INR"}).json()["code"] == "bad_currency"
+    assert not posts and c.get("/api/billing").json()["currencies"] == []  # Razorpay alone sells nothing to members
+    assert c.post("/api/billing/checkout", json={"plan": "pro"}).status_code == 503
+
+
+def test_older_rupee_subscription_webhooks_and_cancel(cloud):
+    posts = []
+    _billing_on(cloud, posts)
+    c = cloud.user()
+    _older_rupee_subscription(cloud, c.uid)
     assert c.get("/api/me").json()["plan"] == "free"  # nothing paid yet
 
     assert _hook(cloud, _sub_event("subscription.activated", "active"), secret="wrong").status_code == 400
     assert _hook(cloud, _sub_event("subscription.activated", "active")).json()["result"] == "active"
     assert _hook(cloud, _sub_event("subscription.activated", "active")).json()["result"] == "duplicate"
     assert c.get("/api/me").json()["plan"] == "pro"
-    assert c.post("/api/billing/checkout").status_code == 409
     assert _hook(cloud, {"event": "payment.captured", "payload": {}}, eid="evt_pay").json()["result"] == "ignored"
 
     v = c.post("/api/billing/cancel").json()
@@ -218,7 +261,7 @@ def test_webhooks_out_of_order_and_older_checkout_links(cloud):
     posts = []
     _billing_on(cloud, posts)
     c = cloud.user()
-    c.post("/api/billing/checkout")
+    _older_rupee_subscription(cloud, c.uid)
     now = int(time.time())
     assert _hook(cloud, _sub_event("subscription.cancelled", "cancelled", end=now - 10, at=now), eid="e1").json()["result"] == "cancelled"
     # an older "charged" event delivered late doesn't switch Pro back on
@@ -269,10 +312,12 @@ def _dodo_event(kind, uid, sub="sub_dodo_1", product="pdt_ULTRA", at=None, **dat
 
 def test_catalog_has_three_plans_priced_in_dollars(cloud):
     cat = cloud.client().get("/api/plans").json()
-    pro, ultra = cat["plans"][1], cat["plans"][2]
-    assert (pro["priceInr"], pro["priceUsd"], ultra["priceInr"], ultra["priceUsd"]) == (799, "39.00", 1999, "79.00")
-    assert (pro["aiCreditsInr"], ultra["aiCreditsInr"]) == (120, 300)
-    assert any("120 AI actions" in f for f in pro["featuresInr"]) and any("400 AI actions" in f for f in pro["features"])
+    free, pro, ultra = cat["plans"]
+    assert (pro["priceUsd"], ultra["priceUsd"]) == ("39.00", "79.00") and "priceInr" not in pro and "featuresInr" not in pro
+    assert any("400 AI actions" in f for f in pro["features"]) and any("own AI key" in f for f in pro["features"])
+    assert (free["ownKey"], pro["ownKey"], ultra["ownKey"]) == (False, True, True)
+    assert not any("own key" in f or "own AI key" in f for f in free["features"])
+    assert [(x["plan"], x["priceUsd"]) for x in cat["passes"]["passes"]] == [("pro", "99.00"), ("ultra", "189.00")] and cat["passes"]["days"] == 90
     assert ultra["aiCredits"] == 1500 and ultra["autoApplyPerDay"] == 60 and ultra["matchEveryMinutes"] == 15
     assert ultra["copilotPerDay"] == 200 and ultra["mockInterviews"] == 60 and ultra["linkedinReview"] is True
     assert not any("nlimited copilot" in f for p in cat["plans"] for f in p["features"])
@@ -305,8 +350,8 @@ def test_dollar_checkout_through_dodo(cloud):
     assert url == "https://test.dodopayments.com/checkouts" and body["product_cart"] == [{"product_id": "pdt_ULTRA", "quantity": 1}]
     assert body["metadata"] == {"user_id": c.uid, "plan": "ultra"} and key == "dodo_test_key"
     assert c.get("/api/me").json()["plan"] == "free"
-    # INR isn't switched on in this test
-    assert c.post("/api/billing/checkout", json={"plan": "pro", "currency": "INR"}).status_code == 503
+    # Members can't pay in rupees
+    assert c.post("/api/billing/checkout", json={"plan": "pro", "currency": "INR"}).status_code == 400
 
     assert _dodo_hook(cloud, _dodo_event("subscription.active", c.uid), secret="whsec_" + base64.b64encode(b"other").decode()).status_code == 400
     assert _dodo_hook(cloud, _dodo_event("subscription.active", c.uid)).json()["result"] == "active"
@@ -333,41 +378,37 @@ def test_dodo_ignores_events_for_unknown_accounts(cloud):
 
 
 def test_upgrade_keeps_pro_until_ultra_is_paid(cloud):
-    posts = []
-    _billing_on(cloud, posts)
-    cloud.cfg.razorpay_plan_ultra = "plan_ULTRA0000000000"
+    calls = []
+    _dodo_on(cloud, calls)
     c = cloud.user()
-    assert c.post("/api/billing/checkout", json={"plan": "pro", "currency": "INR"}).status_code == 200
-    assert _hook(cloud, _sub_event("subscription.activated", "active")).json()["result"] == "active"
+    assert c.post("/api/billing/checkout", json={"plan": "pro"}).status_code == 200
+    ev = _dodo_event("subscription.active", c.uid, sub="sub_dodo_pro", product="pdt_PRO")
+    ev["data"]["metadata"]["plan"] = "pro"
+    assert _dodo_hook(cloud, ev).json()["result"] == "active"
     assert c.get("/api/me").json()["plan"] == "pro"
 
-    new = {"id": "sub_ULTRA000000001", "short_url": "https://rzp.io/i/ultra", "status": "created"}
-    cloud.app.state.razorpay.post = lambda url, body, kid, ksec: (posts.append((url, body, kid)), dict(new))[1]
-    r = c.post("/api/billing/checkout", json={"plan": "ultra", "currency": "INR"})
-    assert r.status_code == 200 and posts[-1][1]["plan_id"] == "plan_ULTRA0000000000" and posts[-1][1]["notes"]["plan"] == "ultra"
+    r = c.post("/api/billing/checkout", json={"plan": "ultra"})
+    assert r.status_code == 200 and calls[-1][2]["product_cart"] == [{"product_id": "pdt_ULTRA", "quantity": 1}]
     b = c.get("/api/billing").json()
     assert b["plan"] == "pro" and b["subscription"]["pendingPlan"] == "ultra"  # an abandoned checkout takes nothing away
 
-    ev = _sub_event("subscription.activated", "active", sub_id=new["id"], notes={"user_id": c.uid, "plan": "ultra"})
-    ev["payload"]["subscription"]["entity"]["plan_id"] = "plan_ULTRA0000000000"
-    assert _hook(cloud, ev, eid="evt_ultra").json()["result"] == "active"
+    assert _dodo_hook(cloud, _dodo_event("subscription.active", c.uid, sub="sub_dodo_ultra"), wid="msg_ultra").json()["result"] == "active"
     b = c.get("/api/billing").json()
     assert b["plan"] == "ultra" and b["subscription"]["pendingPlan"] is None
     with cloud.db.tx() as t:
         task = t.one("SELECT kind, payload FROM tasks WHERE kind = 'billing_cancel'")
-    assert json.loads(task["payload"]) == {"provider": "razorpay", "sub_id": SUB["id"]}
+    assert json.loads(task["payload"]) == {"provider": "dodo", "sub_id": "sub_dodo_pro"}
 
+    from propelo.cloud import plans
     from propelo.cloud.worker import cancel_superseded
     seen = []
-    cloud.app.state.razorpay.post = None
-    from propelo.cloud import plans
-    orig = plans._post
-    plans._post = lambda url, body, kid, ksec: (seen.append((url, body)), {})[1]
+    orig = plans._dodo_request
+    plans._dodo_request = lambda method, url, body, key: (seen.append((method, url, body)), {})[1]
     try:
         cancel_superseded(cloud.cfg, json.loads(task["payload"]))
     finally:
-        plans._post = orig
-    assert seen == [(f"https://api.razorpay.com/v1/subscriptions/{SUB['id']}/cancel", {"cancel_at_cycle_end": 0})]
+        plans._dodo_request = orig
+    assert seen == [("PATCH", "https://test.dodopayments.com/subscriptions/sub_dodo_pro", {"status": "cancelled"})]
 
 
 def test_admin_can_grant_ultra(cloud):
@@ -388,26 +429,13 @@ def test_pricing_page_shows_dollars_only(cloud):
         assert "<script>" not in r.text  # nothing inline without a nonce
 
 
-def test_india_plans_are_for_members_who_look_for_work_in_india(cloud):
-    posts = []
-    _billing_on(cloud, posts)
-    abroad = cloud.user("ravi@example.com")
-    abroad.put("/api/d/settings/profile", json={"homeCountry": "IN", "workAbroad": True, "places": "United Kingdom"})
-    assert "INR" not in abroad.get("/api/billing").json()["currencies"]
-    r = abroad.post("/api/billing/checkout", json={"plan": "pro", "currency": "INR"})
-    assert r.status_code == 400 and r.json()["code"] == "inr_not_for_you" and not posts
-    uk = cloud.user("sam@example.com")
-    uk.put("/api/d/settings/profile", json={"homeCountry": "GB"})
-    assert uk.post("/api/billing/checkout", json={"plan": "pro", "currency": "INR"}).json()["code"] == "inr_not_for_you"
-
-    home = cloud.user()
-    home.put("/api/d/settings/profile", json={"homeCountry": "IN"})
-    b = home.get("/api/billing").json()
-    assert "INR" in b["currencies"] and b["indiaMode"] is True
-    assert home.post("/api/billing/checkout", json={"plan": "pro", "currency": "INR"}).status_code == 200
-    assert _hook(cloud, _sub_event("subscription.activated", "active", notes={"user_id": home.uid})).json()["result"] == "active"
-    ai = home.get("/api/billing").json()["ai"]
-    assert home.get("/api/me").json()["plan"] == "pro" and ai["limit"] == 120
-    # Already paying in rupees, they keep seeing the rupee plan even after changing where they want to work.
-    home.put("/api/d/settings/profile", json={"homeCountry": "IN", "workAbroad": True, "places": "Germany"})
-    assert "INR" in home.get("/api/billing").json()["currencies"]
+def test_pricing_page_offers_the_90_day_passes(cloud):
+    c = cloud.client()
+    page = c.get("/pricing").text
+    assert "or $99 for 90 days, paid once." in page and "or $189 for 90 days, paid once." in page
+    assert "Get the pass" not in page  # not on sale until the Dodo products are set
+    _dodo_on(cloud, [])
+    cloud.cfg.dodo_product_pass, cloud.cfg.dodo_product_pass_ultra = "pdt_PASS", "pdt_PASS_ULTRA"
+    page = c.get("/pricing").text
+    assert "buy%3Dpass-pro" in page and "buy%3Dpass-ultra" in page
+    assert "Job Guarantee" not in page and "India" not in page

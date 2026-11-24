@@ -37,25 +37,26 @@ Set `PROPELO_LLM` to `anthropic` and `ANTHROPIC_API_KEY` to your key. Set a mont
 |---|---|---|---|
 | Pro | $39 a month | Subscription | `DODO_PRODUCT_PRO` |
 | Ultra | $79 a month | Subscription | `DODO_PRODUCT_ULTRA` |
+| Pro, 90-day pass | $99 | One-time | `DODO_PRODUCT_PASS` |
+| Ultra, 90-day pass | $189 | One-time | `DODO_PRODUCT_PASS_ULTRA` |
 | Interview Guarantee | $59 | One-time | `DODO_PRODUCT_GUARANTEE` |
 | Consultancy Starter Pack | $325 | One-time | `DODO_PRODUCT_CONSULTANCY_STARTER` |
 | Consultancy Growth | $625 | One-time | `DODO_PRODUCT_CONSULTANCY_GROWTH` |
 | Consultancy Plus Pack | $1,225 | One-time | `DODO_PRODUCT_CONSULTANCY_PLUS` |
 | Agency roles feed | $99 | One-time | `DODO_PRODUCT_AGENCY_FEED` |
 
-3. **Webhooks:** add `https://app.propelo.org/api/billing/dodo-webhook` and copy its secret.
+3. **Webhooks:** add `https://app.propelo.org/api/billing/dodo-webhook`, subscribe to the `subscription.*` and `payment.*` events, and copy its secret.
 4. In Render set `DODO_API_KEY`, `DODO_WEBHOOK_SECRET`, the product ids above, and `DODO_MODE=test`. Switch to `live` after step 7.
 5. If Render has `PRO_PRICE_USD_CENTS` or `ULTRA_PRICE_USD_CENTS` from before, delete them. The code's defaults are the new prices.
 
-### Razorpay (India plans, in rupees)
+### Razorpay (optional, consultancies in India only)
 
-Only members who live in India and look for work there can buy these. Everyone else is sent to Dodo.
+Members pay only through Dodo, in dollars. Razorpay is only for a consultancy or agency in India that wants to pay its 30 days by a rupee link. Skip it until one asks.
 
 1. Finish Razorpay activation (KYC).
-2. **Subscriptions → Plans:** create **Pro (India) ₹799 a month** and **Ultra (India) ₹1,999 a month**. Copy each `plan_...` id.
-3. **Settings → API Keys:** generate a key id and secret.
-4. **Settings → Webhooks:** add `https://app.propelo.org/api/billing/webhook` with a secret you choose, and tick the `subscription.*` and `payment_link.paid` events.
-5. In Render set `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, `RAZORPAY_PLAN_PRO` and `RAZORPAY_PLAN_ULTRA`. If `PRO_PRICE_INR` or `ULTRA_PRICE_INR` are set from before, delete them.
+2. **Settings → API Keys:** generate a key id and secret.
+3. **Settings → Webhooks:** add `https://app.propelo.org/api/billing/webhook` with a secret you choose, and tick `payment_link.paid`.
+4. In Render set `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` and `RAZORPAY_WEBHOOK_SECRET`. Delete `RAZORPAY_PLAN_PRO`, `RAZORPAY_PLAN_ULTRA`, `PRO_PRICE_INR` and `ULTRA_PRICE_INR` if they are set: they are no longer read.
 
 ## 5. Sign-in buttons
 
@@ -81,10 +82,10 @@ Mobile number sign-in is for members who add a number in Settings. New members c
 ## 7. Check it is live
 
 - `https://app.propelo.org/api/ready` answers `"ok": true`.
-- `https://app.propelo.org/pricing` shows $0, $39 and $79, and the India plans question.
+- `https://app.propelo.org/pricing` shows $0, $39 and $79, the 90-day passes ($99 and $189) under Pro and Ultra, and no rupee prices.
 - The sign-in page shows the buttons you set up in step 5.
-- A Pro checkout in test mode opens Dodo at $39 (or the local-currency equivalent). A member set to "In India" sees the India plans at ₹799 and ₹1,999.
-- Buy Pro once with a real card, then refund it from the Dodo dashboard. Then set `DODO_MODE=live` and switch Razorpay to live mode with the live plan ids.
+- A Pro checkout in test mode opens Dodo at $39 (or the local-currency equivalent), and each pass at $99 or $189.
+- Buy Pro once with a real card, then refund it from the Dodo dashboard. Then set `DODO_MODE=live` with the live product ids.
 
 If something is wrong, revert the merge on `main` and redeploy. Nothing in this release removes data; the one database change only adds two columns for mobile numbers.
 
@@ -98,7 +99,9 @@ If something is wrong, revert the merge on `main` and redeploy. Nothing in this 
 
 | Decision | Why | To change it |
 |---|---|---|
-| India plans: Pro ₹799 and Ultra ₹1,999 a month with 120 and 300 AI actions | ₹499 with the full allowance lost money on Sonnet 5.5. At half the allowance used these give about 93%. | `PRO_PRICE_INR`, `ULTRA_PRICE_INR`, `PRO_AI_CREDITS_INR`, `ULTRA_AI_CREDITS_INR` in Render, and the Razorpay plans |
+| Members pay in dollars only (no India plans, no Job Guarantee) | Propelo focuses on the US, UK, Ireland and the Netherlands; Dodo charges each buyer in their own currency | A code change: the India plans were removed in 2.17 |
+| 90-day passes: Pro $99, Ultra $189, paid once | A job search is a season; students on a visa clock prefer to pay once | `PASS_PRICE_USD_CENTS`, `PASS_ULTRA_PRICE_USD_CENTS`, `PASS_DAYS`, or `PASS=off` |
+| Your own AI key only on Pro and Ultra | Free stays cheap to run; self-hosting with your own key stays free | `plans.own_key_allowed` in `propelo/cloud/plans.py` |
 | Consultancy packs in rupees cost the same as in dollars (Starter ₹28,599) | Every student seat carries the global allowance | `BUSINESS_PLANS` in `propelo/cloud/partners.py` |
 | Mobile number sign-in only for numbers already added in Settings | Texting any number from a public form invites SMS fraud and cost | Ask for phone-first sign-up if you want it |
 | Public demo is a graduate in London who needs sponsorship | The product is aimed at people looking for work abroad | `dashboard/demo-data.json` |
@@ -106,5 +109,5 @@ If something is wrong, revert the merge on `main` and redeploy. Nothing in this 
 ## Known gaps
 
 - Roles outside the US and India are thin for some job titles. That is feed coverage, not a bug.
-- The Job Guarantee is India only and priced in rupees.
+- The Job Guarantee is retired. Its code stays, off; turning it on again needs its terms back on `/terms`.
 - The margin figures assume members use half their AI allowance. Replace the assumption with real usage after the first month.

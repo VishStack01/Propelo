@@ -3,27 +3,29 @@
 Three plans:
 
   Free   everything that runs without a model (fresh matched roles, quoted checks, the pipeline,
-         auto-apply from your own computer), daily matching, a small monthly allowance of AI
-         actions on the service's model, and unlimited AI on your own key.
+         auto-apply from your own computer), daily matching and a small monthly allowance of AI
+         actions on the service's model.
   Pro    matching within an hour of each scan, a larger AI allowance, a higher auto-apply cap and more storage.
   Ultra  matching within 15 minutes of each scan, the largest AI allowance, the highest
          auto-apply cap, the most copilot questions and mock interviews (a stated fair-use limit, none
          on your own key), and LinkedIn review.
 
+Pro and Ultra also come as 90-day passes, paid once (passes.py).
+
 Payments: prices are in US dollars for everyone, paid through Dodo Payments, which is the merchant of
 record (it charges and files VAT and sales tax) and, with Adaptive Currency on, charges each buyer in their
-own currency. Members who live in India and look for work there may instead take the India plans: rupee
-prices through Razorpay, with a smaller AI allowance.
-Either way the server creates the checkout and sends the person to the provider's hosted page,
-so card and UPI details never touch this service. The provider then calls a webhook; every
-event is verified (Razorpay: HMAC of the body; Dodo: Standard Webhooks), stored once by its id
-so retries are harmless, and the subscription's status decides the plan.
+own currency. The server creates the checkout and sends the person to Dodo's hosted page, so card details
+never touch this service. Dodo then calls a webhook; every event is verified (Standard Webhooks), stored
+once by its id so retries are harmless, and the subscription's status decides the plan. (Razorpay events
+are still verified and recorded: consultancies in India pay by Razorpay link, and an older rupee
+subscription keeps working until it ends.)
 
 Changing plan: the new checkout waits in `pending_*`. Only when the new subscription is paid does
 it replace the old one, and the old one is cancelled then, so an abandoned checkout never takes
 away a plan someone already pays for.
 
-Own keys: a person may save their own Anthropic, OpenAI(-compatible) or Gemini key. It is
+Own keys: a Pro or Ultra member may save their own Anthropic, OpenAI(-compatible) or Gemini key (on a computer
+of their own, Propelo with their own key is free and open source). It is
 encrypted with SECRETS_KEY (Fernet: AES-128-CBC with HMAC-SHA256) and only its last four
 characters are ever shown. OpenAI-compatible base URLs are limited to known public providers,
 so the server can't be pointed at internal addresses.
@@ -48,7 +50,7 @@ from .db import Conn, now_iso
 
 PLAN_IDS = ("free", "pro", "ultra")
 PAID = ("pro", "ultra")
-CURRENCIES = ("INR", "USD")
+CURRENCIES = ("USD",)  # what members pay in; consultancies may also pay in rupees (partners.py)
 PRO_STATUSES = {"active", "pending"}  # pending: a renewal charge is being retried; the plan stays on meanwhile
 OWN_PROVIDERS = ("anthropic", "openai", "gemini")
 OPENAI_COMPATIBLE_HOSTS = {
@@ -72,20 +74,14 @@ def addons(cfg: Config) -> list[dict]:
     """Options Pro and Ultra members can apply for. Not part of any plan; the team reviews every application."""
     if not cfg.guarantee_enabled:
         return []
-    out = [{"id": "interview", "name": "Interview Guarantee", "priceInr": cfg.guarantee_interview_inr, "priceUsd": usd(cfg.guarantee_interview_usd_cents),
+    return [{"id": "interview", "name": "Interview Guarantee", "priceUsd": usd(cfg.guarantee_interview_usd_cents),
             "for": ["pro", "ultra"], "days": cfg.guarantee_days, "when": f"once, for {cfg.guarantee_days} days, after we accept you",
             "line": f"Apply, and once we accept you, pay once. {cfg.guarantee_min_interviews} interviews or a second round within {cfg.guarantee_days} days, or the full price back. Terms and conditions apply."}]
-    if cfg.concierge_enabled:
-        out.append({"id": "job", "name": "Job Guarantee", "priceInr": 0, "priceUsd": None, "for": ["pro", "ultra"], "days": None,
-                    "when": "you pay only after you join",
-                    "line": f"Apply, and once we accept you, a talent partner works with you until you're hired. Pay {cfg.concierge_rate_low}% of the "
-                            f"yearly fixed pay ({cfg.concierge_rate_high}% on the part above ₹{cfg.concierge_band // 100000} lakh) only after you join. India only for now."})
-    return out
 
 
 # The hosted service's settings, used for the website's plan cards (render.yaml turns these on).
 def public_config() -> Config:
-    return Config(guarantee_enabled=True, concierge_enabled=True)
+    return Config(guarantee_enabled=True)
 
 
 def _features(cfg: Config, plan: str, credits: int) -> list[str]:
@@ -93,12 +89,13 @@ def _features(cfg: Config, plan: str, credits: int) -> list[str]:
         return ["Fresh roles from company career pages, matched daily",
                 "Every keep or skip with the quote that decided it",
                 "Pipeline, contacts, follow-ups, calendar and referral drafts",
-                f"{credits} AI actions a month, unlimited with your own key",
+                f"{credits} AI actions a month",
                 "Autofill extension, and auto-apply from your own computer up to 5 a day"]
     if plan == "pro":
         return ["Everything in Free",
                 "New roles matched within an hour of each scan",
                 f"{credits:,} AI actions a month: tailored resumes, cover letters, fit scores",
+                "Or bring your own AI key for no monthly limit",
                 "Auto-apply up to 500 a month (25 a day), with a receipt for each",
                 "Ask Propelo, the copilot, 60 questions a day, and 20 mock interviews a month",
                 "Recruiter emails sent from your Gmail, up to 10 a day, when you turn it on",
@@ -114,41 +111,31 @@ def _features(cfg: Config, plan: str, credits: int) -> list[str]:
 
 
 def catalog(cfg: Config) -> list[dict]:
-    """Each paid plan has a dollar price (everyone) and an India price in rupees with a smaller AI allowance
-    (members who live in India and look for work there)."""
+    """The three plans, priced in US dollars a month."""
     rows = [
-        {"id": "free", "name": "Free", "priceInr": 0, "priceUsd": "0", "aiCredits": cfg.free_ai_credits, "aiCreditsInr": cfg.free_ai_credits,
+        {"id": "free", "name": "Free", "priceUsd": "0", "aiCredits": cfg.free_ai_credits, "ownKey": False,
          "matchEveryMinutes": 24 * 60, "matchEveryHours": 24, "autoApplyPerDay": 5, "autoApplyPerMonth": 100, "storageMb": min(cfg.user_storage_mb, 10),
          "copilotPerDay": 10, "mockInterviews": 2, "autoEmailsPerDay": 0, "linkedinReview": False},
-        {"id": "pro", "name": "Pro", "priceInr": cfg.pro_price_inr, "priceUsd": usd(cfg.pro_price_usd_cents), "aiCredits": cfg.pro_ai_credits,
-         "aiCreditsInr": cfg.pro_ai_credits_inr,
+        {"id": "pro", "name": "Pro", "priceUsd": usd(cfg.pro_price_usd_cents), "aiCredits": cfg.pro_ai_credits, "ownKey": True,
          "matchEveryMinutes": 60, "matchEveryHours": 1, "autoApplyPerDay": 25, "autoApplyPerMonth": 500, "storageMb": cfg.user_storage_mb,
          "copilotPerDay": 60, "mockInterviews": 20, "autoEmailsPerDay": 10, "linkedinReview": False},
-        {"id": "ultra", "name": "Ultra", "priceInr": cfg.ultra_price_inr, "priceUsd": usd(cfg.ultra_price_usd_cents), "aiCredits": cfg.ultra_ai_credits,
-         "aiCreditsInr": cfg.ultra_ai_credits_inr,
+        {"id": "ultra", "name": "Ultra", "priceUsd": usd(cfg.ultra_price_usd_cents), "aiCredits": cfg.ultra_ai_credits, "ownKey": True,
          "matchEveryMinutes": 15, "matchEveryHours": 0.25, "autoApplyPerDay": 60, "autoApplyPerMonth": 1000, "storageMb": max(cfg.user_storage_mb, 100),
          "copilotPerDay": 200, "mockInterviews": 60, "autoEmailsPerDay": 25, "linkedinReview": True},
     ]
     for r in rows:
         r["features"] = _features(cfg, r["id"], r["aiCredits"])
-        r["featuresInr"] = _features(cfg, r["id"], r["aiCreditsInr"])
     return rows
 
 
-def india_mode(settings: dict | None) -> bool:
-    """Lives in India and looks for work there: the member the rupee plans are for."""
-    s = settings or {}
-    return str(s.get("homeCountry") or "IN").upper() == "IN" and not s.get("workAbroad")
-
-
 def ai_limit(c: Conn, cfg: Config, user: dict, plan: str | None = None) -> int:
-    """The month's AI allowance: a plan bought in rupees carries the India allowance."""
-    plan = plan or plan_of(c, user)
-    info = plan_info(cfg, plan)
-    s = subscription(c, user["id"])
-    if plan in PAID and s and s.get("currency") == "INR" and _paid_plan(s) == plan:
-        return info["aiCreditsInr"]
-    return info["aiCredits"]
+    """The month's allowance of AI actions on the service's model."""
+    return plan_info(cfg, plan or plan_of(c, user))["aiCredits"]
+
+
+def own_key_allowed(plan: str) -> bool:
+    """Using your own AI key in your Propelo account is part of Pro and Ultra."""
+    return plan in PAID
 
 
 def plan_info(cfg: Config, plan: str) -> dict:
@@ -157,7 +144,7 @@ def plan_info(cfg: Config, plan: str) -> dict:
 
 def currency_for(country: str = "", tz: str = "") -> str:
     """US dollars for everyone. Prices are shown in dollars only; Dodo's Adaptive Currency charges each buyer in
-    their own currency at checkout. (Rupees through Razorpay remain only where a server has no Dodo account.)"""
+    their own currency at checkout."""
     return "USD"
 
 
@@ -231,7 +218,7 @@ def hosted_tier(tier: str, feature: str) -> str:
 def take_feature(c: Conn, cfg: Config, uid: str, plan: str, feature: str) -> tuple[bool, str]:
     """Count one use of a metered feature. (allowed, message when not)."""
     if feature == "linkedin":
-        return (True, "") if plan_info(cfg, plan)["linkedinReview"] else (False, "LinkedIn profile review is part of Ultra. Add your own AI key to use it on any plan.")
+        return (True, "") if plan_info(cfg, plan)["linkedinReview"] else (False, "LinkedIn profile review is part of Ultra, or of Pro with your own AI key.")
     if feature not in FEATURES:
         return True, ""
     field, span, noun = FEATURES[feature]
@@ -244,7 +231,9 @@ def take_feature(c: Conn, cfg: Config, uid: str, plan: str, feature: str) -> tup
     n = int(c.scalar("SELECT count FROM feature_usage WHERE user_id = ? AND period = ? AND feature = ?", (uid, per, feature)) or 0)
     if n > limit:
         c.execute("UPDATE feature_usage SET count = count - 1 WHERE user_id = ? AND period = ? AND feature = ?", (uid, per, feature))
-        nxt = "Ultra allows more" if plan == "pro" else "Pro and Ultra allow more" if plan == "free" else "That's Ultra's fair-use limit"
+        if plan == "free":
+            return False, f"You've used your {limit} {noun}. Pro and Ultra allow more."
+        nxt = "Ultra allows more" if plan == "pro" else "That's Ultra's fair-use limit"
         return False, f"You've used your {limit} {noun}. {nxt}, or add your own AI key in Settings."
     return True, ""
 
@@ -378,12 +367,14 @@ def ai_status(c: Conn, cfg: Config, user: dict, env: dict | None = None) -> dict
     plan = plan_of(c, user)
     limit = ai_limit(c, cfg, user, plan)
     u = usage(c, user["id"])
+    allowed = own_key_allowed(plan)
     own = public_key(c, user["id"])
     hosted = hosted_config(env) is not None
-    source = "own" if own else "hosted" if hosted else "none"
+    source = "own" if own and allowed else "hosted" if hosted else "none"
     left = max(0, limit - u["hosted"]) if hosted else 0
-    return {"source": source, "available": bool(own) or (hosted and left > 0), "hostedAvailable": hosted,
-            "limit": limit, "used": u["hosted"], "left": left, "ownUsed": u["own"], "period": u["period"], "ownKey": own}
+    return {"source": source, "available": bool(own and allowed) or (hosted and left > 0), "hostedAvailable": hosted,
+            "limit": limit, "used": u["hosted"], "left": left, "ownUsed": u["own"], "period": u["period"], "ownKey": own,
+            "ownKeyAllowed": allowed}
 
 
 # ---------------------------------------------------------------- providers
@@ -418,21 +409,7 @@ class Razorpay:
     def __init__(self, cfg: Config, post: Post | None = None):
         self.cfg, self.post = cfg, post or _post
 
-    def plan_id(self, plan: str) -> str:
-        return {"pro": self.cfg.razorpay_plan_pro, "ultra": self.cfg.razorpay_plan_ultra}.get(plan, "")
-
-    def offers(self, plan: str) -> bool:
-        return self.cfg.razorpay_enabled and bool(self.plan_id(plan))
-
-    def create_subscription(self, uid: str, email: str, plan: str = "pro") -> dict:
-        # 120 monthly cycles is Razorpay's way of saying "until cancelled".
-        body = {"plan_id": self.plan_id(plan), "total_count": 120, "quantity": 1, "customer_notify": True,
-                "notes": {"user_id": uid, "email": email[:120], "plan": plan}}
-        sub = self.post(f"{RAZORPAY_API}/subscriptions", body, self.cfg.razorpay_key_id, self.cfg.razorpay_key_secret)
-        if not str(sub.get("id", "")).startswith("sub_") or not str(sub.get("short_url", "")).startswith("https://"):
-            raise BillingError("Razorpay returned an unexpected subscription.")
-        return {"id": sub["id"], "url": sub["short_url"], "status": sub.get("status") or "created"}
-
+    # Members no longer start rupee subscriptions; this cancels one started before the move to dollars.
     def cancel(self, sub_id: str, at_cycle_end: bool = True) -> dict:
         return self.post(f"{RAZORPAY_API}/subscriptions/{sub_id}/cancel", {"cancel_at_cycle_end": 1 if at_cycle_end else 0},
                          self.cfg.razorpay_key_id, self.cfg.razorpay_key_secret)
@@ -519,7 +496,7 @@ def _iso_text(ts) -> str | None:
 
 
 # ---------------------------------------------------------------- checkout and events
-def start_checkout(c: Conn, uid: str, sub: dict, plan: str = "pro", provider: str = "razorpay", currency: str = "INR") -> None:
+def start_checkout(c: Conn, uid: str, sub: dict, plan: str = "pro", provider: str = "dodo", currency: str = "USD") -> None:
     """Remember a new checkout. Someone already on a paid plan keeps it: the checkout waits as pending."""
     now = now_iso()
     existing = subscription(c, uid)
@@ -544,7 +521,7 @@ def razorpay_event(cfg: Config, event: dict) -> dict:
     """Normalise a Razorpay webhook into the fields `apply` needs."""
     ent = (((event.get("payload") or {}).get("subscription") or {}).get("entity")) or {}
     notes = ent.get("notes") if isinstance(ent.get("notes"), dict) else {}
-    plan = _plan_by_id({cfg.razorpay_plan_pro: "pro", cfg.razorpay_plan_ultra: "ultra"}, ent.get("plan_id")) or str(notes.get("plan", ""))
+    plan = str(notes.get("plan", ""))
     kind = str(event.get("event", ""))
     try:
         at = int(event.get("created_at") or 0)
@@ -638,11 +615,9 @@ def grant(c: Conn, uid: str, by: str, until: str | None, plan: str = "pro") -> N
 def billing_view(c: Conn, cfg: Config, user: dict, settings: dict | None = None) -> dict:
     s = subscription(c, user["id"])
     plan = plan_of(c, user)
-    # Rupee plans are offered to members who live and look for work in India (and to anyone already paying in rupees).
-    inr = cfg.razorpay_enabled and (india_mode(settings) or bool(s and s["currency"] == "INR"))
     return {
-        "plan": plan, "plans": catalog(cfg), "checkoutEnabled": cfg.billing_enabled, "indiaMode": india_mode(settings),
-        "currencies": [x for x, on in (("INR", inr), ("USD", cfg.dodo_enabled)) if on],
+        "plan": plan, "plans": catalog(cfg), "checkoutEnabled": cfg.billing_enabled,
+        "currencies": ["USD"] if cfg.dodo_enabled else [],
         "subscription": {"plan": s["plan"], "status": s["status"], "provider": s["provider"], "currency": s["currency"], "currentEnd": s["current_end"],
                          "cancelAtPeriodEnd": bool(s["cancel_at_period_end"]), "granted": s["status"] == "granted",
                          "pendingPlan": s["pending_plan"], "portal": bool(s["provider"] == "dodo" and s["provider_customer_id"])} if s else None,

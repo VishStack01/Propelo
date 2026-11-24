@@ -36,7 +36,10 @@ def test_ingest_then_match_each_user(cloud, tmp_path):
     jobs_b = {d["id"] for d in b.get("/api/c/jobs").json()["docs"]}
     assert len(jobs_b) < len(jobs_a)  # b's own filters
     run = [r["data"] for r in a.get("/api/c/runs").json()["docs"]][0]
-    assert run["kind"] == "search" and run["added"] == 30 and "best remote-worldwide" in run["summary"]
+    assert run["kind"] == "search" and run["added"] == 30 and run["summary"].startswith("30 new roles matched your filters")
+    # A new account starts on the four countries Propelo focuses on.
+    s = a.get("/api/d/settings/profile").json()["data"]
+    assert s["workAbroad"] is True and s["places"] == "United Kingdom, United States, Ireland, Netherlands"
     assert a.get("/api/d/settings/profile").json()["data"]["coverage"]["inventory"] == 32
     assert a.get("/api/me").json()["feed"]["inventory"] == 32
     # A second hourly run with no new feed changes nothing.

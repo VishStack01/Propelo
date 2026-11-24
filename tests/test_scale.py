@@ -126,48 +126,69 @@ def test_signup_source_is_kept_and_the_funnel_counts_by_it(cloud, tmp_path):
     assert cloud.user("carol@example.com").get("/api/admin/funnel").status_code == 404  # admin routes are hidden from members
 
 
+DODO_SECRET = "whsec_" + __import__("base64").b64encode(b"dodo-pass-secret-0123456789").decode()
+
+
 def _pass_cloud(cloud, monkeypatch):
     from propelo.cloud import plans
-    for k, v in dict(pass_enabled=True, razorpay_key_id="rzp_test", razorpay_key_secret="s", razorpay_webhook_secret="whsec").items():
+    for k, v in dict(pass_enabled=True, dodo_api_key="dodo_test", dodo_webhook_secret=DODO_SECRET, dodo_product_pro="pdt_PRO",
+                     dodo_product_pass="pdt_PASS", dodo_product_pass_ultra="pdt_PASS_ULTRA").items():
         object.__setattr__(cloud.cfg, k, v)
-    links = []
+    checkouts = []
 
-    def post(url, body, key_id, key_secret):
-        links.append(body)
-        return {"id": f"plink_P{len(links)}", "short_url": f"https://rzp.io/i/P{len(links)}"}
-    monkeypatch.setattr(plans, "_post", post)
-    return links
+    def call(method, url, body, key):
+        checkouts.append(body)
+        return {"session_id": f"cks_P{len(checkouts)}", "checkout_url": f"https://test.checkout.dodopayments.com/P{len(checkouts)}"}
+    monkeypatch.setattr(plans, "_dodo_request", call)
+    return checkouts
 
 
-def _rzp_paid(cloud, link_id, amount):
+def _pass_paid(cloud, checkout, amount, n=0):
+    import base64
     import hashlib
     import hmac
-    ev = json.dumps({"event": "payment_link.paid", "payload": {"payment_link": {"entity": {"id": link_id, "status": "paid", "amount_paid": amount}}}}).encode()
-    sig = hmac.new(b"whsec", ev, hashlib.sha256).hexdigest()
-    return cloud.client().post("/api/billing/webhook", content=ev, headers={"X-Razorpay-Signature": sig, "X-Razorpay-Event-Id": f"evt_{link_id}_{amount}",
-                                                                          "Content-Type": "application/json"}).json()
+    import time
+    body = json.dumps({"type": "payment.succeeded", "timestamp": "2026-11-25T00:00:00Z",
+                       "data": {"payment_id": f"pay_{n}", "total_amount": amount, "metadata": checkout["metadata"]}}).encode()
+    wid, ts = f"msg_{checkout['metadata']['pass_id']}_{amount}_{n}", str(int(time.time()))
+    sig = base64.b64encode(hmac.new(base64.b64decode(DODO_SECRET[6:]), f"{wid}.{ts}.".encode() + body, hashlib.sha256).digest()).decode()
+    return cloud.client().post("/api/billing/dodo-webhook", content=body, headers={
+        "Content-Type": "application/json", "webhook-id": wid, "webhook-timestamp": ts, "webhook-signature": f"v1,{sig}"}).json()
 
 
-def test_pass_is_off_by_default_and_sells_pro_once(cloud, monkeypatch):
+def test_90_day_passes_for_pro_and_ultra(cloud, monkeypatch):
     a = cloud.user("asha@example.com")
-    assert a.get("/api/billing").json()["pass"] is None
-    assert a.post("/api/billing/pass", json={"currency": "INR"}).status_code == 503  # off until PASS=on
-    links = _pass_cloud(cloud, monkeypatch)
     offer = a.get("/api/billing").json()["pass"]
-    assert offer["onSale"] and offer["days"] == 90 and offer["priceInr"] == 2999 and offer["currencies"] == ["INR"] and not offer["running"]
-    r = a.post("/api/billing/pass", json={"currency": "INR"})
-    assert r.status_code == 200 and r.json()["url"].startswith("https://rzp.io/") and links[0]["amount"] == 299_900
+    assert offer["days"] == 90 and [(x["plan"], x["priceUsd"], x["onSale"]) for x in offer["passes"]] == [("pro", "99.00", False), ("ultra", "189.00", False)]
+    assert not offer["onSale"] and a.post("/api/billing/pass", json={"plan": "pro"}).status_code == 503  # not on sale until the Dodo products exist
+    object.__setattr__(cloud.cfg, "pass_enabled", False)
+    assert a.get("/api/billing").json()["pass"] is None and a.post("/api/billing/pass").status_code == 503  # PASS=off
+    checkouts = _pass_cloud(cloud, monkeypatch)
+    offer = a.get("/api/billing").json()["pass"]
+    assert offer["onSale"] and all(x["onSale"] for x in offer["passes"]) and not offer["running"]
+    assert a.post("/api/billing/pass", json={"plan": "gold"}).status_code == 400
+    assert a.post("/api/billing/pass", json={"plan": "pro", "currency": "INR"}).json()["code"] == "bad_currency"
+    r = a.post("/api/billing/pass", json={"plan": "pro"})
+    assert r.status_code == 200 and r.json()["url"].startswith("https://test.checkout.dodopayments.com/")
+    assert checkouts[0]["product_cart"] == [{"product_id": "pdt_PASS", "quantity": 1}] and checkouts[0]["metadata"]["plan"] == "pro"
     assert a.get("/api/me").json()["plan"] == "free"  # nothing until the payment webhook
-    assert _rzp_paid(cloud, "plink_P1", 100)["result"] == "short" and a.get("/api/me").json()["plan"] == "free"
-    assert _rzp_paid(cloud, "plink_P1", 299_900)["result"] == "paid"
+    assert _pass_paid(cloud, checkouts[0], 100)["result"] == "short" and a.get("/api/me").json()["plan"] == "free"
+    assert _pass_paid(cloud, checkouts[0], 9_900, 1)["result"] == "paid"
     assert a.get("/api/me").json()["plan"] == "pro"
-    assert _rzp_paid(cloud, "plink_P1", 299_900)["result"] == "duplicate"
-    first = a.get("/api/billing").json()["pass"]["running"]["endsAt"]
-    # A second pass adds its days to the end of the first.
-    a.post("/api/billing/pass", json={"currency": "INR"})
-    assert _rzp_paid(cloud, "plink_P2", 299_900)["result"] == "paid"
-    second = a.get("/api/billing").json()["pass"]["running"]["endsAt"]
-    assert second > first and (datetime.fromisoformat(second.replace("Z", "+00:00")) - datetime.fromisoformat(first.replace("Z", "+00:00"))).days == 90
+    assert _pass_paid(cloud, checkouts[0], 9_900, 2)["result"] == "duplicate"
+    first = a.get("/api/billing").json()["pass"]["running"]
+    assert first["plan"] == "pro"
+    assert any(m["subject"] == "Your Pro pass has started" for m in cloud.outbox)
+    # An Ultra pass adds its 90 days to the end and switches the account to Ultra.
+    a.post("/api/billing/pass", json={"plan": "ultra"})
+    assert checkouts[1]["product_cart"] == [{"product_id": "pdt_PASS_ULTRA", "quantity": 1}]
+    assert _pass_paid(cloud, checkouts[1], 18_900, 3)["result"] == "paid"
+    second = a.get("/api/billing").json()["pass"]["running"]
+    assert second["plan"] == "ultra" and a.get("/api/me").json()["plan"] == "ultra"
+    assert (datetime.fromisoformat(second["endsAt"].replace("Z", "+00:00")) - datetime.fromisoformat(first["endsAt"].replace("Z", "+00:00"))).days == 90
+    # A Pro pass bought during an Ultra pass adds days without stepping down.
+    a.post("/api/billing/pass", json={"plan": "pro"})
+    assert _pass_paid(cloud, checkouts[2], 9_900, 4)["result"] == "paid" and a.get("/api/me").json()["plan"] == "ultra"
     admin = cloud.user("admin@example.com")
     assert admin.get("/api/admin/funnel").json()["total"]["paying"] == 1
 
@@ -259,10 +280,12 @@ def test_register_spreadsheets_are_tallied_and_used(tmp_path):
 def test_pricing_page_goes_straight_to_checkout_when_payments_are_on(cloud):
     c = cloud.client()
     assert "buy%3Dpro" not in c.get("/pricing").text  # payments off: every card starts free
-    for k, v in dict(razorpay_key_id="rzp_test", razorpay_key_secret="s", razorpay_webhook_secret="w", razorpay_plan_pro="plan_x", pass_enabled=True).items():
+    for k, v in dict(dodo_api_key="dodo_test", dodo_webhook_secret="whsec_x", dodo_product_pro="pdt_PRO", dodo_product_ultra="pdt_ULTRA",
+                     dodo_product_pass="pdt_PASS", pass_enabled=True).items():
         object.__setattr__(cloud.cfg, k, v)
     page = c.get("/pricing").text
-    assert 'href="/signup?next=%2Fapp%3Fbuy%3Dpro">Get Pro</a>' in page and "Get the pass" in page and "buy%3Dpass" in page
+    assert 'href="/signup?next=%2Fapp%3Fbuy%3Dpro">Get Pro</a>' in page and "Get the pass" in page and "buy%3Dpass-pro" in page
+    assert "buy%3Dpass-ultra" not in page  # the Ultra pass's product isn't set
     # The sign-up form carries that destination through the confirm link.
     r = c.post("/api/auth/signup", json={"name": "Asha", "email": "buyer@example.com", "password": "correct horse 42 staple", "next": "/app?buy=pro"})
     assert r.status_code == 202 and "next=%2Fapp%3Fbuy%3Dpro" in json.dumps(cloud.outbox[-1])

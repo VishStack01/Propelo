@@ -93,7 +93,7 @@ flowchart TD
 | Outreach | `#outreach` | Drafts, recruiter emails via own Gmail | Implemented; Gmail Not verified |
 | Contacts | `#contacts` | People and referrals | Implemented |
 | Ask Propelo | `#ask` | Copilot questions | Implemented |
-| Job Guarantee | `#concierge` | Request, proposed roles, messages, fee | Implemented |
+| Job Guarantee (retired) | `#concierge` | Shown only to an open case or where `CONCIERGE=on` | Retired |
 | Guarantees | `#guarantee` | Interview Guarantee apply, pay, claim | Implemented |
 | Inbox | `#inbox` | Replies found by the inbox check | Implemented |
 | Calendar | `#calendar` | Interviews and follow-ups | Implemented |
@@ -119,7 +119,7 @@ flowchart TD
 | page | route | user | auth | status |
 | --- | --- | --- | --- | --- |
 | Admin console | `/admin` | admin | session + two-step (production) | Verified (local) |
-| Staff desk (Job Guarantee, Interview Guarantee) | `/staff` | staff, admin | session + two-step (production) | Implemented |
+| Staff desk (Interview Guarantee; Job Guarantee cases where still on) | `/staff` | staff, admin | session + two-step (production) | Implemented |
 | Business accounts (staff section) | `/partner` | staff, admin | session + two-step (production) | Verified |
 | Sign-up funnel by source | `/admin` (`/api/admin/funnel`) | admin | session + two-step (production) | Verified (local) |
 | Content management (blog) | (none) | | | **Missing** (no blog) |
@@ -136,7 +136,7 @@ flowchart TD
 | Manage / cancel | `/api/billing/portal`, `/api/billing/cancel` | Implemented |
 | Webhooks | `/api/billing/webhook`, `/api/billing/dodo-webhook` | Verified with signed test events |
 | Business plans | `/business`, `/partner` | Verified with test webhooks |
-| Pro pass (pay once, no renewal) | `/app#setup` › Billing (`/api/billing/pass`); off unless `PASS=on` | Implemented; tested with signed test webhooks; live Not verified |
+| 90-day passes, Pro $99 and Ultra $189 (pay once, no renewal) | `/app#setup` › Billing (`/api/billing/pass`); each on sale once its Dodo product is set | Implemented; tested with signed test webhooks; live Not verified |
 | Invoices / GST receipts | provider emails only | **Partial** |
 
 ## 8. Legal and privacy

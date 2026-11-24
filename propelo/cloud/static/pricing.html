@@ -28,7 +28,7 @@ nav{display:flex;justify-content:space-between;align-items:center;padding:22px 0
 .btn:active{transform:scale(.97)}
 .btn.light{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--ink)}
 .pill{display:inline-block;background:var(--pink);color:#151515;border-radius:999px;padding:8px 20px;font-size:14px;font-weight:500;letter-spacing:.04em;text-transform:uppercase}
-.lede{font-family:var(--d);font-weight:400;color:#57534D;font-size:clamp(32px,5vw,58px);line-height:1.12;letter-spacing:-.03em;max-width:900px;margin:24px 0 0}
+.lede{font-family:var(--d);font-weight:400;color:#57534D;font-size:clamp(32px,5vw,58px);line-height:1.12;letter-spacing:-.03em;max-width:900px;margin:8px 0 0}
 .lede b{color:var(--ink);font-weight:500}
 .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:32px 0 24px}
 @media (max-width:980px){.grid{grid-template-columns:1fr}}
@@ -45,6 +45,8 @@ nav{display:flex;justify-content:space-between;align-items:center;padding:22px 0
 .plan li::before{content:"";width:16px;height:16px;border-radius:50%;background:var(--green);margin-top:4px}
 .plan.pro li::before{background:#151515}
 .plan .btn{margin-top:auto;align-self:flex-start}
+.plan .alt{margin:-6px 0 0;font-size:15px}
+.plan .alt a{color:inherit;font-weight:600;text-decoration:underline;text-underline-offset:3px}
 .shape{position:absolute;pointer-events:none}
 .shape svg{width:100%;height:100%}
 @keyframes rise{from{opacity:0;transform:translateY(12px)}}
@@ -97,17 +99,15 @@ input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 45%,transparent) 
 <body>
 <div class="wrap">
   <nav><a class="brand" href="/">propelo<span class="dot" aria-hidden="true"></span></a><span class="navr"><a href="/business"><span class="long">For consultancies and agencies</span><span class="short">For business</span></a><a class="btn light" href="/login">Sign in</a></span></nav>
-  <h1 class="pill" style="font:inherit;margin:0">Pricing</h1>
-  <p class="lede">Finding and checking roles is <mark>free for everyone</mark>. Pro and Ultra are for when you want them first, with AI that writes from your real experience.</p>
+  <h1 class="lede">Finding and checking roles is <mark>free for everyone</mark>. Pro and Ultra are for when you want them first, with AI that writes from your real experience.</h1>
   <div class="grid" id="plans"><!--PLANS--></div>
   <!--ADDONS-->
   <p class="note">Prices are in US dollars. At checkout you pay in your own currency: Dodo Payments, our merchant of record, converts at the day's rate, shows any conversion fee before you pay, and adds sales tax or VAT where your country requires it.</p>
   <div class="faq">
-    <div><h3>Can I use my own AI key?</h3><p>Yes, on any plan. Save an Anthropic, OpenAI-compatible or Gemini key in Settings and AI actions run on it without counting toward your allowance. It's stored encrypted.</p></div>
-    <div><h3>How do I pay?</h3><p>By card, Apple Pay or Google Pay, and by UPI in India, through Dodo Payments, in your own currency. We never see your card or bank details. Plans renew monthly until you cancel.</p></div>
-    <!--INDIA-->
+    <div><h3>Can I use my own AI key?</h3><p>On Pro and Ultra. Save an Anthropic, OpenAI-compatible or Gemini key in Settings and AI actions run on it without counting toward your allowance. It's stored encrypted. Propelo is also open source: on your own computer it runs on your key for free.</p></div>
+    <div><h3>How do I pay?</h3><p>By card, Apple Pay or Google Pay, through Dodo Payments, in your own currency. We never see your card details. Plans renew monthly until you cancel; a 90-day pass is paid once and never renews.</p></div>
     <div><h3>Can I cancel or switch?</h3><p>Any time, in Settings. You keep your plan until the end of the month you paid for, then move to Free with all your data. Switching plans takes effect once the new payment goes through. See <a href="/refunds">refunds</a>.</p></div>
-    <div><h3>Does Propelo apply on LinkedIn or Naukri?</h3><p>No. It reads company career pages and applies from your own computer only where it can answer every question truthfully. Roles listed only on the big boards are marked "Apply yourself".</p></div>
+    <div><h3>Does Propelo apply on LinkedIn or Indeed?</h3><p>No. It reads company career pages and applies from your own computer only where it can answer every question truthfully. Roles listed only on the big boards are marked "Apply yourself".</p></div>
   </div>
   <footer><span>Propelo · open source under the MIT licence</span><span><a href="/terms">Terms</a> · <a href="/privacy">Privacy</a> · <a href="/refunds">Refunds</a> · <a href="/contact">Contact</a></span></footer>
 </div>

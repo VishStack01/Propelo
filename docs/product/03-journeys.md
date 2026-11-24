@@ -50,7 +50,7 @@ flowchart LR
   E -->|short of that, rules met| H[Claim refund] --> I[Staff checks] --> J[Refund]
 ```
 
-## J4 · Job Guarantee (Implemented, API tests; terms need legal review)
+## J4 · Job Guarantee (Retired in 2.17: off, not offered; the steps below describe a server that turns it on)
 
 Request → staff partner reviews the profile → proposes roles → member approves each → applications → placed →
 fee is 8% of first-year salary in instalments after joining (manual payment links) → staff records payments.

@@ -119,10 +119,10 @@ def guarantee(public_url: str, kind: str, what: str) -> tuple[str, str]:
     return subject, body.replace("{u}", public_url)
 
 
-def pass_started(public_url: str, days: int, ends_at: str) -> tuple[str, str]:
-    """A pass was paid for: Pro for a fixed number of days, with nothing that renews."""
-    until = (ends_at or "")[:10]
-    return ("Your Pro pass has started", f"Thanks. Your payment went through and Pro is on for {days} days, until {until}. "
+def pass_started(public_url: str, days: int, ends_at: str, plan: str = "pro") -> tuple[str, str]:
+    """A pass was paid for: Pro or Ultra for a fixed number of days, with nothing that renews."""
+    until, name = (ends_at or "")[:10], "Ultra" if plan == "ultra" else "Pro"
+    return (f"Your {name} pass has started", f"Thanks. Your payment went through and {name} is on for {days} days, until {until}. "
             f"Nothing renews and there is nothing to cancel.\n\n{public_url}/app\n")
 
 

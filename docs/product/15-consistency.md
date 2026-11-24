@@ -7,7 +7,7 @@ Checks run on 22 Nov 2026 between the docs, the code and what the running app do
 | Every page route the app serves is in the sitemap | Pass (`product_docs.py --check`) |
 | Every `website/*.html` page is in the sitemap | Pass |
 | Generated routes, tables and workflows match the code | Pass |
-| Prices: `plans.py`, `/pricing`, `/business`, README, register | Consistent: Pro $39, Ultra $79 (India plans ₹799 / ₹1,999); Starter $325 (25), Growth $625 (50), Plus $1,225 (100), feed $99 |
+| Prices: `plans.py`, `/pricing`, `/business`, README, register | Consistent: Pro $39, Ultra $79, 90-day passes $99 / $189, Interview Guarantee $59; Starter $325 (25), Growth $625 (50), Plus $1,225 (100), feed $99 |
 | Scan frequency claims vs reality | Fixed: was "hourly" in site, app, plans, README, competitors doc; now "several times a day" |
 | Interview Guarantee terms: dashboard, terms page, staff desk | Consistent ($59; 3 interviews or a second round in 45 days; refund on claim) |
 | "Never submits" claim vs extension code | Consistent: no submit call in the extension |

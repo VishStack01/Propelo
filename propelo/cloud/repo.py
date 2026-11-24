@@ -11,8 +11,12 @@ from .db import Conn, now_iso
 from .security import new_id, new_token, token_hash
 
 COLLECTIONS = {"jobs", "runs", "settings", "brain", "profile", "inbox"}
+# A new account starts on the four countries Propelo focuses on; the first-run questions then ask where the person
+# lives and wants to work. ("locations" are the India regions, used only by someone who picks a job inside India.)
+CORE_PLACES = "United Kingdom, United States, Ireland, Netherlands"
 DEFAULT_SETTINGS = {
-    "targetRoles": [], "titleExclude": [], "locations": ["South India (any work mode)", "Rest of India (remote only)", "Remote worldwide (first priority)"],
+    "targetRoles": [], "titleExclude": [], "workAbroad": True, "places": CORE_PLACES, "remoteOk": True,
+    "locations": ["South India (any work mode)", "Rest of India (remote only)", "Remote worldwide (first priority)"],
     "experienceLevels": ["Fresher", "1+ years"], "maxRequiredYears": 1, "maxPostingAgeDays": 25, "salaryFloorLpa": "",
     "dailyCap": 8, "minFit": "good", "approvalMode": "daily-batch", "dealbreakers": "", "noticeDays": "",
     "schedule": "Matched every hour against the shared job inventory",

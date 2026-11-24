@@ -1,10 +1,12 @@
-"""The Interview Guarantee: Pro and Ultra members apply, the team reviews, an accepted member pays once and gets
-the price back if there's no interview. The Job Guarantee is a Concierge application with no upfront price.
-Money back or a fee after placement, never a promised job."""
+"""The Interview Guarantee: Pro and Ultra members apply, the team reviews, an accepted member pays once ($59, through
+Dodo) and gets the price back if the interviews don't come. Money back, never a promised job. (The Job Guarantee, an
+India-only Concierge service, is retired and off; its backend still works with CONCIERGE=on.)"""
 
+import base64
 import hashlib
 import hmac
 import json
+import time
 from datetime import datetime, timedelta, timezone
 
 import pytest
@@ -21,29 +23,36 @@ def iso(d):
     return d.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+DODO_SECRET = "whsec_" + base64.b64encode(b"dodo-guarantee-secret-0123").decode()
+
+
 @pytest.fixture
 def g(cloud, monkeypatch):
     cloud.cfg.guarantee_enabled = True
-    cloud.cfg.razorpay_key_id, cloud.cfg.razorpay_key_secret, cloud.cfg.razorpay_webhook_secret = "rzp_test_k", "s", "whs"
+    cloud.cfg.dodo_api_key, cloud.cfg.dodo_webhook_secret = "dodo_test_key", DODO_SECRET
+    cloud.cfg.dodo_product_pro, cloud.cfg.dodo_product_guarantee = "pdt_PRO", "pdt_GUAR"
     links = []
 
-    def fake_post(url, body, key, secret):
+    def fake_call(method, url, body, key):
         links.append(body)
-        return {"id": f"plink_G{len(links)}", "short_url": f"https://rzp.io/i/g{len(links)}"}
+        return {"session_id": f"cks_G{len(links)}", "checkout_url": f"https://test.checkout.dodopayments.com/g{len(links)}"}
     from propelo.cloud import plans
-    monkeypatch.setattr(plans, "_post", fake_post)
+    monkeypatch.setattr(plans, "_dodo_request", fake_call)
     c = cloud.user()
     admin = cloud.user("admin@example.com")
     cloud.links = links
     return cloud, c, admin
 
 
-def _paid(cloud, link_id, amount):
-    """Razorpay tells us the payment link was paid (signed like the real webhook)."""
-    ev = json.dumps({"event": "payment_link.paid", "payload": {"payment_link": {"entity": {"id": link_id, "status": "paid", "amount_paid": amount}}}}).encode()
-    sig = hmac.new(b"whs", ev, hashlib.sha256).hexdigest()
-    return cloud.client().post("/api/billing/webhook", content=ev, headers={"X-Razorpay-Signature": sig, "X-Razorpay-Event-Id": f"evt_{link_id}_{amount}",
-                                                                            "Content-Type": "application/json"}).json()
+def _paid(cloud, n, amount):
+    """Dodo tells us checkout number n was paid (signed like the real Standard Webhook)."""
+    gid = cloud.links[n - 1]["metadata"]["guarantee_id"]
+    body = json.dumps({"type": "payment.succeeded", "timestamp": "2026-11-25T00:00:00Z",
+                       "data": {"payment_id": f"pay_{n}_{amount}", "total_amount": amount, "metadata": {"guarantee_id": gid}}}).encode()
+    wid, ts = f"msg_{n}_{amount}", str(int(time.time()))
+    sig = base64.b64encode(hmac.new(base64.b64decode(DODO_SECRET[6:]), f"{wid}.{ts}.".encode() + body, hashlib.sha256).digest()).decode()
+    return cloud.client().post("/api/billing/dodo-webhook", content=body, headers={
+        "Content-Type": "application/json", "webhook-id": wid, "webhook-timestamp": ts, "webhook-signature": f"v1,{sig}"}).json()
 
 
 def _applied(c, roles="Backend engineer"):
@@ -61,10 +70,10 @@ def _buy(cloud, c, admin):
     assert _applied(c).status_code == 200
     _accept(admin)
     v = c.post("/api/guarantee/interview/buy", json=T).json()
-    assert v["payUrl"].startswith("https://rzp.io/"), v
+    assert v["payUrl"].startswith("https://test.checkout.dodopayments.com/"), v
     cur = v["interview"]["current"]
     assert cur["status"] == "pending"
-    assert _paid(cloud, f"plink_G{len(cloud.links)}", cur["price"])["result"] == "paid"
+    assert _paid(cloud, len(cloud.links), cur["price"])["result"] == "paid"
     return c.get("/api/guarantee").json()["interview"]["current"]
 
 
@@ -96,9 +105,8 @@ def _age(cloud, uid, kind="interview", days=46):
 def test_prices_and_refunds():
     cfg = Config()
     assert cfg.guarantee_days == 45 and cfg.guarantee_min_apps == 25 and cfg.guarantee_min_weeks == 3
-    assert guarantee.price_for(cfg, "interview", "INR") == 499_900 and guarantee.price_for(cfg, "interview", "USD") == 5_900
+    assert guarantee.price_for(cfg, "interview", "USD") == 5_900 and guarantee.price_for(cfg, "interview") == 5_900
     # money back: exactly the price paid for the guarantee, never the plan fees
-    assert guarantee.refund_estimate(cfg, "pro", "INR", 45, 499_900) == 499_900
     assert guarantee.refund_estimate(cfg, "ultra", "USD", 45, 5_900) == 5_900
 
 
@@ -107,9 +115,9 @@ def test_not_part_of_any_plan():
     cfg = Config(guarantee_enabled=True, concierge_enabled=True)
     assert not any("Guarantee" in f for p in plans.catalog(cfg) for f in p["features"])
     ads = plans.addons(cfg)
-    assert [a["id"] for a in ads] == ["interview", "job"] and ads[0]["priceInr"] == 4999 and ads[0]["for"] == ["pro", "ultra"]
-    assert ads[1]["priceInr"] == 0  # the Job Guarantee: nothing upfront, a fee only after joining
-    assert [a["id"] for a in plans.addons(Config(guarantee_enabled=True))] == ["interview"]
+    # Only the Interview Guarantee is offered, even where the retired Job Guarantee (Concierge) is still switched on.
+    assert [a["id"] for a in ads] == ["interview"] and ads[0]["priceUsd"] == "59.00" and ads[0]["for"] == ["pro", "ultra"]
+    assert "priceInr" not in ads[0] and "India" not in json.dumps(ads)
     assert plans.addons(Config()) == []
 
 
@@ -153,16 +161,17 @@ def test_accepted_then_paid_starts_the_window(g):
     _accept(admin)
     assert any(m["subject"] == "Your Interview Guarantee is accepted" for m in cloud.outbox)
     v = c.get("/api/guarantee").json()["interview"]
-    assert v["current"]["status"] == "accepted" and v["current"]["payBy"] and v["price"] == 499_900
+    assert v["current"]["status"] == "accepted" and v["current"]["payBy"] and v["price"] == 5_900
     v = c.post("/api/guarantee/interview/buy", json=T).json()
-    assert v["interview"]["current"]["status"] == "pending" and cloud.links[0]["amount"] == 499_900 and cloud.links[0]["currency"] == "INR"
+    assert v["interview"]["current"]["status"] == "pending" and cloud.links[0]["product_cart"] == [{"product_id": "pdt_GUAR", "quantity": 1}]
+    assert v["interview"]["current"]["currency"] == "USD"
     assert not any("has started" in m["subject"] for m in cloud.outbox)  # nothing starts before payment
     again = c.post("/api/guarantee/interview/buy", json=T).json()
     assert again["payUrl"] == v["payUrl"] and len(cloud.links) == 1  # an open checkout is reused
-    assert _paid(cloud, "plink_G1", 50_000)["result"] == "short"  # underpaid: doesn't start
-    assert _paid(cloud, "plink_G1", 499_900)["result"] == "paid"
+    assert _paid(cloud, 1, 500)["result"] == "short"  # underpaid: doesn't start
+    assert _paid(cloud, 1, 5_900)["result"] == "paid"
     cur = c.get("/api/guarantee").json()["interview"]["current"]
-    assert cur["status"] == "active" and cur["price"] == 499_900 and cur["estimate"] == 499_900
+    assert cur["status"] == "active" and cur["price"] == 5_900 and cur["estimate"] == 5_900
     days = (datetime.fromisoformat(cur["endsAt"].replace("Z", "+00:00")) - datetime.fromisoformat(cur["startsAt"].replace("Z", "+00:00"))).days
     assert days == 45
     assert c.post("/api/guarantee/interview/buy", json=T).status_code == 400
@@ -227,11 +236,11 @@ def test_claim_after_the_window_with_the_activity_done(g):
     assert any(m["subject"] == "New guarantee claim" for m in cloud.outbox)
     claims = [x for x in admin.get("/api/staff/guarantees").json()["claims"] if x["status"] == "claimed"]
     gid = claims[0]["id"]
-    assert admin.post(f"/api/staff/guarantees/{gid}/approve", json={"amount": 500_000}).status_code == 400  # never more than the price
+    assert admin.post(f"/api/staff/guarantees/{gid}/approve", json={"amount": 6_000}).status_code == 400  # never more than the price
     assert admin.post(f"/api/staff/guarantees/{gid}/refunded").status_code == 400  # approve first
     admin.post(f"/api/staff/guarantees/{gid}/approve", json={})
-    assert c.get("/api/guarantee").json()["interview"]["current"]["refund"] == 499_900  # the full ₹4,999 back
-    admin.post(f"/api/staff/guarantees/{gid}/refunded", json={"note": "Refunded in Razorpay."})
+    assert c.get("/api/guarantee").json()["interview"]["current"]["refund"] == 5_900  # the full $59 back
+    admin.post(f"/api/staff/guarantees/{gid}/refunded", json={"note": "Refunded in Dodo."})
     assert c.get("/api/guarantee").json()["interview"]["current"]["status"] == "refunded"
     with cloud.db.tx() as x:
         x.execute("UPDATE guarantees SET status = 'ended' WHERE id = ?", (gid,))
