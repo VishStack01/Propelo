@@ -60,6 +60,8 @@ class Config:
     max_doc_kb: int = 512
     linkedin_client_id: str = ""  # "Sign in with LinkedIn using OpenID Connect": name, email, photo only
     linkedin_client_secret: str = ""
+    github_client_id: str = ""  # Sign in with GitHub: name and confirmed email only
+    github_client_secret: str = ""
     # Google OAuth for sending recruiter emails from the person's own Gmail (scope gmail.send only).
     # Propelo Concierge (human-run search, fee only after joining). Off unless CONCIERGE=on.
     concierge_enabled: bool = False
@@ -93,7 +95,7 @@ class Config:
     guarantee_job_inr: int = 2999
     dodo_product_guarantee: str = ""   # a one-time Dodo product priced at the Interview Guarantee's dollar price
     security_email: str = ""  # shown in /.well-known/security.txt; falls back to SUPPORT_EMAIL
-    google_client_id: str = ""
+    google_client_id: str = ""  # one Google client serves Sign in with Google and sending from the member's Gmail
     google_client_secret: str = ""
     # Plans and billing. Prices are in rupees per month; credits are AI actions per calendar month (UTC).
     secrets_key: str = ""  # encrypts users' own AI keys at rest; any long random string
@@ -152,6 +154,8 @@ class Config:
             max_doc_kb=_int("MAX_DOC_KB", 512),
             linkedin_client_id=e("LINKEDIN_CLIENT_ID", "").strip(),
             linkedin_client_secret=e("LINKEDIN_CLIENT_SECRET", "").strip(),
+            github_client_id=e("GITHUB_CLIENT_ID", "").strip(),
+            github_client_secret=e("GITHUB_CLIENT_SECRET", "").strip(),
             concierge_enabled=e("CONCIERGE", "off").strip().lower() in ("on", "1", "true", "yes"),
             concierge_countries=tuple(x.strip().upper() for x in e("CONCIERGE_COUNTRIES", "IN").split(",") if x.strip()),
             concierge_rate_low=float(e("CONCIERGE_RATE_LOW", "8") or 8),
@@ -217,6 +221,13 @@ class Config:
     @property
     def linkedin_enabled(self) -> bool:
         return bool(self.linkedin_client_id and self.linkedin_client_secret)
+
+    def oauth_keys(self, provider: str) -> tuple[str, str]:
+        """(client id, client secret) for google, github or linkedin; empty strings when not set up."""
+        if provider not in ("google", "github", "linkedin"):
+            return "", ""
+        cid, secret = getattr(self, provider + "_client_id"), getattr(self, provider + "_client_secret")
+        return (cid, secret) if cid and secret else ("", "")
 
     @property
     def gmail_enabled(self) -> bool:

@@ -173,7 +173,7 @@ def test_referrals_cli(tmp_path, capsys):
 def test_linkedin_sign_in(cloud, monkeypatch):
     from propelo.cloud import linkedin
     c = cloud.client()
-    assert c.get("/api/auth/providers").json() == {"linkedin": False}
+    assert c.get("/api/auth/providers").json()["linkedin"] is False
     assert c.get("/api/auth/linkedin/start", follow_redirects=False).status_code == 404
     cloud.cfg.linkedin_client_id, cloud.cfg.linkedin_client_secret = "cid", "secret"
     r = c.get("/api/auth/linkedin/start", follow_redirects=False)

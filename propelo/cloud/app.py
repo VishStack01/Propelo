@@ -42,7 +42,7 @@ from .. import followups, llm
 from ..dedupe import canonical_url, company_key
 from ..scamcheck import check as scam_check
 from . import mailer as mail
-from . import linkedin as li_auth
+from . import oauth
 from . import autosend, concierge, guarantee, mailbox, mfa, partners, passes, plans, repo, security
 from .config import Config
 from .db import Database, now_iso
@@ -620,47 +620,57 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
         set_session_cookie(response, token)
         return {"ok": True, "user": repo.public_user(user)}
 
-    # ------------------------------------------------------------ Sign in with LinkedIn (OpenID Connect)
-    LI_STATE = "propelo_li_state"
+    # ------------------------------------------------------------ Sign in with Google, GitHub or LinkedIn
+    def oauth_cookie(provider: str) -> str:
+        return f"propelo_{provider}_state"
 
-    def li_redirect_uri() -> str:
-        return f"{cfg.public_url}/api/auth/linkedin/callback"
+    def oauth_redirect_uri(provider: str) -> str:
+        return f"{cfg.public_url}/api/auth/{provider}/callback"
+
+    def oauth_ready(provider: str) -> tuple[str, str]:
+        cid, secret = cfg.oauth_keys(provider)
+        if not cid:
+            label = oauth.PROVIDERS[provider].label if provider in oauth.PROVIDERS else "that service"
+            raise err(404, f"Sign in with {label} isn't set up on this server.", "not_configured")
+        return cid, secret
 
     @app.get("/api/auth/providers")
     def auth_providers():
-        return {"linkedin": cfg.linkedin_enabled}
+        return {p: bool(cfg.oauth_keys(p)[0]) for p in oauth.PROVIDERS}
 
-    @app.get("/api/auth/linkedin/start")
-    def linkedin_start():
-        if not cfg.linkedin_enabled:
-            raise err(404, "Sign in with LinkedIn isn't set up on this server.", "not_configured")
+    @app.get("/api/auth/{provider}/start")
+    def oauth_start(provider: str):
+        cid, _ = oauth_ready(provider)
         state = secrets.token_urlsafe(24)
-        resp = RedirectResponse(li_auth.authorize_url(cfg.linkedin_client_id, li_redirect_uri(), state), status_code=303)
-        resp.set_cookie(LI_STATE, state, max_age=600, httponly=True, secure=cfg.secure_cookies, samesite="lax", path="/api/auth/linkedin")
+        resp = RedirectResponse(oauth.authorize_url(provider, cid, oauth_redirect_uri(provider), state), status_code=303)
+        resp.set_cookie(oauth_cookie(provider), state, max_age=600, httponly=True, secure=cfg.secure_cookies, samesite="lax", path=f"/api/auth/{provider}")
         return resp
 
-    @app.get("/api/auth/linkedin/callback")
-    def linkedin_callback(request: Request, code: str = "", state: str = "", error: str = ""):
-        def back(msg: str):
-            resp = RedirectResponse(f"/login#error={msg}", status_code=303)
-            resp.delete_cookie(LI_STATE, path="/api/auth/linkedin")
+    @app.get("/api/auth/{provider}/callback")
+    def oauth_callback(provider: str, request: Request, code: str = "", state: str = "", error: str = ""):
+        cid, secret = oauth_ready(provider)
+        cookie, path = oauth_cookie(provider), f"/api/auth/{provider}"
+
+        def done(resp):
+            resp.delete_cookie(cookie, path=path)
             return resp
-        if not cfg.linkedin_enabled:
-            raise err(404, "Sign in with LinkedIn isn't set up on this server.", "not_configured")
-        expected = request.cookies.get(LI_STATE, "")
+
+        def back(msg: str):
+            return done(RedirectResponse(f"/login#error={msg}", status_code=303))
+        expected = request.cookies.get(cookie, "")
         if error or not code or not expected or not secrets.compare_digest(expected, state):
-            return back("linkedin_cancelled" if error else "linkedin_state")
+            return back(f"{provider}_cancelled" if error else f"{provider}_state")
         ip = client_ip(request)
         with db.tx() as c:
-            limited(c, "linkedin:" + security.ip_key(ip), 30, 3600)
+            limited(c, f"{provider}:" + security.ip_key(ip), 30, 3600)
         try:
-            info = li_auth.userinfo(li_auth.exchange(code, li_redirect_uri(), cfg.linkedin_client_id, cfg.linkedin_client_secret))
+            who = oauth.identity(provider, oauth.exchange(provider, code, oauth_redirect_uri(provider), cid, secret))
         except Exception:  # noqa: BLE001  a refused or expired code
-            return back("linkedin_failed")
-        email = security.normalize_email(str(info.get("email") or ""))
-        if not security.valid_email(email) or info.get("email_verified") is False:
-            return back("linkedin_no_email")
-        name = str(info.get("name") or "").strip()[:80]
+            return back(f"{provider}_failed")
+        email = security.normalize_email(who["email"])
+        if not security.valid_email(email) or not who["verified"]:
+            return back(f"{provider}_no_email")
+        name = who["name"].strip()[:80]
         with db.tx() as c:
             user = repo.user_by_email(c, email)
             if user and user["disabled_at"]:
@@ -668,21 +678,23 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
             if not user:
                 if not cfg.signup_allowed(email):
                     return back("closed")
-                # No password: this account signs in with LinkedIn (or sets one through "Forgot password").
-                uid = repo.create_user(c, email, name, "!linkedin", is_admin=bool(cfg.bootstrap_admin_email) and email == cfg.bootstrap_admin_email)
+                # No password: this account signs in with the provider (or sets one through "Forgot password").
+                uid = repo.create_user(c, email, name, "!" + provider, is_admin=bool(cfg.bootstrap_admin_email) and email == cfg.bootstrap_admin_email)
                 repo.enqueue(c, "match_user", user_id=uid, dedupe_key=f"match:{uid}", max_attempts=3)
-                repo.audit(c, uid, "signup-linkedin", ip)
+                repo.audit(c, uid, f"signup-{provider}", ip)
             else:
                 uid = user["id"]
+                if not user["email_verified_at"]:
+                    # Someone typed this address into the sign-up form but never confirmed it. The provider has now shown
+                    # who owns it, so the password that stranger chose must not open the account.
+                    c.execute("UPDATE users SET password_hash = ? WHERE id = ?", ("!" + provider, uid))
+                    c.execute("DELETE FROM sessions WHERE user_id = ?", (uid,))
             c.execute("UPDATE users SET email_verified_at = COALESCE(email_verified_at, ?), updated_at = ? WHERE id = ?", (now_iso(), now_iso(), uid))
             if user and mfa.enabled(user):
-                resp = RedirectResponse(f"/login#mfa={mfa.ticket(cfg, uid, 'linkedin')}", status_code=303)
-                resp.delete_cookie(LI_STATE, path="/api/auth/linkedin")
-                return resp
+                return done(RedirectResponse(f"/login#mfa={mfa.ticket(cfg, uid, provider)}", status_code=303))
             token = repo.create_session(c, uid, cfg.session_ttl_days, ip, request.headers.get("user-agent", ""))
-            repo.audit(c, uid, "login-linkedin", ip)
-        resp = RedirectResponse("/app", status_code=303)
-        resp.delete_cookie(LI_STATE, path="/api/auth/linkedin")
+            repo.audit(c, uid, f"login-{provider}", ip)
+        resp = done(RedirectResponse("/app", status_code=303))
         set_session_cookie(resp, token)
         return resp
 
@@ -2451,7 +2463,7 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
             return {"id": u["id"], "email": u["email"], "name": u["name"], "createdAt": u["created_at"], "lastLoginAt": u["last_login_at"],
                     "verified": bool(u["email_verified_at"]), "disabled": bool(u["disabled_at"]), "isAdmin": bool(u["is_admin"]),
                     "isStaff": bool(u.get("is_staff")), "mfa": mfa.enabled(u), "plan": plans.plan_of(c, u), "sessions": sessions,
-                    "partner": partners.branding(seat), "signIn": "LinkedIn only" if str(u["password_hash"]).startswith("!") else "password"}
+                    "partner": partners.branding(seat), "signIn": (oauth.PROVIDERS[str(u["password_hash"])[1:]].label + " only" if str(u["password_hash"])[1:] in oauth.PROVIDERS else "no password") if str(u["password_hash"]).startswith("!") else "password"}
 
     @app.post("/api/admin/disable")
     def admin_disable(request: Request, body: dict = Body(...), p: Principal = Depends(admin_only)):
