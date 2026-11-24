@@ -4,7 +4,8 @@
 
 Most job seekers only see what reaches LinkedIn, Naukri and Indeed. Thousands
 of startups post only on their own Greenhouse, Lever, Ashby, Workable,
-SmartRecruiters or Recruitee board, and most large employers on Workday. The open-source ats-scrapers project
+SmartRecruiters or Recruitee board, most large employers on Workday or iCIMS,
+and many UK, Irish and Dutch employers on Pinpoint or Teamtailor. The open-source ats-scrapers project
 (MIT, github.com/kalil0321/ats-scrapers) keeps an inventory of about 24,000
 such boards. This command downloads that inventory, drops the boards Propelo
 already knows, and writes the rest as a company list for `propelo discover`.
@@ -29,7 +30,7 @@ from .sources import http
 
 INVENTORY = "https://raw.githubusercontent.com/kalil0321/ats-scrapers/main/ats-companies/{ats}.csv"
 # Startups that publish pay most often first: Ashby and Lever carry structured pay fields.
-ATS = ["ashby", "lever", "greenhouse", "workday", "workable", "smartrecruiters", "recruitee"]
+ATS = ["ashby", "lever", "greenhouse", "workday", "workable", "smartrecruiters", "recruitee", "pinpoint", "teamtailor", "icims"]
 FIELDS = ["name", "category", "city", "website", "slugs", "ats", "token", "source"]
 
 
@@ -41,6 +42,11 @@ def parse(ats: str, text: str) -> list[dict]:
         if ats == "workday":  # the token needs the wdN host from the URL
             slug = token_from_url(r.get("url") or "") or ""
             ok = bool(slug)
+        elif ats == "icims":  # a portal on another host than careers-{slug}.icims.com is kept as its address
+            url = (r.get("url") or "").strip().rstrip("/")
+            if slug and url and url != f"https://careers-{slug}.icims.com":
+                slug = url
+            ok = bool(slug) and (slug.startswith("https://") or "/" not in slug)
         else:
             ok = bool(slug) and "/" not in slug
         if name and ok and len(slug) <= 120:

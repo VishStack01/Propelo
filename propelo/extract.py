@@ -59,7 +59,8 @@ _PATTERNS = [
 _FRESHER = re.compile(
     r"\bfreshers?\b|\bnew[- ]grad(?:uate)?s?\b|\brecent graduates?\b|\bentry[- ]level\b|"
     r"\bno (?:prior )?experience (?:is )?(?:required|needed|necessary)\b|\b20\d\d (?:batch|graduates|pass[- ]?outs?)\b|"
-    r"\bany \(new grads ok\)",
+    r"\bany \(new grads ok\)|\bgraduate (?:scheme|programme|program)s?\b|\bearly[- ]careers? (?:programme|program|role|scheme)s?\b|"
+    r"\brotational (?:programme|program)s?\b|\b(?:university|campus) (?:graduate|hire|hiring)s?\b",
     re.I,
 )
 _NOT_FRESHER = re.compile(r"\bnot (?:a |for |open to )?(?:freshers?|entry[- ]level|new grads?)\b", re.I)

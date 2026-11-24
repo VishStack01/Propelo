@@ -30,7 +30,8 @@ from . import countries, geo
 from .models import iso
 from .sources import http
 
-ATS_ORDER = ["greenhouse", "lever", "ashby", "smartrecruiters", "recruitee", "breezy", "personio", "workable"]
+# Pinpoint and Teamtailor carry many UK, Irish and Dutch employers. iCIMS boards come from the inventory and links only.
+ATS_ORDER = ["greenhouse", "lever", "ashby", "smartrecruiters", "recruitee", "breezy", "personio", "pinpoint", "teamtailor", "workable"]
 # Workable rate-limits hard and answers for any name with an empty board, so it
 # is tried last and with the first slug only, unless the company list names it.
 SLUGS_PER_ATS = {"workable": 1}
@@ -114,17 +115,39 @@ def probe(ats: str, slug: str) -> dict | None:
                                    timeout=10, retries=1, min_interval=PROBE_INTERVAL)
             if "jobPostings" not in first:
                 return None
-            hit = workday.india_facet(first.get("facets") or [])
-            page = http.post_json(workday.api(slug) + "/jobs", {"appliedFacets": {hit[0]: [hit[1]]} if hit else {}, "limit": 20, "offset": 0,
-                                  "searchText": "" if hit else "India"}, timeout=10, retries=1, min_interval=PROBE_INTERVAL)
+            hit = workday.country_facet(first.get("facets") or [])
+            page = http.post_json(workday.api(slug) + "/jobs", {"appliedFacets": {hit[0]: hit[1]}, "limit": 20, "offset": 0, "searchText": ""},
+                                  timeout=10, retries=1, min_interval=PROBE_INTERVAL) if hit else first
             posts = page.get("jobPostings") or []
-            return {"board_name": "", "locations": [(j.get("locationsText") or "") + (" India" if hit else "") for j in posts],
-                    "titles": [j.get("title", "") for j in posts]}
+            return {"board_name": "", "locations": [j.get("locationsText") or "" for j in posts], "titles": [j.get("title", "") for j in posts]}
         if ats == "amazon":
             data = _get(f"https://www.amazon.jobs/en/search.json?result_limit=20&normalized_country_code[]={slug or 'IND'}")
             jobs = data.get("jobs") or []
             return {"board_name": "Amazon", "locations": [j.get("normalized_location") or j.get("location") or "" for j in jobs],
                     "titles": [j.get("title", "") for j in jobs]}
+        if ats == "pinpoint":
+            from .sources import pinpoint
+            data = _get(pinpoint.API.format(token=slug))
+            items = data.get("data") if isinstance(data, dict) else None
+            if not isinstance(items, list):
+                return None
+            return {"board_name": "", "locations": [pinpoint._location(j.get("location")) + (" remote" if j.get("workplace_type") == "remote" else "")
+                                                    for j in items if isinstance(j, dict)],
+                    "titles": [j.get("title", "") for j in items if isinstance(j, dict)]}
+        if ats == "teamtailor":
+            from .sources import teamtailor
+            root = ET.fromstring(http.get_text(teamtailor.feed_url(slug), timeout=10, retries=1, min_interval=PROBE_INTERVAL))
+            if root.tag != "rss":
+                return None
+            items = root.findall("./channel/item")
+            return {"board_name": (root.findtext("./channel/title") or "").strip(),
+                    "locations": [teamtailor._location(i) + (" remote" if (i.findtext("remoteStatus") or "") == "fully" else "") for i in items],
+                    "titles": [(i.findtext("title") or "").strip() for i in items]}
+        if ats == "icims":
+            from .sources import icims
+            jobs = icims.parse_page(http.get_text(f"{icims.base(slug)}/jobs/search?ss=1&pr=0&in_iframe=1", timeout=10, retries=1,
+                                                  min_interval=PROBE_INTERVAL), slug)
+            return {"board_name": "", "locations": [j.location for j in jobs], "titles": [j.title for j in jobs]}
         if ats == "personio":
             text = http.get_text(f"https://{slug}.jobs.personio.de/xml", timeout=10, retries=1, min_interval=PROBE_INTERVAL)
             if "<workzag-jobs" not in text:

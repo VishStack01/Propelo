@@ -68,29 +68,43 @@ def test_rest_of_india_any_wins_when_both_are_ticked():
 
 # ------------------------------------------------------------------ Workday and Amazon
 
-WD_LIST = {"total": 2, "facets": [{"facetParameter": "locationMainGroup", "values": [
-    {"facetParameter": "locationCountry", "values": [{"descriptor": "United States", "id": "us1"}, {"descriptor": "India", "id": "in1"}]}]}],
-    "jobPostings": [{"title": "Software Engineer", "externalPath": "/job/Bengaluru/Software-Engineer_JR1", "locationsText": "Bengaluru, India",
-                     "postedOn": "Posted 3 Days Ago", "bulletFields": ["JR1"]},
-                    {"title": "Payroll Specialist", "externalPath": "/job/Pune/Payroll_JR2", "locationsText": "Pune, India", "postedOn": "Posted Today"}]}
-WD_DETAIL = {"jobPostingInfo": {"title": "Software Engineer", "jobDescription": "<p>0-1 years. Build GPU tools in C++.</p>",
-                                "location": "Bengaluru, India", "startDate": "2026-10-20", "externalUrl": "https://nvidia.wd5.myworkdayjobs.com/en-US/X/job/1"}}
+WD_LIST = {"total": 3, "facets": [{"facetParameter": "locationMainGroup", "values": [
+    {"facetParameter": "locationCountry", "values": [{"descriptor": "United States of America", "id": "us1"}, {"descriptor": "India", "id": "in1"},
+                                                     {"descriptor": "United Kingdom", "id": "gb1"}, {"descriptor": "Germany", "id": "de1"}]}]}],
+    "jobPostings": [{"title": "Senior Payroll Specialist", "externalPath": "/job/London/Payroll_JR2", "locationsText": "London, United Kingdom", "postedOn": "Posted Today"},
+                    {"title": "Graduate Scheme 2027: Finance", "externalPath": "/job/London/Graduate_JR3", "locationsText": "London, United Kingdom",
+                     "postedOn": "Posted Yesterday"},
+                    {"title": "Volunteer, Weekend Events", "externalPath": "/job/Austin/Volunteer_JR4", "locationsText": "Austin, TX", "postedOn": "Posted Today"}]}
+WD_DETAIL = {"jobPostingInfo": {"title": "Graduate Scheme 2027: Finance", "jobDescription": "<p>Our graduate programme for 2027 starters.</p>",
+                                "location": "London, United Kingdom", "startDate": "2026-10-20", "externalUrl": "https://nvidia.wd5.myworkdayjobs.com/en-US/X/job/1"}}
 
 
-def test_workday_reads_india_through_the_country_facet(monkeypatch):
+def test_workday_reads_the_four_countries_and_every_job_family(monkeypatch):
     posts, gets = [], []
     monkeypatch.setattr(workday, "post_json", lambda url, body, **kw: posts.append((url, body)) or WD_LIST)
     monkeypatch.setattr(workday, "get_json", lambda url, **kw: gets.append(url) or WD_DETAIL)
+    monkeypatch.setattr(workday, "DETAIL_CAP", 1)
     jobs = workday.fetch("nvidia/wd5/NVIDIAExternalCareerSite", "NVIDIA")
     assert posts[0][0] == "https://nvidia.wd5.myworkdayjobs.com/wday/cxs/nvidia/NVIDIAExternalCareerSite/jobs"
-    assert posts[1][1]["appliedFacets"] == {"locationCountry": ["in1"]} and posts[1][1]["searchText"] == ""
-    assert gets == ["https://nvidia.wd5.myworkdayjobs.com/wday/cxs/nvidia/NVIDIAExternalCareerSite/job/Bengaluru/Software-Engineer_JR1"]  # tech titles only
-    se, payroll = jobs
-    assert se.posted_at == "2026-10-20T00:00:00Z" and "GPU tools" in se.description and se.url.endswith("/job/1")
-    assert payroll.description == "" and payroll.url == "https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite/job/Pune/Payroll_JR2"
+    assert posts[1][1]["appliedFacets"] == {"locationCountry": ["us1", "gb1"]} and posts[1][1]["searchText"] == ""  # not India, not Germany
+    # A finance role is read in full like a tech one; with one detail request left, the graduate scheme goes first.
+    assert gets == ["https://nvidia.wd5.myworkdayjobs.com/wday/cxs/nvidia/NVIDIAExternalCareerSite/job/London/Graduate_JR3"]
+    payroll, grad, volunteer = jobs
+    assert grad.posted_at == "2026-10-20T00:00:00Z" and "graduate programme" in grad.description and grad.url.endswith("/job/1")
+    assert payroll.description == "" and payroll.url == "https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite/job/London/Payroll_JR2"
     assert workday.token_from_url("https://adobe.wd5.myworkdayjobs.com/en-US/external_experienced/job/x") == "adobe/wd5/external_experienced"
+    assert workday.india_facet(WD_LIST["facets"]) == ("locationCountry", "in1")
     with pytest.raises(ValueError):
         workday.parse_token("adobe/external")
+
+
+def test_workday_site_without_a_country_facet_is_read_whole(monkeypatch):
+    small = {"total": 1, "facets": [], "jobPostings": [{"title": "Data Analyst", "externalPath": "/job/Dublin/DA_1", "locationsText": "Dublin, Ireland"}]}
+    posts = []
+    monkeypatch.setattr(workday, "post_json", lambda url, body, **kw: posts.append(body) or small)
+    monkeypatch.setattr(workday, "get_json", lambda url, **kw: {})
+    jobs = workday.fetch("acme/wd1/careers", "Acme")
+    assert len(posts) == 1 and posts[0]["searchText"] == "" and [j.title for j in jobs] == ["Data Analyst"]
 
 
 def test_amazon_reader_pages_and_parses(monkeypatch):
