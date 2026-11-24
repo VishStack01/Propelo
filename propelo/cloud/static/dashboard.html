@@ -2735,7 +2735,8 @@ function renderCloud(){
 const inApp = /CareerOSApp/.test(navigator.userAgent || '');
 function inr(n){ return '₹' + Number(n || 0).toLocaleString('en-IN'); }
 function capMax(){ const p = state.me && state.me.plan; return p === 'ultra' ? 60 : 25; }
-function guessCur(){ return 'USD'; }  // dollars for everyone; the checkout charges each buyer in their own currency
+/* Dollars for everyone (the checkout charges each buyer in their own currency); members who live and look for work in India see the India plans in rupees first. */
+function guessCur(){ return inIndiaMode(state.settings) ? 'INR' : 'USD'; }
 function refreshBilling(){ return api('api/billing').then(r => r.json()).then(b => { state.billing = b; if (state.me) state.me.ai = b.ai; state.sample = b.ai && b.ai.available ? makeServerSample() : null; render(); }).catch(() => {}); }
 function renderPlan(){
   const b = state.billing;
@@ -2761,14 +2762,14 @@ function renderPlan(){
     }
     return `<article class="plan ${pl.id}${cur ? ' current' : ''}"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h3 style="font-size:22px">${name}</h3>${cur ? '<span class="pill mine">Your plan</span>' : ''}</div>
       <div class="price">${price(pl)}${pl.priceInr ? '<small> / month</small>' : ''}</div>
-      <ul>${arr(pl.features).map(f => `<li>${esc(f)}</li>`).join('')}</ul>${action}</article>`;
+      <ul>${arr(cur$ === 'INR' && pl.featuresInr ? pl.featuresInr : pl.features).map(f => `<li>${esc(f)}</li>`).join('')}</ul>${action}</article>`;
   }).join('');
   // A pass: Pro for a fixed number of days, paid once. Shown only when the server sells it and this account has no subscription.
   const ps = b.pass, psPrice = ps ? (cur$ === 'USD' ? '$' + ps.priceUsd : inr(ps.priceInr)) : '';
   const passBox = ps && ps.onSale && !ps.blocked && arr(ps.currencies).includes(cur$) ? `<div class="panel" style="margin-top:14px;display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap">
       <div><b>Prefer to pay once? Pro pass, ${esc(ps.days)} days for ${esc(psPrice)}.</b><p class="small" style="margin:4px 0 0">${ps.running ? 'Your pass runs until ' + esc(fDate.format(new Date(ps.running.endsAt))) + '. Buying another adds its days to the end. ' : ''}Pay once by ${cur$ === 'USD' ? 'card' : 'UPI, card or netbanking'}. Nothing renews and there is nothing to cancel.</p></div>
       <button class="btn solid buy" data-act="buy-pass">Buy the ${esc(ps.days)}-day pass</button></div>` : '';
-  const curSwitch = curs.length > 1 ? `<div class="curseg" role="group" aria-label="Currency">${curs.map(x => `<button type="button" class="${x === cur$ ? 'on' : ''}" aria-pressed="${x === cur$}" data-act="plan-cur" data-cur="${x}">${x === 'INR' ? '₹ INR' : '$ USD'}</button>`).join('')}</div>` : '';
+  const curSwitch = curs.length > 1 ? `<div class="curseg" role="group" aria-label="Plan">${curs.map(x => `<button type="button" class="${x === cur$ ? 'on' : ''}" aria-pressed="${x === cur$}" data-act="plan-cur" data-cur="${x}">${x === 'INR' ? 'India plans, ₹' : 'Global plans, $'}</button>`).join('')}</div><p class="small" style="margin-top:8px">${cur$ === 'INR' ? 'India plans are for job-hunting inside India: rupee prices, a smaller AI allowance, everything else the same.' : 'Global plans carry the full AI allowance and are charged in your own currency at checkout.'}</p>` : '';
   const pct = ai.limit ? Math.min(100, Math.round(ai.used / ai.limit * 100)) : 0;
   const meter = own ? `<p class="small">AI actions run on your own ${esc(own.provider)} key: ${esc(ai.ownUsed || 0)} this month, no limit from us.</p>`
     : ai.hostedAvailable ? `<div style="display:grid;gap:8px"><div style="display:flex;justify-content:space-between;font-size:14px"><span><b>${esc(ai.used)}</b> of ${esc(ai.limit)} AI actions used this month</span><span class="muted">${esc(ai.left)} left</span></div><div class="meter" role="img" aria-label="${esc(pct)}% used"><i style="width:${pct}%"></i></div></div>`

@@ -5,9 +5,13 @@ All notable changes to Propelo. The format follows [Keep a Changelog](https://ke
 ## [Unreleased]
 
 ### Added
+- **India plans.** Members who live in India and look for work there can take Pro at ₹799 and Ultra at ₹1,999 a month through Razorpay, with 120 and 300 AI actions a month so the margin holds at an Indian price. Everyone else, including people in India looking abroad, pays the global dollar prices in their own currency. The server refuses a rupee checkout from anyone else. The pricing page says so.
 - **"Where you want to work".** The first-run questions and Settings now ask it. Someone living in India who picks another country names the countries or cities, and is matched like a member abroad: office roles in those places, remote roles open to India, and the visa sponsorship check on the office roles. Until a place is named, the India rules stay.
 - **Application details follow that answer.** For work outside India the form asks salary with its currency, postal code, university, and "your right to work where you are applying" instead of LPA, PIN code, backlogs and notice buyout. The browser extension fills the new answers into free-text boxes and "authorised to work" questions.
 - **Sign in with Google and GitHub**, next to LinkedIn and email, each shown only when its keys are set. The sign-in and sign-up page is rebuilt in the website's style, with the providers' own logos.
+
+### Changed
+- Consultancy packs and the agency feed bought in rupees now cost the same as in dollars (Starter ₹28,599, Growth ₹54,999, Plus ₹1,07,799, feed ₹8,699), since every seat carries the global allowance. The rupee Pro pass, still off by default, is ₹2,999.
 
 ### Fixed
 - A provider sign-in on an address someone else typed into the sign-up form but never confirmed now removes that person's password and sessions.

@@ -7,9 +7,9 @@ Checks run on 22 Nov 2026 between the docs, the code and what the running app do
 | Every page route the app serves is in the sitemap | Pass (`product_docs.py --check`) |
 | Every `website/*.html` page is in the sitemap | Pass |
 | Generated routes, tables and workflows match the code | Pass |
-| Prices: `plans.py`, `/pricing`, `/business`, README, register | Consistent: Pro ₹499 / $22.50, Ultra ₹1,199 / $48.50; Starter ₹14,999 (25), Growth ₹29,999 (50), Plus ₹44,999 (100), feed ₹4,999 / $99 |
+| Prices: `plans.py`, `/pricing`, `/business`, README, register | Consistent: Pro $39, Ultra $79 (India plans ₹799 / ₹1,999); Starter $325 (25), Growth $625 (50), Plus $1,225 (100), feed $99 |
 | Scan frequency claims vs reality | Fixed: was "hourly" in site, app, plans, README, competitors doc; now "several times a day" |
-| Interview Guarantee terms: dashboard, terms page, staff desk | Consistent (₹4,999; 3 interviews or a second round in 45 days; refund on claim) |
+| Interview Guarantee terms: dashboard, terms page, staff desk | Consistent ($59; 3 interviews or a second round in 45 days; refund on claim) |
 | "Never submits" claim vs extension code | Consistent: no submit call in the extension |
 | Permissions doc vs route guards | Consistent with the generated routes list |
 | Feed counts in docs vs live feed | 01-product uses the 22 Nov feed (95,212 roles); the site shows the live value |

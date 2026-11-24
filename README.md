@@ -120,11 +120,12 @@ For roles you apply to yourself, **Propelo Autofill** ([extension/](extension/RE
 
 ## Launch it as a product
 
-Propelo Cloud is the hosted version people sign up for, on the web, as an installable app, or as the Android and iOS apps in [`mobile/`](mobile/). It has Free, Pro and Ultra plans, billed in rupees through Razorpay in India and in dollars through Dodo Payments elsewhere, a monthly AI allowance on your model (or the user's own key, encrypted), and pricing, terms, privacy and refund pages. **[docs/launch.md](docs/launch.md)** is the owner's to-do list, from Render to the app stores; **[docs/runbook.md](docs/runbook.md)** covers incidents and backups.
+Propelo Cloud is the hosted version people sign up for, on the web, as an installable app, or as the Android and iOS apps in [`mobile/`](mobile/). It has Free, Pro and Ultra plans priced in US dollars and charged in each buyer's own currency through Dodo Payments, plus India plans in rupees through Razorpay for people who live and look for work in India.
 
 | | Free | Pro | Ultra |
 |---|---|---|---|
-| Price | ₹0 / $0 | ₹499 / $22.50 a month | ₹1,199 / $48.50 a month |
+| Price | $0 | $39 a month, charged in your own currency | $79 a month |
+| India plans (live and job-hunt in India) | ₹0 | ₹799 a month, 120 AI actions | ₹1,999 a month, 300 AI actions |
 | Matching | Daily | Every hour | Within 15 minutes of each scan |
 | AI actions | 15 a month, unlimited with your own key | 400 a month | 1,500 a month |
 | Auto-apply | 5 a day | 500 a month (25 a day) | 1,000 a month (60 a day) |
@@ -132,7 +133,7 @@ Propelo Cloud is the hosted version people sign up for, on the web, as an instal
 | Mock interviews | 2 a month | 20 a month | Unlimited |
 | Recruiter emails from your Gmail | Drafts | Up to 10 a day | Up to 25 a day, with follow-ups |
 | LinkedIn profile review | | | Yes |
-| Interview Guarantee, by application: ₹4,999 once for 45 days, the full ₹4,999 back if you don't get 3 interviews or a second round | | Apply (reviewed) | Apply (reviewed) |
+| Interview Guarantee, by application: $59 once for 45 days, the full $59 back (terms and conditions apply) if you don't get 3 interviews or a second round | | Apply (reviewed) | Apply (reviewed) |
 | Job Guarantee, by application: nothing upfront, 6 to 8% of fixed pay only after you join | | Apply (reviewed) | Apply (reviewed) |
 
 Matching works for every field and every level (software and business roles, engineering trades, healthcare, education, legal, retail and hospitality, media), and wherever you live: in India with city and remote rules, and elsewhere with remote roles open to your country and on-site roles in places you choose. The Chrome extension shows your match score on any job page, fills applications from your profile, and walks your apply queue (you press Submit). Every plan has Contacts, interview prep sheets, application receipts, the scam check and the autofill extension. [How it compares with Simplify, Teal, Jobright and Salvo](docs/competitors.md).

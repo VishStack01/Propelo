@@ -270,7 +270,9 @@ def _dodo_event(kind, uid, sub="sub_dodo_1", product="pdt_ULTRA", at=None, **dat
 def test_catalog_has_three_plans_priced_in_dollars(cloud):
     cat = cloud.client().get("/api/plans").json()
     pro, ultra = cat["plans"][1], cat["plans"][2]
-    assert (pro["priceInr"], pro["priceUsd"], ultra["priceInr"], ultra["priceUsd"]) == (499, "39.00", 1199, "79.00")
+    assert (pro["priceInr"], pro["priceUsd"], ultra["priceInr"], ultra["priceUsd"]) == (799, "39.00", 1999, "79.00")
+    assert (pro["aiCreditsInr"], ultra["aiCreditsInr"]) == (120, 300)
+    assert any("120 AI actions" in f for f in pro["featuresInr"]) and any("400 AI actions" in f for f in pro["features"])
     assert ultra["aiCredits"] == 1500 and ultra["autoApplyPerDay"] == 60 and ultra["matchEveryMinutes"] == 15
     assert ultra["copilotPerDay"] == 200 and ultra["mockInterviews"] == 60 and ultra["linkedinReview"] is True
     assert not any("nlimited copilot" in f for p in cat["plans"] for f in p["features"])
@@ -384,3 +386,28 @@ def test_pricing_page_shows_dollars_only(cloud):
         assert "₹" not in r.text and "data-cur" not in r.text, country  # no rupee prices, no currency switch
         assert "pay in your own currency" in r.text
         assert "<script>" not in r.text  # nothing inline without a nonce
+
+
+def test_india_plans_are_for_members_who_look_for_work_in_india(cloud):
+    posts = []
+    _billing_on(cloud, posts)
+    abroad = cloud.user("ravi@example.com")
+    abroad.put("/api/d/settings/profile", json={"homeCountry": "IN", "workAbroad": True, "places": "United Kingdom"})
+    assert "INR" not in abroad.get("/api/billing").json()["currencies"]
+    r = abroad.post("/api/billing/checkout", json={"plan": "pro", "currency": "INR"})
+    assert r.status_code == 400 and r.json()["code"] == "inr_not_for_you" and not posts
+    uk = cloud.user("sam@example.com")
+    uk.put("/api/d/settings/profile", json={"homeCountry": "GB"})
+    assert uk.post("/api/billing/checkout", json={"plan": "pro", "currency": "INR"}).json()["code"] == "inr_not_for_you"
+
+    home = cloud.user()
+    home.put("/api/d/settings/profile", json={"homeCountry": "IN"})
+    b = home.get("/api/billing").json()
+    assert "INR" in b["currencies"] and b["indiaMode"] is True
+    assert home.post("/api/billing/checkout", json={"plan": "pro", "currency": "INR"}).status_code == 200
+    assert _hook(cloud, _sub_event("subscription.activated", "active", notes={"user_id": home.uid})).json()["result"] == "active"
+    ai = home.get("/api/billing").json()["ai"]
+    assert home.get("/api/me").json()["plan"] == "pro" and ai["limit"] == 120
+    # Already paying in rupees, they keep seeing the rupee plan even after changing where they want to work.
+    home.put("/api/d/settings/profile", json={"homeCountry": "IN", "workAbroad": True, "places": "Germany"})
+    assert "INR" in home.get("/api/billing").json()["currencies"]

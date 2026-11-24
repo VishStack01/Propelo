@@ -40,10 +40,10 @@ Set `PROPELO_LLM=anthropic` and `ANTHROPIC_API_KEY` on `propelo-web` (or `openai
 
 Rough cost check before you set prices: an AI action is one model call of a few thousand tokens. Multiply your provider's price per call by 1,500 and make sure Ultra still leaves margin after payment fees and tax.
 
-## 4. Razorpay (rupees)
+## 4. Razorpay (India plans, in rupees)
 
 1. Sign up and complete activation (KYC). Razorpay reviews your website: give it the app's address and these pages, which the app serves: `/terms`, `/privacy`, `/refunds`, `/contact`, `/pricing`. Have the policy text reviewed for your situation first; it's a plain-language starting point, not legal advice.
-2. In **Test mode**, under Subscriptions > Plans, create two monthly plans: **Pro at ₹499** and **Ultra at ₹1,199**. Copy their `plan_...` ids.
+2. In **Test mode**, under Subscriptions > Plans, create two monthly plans: **Pro (India) at ₹799** and **Ultra (India) at ₹1,999** (the India plans: only members who live in India and look for work there can buy them; `PRO_PRICE_INR` and `ULTRA_PRICE_INR` must match). Copy their `plan_...` ids.
 3. Settings > API Keys: generate a key id and secret.
 4. Settings > Webhooks: add `https://<your-app>/api/billing/webhook`, choose a secret, select the `subscription.*` events.
 5. Set `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, `RAZORPAY_PLAN_PRO` and `RAZORPAY_PLAN_ULTRA` on `propelo-web` and redeploy.

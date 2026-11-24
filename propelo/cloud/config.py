@@ -77,7 +77,7 @@ class Config:
     guarantee_enabled: bool = False
     pass_enabled: bool = False          # PASS=on: sell Pro for a fixed number of days, paid once (passes.py)
     pass_days: int = 90
-    pass_inr: int = 1199
+    pass_inr: int = 2999
     pass_usd_cents: int = 9900
     dodo_product_pass: str = ""        # a one-time Dodo product priced at the pass's dollar price
     guarantee_days: int = 45
@@ -102,8 +102,12 @@ class Config:
     # Prices are shown in US dollars everywhere and paid through Dodo Payments (merchant of record: it handles VAT
     # and sales tax, and with Adaptive Currency on it charges each buyer in their own currency). USD prices are in
     # cents. The rupee prices and Razorpay remain only for a self-hosted server that has no Dodo account.
-    pro_price_inr: int = 499
-    ultra_price_inr: int = 1199
+    # India plans: for members who live in India and are job-hunting there. Paid in rupees through Razorpay,
+    # with a smaller AI allowance so the margin holds at an Indian price (docs/business.md has the sums).
+    pro_price_inr: int = 799
+    ultra_price_inr: int = 1999
+    pro_ai_credits_inr: int = 120
+    ultra_ai_credits_inr: int = 300
     pro_price_usd_cents: int = 3900
     ultra_price_usd_cents: int = 7900
     free_ai_credits: int = 15
@@ -167,7 +171,7 @@ class Config:
             guarantee_enabled=e("GUARANTEE", "off").strip().lower() in ("on", "1", "true", "yes"),
             pass_enabled=e("PASS", "off").strip().lower() in ("on", "1", "true", "yes"),
             pass_days=_int("PASS_DAYS", 90),
-            pass_inr=_int("PASS_PRICE_INR", 1199),
+            pass_inr=_int("PASS_PRICE_INR", 2999),
             pass_usd_cents=_int("PASS_PRICE_USD_CENTS", 9900),
             dodo_product_pass=e("DODO_PRODUCT_PASS", "").strip(),
             guarantee_days=_int("GUARANTEE_DAYS", 45),
@@ -185,8 +189,10 @@ class Config:
             google_client_id=e("GOOGLE_CLIENT_ID", "").strip(),
             google_client_secret=e("GOOGLE_CLIENT_SECRET", "").strip(),
             secrets_key=e("SECRETS_KEY", "").strip(),
-            pro_price_inr=_int("PRO_PRICE_INR", 499),
-            ultra_price_inr=_int("ULTRA_PRICE_INR", 1199),
+            pro_price_inr=_int("PRO_PRICE_INR", 799),
+            ultra_price_inr=_int("ULTRA_PRICE_INR", 1999),
+            pro_ai_credits_inr=_int("PRO_AI_CREDITS_INR", 120),
+            ultra_ai_credits_inr=_int("ULTRA_AI_CREDITS_INR", 300),
             pro_price_usd_cents=_int("PRO_PRICE_USD_CENTS", 3900),
             ultra_price_usd_cents=_int("ULTRA_PRICE_USD_CENTS", 7900),
             free_ai_credits=_int("FREE_AI_CREDITS", 15),

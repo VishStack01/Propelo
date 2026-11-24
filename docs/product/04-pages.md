@@ -35,7 +35,7 @@ layouts checked at 390, 820 and 1280 px with no sideways scrolling (audit 22 Nov
 - **Acceptance:** prices match `plans.py` and the env values (₹499 / ₹1,199; $22.50 / $48.50).
 
 ### For business · /business
-- **Purpose:** sell the consultancy portal and agency feed; free pilot request. **Prices:** ₹14,999 / ₹29,999 / ₹44,999; feed ₹4,999 / $99.
+- **Purpose:** sell the consultancy portal and agency feed; free pilot request. **Prices:** $325 / $625 / $1,225; feed $99.
 - **Acceptance:** says what consultancies see (counts) and never see (resumes, answers, messages); nothing auto-renews.
 
 ### Dashboard · /app

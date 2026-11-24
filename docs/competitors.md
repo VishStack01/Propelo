@@ -13,7 +13,7 @@ Four products shaped the 2.0 feature set: Simplify, Teal, Jobright and Salvo. Th
 | Recruiter emails | No | Templates | Referral intros | Sent automatically | Drafted, or sent from your own Gmail when you turn it on, with limits and an opt-out |
 | Copilot | No | No | Yes (Orion) | No | Ask Propelo, grounded on your pipeline |
 | Scam check | No | No | Yes | Posting check | Rule-based, quoting the words that triggered it; unsafe postings are never auto-applied |
-| India pricing | USD only | USD only | USD only | USD only | ₹0 / ₹499 / ₹1,199, with UPI |
+| India pricing | USD only | USD only | USD only | USD only | $0 / $39 / $79 in local currency; India plans ₹799 / ₹1,999 with UPI |
 | Open source, self-hostable | No | No | No | No | Yes, MIT |
 
 Approximate paid prices seen: Teal about $29 for 30 days, Jobright Turbo $39.99 a month, Salvo Turbo $49 a month. Propelo: $22.50 (Pro) and $48.50 (Ultra) outside India.

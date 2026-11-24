@@ -451,7 +451,15 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
         if extras:
             extras = ('<section class="addons"><h2>Guarantees for Pro and Ultra members</h2><p class="note">Not part of any plan. Apply in the app; '
                       'a person on our team reviews every application. Terms and conditions apply: <a href="/terms#guarantees">read the guarantee terms</a>.</p>' + extras + '</section>')
+        india = ""
+        if cfg.razorpay_enabled:
+            pro, ultra = plans.plan_info(cfg, "pro"), plans.plan_info(cfg, "ultra")
+            india = ('<div><h3>Job-hunting inside India?</h3><p>Take the India plans: Pro at ₹{:,} and Ultra at ₹{:,} a month, paid by UPI, card or netbanking. '
+                     'They have everything in the global plans with a smaller AI allowance ({} and {} actions a month). Pick them in Settings, Plan, '
+                     'once "Where you want to work" is India. Looking for work abroad? Take the global plans.</p></div>').format(
+                         pro["priceInr"], ultra["priceInr"], pro["aiCreditsInr"], ultra["aiCreditsInr"])
         text = (STATIC / "pricing.html").read_text(encoding="utf-8").replace("<!--PLANS-->", "".join(cards)).replace("<!--ADDONS-->", extras) \
+            .replace("<!--INDIA-->", india) \
             .replace("<script>", f'<script nonce="{request.state.nonce}">') \
             .replace("</title>", f'</title>\n<link rel="canonical" href="{cfg.public_url}/pricing">', 1)
         return HTMLResponse(text)
@@ -870,7 +878,7 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
                 "computerKeys": repo.list_api_tokens(c, p.uid),
                 "sessions": c.all("SELECT created_at, last_seen_at, expires_at, revoked_at, user_agent FROM sessions WHERE user_id = ?", (p.uid,)),
                 "securityEvents": c.all("SELECT at, kind, detail FROM audit_events WHERE user_id = ? ORDER BY at", (p.uid,)),
-                "plan": {k: v for k, v in plans.billing_view(c, cfg, p.user).items() if k != "plans"},
+                "plan": {k: v for k, v in plans.billing_view(c, cfg, p.user, member_settings(c, p.uid)).items() if k != "plans"},
                 "aiKey": plans.public_key(c, p.uid),
                 "aiUsage": c.all("SELECT period, hosted, own FROM ai_usage WHERE user_id = ? ORDER BY period", (p.uid,)),
                 "featureUsage": c.all("SELECT period, feature, count FROM feature_usage WHERE user_id = ? ORDER BY period", (p.uid,)),
@@ -1420,6 +1428,15 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
     def provider_for(currency: str):
         return app.state.razorpay if currency == "INR" else app.state.dodo
 
+    def member_settings(c, uid: str) -> dict:
+        d = repo.get_doc(c, uid, "settings", "profile")
+        return (d or {}).get("data", d) if isinstance(d, dict) else {}
+
+    def rupees_allowed(c, uid: str) -> bool:
+        """The India plans are for members who live in India and look for work there."""
+        s = plans.subscription(c, uid)
+        return plans.india_mode(member_settings(c, uid)) or bool(s and s["currency"] == "INR")
+
     @app.get("/api/plans")
     def plan_catalog(request: Request):
         return {"plans": plans.catalog(cfg), "addons": plans.addons(cfg), "checkoutEnabled": cfg.billing_enabled, "currency": guess_currency(request),
@@ -1428,7 +1445,7 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
     @app.get("/api/billing")
     def billing(p: Principal = Depends(session_only)):
         with db.tx() as c:
-            return dict(plans.billing_view(c, cfg, p.user), ai=plans.ai_status(c, cfg, p.user),
+            return dict(plans.billing_view(c, cfg, p.user, member_settings(c, p.uid)), ai=plans.ai_status(c, cfg, p.user),
                         features=plans.feature_usage(c, cfg, p.uid, plans.plan_of(c, p.user)), **{"pass": passes.view(c, cfg, p.user)})
 
     @app.post("/api/billing/pass")
@@ -1439,6 +1456,8 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
             raise err(400, "Pay in INR or USD.", "bad_currency")
         with db.tx() as c:
             limited(c, f"checkout:{p.uid}", 10, 3600)
+            if currency == "INR" and not rupees_allowed(c, p.uid):
+                raise err(400, "Rupee prices are for members who live in India and look for work there.", "inr_not_for_you")
             why = "Passes aren't on sale right now." if not cfg.pass_enabled else passes.can_buy(c, p.user)
         if why:
             raise err(409 if cfg.pass_enabled else 503, why, "pass_unavailable")
@@ -1472,6 +1491,9 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
             raise err(503, f"Payments in {currency} aren't switched on yet.{hint}", "billing_off")
         with db.tx() as c:
             limited(c, f"checkout:{p.uid}", 10, 3600)
+            if currency == "INR" and not rupees_allowed(c, p.uid):
+                raise err(400, "Rupee prices are for members who live in India and look for work there. Pay in dollars, "
+                               "or set where you want to work to India in Settings.", "inr_not_for_you")
             s = plans.subscription(c, p.uid)
             current = plans.plan_of(c, p.user) if not p.user.get("is_admin") else plans._paid_plan(s)
             if current == plan and not (s and (s["status"] == "cancelled" or s["cancel_at_period_end"])):
@@ -1506,7 +1528,7 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
                 c.execute("UPDATE subscriptions SET cancel_at_period_end = 1, pending_plan = NULL, pending_provider = NULL, "
                           "pending_sub_id = NULL, updated_at = ? WHERE user_id = ?", (now_iso(), p.uid))
             repo.audit(c, p.uid, "plan-cancelled", client_ip(request), {"provider": s["provider"], "plan": s["plan"]})
-            return plans.billing_view(c, cfg, p.user)
+            return plans.billing_view(c, cfg, p.user, member_settings(c, p.uid))
 
     @app.post("/api/billing/portal")
     async def billing_portal(request: Request, p: Principal = Depends(session_only)):
@@ -2388,7 +2410,7 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
                 ok, why = plans.take_feature(c, cfg, p.uid, plan, feature)
                 if not ok:
                     raise err(402, why, "plan_limit")
-                limit = plans.plan_info(cfg, plan)["aiCredits"]
+                limit = plans.ai_limit(c, cfg, p.user, plan)
                 if not plans.take_credit(c, p.uid, "hosted", limit):
                     hint = "Upgrade to Pro or add your own key in Settings." if plan == "free" else "Add your own key in Settings to keep going."
                     raise err(402, f"You've used this month's {limit} AI actions. {hint}", "ai_quota")

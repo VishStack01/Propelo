@@ -44,10 +44,10 @@ open first, plus a one-line summary to paste into an email.
 
 | plan | students | price for 30 days |
 | --- | ---: | ---: |
-| Starter Pack | 25 | ₹14,999 ($159) |
-| Growth | 50 | ₹29,999 ($319) |
-| Plus Pack | 100 | ₹44,999 ($479) |
-| Agency roles feed | n/a | ₹4,999 ($99) |
+| Starter Pack | 25 | $325 (₹28,599) |
+| Growth | 50 | $625 (₹54,999) |
+| Plus Pack | 100 | $1,225 (₹1,07,799) |
+| Agency roles feed | n/a | $99 (₹8,699) |
 
 Set in `BUSINESS_PLANS` (`propelo/cloud/partners.py`). Dollar checkout needs a Dodo product per plan:
 `DODO_PRODUCT_CONSULTANCY_STARTER`, `DODO_PRODUCT_CONSULTANCY_GROWTH`, `DODO_PRODUCT_CONSULTANCY_PLUS`, `DODO_PRODUCT_AGENCY_FEED`.
