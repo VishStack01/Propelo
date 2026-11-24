@@ -5,14 +5,9 @@
     "Fresher",
     "1+ years"
    ],
-   "maxRequiredYears": 1,
+   "maxRequiredYears": 2,
    "maxPostingAgeDays": 25,
-   "locations": [
-    "South India (any work mode)",
-    "Rest of India (remote only)",
-    "Remote worldwide (first priority)"
-   ],
-   "salaryFloorLpa": 7,
+   "salaryFloorLpa": 35.2,
    "dailyCap": 8,
    "approvalMode": "auto-when-clear",
    "schedule": "Search every 3 hours",
@@ -29,7 +24,18 @@
      "HN Who is hiring",
      "VC portfolio boards"
     ]
-   }
+   },
+   "homeCountry": "GB",
+   "places": "United Kingdom, Netherlands, Ireland",
+   "remoteOk": true,
+   "needsSponsorship": true,
+   "salaryFloorUsd": 40000,
+   "yearsExperience": 1,
+   "targetRoles": [
+    "AI Engineer",
+    "Data Scientist",
+    "ML Engineer"
+   ]
   },
   "inboxCheck": {
    "lastCheckedAtHoursAgo": 2,
@@ -103,7 +109,7 @@
     {
      "name": "Location",
      "level": 3,
-     "reason": "Remote worldwide; India explicitly allowed."
+     "reason": "Remote worldwide; the UK explicitly allowed."
     }
    ],
    "checks": [
@@ -134,7 +140,7 @@
     {
      "gate": "Pay",
      "passed": true,
-     "value": "26.4–35.2 LPA",
+     "value": "$30K–40K a year",
      "quote": "$30K – $40K"
     }
    ],
@@ -246,7 +252,7 @@
      "culture": {
       "score": 4,
       "status": "partial",
-      "note": "Remote worldwide with India allowed; moving from demo to paying customers.",
+      "note": "Remote worldwide with the UK allowed; moving from demo to paying customers.",
       "source": "posting"
      },
      "redFlags": {
@@ -360,13 +366,13 @@
   "kestrel-ai-automation": {
    "company": "Kestrel AI",
    "title": "AI Automation Engineer",
-   "location": "Remote (India)",
+   "location": "Remote (UK)",
    "workMode": "remote",
-   "region": "remote-india",
+   "region": "remote-local",
    "source": "Wellfound",
    "url": "https://example.com/kestrel/automation",
    "postedAtHoursAgo": 30,
-   "salary": "9–12 LPA",
+   "salary": "£38–45K",
    "experience": "1 year",
    "stage": "ready",
    "decision": "C",
@@ -382,14 +388,14 @@
     {
      "gate": "Location",
      "passed": true,
-     "value": "Remote, India",
-     "quote": "Remote within India."
+     "value": "Remote, United Kingdom",
+     "quote": "Remote within the UK."
     },
     {
      "gate": "Pay",
      "passed": true,
-     "value": "9–12 LPA",
-     "quote": "9–12 LPA"
+     "value": "£38–45K",
+     "quote": "£38–45K"
     }
    ],
    "brief": {
@@ -431,13 +437,13 @@
      "comp": {
       "score": 3,
       "status": "partial",
-      "note": "9–12 LPA is at your floor.",
+      "note": "£38–45K is above your floor.",
       "source": "posting"
      },
      "culture": {
       "score": 4,
       "status": "partial",
-      "note": "Small team, hybrid in Bengaluru.",
+      "note": "Small team, hybrid in London.",
       "source": "posting"
      },
      "redFlags": {
@@ -484,7 +490,7 @@
      "compReliability": "medium"
     },
     "comp": {
-     "advertised": "9–12 LPA",
+     "advertised": "£38–45K",
      "market": "Not researched yet."
     },
     "keywords": [
@@ -507,13 +513,13 @@
   "orbit-junior-ai": {
    "company": "Orbit Systems",
    "title": "Junior AI Engineer",
-   "location": "Hyderabad",
+   "location": "Manchester, United Kingdom",
    "workMode": "hybrid",
-   "region": "south-india",
+   "region": "local",
    "source": "Greenhouse",
    "url": "https://example.com/orbit/junior-ai",
    "postedAtHoursAgo": 20,
-   "salary": "8–11 LPA",
+   "salary": "£34–40K",
    "experience": "Fresher welcome",
    "stage": "approved",
    "fitBand": "pending",
@@ -527,8 +533,8 @@
     {
      "gate": "Location",
      "passed": true,
-     "value": "Hybrid, Hyderabad (south India)",
-     "quote": "Hyderabad"
+     "value": "Hybrid, Manchester, United Kingdom",
+     "quote": "Manchester, United Kingdom"
     }
    ],
    "brief": {
@@ -545,14 +551,22 @@
     ]
    },
    "autoApply": "queued",
-   "applyByHoursAgo": -120
+   "applyByHoursAgo": -120,
+   "visa": {
+    "status": "offers",
+    "quote": "We sponsor Skilled Worker visas for this role.",
+    "ukRegister": {
+     "listed": true,
+     "name": "Orbit Systems Ltd"
+    }
+   }
   },
   "quill-llm-eval": {
    "company": "Quill Health",
    "title": "LLM Evaluation Engineer (New Grad)",
-   "location": "Remote (APAC)",
+   "location": "Remote (Europe)",
    "workMode": "remote",
-   "region": "remote-global",
+   "region": "remote-local",
    "source": "Lever",
    "url": "https://example.com/quill/llm-eval",
    "postedAtHoursAgo": 33,
@@ -564,7 +578,7 @@
     {
      "gate": "Location",
      "passed": true,
-     "value": "Remote (apac), open to India",
+     "value": "Remote (Europe), open to the United Kingdom",
      "quote": "We hire across APAC time zones."
     }
    ]
@@ -572,34 +586,48 @@
   "banyan-fde": {
    "company": "Banyan Robotics",
    "title": "Forward Deployed Engineer",
-   "location": "Chennai",
+   "location": "London, United Kingdom",
    "workMode": "onsite",
-   "region": "south-india",
+   "region": "local",
    "source": "HN Who is hiring",
    "url": "https://example.com/banyan/fde",
    "postedAtHoursAgo": 120,
-   "salary": "12–18 LPA",
+   "salary": "£48–58K",
    "experience": "1+ years",
    "stage": "found",
    "fitBand": "pending",
    "needsYou": "The form asks you to create an account on Banyan's careers site. Sign in there once in the Claude app's browser, then press Try again.",
    "needsYouAt": "2026-10-12T09:40:00Z",
    "applyUrl": "https://example.com/banyan/apply",
-   "applyTo": "jobs@banyan.example"
+   "applyTo": "jobs@banyan.example",
+   "visa": {
+    "status": "unclear",
+    "ukRegister": {
+     "listed": true,
+     "name": "Banyan Robotics UK Ltd"
+    }
+   }
   },
   "lumen-ml-associate": {
    "company": "Lumen Data",
    "title": "ML Associate",
-   "location": "Kochi",
+   "location": "Amsterdam, Netherlands",
    "workMode": "onsite",
-   "region": "south-india",
-   "source": "Internshala",
+   "region": "local",
+   "source": "Workable",
    "url": "https://example.com/lumen/ml",
    "postedAtHoursAgo": 300,
-   "salary": "7–9 LPA",
+   "salary": "€46–52K",
    "experience": "Fresher (0 years)",
    "stage": "found",
-   "fitBand": "pending"
+   "fitBand": "pending",
+   "visa": {
+    "status": "unclear",
+    "nlRegister": {
+     "listed": true,
+     "name": "Lumen Data B.V."
+    }
+   }
   },
   "tessera-ai-engineer": {
    "company": "Tessera",
@@ -629,9 +657,9 @@
   "cobalt-genai": {
    "company": "Cobalt Pay",
    "title": "GenAI Engineer",
-   "location": "Bengaluru",
+   "location": "Dublin, Ireland",
    "workMode": "hybrid",
-   "region": "south-india",
+   "region": "local",
    "source": "Greenhouse",
    "url": "https://example.com/cobalt/genai",
    "postedAtHoursAgo": 40,
@@ -685,39 +713,39 @@
   "pine-ai-dev": {
    "company": "Pine Analytics",
    "title": "AI Developer",
-   "location": "Pune",
+   "location": "Berlin, Germany",
    "workMode": "onsite",
-   "source": "Internshala",
+   "source": "Workable",
    "url": "https://example.com/pine/ai-dev",
    "postedAtHoursAgo": 70,
    "stage": "skipped",
    "skip": {
     "gate": "Location",
-    "reason": "On-site in Pune. Outside south India you only want remote roles.",
+    "reason": "On-site in Berlin, Germany, outside the places you chose.",
     "wouldChange": "A remote option."
    }
   },
   "ember-prompt": {
    "company": "Ember Studio",
    "title": "Prompt Engineer (Fresher)",
-   "location": "Remote (India)",
+   "location": "Remote (UK)",
    "workMode": "remote",
-   "source": "Internshala",
+   "source": "Workable",
    "url": "https://example.com/ember/prompt",
    "postedAtHoursAgo": 90,
    "stage": "skipped",
    "skip": {
     "gate": "Pay",
-    "reason": "Pays 3–4.2 LPA, below your 7 LPA floor.",
-    "wouldChange": "Lowering your floor to 4 LPA."
+    "reason": "Pays £24–26K a year, below your pay floor.",
+    "wouldChange": "Lowering your pay floor to £24,000."
    }
   },
   "vela-ai-fde": {
-   "location": "Bengaluru",
+   "location": "London, United Kingdom",
    "workMode": "hybrid",
    "experience": "0-1 years",
    "source": "Company careers page",
-   "region": "south-india",
+   "region": "local",
    "company": "Vela AI",
    "title": "Forward Deployed Engineer",
    "stage": "interview",
@@ -725,33 +753,47 @@
    "appliedAtHoursAgo": 460,
    "screenAtHoursAgo": 380,
    "interviewAtHoursAgo": -50,
-   "salary": "18-24 LPA",
+   "salary": "£55–65K",
    "timeline": [
     {
      "atHoursAgo": 460,
      "event": "Applied by auto-apply"
     }
-   ]
+   ],
+   "visa": {
+    "status": "offers",
+    "quote": "Visa sponsorship is available for the right candidate.",
+    "ukRegister": {
+     "listed": true,
+     "name": "Vela AI Ltd"
+    }
+   }
   },
   "harbor-ml": {
-   "location": "Hyderabad",
+   "location": "Edinburgh, United Kingdom",
    "workMode": "hybrid",
    "experience": "0-1 years",
    "source": "Company careers page",
-   "region": "south-india",
+   "region": "local",
    "company": "Harbor Analytics",
    "title": "ML Engineer I",
    "stage": "rejected",
    "closedFrom": "applied",
    "postedAtHoursAgo": 900,
-   "appliedAtHoursAgo": 850
+   "appliedAtHoursAgo": 850,
+   "visa": {
+    "status": "unclear",
+    "ukRegister": {
+     "listed": false
+    }
+   }
   },
   "ridge-llm": {
-   "location": "Remote (India)",
+   "location": "Remote (UK)",
    "workMode": "remote",
    "experience": "0-1 years",
    "source": "Company careers page",
-   "region": "south-india",
+   "region": "local",
    "company": "Ridge",
    "title": "LLM Applications Engineer",
    "stage": "rejected",
@@ -761,11 +803,11 @@
    "screenAtHoursAgo": 560
   },
   "nimbus-sde": {
-   "location": "Bengaluru",
+   "location": "London, United Kingdom",
    "workMode": "hybrid",
    "experience": "0-1 years",
    "source": "Company careers page",
-   "region": "south-india",
+   "region": "local",
    "company": "Nimbus Cloud",
    "title": "Software Engineer, AI Platform",
    "stage": "applied",
@@ -778,7 +820,14 @@
      "dueHoursAgo": -30,
      "done": false
     }
-   ]
+   ],
+   "visa": {
+    "status": "unclear",
+    "ukRegister": {
+     "listed": true,
+     "name": "Nimbus Cloud Ltd"
+    }
+   }
   }
  },
  "profile": {
@@ -787,14 +836,14 @@
     "name": "Asha Rao",
     "headline": "AI Engineer",
     "email": "asha@example.com",
-    "phone": "+91 90000 00000",
-    "location": "Bengaluru",
+    "phone": "+44 7700 900123",
+    "location": "London, United Kingdom",
     "links": [
      "https://github.com/asha-example",
      "https://linkedin.com/in/asha-example"
     ]
    },
-   "summary": "AI engineer who ships retrieval and evaluation systems in Python. Built and ran a RAG service used by 1,200 people, and an evaluation harness that cut review time by 40%. Looking for an early-career AI or forward-deployed engineering role.",
+   "summary": "AI engineer who ships retrieval and evaluation systems in Python. Built and ran a RAG service used by 1,200 people, and an evaluation harness that cut review time by 40%. On a UK Graduate visa; looking for an early-career AI role in the UK or Europe with an employer that can sponsor.",
    "skills": [
     "Python",
     "FastAPI",
@@ -810,7 +859,7 @@
     {
      "title": "AI Engineer",
      "company": "Acme Labs",
-     "location": "Bengaluru",
+     "location": "London",
      "start": "Jan 2026",
      "end": "Present",
      "bullets": [
@@ -854,10 +903,17 @@
    ],
    "education": [
     {
+     "degree": "MSc, Data Science",
+     "school": "Example University, London",
+     "start": "2024",
+     "end": "2025",
+     "note": "Merit"
+    },
+    {
      "degree": "B.Tech, Computer Science",
      "school": "Example Institute of Technology",
-     "start": "2021",
-     "end": "2025",
+     "start": "2020",
+     "end": "2024",
      "note": ""
     }
    ],
@@ -880,7 +936,7 @@
      "due": ""
     },
     {
-     "text": "Confirm your notice period",
+     "text": "Confirm when you could start",
      "due": ""
     }
    ],
@@ -889,7 +945,7 @@
     "Fri 31 Oct, 15:00–15:45",
     "Mon 3 Nov, 12:00–12:45"
    ],
-   "body": "Hi Asha,\n\nThanks for applying to Vela AI. We would love to set up a 45-minute technical interview with our engineering lead.\n\nCould you share three times that work for you this week or next, and confirm your notice period?\n\nBest,\nPriya",
+   "body": "Hi Asha,\n\nThanks for applying to Vela AI. We would love to set up a 45-minute technical interview with our engineering lead.\n\nCould you share three times that work for you this week or next, and confirm when you could start?\n\nBest,\nPriya",
    "jobId": "vela-ai-fde",
    "company": "Vela AI",
    "status": "new"

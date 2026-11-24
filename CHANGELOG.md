@@ -11,9 +11,12 @@ All notable changes to Propelo. The format follows [Keep a Changelog](https://ke
 - **Sign in with Google and GitHub**, next to LinkedIn and email, each shown only when its keys are set. The sign-in and sign-up page is rebuilt in the website's style, with the providers' own logos.
 
 ### Changed
+- **The public demo is a graduate in London who needs sponsorship**, with roles in London, Manchester, Amsterdam and Dublin, pay in pounds and euros, and UK and Dutch sponsor-register pills. It was a fresher in Bengaluru.
+- For members outside India mode, the role cards drop the LPA pay pills, the pay icon is a banknote unless the pay is in rupees, the filter summary reads "in United Kingdom, Netherlands (on-site or hybrid) and remote from the United Kingdom", and the pay floor shows in dollars. Pasted postings recognise major cities abroad.
 - Consultancy packs and the agency feed bought in rupees now cost the same as in dollars (Starter ₹28,599, Growth ₹54,999, Plus ₹1,07,799, feed ₹8,699), since every seat carries the global allowance. The rupee Pro pass, still off by default, is ₹2,999.
 
 ### Fixed
+- "1 are somewhere else" and similar near-miss counts now read in the singular.
 - A provider sign-in on an address someone else typed into the sign-up form but never confirmed now removes that person's password and sessions.
 
 ## [2.16.2] - 2026-11-24
