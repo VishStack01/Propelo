@@ -215,6 +215,10 @@ def get_asset(c: Conn, uid: str, aid: str) -> dict | None:
 
 
 # ------------------------------------------------------------------ tasks
+def on_enqueue() -> None:
+    """Replaced by the all-in-one server so a sleeping worker wakes for a new task (allinone.WorkerChild.wake)."""
+
+
 def enqueue(c: Conn, kind: str, payload: dict | None = None, user_id: str | None = None, dedupe_key: str | None = None,
             delay_seconds: int = 0, max_attempts: int = 5) -> bool:
     """Queue a task. With a dedupe key, a second copy is dropped while one is queued or running."""
@@ -222,4 +226,6 @@ def enqueue(c: Conn, kind: str, payload: dict | None = None, user_id: str | None
     cur = c.execute("INSERT INTO tasks(id, kind, user_id, payload, dedupe_key, status, attempts, max_attempts, run_after, created_at, updated_at) "
                     "VALUES (?, ?, ?, ?, ?, 'queued', 0, ?, ?, ?, ?) ON CONFLICT DO NOTHING",
                     (new_id(), kind, user_id, _j(payload or {}), dedupe_key, max_attempts, now_iso(timedelta(seconds=delay_seconds)), now, now))
+    if cur.rowcount > 0:
+        on_enqueue()
     return cur.rowcount > 0

@@ -186,3 +186,64 @@ def test_replies_go_to_the_support_inbox():
     Mailer("console://", "Propelo <hello@propelo.org>", "hello@propelo.org").send("a@example.com", "Hi", "Body")   # same inbox: no header
     Mailer("console://", "Propelo <hello@propelo.org>", "not an address").send("a@example.com", "Hi", "Body")
     assert [m["replyTo"] for m in OUTBOX] == ["help@example.com", "", "", ""]
+
+
+def test_a_quiet_worker_sleeps_when_idle_and_wakes_for_a_new_task(cloud, monkeypatch):
+    """All-in-one on a free database: no polling every few seconds, yet a sign-in email still goes at once."""
+    import threading
+    import time
+    from propelo.cloud import repo, worker
+    from propelo.cloud.mailer import OUTBOX
+    cloud.cfg.worker_idle_seconds = 600
+    w = worker.Worker(cloud.cfg, cloud.db, cloud.app.state.mailer, worker_id="quiet", quiet=True)
+    w.drain()
+    stop = threading.Event()
+    t = threading.Thread(target=w.run_forever, args=(stop,), daemon=True)
+    t.start()
+    time.sleep(0.5)  # idle now, for up to ten minutes
+    monkeypatch.setattr(repo, "on_enqueue", worker.WAKE.set)
+    before = len(OUTBOX)
+    with cloud.db.tx() as c:
+        repo.enqueue(c, "send_email", {"to": "asha@example.com", "subject": "Your link", "text": "hi"})
+    deadline = time.monotonic() + 10
+    while len(OUTBOX) == before and time.monotonic() < deadline:
+        time.sleep(0.1)
+    stop.set(); worker.WAKE.set(); t.join(5)
+    assert len(OUTBOX) == before + 1 and OUTBOX[-1]["subject"] == "Your link"
+
+
+def test_a_quiet_worker_reads_the_feed_hourly(cloud):
+    from propelo.cloud import worker
+    cloud.cfg.ingest_every_minutes = 15
+    w = worker.Worker(cloud.cfg, cloud.db, quiet=True)
+    w.schedule()
+    with cloud.db.tx() as c:
+        nxt = c.one("SELECT value FROM feed_state WHERE key = 'next_ingest_at'")["value"]
+    from datetime import datetime, timezone
+    mins = (datetime.fromisoformat(nxt.replace("Z", "+00:00")) - datetime.now(timezone.utc)).total_seconds() / 60
+    assert 58 < mins <= 60
+
+
+def test_the_server_wakes_its_worker_child(tmp_path):
+    import sys
+    import time
+    from propelo.cloud.allinone import WorkerChild
+    flag = tmp_path / "woken"
+    script = ("import os, signal, time, pathlib\n"
+              f"p = pathlib.Path({str(flag)!r})\n"
+              "assert os.environ.get('PROPELO_WORKER_WAKE') == 'signal'\n"
+              "signal.signal(signal.SIGUSR1, lambda *_: p.write_text('yes'))\n"
+              "time.sleep(20)\n")
+    child = WorkerChild(command=[sys.executable, "-c", script])
+    child.start()
+    try:
+        deadline = time.monotonic() + 10
+        while (child.proc is None or child.proc.poll() is not None) and time.monotonic() < deadline:
+            time.sleep(0.1)
+        time.sleep(0.5)
+        child.wake()
+        while not flag.exists() and time.monotonic() < deadline:
+            time.sleep(0.1)
+        assert flag.read_text() == "yes"
+    finally:
+        child.close()
