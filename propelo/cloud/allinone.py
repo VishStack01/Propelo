@@ -9,6 +9,7 @@ try to migrate. Move to separate services when there is more than one web instan
 
 from __future__ import annotations
 
+import os
 import signal
 import subprocess
 import sys
@@ -45,6 +46,15 @@ class WorkerChild:
         self.starts = 0
         self._thread: threading.Thread | None = None
 
+    def wake(self) -> None:
+        """Tell a sleeping worker there is a new task (it sleeps long when idle so the database can pause)."""
+        p = self.proc
+        if p is not None and p.poll() is None:
+            try:
+                p.send_signal(signal.SIGUSR1)
+            except (OSError, ValueError, AttributeError):
+                pass
+
     def start(self) -> None:
         self._thread = threading.Thread(target=self._loop, name="worker-child", daemon=True)
         self._thread.start()
@@ -54,7 +64,8 @@ class WorkerChild:
         while not self.stop.is_set():
             began = time.monotonic()
             try:
-                self.proc = subprocess.Popen(self.command, preexec_fn=_die_with_parent if sys.platform == "linux" else None)
+                self.proc = subprocess.Popen(self.command, preexec_fn=_die_with_parent if sys.platform == "linux" else None,
+                                             env=dict(os.environ, PROPELO_WORKER_WAKE="signal"))
             except OSError as e:
                 print(f"worker could not start: {e}", flush=True)
                 self.stop.wait(60)
@@ -96,6 +107,8 @@ def serve(cfg: Config, host: str, port: int) -> None:
     db = prepare(cfg)
     child = WorkerChild()
     child.start()
+    from . import repo
+    repo.on_enqueue = child.wake  # a sign-in email or a new search starts at once, even when the worker sleeps
 
     def finish(*_):
         child.close()

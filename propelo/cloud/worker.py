@@ -35,11 +35,17 @@ from . import alerts
 from .matching import match_user
 
 log = logging.getLogger("propelo.worker")
+# Set by SIGUSR1 from the all-in-one server when it queues a task, and by SIGTERM.
+WAKE = threading.Event()
+BURST_SECONDS = 30  # after a wake, look often for a while: the task may still be committing
 
 
 class Worker:
-    def __init__(self, cfg: Config, db: Database, mailer: Mailer | None = None, worker_id: str | None = None):
-        self.cfg, self.db = cfg, db
+    def __init__(self, cfg: Config, db: Database, mailer: Mailer | None = None, worker_id: str | None = None, quiet: bool = False):
+        """quiet: the all-in-one server wakes this worker for new tasks, so while idle it sleeps for
+        cfg.worker_idle_seconds instead of asking the database every few seconds. A database that scales to zero
+        when unused (Neon's free plan) can then pause between hourly scans, even if the web app is kept awake."""
+        self.cfg, self.db, self.quiet = cfg, db, quiet
         self.mailer = mailer or Mailer(cfg.smtp_url, cfg.mail_from, cfg.support_email)
         self.id = worker_id or f"{socket.gethostname()}:{os.getpid()}"
 
@@ -55,7 +61,9 @@ class Worker:
 
     def schedule(self) -> None:
         with self.db.tx() as c:
-            if self._due(c, "next_ingest_at", timedelta(minutes=self.cfg.ingest_every_minutes)):
+            # The scan publishes hourly; a quiet worker looks once an hour so the database can rest in between.
+            every = max(self.cfg.ingest_every_minutes, 60) if self.quiet else self.cfg.ingest_every_minutes
+            if self._due(c, "next_ingest_at", timedelta(minutes=every)):
                 repo.enqueue(c, "ingest", dedupe_key="ingest", max_attempts=3)
             if self._due(c, "next_cleanup_at", timedelta(hours=24)):
                 repo.enqueue(c, "cleanup", dedupe_key="cleanup", max_attempts=2)
@@ -166,14 +174,21 @@ class Worker:
     def run_forever(self, stop: threading.Event | None = None) -> None:
         stop = stop or threading.Event()
         log.info("worker %s started", self.id)
+        burst_until = 0.0
         while not stop.is_set():
             try:
                 busy = self.tick()
             except Exception:  # noqa: BLE001 - a database blip must not kill the worker
                 log.exception("worker tick failed")
                 busy = False
-            if not busy:
+            if busy:
+                continue
+            if not self.quiet or time.monotonic() < burst_until:
                 stop.wait(self.cfg.worker_poll_seconds)
+                continue
+            if WAKE.wait(self.cfg.worker_idle_seconds):
+                WAKE.clear()
+                burst_until = time.monotonic() + BURST_SECONDS
 
 
 def cancel_superseded(cfg: Config, payload: dict) -> None:
@@ -219,12 +234,15 @@ def main(cfg: Config | None = None) -> None:
     if db.pending_migrations():
         db.close()
         raise SystemExit("Database migrations are pending. Run `propelo cloud migrate` first.")
-    w = Worker(cfg, db)
+    quiet = os.environ.get("PROPELO_WORKER_WAKE") == "signal"
+    w = Worker(cfg, db, quiet=quiet)
     stop = threading.Event()
     try:
         import signal
-        signal.signal(signal.SIGTERM, lambda *_: stop.set())
-    except (ValueError, OSError):
+        signal.signal(signal.SIGTERM, lambda *_: (stop.set(), WAKE.set()))
+        if quiet:
+            signal.signal(signal.SIGUSR1, lambda *_: WAKE.set())
+    except (ValueError, OSError, AttributeError):
         pass
     try:
         w.run_forever(stop)

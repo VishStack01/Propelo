@@ -52,6 +52,7 @@ class Config:
     feed_url: str = DEFAULT_FEED
     ingest_every_minutes: int = 15
     worker_poll_seconds: int = 5
+    worker_idle_seconds: int = 1800  # all-in-one: how long an idle worker sleeps before looking again (it is woken for new tasks)
     worker_lease_minutes: int = 10
     db_pool_min: int = 1
     db_pool_max: int = 10
@@ -146,6 +147,7 @@ class Config:
             feed_url=e("FEED_URL", DEFAULT_FEED),
             ingest_every_minutes=_int("INGEST_EVERY_MINUTES", 15),
             worker_poll_seconds=_int("WORKER_POLL_SECONDS", 5),
+            worker_idle_seconds=_int("WORKER_IDLE_SECONDS", 1800),
             worker_lease_minutes=_int("WORKER_LEASE_MINUTES", 10),
             db_pool_min=_int("DB_POOL_MIN", 1),
             db_pool_max=_int("DB_POOL_MAX", 10),

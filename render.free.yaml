@@ -4,6 +4,9 @@
 # Good for trying the app and for a first pilot. Know the limits before you invite people:
 #   - A free web service sleeps after 15 minutes without visitors; the next visitor waits about a minute,
 #     and nothing is scanned or emailed while it sleeps.
+#     A monitor such as UptimeRobot calling https://<your-app>/api/health every 5 minutes keeps it awake. /api/health
+#     doesn't touch the database, and the built-in worker sleeps while idle (WORKER_IDLE_SECONDS, woken for new tasks),
+#     so a database that pauses when unused (Neon's free plan) still pauses between hourly scans.
 #   - A free database is deleted 30 days after it is created unless you move it to a paid plan, has no
 #     backups and holds 1 GB (the job data alone is about half of that).
 #   - Free web services cannot use the usual email ports. Use your provider's alternative port
