@@ -10,6 +10,9 @@ Three independent facts, each with its evidence:
 - `uk_salary_line(text)`: an annual salary in pounds stated in the posting, against the Skilled
   Worker floors (general and new entrant). The floors only; the occupation's own going rate also
   applies and is not checked here.
+- `ie_salary_line(text)` and `nl_salary_line(text)`: the same for Ireland's employment permits
+  (Critical Skills and General, with the lower figures for recent graduates) and the Netherlands'
+  highly skilled migrant permit (30 and over, under 30, and the reduced criterion).
 """
 
 from __future__ import annotations
@@ -308,6 +311,73 @@ def uk_salary_line(text: str) -> dict:
     return {}
 
 
+# ---------------------------------------------------------------- Irish and Dutch salary floors
+
+# Ireland's minimum annual remuneration for employment permits from 1 March 2026 (Department of Enterprise,
+# "Employment Permits Minimum Annual Remuneration: outcome of the roadmap review", 2 December 2025). The graduate
+# figures are for people within 12 months of a level 8 degree. Check them yearly.
+IE_CSEP = 40_904            # Critical Skills Employment Permit, with a relevant degree
+IE_CSEP_GRADUATE = 36_848   # Critical Skills, recent graduate
+IE_GEP = 36_605             # General Employment Permit
+IE_GEP_GRADUATE = 34_009    # General Employment Permit, recent Irish graduate
+# The Netherlands' highly skilled migrant salary criteria for 2026, gross a month without holiday pay (IND, "Fees and
+# required amounts for 2026 known"). Check them yearly.
+NL_HSM_30 = 5_942
+NL_HSM_UNDER_30 = 4_357
+NL_HSM_REDUCED = 3_122      # the reduced criterion, for example after a Dutch degree or the orientation year
+
+_EUR = re.compile(r"(?:€|\beur\b|\beuro?s?\b)\s?(\d{1,3}(?:[.,\s]\d{3})+|\d+)(?:[.,]-|[.,]00)?(\s?k\b)?"
+                  r"(?:\s?(?:-|–|to|tot)\s?(?:€|eur\s?)?\s?(\d{1,3}(?:[.,\s]\d{3})+|\d+)(?:[.,]-|[.,]00)?(\s?k\b)?)?", re.I)
+_MONTHLY = re.compile(r"per (?:month|maand)|/\s?(?:month|maand|mo)\b|a month|monthly|bruto per maand|p\.?m\.?\b|maandsalaris", re.I)
+_NOT_PAY = re.compile(r"per (?:hour|uur|day|dag|week)|/\s?(?:hr|hour|uur|day|dag)\b|an hour|hourly|uurloon|daily rate", re.I)
+
+
+def _euro(num: str, k: str | None) -> int:
+    digits = re.sub(r"[.,\s]", "", num)
+    return int(digits) * (1000 if k else 1)
+
+
+def euro_salary(text: str) -> dict:
+    """The first euro salary in the text: {"amount" (top of the range), "per": "year"|"month", "quote"}, or {}."""
+    text = text or ""
+    for m in _EUR.finditer(text):
+        window = text[m.end(): m.end() + 40]
+        if _NOT_PAY.search(window):
+            continue
+        high = _euro(m.group(3), m.group(4)) if m.group(3) else _euro(m.group(1), m.group(2))
+        per = "month" if _MONTHLY.search(window) or _MONTHLY.search(text[max(0, m.start() - 30): m.start()]) else "year"
+        if per == "year" and not 10_000 <= high <= 1_000_000:
+            per = "month" if 800 <= high <= 25_000 else ""
+        if per == "month" and not 800 <= high <= 25_000:
+            continue
+        if per:
+            return {"amount": high, "per": per, "quote": quote_around(text, *m.span())}
+    return {}
+
+
+def ie_salary_line(text: str) -> dict:
+    """An annual euro salary against Ireland's permit minimums: {"status", "amount", "quote"}, or {}. Status is
+    "csep" (Critical Skills, if the job is on that list), "csep-graduate", "gep", "gep-graduate" or "below"."""
+    sal = euro_salary(text)
+    if not sal:
+        return {}
+    year = sal["amount"] * 12 if sal["per"] == "month" else sal["amount"]
+    status = ("csep" if year >= IE_CSEP else "csep-graduate" if year >= IE_CSEP_GRADUATE else "gep" if year >= IE_GEP
+              else "gep-graduate" if year >= IE_GEP_GRADUATE else "below")
+    return {"status": status, "amount": year, "quote": sal["quote"]}
+
+
+def nl_salary_line(text: str) -> dict:
+    """A euro salary against the highly skilled migrant criteria, a month: {"status", "amount", "quote", "fromYear"}, or {}.
+    Status is "30plus", "under30", "reduced" or "below". An annual figure is divided by 12, so it may include holiday pay."""
+    sal = euro_salary(text)
+    if not sal:
+        return {}
+    month = sal["amount"] if sal["per"] == "month" else round(sal["amount"] / 12)
+    status = "30plus" if month >= NL_HSM_30 else "under30" if month >= NL_HSM_UNDER_30 else "reduced" if month >= NL_HSM_REDUCED else "below"
+    return {"status": status, "amount": month, "quote": sal["quote"], "fromYear": sal["per"] == "year"}
+
+
 # ---------------------------------------------------------------- one record
 
 def visa_facts(company: str, location: str, text: str, salary_text: str = "", register: UkRegister | None = None,
@@ -330,6 +400,14 @@ def visa_facts(company: str, location: str, text: str, salary_text: str = "", re
     if "NL" in where and nl_register is not None and len(nl_register):
         hit = nl_register.match(company)
         out["nlRegister"] = {"listed": bool(hit), **({"name": hit["name"], "match": hit["match"]} if hit else {})}
+    if "NL" in where:
+        line = nl_salary_line(salary_text) or nl_salary_line(text)
+        if line:
+            out["nlSalary"] = line
+    if "IE" in where:
+        line = ie_salary_line(salary_text) or ie_salary_line(text)
+        if line:
+            out["ieSalary"] = line
     if "GB" in where:
         out["uk"] = True
         if register is not None and len(register):
@@ -373,6 +451,20 @@ def label(v: dict) -> str:
     sal = v.get("ukSalary")
     if sal:
         parts.append({"general": f"£{sal['amount']:,} meets the Skilled Worker floor",
-                      "new-entrant": f"£{sal['amount']:,} meets the new-entrant floor only",
+                      "new-entrant": f"£{sal['amount']:,} meets only the lower rate for new entrants (under 26, or switching from a Student or Graduate visa)",
                       "below": f"£{sal['amount']:,} is below the Skilled Worker floors"}[sal["status"]])
+    ie = v.get("ieSalary")
+    if ie:
+        parts.append({"csep": f"€{ie['amount']:,} a year meets the Critical Skills permit minimum, if the job is on that list",
+                      "csep-graduate": f"€{ie['amount']:,} a year meets the Critical Skills minimum for recent graduates and the General permit minimum",
+                      "gep": f"€{ie['amount']:,} a year meets the General Employment Permit minimum",
+                      "gep-graduate": f"€{ie['amount']:,} a year meets only the General permit minimum for recent Irish graduates",
+                      "below": f"€{ie['amount']:,} a year is below the Irish employment permit minimums"}[ie["status"]])
+    nl = v.get("nlSalary")
+    if nl:
+        about = "about " if nl.get("fromYear") else ""
+        parts.append({"30plus": f"{about}€{nl['amount']:,} a month meets the highly skilled migrant criterion at any age",
+                      "under30": f"{about}€{nl['amount']:,} a month meets the highly skilled migrant criterion for under-30s",
+                      "reduced": f"{about}€{nl['amount']:,} a month meets only the reduced criterion (for example after a Dutch degree or the orientation year)",
+                      "below": f"{about}€{nl['amount']:,} a month is below the highly skilled migrant criteria"}[nl["status"]])
     return "; ".join(parts)

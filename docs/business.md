@@ -65,3 +65,21 @@ never guessed); for UK roles, the Home Office register of licensed sponsors (dow
 scan) and the Skilled Worker salary floors (£41,700 general, £33,400 new entrant, from 22 July 2025;
 the occupation's going rate is not checked). On the 31 Oct feed, 94% of UK postings said nothing about
 sponsorship, so for UK roles the register is the signal that matters.
+
+For Irish roles, a stated salary is set against the employment permit minimums from 1 March 2026 (Department
+of Enterprise): €40,904 Critical Skills, €36,848 Critical Skills for a recent graduate, €36,605 General, and
+€34,009 General for a recent Irish graduate. For Dutch roles, a monthly salary is set against the IND's 2026
+highly skilled migrant criteria, gross without holiday pay: €5,942 at 30 and over, €4,357 under 30, €3,122
+reduced. For someone who needs a visa, pay below the lowest Irish figure, or a monthly Dutch figure below the
+reduced criterion, rules the role out. An annual Dutch figure is shown but never used to skip, since it may
+include holiday pay. Every figure is a constant at the top of the "Irish and Dutch salary floors" section, to
+check each year.
+
+## Languages
+
+See `language_need` in `propelo/signals.py`. A posting that asks for a language other than English in so many
+words ("fluent Dutch", "excellent command of German", "Dutch is required", or the same in Dutch), a title named
+for the language ("German Speaking Account Manager"), or a posting written in Dutch, German or French, is
+skipped for someone who hasn't listed that language under "Languages you work in" (English by default). It goes
+to the skip log with the fix. "Dutch is a plus" never skips a role, and "you don't need to speak Dutch" is
+shown as a green pill.

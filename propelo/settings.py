@@ -57,6 +57,9 @@ class Settings:
     # or titles marked junior, fresher or trainee; None leaves those decisions to max_required_years alone.
     experience_years: float | None = None
     location: LocationPolicy = field(default_factory=LocationPolicy)
+    # Languages the person can work in. A role that asks for another one, or whose posting is written in
+    # another one, is skipped (and shown as a near miss).
+    languages: list[str] = field(default_factory=lambda: ["English"])
     daily_cap: int = 8
     reapply_cooldown_days: int = 180
 
@@ -71,7 +74,7 @@ class Settings:
             "max_required_years", "max_posting_age_days", "ghost_after_days", "priority_within_hours",
             "salary_floor_lpa", "usd_inr", "role_keywords", "title_exclude", "dealbreakers",
             "company_blocklist", "allow_internships", "daily_cap", "reapply_cooldown_days", "require_stated_pay", "needs_sponsorship", "families",
-            "experience_years",
+            "experience_years", "languages",
         ):
             if key in search:
                 setattr(s, key, search[key])

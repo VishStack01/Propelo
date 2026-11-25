@@ -166,6 +166,9 @@ def to_feed(job: Job, company: dict, via: str = "careers") -> dict:
     if ty is not None and (f.get("expMin") is None or ty > f["expMin"]):
         f["expMin"], f["expQuote"] = ty, job.title  # the title's own figure, when the text gave none or less
     f["loc"], f["locQuote"] = loc_class(job, f)
+    lang = signals.language_need(job.description, job.title)
+    if lang:
+        f["language"] = lang  # a language other than English the posting asks for, welcomes or is written in
     band = paydata.band(job.company)
     if band:
         f["payBand"] = band  # public entry-level pay for this company; an estimate, used only when the posting states none

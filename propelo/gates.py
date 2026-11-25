@@ -340,10 +340,34 @@ def gate_sponsorship(job: Job, region: str, s: Settings) -> Check | None:
     sal = v.get("ukSalary") or {}
     if sal.get("status") == "below":
         return Check("Visa sponsorship", False, f"Pays £{sal['amount']:,}, below the Skilled Worker salary floors.", sal.get("quote", ""))
+    ie = v.get("ieSalary") or {}
+    if ie.get("status") == "below":
+        return Check("Visa sponsorship", False, f"Pays €{ie['amount']:,} a year, below the Irish employment permit minimums.", ie.get("quote", ""))
+    nl = v.get("nlSalary") or {}
+    if nl.get("status") == "below" and not nl.get("fromYear"):
+        return Check("Visa sponsorship", False, f"Pays €{nl['amount']:,} a month, below the Dutch highly skilled migrant criteria.", nl.get("quote", ""))
     if v.get("status") == "offers":
         return Check("Visa sponsorship", True, sponsors.label(v), v.get("quote", ""))
     return Check("Visa sponsorship", True, sponsors.label(v) + ". Unclear: ask before applying.",
                  (reg or {}).get("name", "") and f"On the register as {reg['name']}")
+
+
+def gate_language(job: Job, s: Settings) -> Check:
+    """A role that asks for a language the person doesn't work in, or whose posting is written in one, is
+    ruled out. "Welcome" or "a plus" never rules a role out."""
+    f = _facts(job)
+    ln = (f.get("language") or {}) if f is not None and "loc" in f else signals.language_need(job.description, job.title)
+    if not ln:
+        return Check("Language", True, "English")
+    lang, need, q = ln["lang"], ln["need"], ln.get("quote", "")
+    you = signals.speaks(lang, s.languages)
+    if need == "not-needed":
+        return Check("Language", True, f"Says you don't need {lang}.", q)
+    if need == "plus":
+        return Check("Language", True, f"{lang} is welcome, not required.", q)
+    if need == "posting":
+        return Check("Language", you, f"The posting is written in {lang}" + (", which you work in." if you else ", which isn't one of the languages you work in."), q)
+    return Check("Language", you, f"Asks for {lang}" + (", which you work in." if you else ", which isn't one of the languages you work in."), q)
 
 
 def gate_dealbreakers(job: Job, s: Settings) -> Check:
@@ -362,7 +386,7 @@ def evaluate(job: Job, s: Settings, now: datetime | None = None) -> Decision:
     checks += [fresh, gate_open(job, now.date())]
     loc, region = gate_location(job, s)
     pay, sal = gate_pay(job, s)
-    checks += [loc, gate_work_auth(job, region, s.location.home, s.location.by_places), pay, gate_dealbreakers(job, s)]
+    checks += [loc, gate_work_auth(job, region, s.location.home, s.location.by_places), pay, gate_language(job, s), gate_dealbreakers(job, s)]
     visa = gate_sponsorship(job, region, s)
     if visa is not None:
         checks.append(visa)

@@ -24,7 +24,7 @@ from .models import Job
 from .settings import LocationPolicy, Settings
 from . import visaclock
 
-NEAR_MISS_GATES = {"Experience", "Posted", "Location", "Pay", "Seniority"}
+NEAR_MISS_GATES = {"Experience", "Posted", "Location", "Pay", "Seniority", "Language"}
 
 
 def load_feed(src: str) -> list[dict]:
@@ -67,6 +67,11 @@ def settings_from_dashboard(doc: dict) -> Settings:
     if doc.get("jobMode") == "part-time" and visaclock.part_time_ok(doc.get("visa")):
         # Part-time work while studying is allowed by the student visa itself: no sponsor needed.
         s.needs_sponsorship = False
+    langs = doc.get("workLanguages")
+    langs = langs if isinstance(langs, list) else re.split(r"[,;\n]", str(langs or ""))
+    langs = [str(x).strip()[:30] for x in langs if str(x).strip()][:12]
+    if langs:
+        s.languages = langs if any(x.lower() == "english" for x in langs) else ["English"] + langs
     fams = [f for f in (doc.get("families") or []) if f in tagger_families()]
     if fams:
         # Families chosen: they decide, plus any target roles typed in (the built-in tech keywords no longer apply).
@@ -278,6 +283,8 @@ def match(records, settings: Settings, known: list[tuple[str, dict]], summary: d
             doc["payTier"] = r["tags"]["payTier"]
         if (r.get("facts") or {}).get("visa"):
             doc["visa"] = r["facts"]["visa"]  # sponsorship: the posting's words, UK register, salary floor
+        if (r.get("facts") or {}).get("language"):
+            doc["language"] = r["facts"]["language"]  # {"lang", "need", "quote"}
         if (r.get("facts") or {}).get("daysOpen") is not None:
             doc["daysOpen"] = r["facts"]["daysOpen"]
         if (r.get("facts") or {}).get("payBand"):
@@ -292,6 +299,8 @@ def match(records, settings: Settings, known: list[tuple[str, dict]], summary: d
             if failed[0] == "Seniority" and settings.experience_years is not None and any(
                     c.gate == "Seniority" and c.value.startswith("An entry-level") for c in d.checks):
                 continue  # too junior for them: not worth showing as a near miss
+            if failed[0] == "Language":
+                doc["skip"]["wouldChange"] = f"Adding {(r.get('facts') or {}).get('language', {}).get('lang') or 'the language'} to the languages you work in."
             if failed[0] == "Pay" and settings.require_stated_pay and not (r.get("facts") or {}).get("salaryHigh"):
                 doc["skip"]["wouldChange"] = "Allowing roles that don't state pay."
             skipped.append((r["id"], doc))
