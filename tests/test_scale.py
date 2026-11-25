@@ -17,6 +17,9 @@ from tests.conftest import feed_record, write_feed
     ("Toronto, ON", {"CA"}), ("Vancouver, CA", {"CA"}), ("Melbourne, VIC", {"AU"}), ("Perth, WA", {"AU"}), ("Seattle, WA", {"US"}),
     ("Berlin, DE", {"DE"}), ("Wilmington, DE", {"US"}), ("London; Austin, TX", {"GB", "US"}), ("Eindhoven", {"NL"}),
     ("Doha, Doha, Qatar", {"QA"}), ("Remote", set()), ("2 Locations", set()), ("Tbilisi, Georgia", set()),
+    # A region code that is also a US state, next to the country it belongs to
+    ("Chennai, TN, India", {"IN"}), ("Mumbai, MH, India", {"IN"}), ("Amstelveen, NH, Netherlands", {"NL"}),
+    ("Albuquerque, NM, New Mexico", {"US"}), ("Newark, NJ, New Jersey", {"US"}), ("Fort Wayne, IN, United States", {"US"}),
 ])
 def test_resolve_reads_the_country_a_location_only_implies(loc, want):
     assert countries.resolve(loc) == want

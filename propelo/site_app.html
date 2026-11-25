@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Propelo Jobs</title>
-<meta name="description" content="Open roles in India and around the world, read straight from company career pages several times a day, with top companies and well-paid roles one tap away: engineering, AI and data, product, marketing, sales, finance, operations, healthcare, education and more.">
+<title>Jobs in the US, UK, Ireland and the Netherlands, from company career pages | Propelo</title>
+<meta name="description" content="Open roles in the US, UK, Ireland and the Netherlands, read straight from company career pages every hour, with the employer's visa sponsor record, pay as the posting states it, and graduate roles one tap away: engineering, AI and data, product, marketing, sales, finance, operations, healthcare, education and more.">
 <link rel="alternate" type="application/rss+xml" title="Propelo Jobs" href="feed.xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -326,38 +326,37 @@ footer{color:var(--muted)}
 </style>
 </head>
 <body>
-<div class="strip"><div class="wrap"><span id="strip">Open roles in India and around the world, read straight from company career pages.</span></div></div>
+<div class="strip"><div class="wrap"><span id="strip">Open roles in the US, UK, Ireland and the Netherlands, read straight from company career pages.</span></div></div>
 <header class="top"><div class="wrap">
-  <a class="brand" href="#/" aria-label="Propelo jobs">propelo<span class="dot" aria-hidden="true"></span></a>
+  <a class="brand" href="./" aria-label="Propelo home">propelo<span class="dot" aria-hidden="true"></span></a>
   <nav class="nav" aria-label="Main">
     <a href="#/" data-nav="jobs">Jobs</a>
     <a href="#/companies" data-nav="companies">Companies</a>
-    <a class="nav-x" href="#/api" data-nav="api">API</a>
-    <a class="nav-x" href="demo/">Dashboard demo</a>
-    <a href="./" data-home>About Propelo</a>
-    <a href="sponsor-check.html">Sponsor check</a>
-    <a class="nav-x" href="https://github.com/VishStack01/Propelo" target="_blank" rel="noopener">GitHub</a>
-    <a class="btn solid" data-signup="jobboard" href="https://app.propelo.org/signup?src=jobboard" style="height:36px;color:var(--btn-ink)">Get matched free</a>
+    <a href="visa-jobs.html">Visa sponsor jobs</a>
+    <a class="nav-x" href="sponsor-check.html">Sponsor check</a>
+    <a href="./#pricing">Pricing</a>
+    <a class="nav-x" data-app="/business" href="https://app.propelo.org/business">For consultancies</a>
+    <a data-app="/login" href="https://app.propelo.org/login">Sign in</a>
+    <a class="btn solid" data-signup="jobboard" href="https://app.propelo.org/signup?src=jobboard" style="height:36px;color:var(--btn-ink)">Start free</a>
   </nav>
 </div></header>
 
 <main id="v-jobs">
   <section class="wrap hero">
     <div class="kicker" aria-hidden="true"><span>Job board</span><span>From company career pages</span></div>
-    <h1 id="h1">Open roles in India and around the world</h1>
-    <p class="sub" id="sub">Read straight from company career pages and remote job boards. Every role links to the company's own application page.</p>
+    <h1 id="h1">Open roles in the US, UK, Ireland and the Netherlands</h1>
+    <p class="sub" id="sub">Read straight from company career pages every hour. Every role links to the company's own application page.</p>
     <p class="meta-line" id="metaline"></p>
     <form class="search" id="sform" role="search">
-      <input id="q" type="search" placeholder="Try: Bengaluru AI internships, 0-1 years, 8+ LPA" aria-label="Search roles in plain words" autocomplete="off">
+      <input id="q" type="search" placeholder="Try: London data analyst, graduate, £35k+" aria-label="Search roles in plain words" autocomplete="off">
       <select id="where" aria-label="Where">
+        <option value="core4">US, UK, Ireland, Netherlands</option>
+        <option value="US">United States</option>
+        <option value="GB">United Kingdom</option>
+        <option value="IE">Ireland</option>
+        <option value="NL">Netherlands</option>
+        <option value="remote">Remote</option>
         <option value="any">Everywhere</option>
-        <option value="india-ok">Anywhere you can work from India</option>
-        <option value="abroad">Outside India</option>
-        <option value="remote">Remote, open to India</option>
-        <option value="worldwide">Remote worldwide</option>
-        <option value="remote-india">Remote within India</option>
-        <option value="south">South India, on-site or hybrid</option>
-        <option value="india">India, on-site or hybrid</option>
       </select>
       <button class="btn solid big" type="submit">Search</button>
     </form>
@@ -393,17 +392,17 @@ footer{color:var(--muted)}
     <p>Every role on the board is available as JSON, free, no key. The data is regenerated with each scan (several times a day). Please cache responses and link back to the role's <code>url</code>.</p>
     <h2>All roles, 100 per page</h2>
     <div class="code" id="api1"></div>
-    <p>Fields: <code>slug</code>, <code>company_name</code>, <code>title</code>, <code>description</code> (full posting text), <code>remote</code>, <code>url</code> (the company's application page), <code>tags</code>, <code>job_types</code>, <code>level</code>, <code>location</code>, <code>where</code>, <code>salary</code>, <code>experience_min_years</code>, <code>source</code>, <code>created_at</code>. Follow <code>links.next</code> for the next page.</p>
+    <p>Fields: <code>slug</code>, <code>company_name</code>, <code>title</code>, <code>description</code> (full posting text), <code>remote</code>, <code>url</code> (the company's application page), <code>tags</code>, <code>job_types</code>, <code>level</code>, <code>location</code>, <code>where</code>, <code>pay</code>, <code>pay_currency</code>, <code>pay_max_annual</code>, <code>experience_min_years</code>, <code>source</code>, <code>created_at</code>. Follow <code>links.next</code> for the next page.</p>
     <h2>Compact list and single roles</h2>
     <div class="code" id="api2"></div>
     <h2>RSS</h2>
     <div class="code" id="api3"></div>
-    <p><code>where</code> codes: <code>ww</code> remote worldwide, <code>ro</code> remote and open to India, <code>ri</code> remote within India, <code>ru</code> remote with eligibility not stated, <code>rx</code> remote but not open to India, <code>s</code> south India on-site or hybrid, <code>i</code> elsewhere in India, <code>a</code> abroad on-site, <code>u</code> not stated.</p>
+    <p><code>where</code> codes: <code>ww</code> remote worldwide, <code>ro</code> remote and open to applicants in India, <code>ri</code> remote within India, <code>ru</code> remote with eligibility not stated, <code>rx</code> remote but limited to other countries, <code>s</code> and <code>i</code> on-site or hybrid in India, <code>a</code> on-site or hybrid elsewhere, <code>u</code> not stated. <code>pay</code> is the pay the posting states, in its own currency; <code>pay_currency</code> and <code>pay_max_annual</code> give the currency and the top of the range a year.</p>
   </div>
 </main>
 
 <footer><div class="wrap">
-  <p id="foot">Roles come from each company's public job board (Greenhouse, Lever, Ashby, Workable, SmartRecruiters, Recruitee, Breezy, Personio) and from remote boards with public feeds. Postings belong to their companies; apply on the company's site.</p>
+  <p id="foot">Roles come from each company's public job board (Workday, Greenhouse, Lever, Ashby, iCIMS, SmartRecruiters, Workable, Teamtailor, Pinpoint and others) and from remote boards with public feeds. Postings belong to their companies; apply on the company's site.</p>
   <p>Built with <a href="https://github.com/VishStack01/Propelo" target="_blank" rel="noopener">Propelo</a>, open source. <a href="feed.xml">RSS</a> · <a href="#/api">API</a> · <a href="demo/">Dashboard demo</a></p>
 </div></footer>
 
@@ -413,11 +412,25 @@ footer{color:var(--muted)}
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const fmt = n => Number(n).toLocaleString('en-IN');
+const fmt = n => Number(n).toLocaleString('en-GB');
 const safeUrl = u => /^https?:\/\//i.test(u || '') ? u : '';
-const WHERE_LABEL = {ww:'Remote worldwide', ro:'Remote, open to India', ri:'Remote, India', ru:'Remote, check eligibility', rx:'Remote, not open to India', s:'South India', i:'India', a:'Abroad', u:''};
-// 'any' is everywhere, worldwide; 'india-ok' keeps roles someone in India can take.
-const WHERE_SETS = {any:['ww','ro','ri','ru','s','i','u','a','rx'], 'india-ok':['ww','ro','ri','ru','s','i','u'], abroad:['a','rx'], remote:['ww','ro','ri'], worldwide:['ww'], 'remote-india':['ri'], south:['s'], india:['s','i']};
+// The four countries Propelo covers come first; the board still holds every role the scan read.
+const CORE4 = ['US','GB','IE','NL'];
+const REMOTE = ['ww','ro','ri','ru','rx'];
+const WHERE = {core4: 'US, UK, Ireland and the Netherlands', US: 'United States', GB: 'United Kingdom', IE: 'Ireland', NL: 'Netherlands', remote: 'Remote', any: 'Everywhere'};
+// Links from before the board covered four countries.
+const OLD_WHERE = {'india-ok':'any', abroad:'core4', worldwide:'remote', 'remote-india':'any', south:'any', india:'any'};
+function whereHit(j, w){
+  if (w === 'any') return true;
+  if (w === 'remote') return REMOTE.includes(j.w);
+  if (w === 'core4') return j.co.some(c => CORE4.includes(c));
+  return j.co.includes(w);
+}
+function placeTag(j){
+  if (j.w === 'ww') return 'Remote worldwide';
+  if (REMOTE.includes(j.w)) return 'Remote' + (j.co.length === 1 && COUNTRY_NAME[j.co[0]] ? ', ' + COUNTRY_NAME[j.co[0]] : '');
+  return j.co.length === 1 ? (COUNTRY_NAME[j.co[0]] || '') : j.co.length > 1 ? 'Several countries' : '';
+}
 const LEVELS = ['Fresher','Entry','Internship','Mid','Senior','Not stated'];
 /* Job families (top-level categories) and one-tap lists, like the big US boards have. */
 const FAMILIES = ['Software Engineering','AI & Data','Product & Design','Marketing & Growth','Sales & Accounts','Finance & Strategy','Operations & People','Engineering & Trades','Healthcare','Education','Legal','Retail & Hospitality','Media & Writing'];
@@ -425,8 +438,8 @@ const LISTS = {
   top: {label: 'Top companies', test: j => j.tp === 1},
   internships: {label: 'Internships', test: j => j.lv === 'Internship' || j.ty === 'Internship'},
   newgrad: {label: 'New grad & freshers', test: j => j.lv === 'Fresher' || j.lv === 'Entry'},
-  remote: {label: 'Remote', test: j => ['ww','ro','ri'].includes(j.w)},
-  pay20: {label: 'Well paid (20 LPA+)', test: j => j.pt === '20+'},
+  remote: {label: 'Remote', test: j => REMOTE.includes(j.w)},
+  paid: {label: 'Well paid', test: j => j.pt === 'top'},
   fresh: {label: 'Posted today', test: j => (hoursAgo(j.p) ?? 1e9) < 24},
   saved: {label: 'Saved', test: j => SAVED.has(j.id), mine: true}
 };
@@ -435,22 +448,25 @@ const store = {get(k){ try { return JSON.parse(localStorage.getItem('propelo.' +
   set(k, v){ try { localStorage.setItem('propelo.' + k, JSON.stringify([...v])); } catch(e){} }};
 const SAVED = new Set(store.get('saved')), HIDDEN = new Set(store.get('hidden'));
 /* Plain-English search: places, years, pay, lists and dates become filters you can see and remove. */
-const CITIES = {Bengaluru:['bengaluru','bangalore','blr'], Hyderabad:['hyderabad','secunderabad'], Chennai:['chennai','madras'], Pune:['pune'], Mumbai:['mumbai','bombay','navi mumbai','thane'],
-  'Delhi NCR':['delhi','new delhi','ncr','gurugram','gurgaon','noida','faridabad','ghaziabad'], Kolkata:['kolkata','calcutta'], Ahmedabad:['ahmedabad'], Kochi:['kochi','cochin','ernakulam'],
-  Coimbatore:['coimbatore'], Thiruvananthapuram:['thiruvananthapuram','trivandrum','technopark'], Mysuru:['mysuru','mysore'], Jaipur:['jaipur'], Indore:['indore'], Chandigarh:['chandigarh','mohali'],
-  Lucknow:['lucknow'], Visakhapatnam:['visakhapatnam','vizag'], Bhubaneswar:['bhubaneswar'], Nagpur:['nagpur'], Mangaluru:['mangaluru','mangalore'], Madurai:['madurai']};
-const FILLER = new Set(['jobs','job','roles','role','openings','opening','in','at','for','with','and','or','the','a','an','near','me','based','work','position','positions','vacancy','vacancies','hiring','of','to','from','batch','graduates','graduate','grads','yrs','years','year','experience','exp','lpa','salary','posted','new']);
+const CITIES = {London:['london'], Manchester:['manchester'], Birmingham:['birmingham'], Edinburgh:['edinburgh'], Glasgow:['glasgow'], Bristol:['bristol'], Leeds:['leeds'],
+  Cambridge:['cambridge'], Oxford:['oxford'], Belfast:['belfast'], Cardiff:['cardiff'],
+  Dublin:['dublin'], Cork:['cork'], Galway:['galway'], Limerick:['limerick'],
+  Amsterdam:['amsterdam'], Rotterdam:['rotterdam'], 'The Hague':['the hague','den haag'], Utrecht:['utrecht'], Eindhoven:['eindhoven'], Delft:['delft'],
+  'New York':['new york','nyc','brooklyn','manhattan'], 'San Francisco Bay Area':['san francisco','bay area','palo alto','mountain view','san jose','sunnyvale','menlo park','oakland'],
+  Seattle:['seattle','bellevue','redmond'], Boston:['boston','cambridge ma'], Austin:['austin'], Chicago:['chicago'], 'Los Angeles':['los angeles'],
+  'Washington DC':['washington dc','washington d c','arlington'], Atlanta:['atlanta'], Dallas:['dallas'], Denver:['denver']};
+const FILLER = new Set(['jobs','job','roles','role','openings','opening','in','at','for','with','and','or','the','a','an','near','me','based','work','position','positions','vacancy','vacancies','hiring','of','to','from','batch','graduates','graduate','grads','yrs','years','year','experience','exp','lpa','salary','pay','posted','new','plus']);
+const CUR_SIGN = {USD: '$', GBP: '£', EUR: '€', INR: '₹'};
 function parseQuery(text){
   let t = ' ' + String(text || '').toLowerCase().replace(/[,;]+/g, ' ') + ' ';
   const got = {};
   const take = (rx, fn) => { t = t.replace(rx, (...m) => { fn(m); return ' '; }); };
-  take(/\b(\d{1,2}(?:\.\d)?)\s*\+?\s*(?:lpa|lakhs?|l\b)(?:\s*(?:\+|or more|and above))?/g, m => { got.minpay = String(parseFloat(m[1])); });
+  take(/([$£€])\s?(\d{1,3}(?:,\d{3})*)\s*(k\b)?\s*\+?(?:\s*(?:or more|and above|plus))?/g, m => { const v = Number(m[2].replace(/,/g, '')) * (m[3] ? 1000 : 1); if (v >= 1000) got.minpay = ({'$': 'USD', '£': 'GBP', '€': 'EUR'})[m[1]] + ':' + v; });
+  take(/\b(\d{1,2}(?:\.\d)?)\s*\+?\s*(?:lpa|lakhs?)(?:\s*(?:\+|or more|and above))?/g, m => { got.minpay = 'INR:' + Math.round(parseFloat(m[1]) * 1e5); });
   take(/\b(\d{1,2})\s*(?:-|to)\s*(\d{1,2})\s*(?:years?|yrs?|yoe)\b/g, m => { got.yrs = [Number(m[1]), Number(m[2])]; });
   take(/\b(\d{1,2})\s*\+\s*(?:years?|yrs?|yoe)\b/g, m => { got.yrs = [Number(m[1]), 99]; });
   take(/\b(?:intern(?:ship)?s?)\b/g, () => { got.list = 'internships'; });
-  take(/\b(?:fresher?s?|new ?grads?|entry[- ]level|campus|20\d\d (?:batch|graduates?|grads?|passouts?))\b/g, () => { got.list = got.list || 'newgrad'; });
-  take(/\bremote (?:in(?:side)?|within) india\b/g, () => { got.where = 'remote-india'; });
-  take(/\b(?:remote (?:worldwide|anywhere|global)|worldwide)\b/g, () => { got.where = 'worldwide'; });
+  take(/\b(?:fresher?s?|new ?grads?|graduates?|grad scheme|graduate scheme|entry[- ]level|early careers?|campus|20\d\d (?:batch|graduates?|grads?|passouts?))\b/g, () => { got.list = got.list || 'newgrad'; });
   take(/\b(?:remote|work from home|wfh)\b/g, () => { got.where = got.where || 'remote'; });
   take(/\b(?:posted )?(?:today|last 24 hours)\b/g, () => { got.posted = '1'; });
   take(/\b(?:this week|last 7 days|past week)\b/g, () => { got.posted = '7'; });
@@ -466,11 +482,11 @@ function shortLoc(l){ const parts = String(l || '').split(/\s*[;|]\s*/).filter(B
 function host(u){ try { return new URL(u).hostname.replace(/^www\./, ''); } catch(e){ return ''; } }
 const POSTED = [['', 'Any time'], ['1', 'Last 24 hours'], ['3', 'Last 3 days'], ['7', 'Last 7 days'], ['25', 'Last 25 days']];
 const TYPES = ['Full-time','Internship','Contract','Part-time'];
-const QLABEL = {'20+': '20 LPA+'};
-// Where most Indian students study and then look for work, plus India. Picking a country shows on-site roles there too.
-const COUNTRIES = [['US','United States'],['GB','United Kingdom'],['CA','Canada'],['AU','Australia'],['DE','Germany'],['IE','Ireland'],['NL','Netherlands'],['FR','France'],['NZ','New Zealand'],['SG','Singapore'],['AE','UAE'],['IN','India']];
+const QLABEL = {};
+// Country names for the tags and the chips. The four Propelo covers come first.
+const COUNTRIES = [['US','United States'],['GB','United Kingdom'],['IE','Ireland'],['NL','Netherlands'],['CA','Canada'],['AU','Australia'],['DE','Germany'],['FR','France'],['NZ','New Zealand'],['SG','Singapore'],['AE','UAE'],['IN','India']];
 const COUNTRY_NAME = Object.fromEntries(COUNTRIES);
-const VISA = [['sponsors','Says it sponsors visas'],['uk','On the UK sponsor register'],['nl','Dutch recognised sponsor'],['us','Has sponsored H-1B (US)'],['ca','Approved to hire foreign workers (Canada)'],['ie','Issued work permits this year (Ireland)'],['opt','Takes OPT or CPT (US)'],['everify','Uses E-Verify (US)']];
+const VISA = [['sponsors','Says it sponsors visas'],['uk','On the UK sponsor register'],['nl','Dutch recognised sponsor'],['us','Has sponsored H-1B (US)'],['ie','Issued work permits this year (Ireland)'],['opt','Takes OPT or CPT (US)'],['everify','Uses E-Verify (US)']];
 const VISA_NAME = Object.fromEntries(VISA);
 // Sign-up links carry a short label for where the visitor came from (the label on the link that brought them, else
 // the part of the board they clicked), so each channel's sign-ups can be counted. No cookie, nothing about the person.
@@ -480,9 +496,9 @@ try { const q0 = new URLSearchParams(location.search); SRC = (q0.get('src') || q
   if (SRC) sessionStorage.setItem('propelo-src', SRC); else SRC = sessionStorage.getItem('propelo-src') || ''; } catch (e) { SRC = ''; }
 function signupUrl(where){ return APP_URL + '/signup?src=' + encodeURIComponent(SRC || 'board-' + where); }
 document.querySelectorAll('[data-signup]').forEach(a => { a.href = signupUrl(a.dataset.signup); });
-const QUICK = [['AI & ML','cat'],['Backend','cat'],['Frontend','cat'],['Full stack','cat'],['Data','cat'],['Design','cat'],['DevOps & Cloud','cat'],['Python','sk'],['React','sk'],['Visa sponsorship','pk']];
+const QUICK = [['Visa sponsorship','pk'],['AI & ML','cat'],['Data','cat'],['Backend','cat'],['Frontend','cat'],['Full stack','cat'],['Design','cat'],['DevOps & Cloud','cat'],['Python','sk'],['SQL','sk']];
 let ALL = [], META = {}, COMPANIES = [], shown = 40;
-let F = {q:'', fm:'', list:'', city:'', minpay:'', nl:false, where:'any', lv:new Set(), posted:'', ty:new Set(), cat:new Set(), sk:new Set(), pk:new Set(), ar:new Set(), lg:new Set(), pt:new Set(), co:new Set(), vs:new Set(), all:false, company:'', sort:'new'};
+let F = {q:'', fm:'', list:'', city:'', minpay:'', nl:false, where:'core4', lv:new Set(), posted:'', ty:new Set(), cat:new Set(), sk:new Set(), pk:new Set(), ar:new Set(), lg:new Set(), pt:new Set(), co:new Set(), vs:new Set(), all:false, company:'', sort:'new'};
 
 function logo(name, src){ const ini = (name || '?').replace(/[^A-Za-z0-9]/g, '').slice(0, 1).toUpperCase() || '?';
   const img = src && /^logos\/[a-f0-9]{16}\.(png|jpg|gif|webp|ico|svg)$/.test(src) ? `<img src="${esc(src)}" alt="" loading="lazy" decoding="async" width="44" height="44">` : '';
@@ -493,15 +509,13 @@ function ago(p){ const h = hoursAgo(p); if (h == null) return ''; if (h < 1) ret
 /* ---- URL state ---- */
 function readState(){
   const u = new URLSearchParams(location.search);
-  F.q = u.get('q') || ''; F.city = CITIES[u.get('city')] ? u.get('city') : ''; F.minpay = /^\d+(\.\d)?$/.test(u.get('minpay') || '') ? u.get('minpay') : ''; F.fm = FAMILIES.includes(u.get('fm')) ? u.get('fm') : ''; F.list = LISTS[u.get('list')] ? u.get('list') : ''; F.where = WHERE_SETS[u.get('where')] ? u.get('where') : 'any'; F.posted = u.get('posted') || ''; F.sort = ['rel', 'pay'].includes(u.get('sort')) ? u.get('sort') : 'new';
+  F.q = u.get('q') || ''; F.city = CITIES[u.get('city')] ? u.get('city') : ''; F.minpay = /^(USD|GBP|EUR|INR):\d+$/.test(u.get('minpay') || '') ? u.get('minpay') : ''; F.fm = FAMILIES.includes(u.get('fm')) ? u.get('fm') : ''; F.list = LISTS[u.get('list')] ? u.get('list') : ''; const w0 = OLD_WHERE[u.get('where')] || u.get('where'); F.where = WHERE[w0] ? w0 : 'core4'; F.posted = u.get('posted') || ''; F.sort = ['rel', 'pay'].includes(u.get('sort')) ? u.get('sort') : 'new';
   for (const k of ['lv','ty','cat','sk','pk','ar','lg','pt','co','vs']) F[k] = new Set((u.get(k) || '').split('|').filter(Boolean));
-  F.all = u.get('all') === '1';
 }
 function writeState(){
   const u = new URLSearchParams();
-  if (F.q) u.set('q', F.q); if (F.city) u.set('city', F.city); if (F.minpay) u.set('minpay', F.minpay); if (F.fm) u.set('fm', F.fm); if (F.list) u.set('list', F.list); if (F.where !== 'any') u.set('where', F.where); if (F.posted) u.set('posted', F.posted); if (F.sort !== 'new') u.set('sort', F.sort);
+  if (F.q) u.set('q', F.q); if (F.city) u.set('city', F.city); if (F.minpay) u.set('minpay', F.minpay); if (F.fm) u.set('fm', F.fm); if (F.list) u.set('list', F.list); if (F.where !== 'core4') u.set('where', F.where); if (F.posted) u.set('posted', F.posted); if (F.sort !== 'new') u.set('sort', F.sort);
   for (const k of ['lv','ty','cat','sk','pk','ar','lg','pt','co','vs']) if (F[k].size) u.set(k, [...F[k]].join('|'));
-  if (F.all) u.set('all', '1');
   const qs = u.toString();
   history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
 }
@@ -514,11 +528,11 @@ function pass(j, skip){
   if (skip !== 'list' && (F.list === 'saved' ? false : HIDDEN.has(j.id))) return false;
   if (skip !== 'fm' && F.fm && j.fm !== F.fm) return false;
   if (skip !== 'city' && F.city && !cityHit(j, F.city)) return false;
-  if (skip !== 'minpay' && F.minpay && !((j.ph ?? -1) >= Number(F.minpay))) return false;
+  if (skip !== 'minpay' && F.minpay){ const [c, v] = F.minpay.split(':'); if (!(j.pc === c && (j.pa || 0) >= Number(v))) return false; }
   if (skip !== 'list' && F.list && !LISTS[F.list].test(j)) return false;
   if (skip !== 'co' && F.co.size && !j.co.some(c => F.co.has(c))) return false;
   if (skip !== 'vs' && F.vs.size && !j.vs.some(c => F.vs.has(c))) return false;
-  if (skip !== 'where' && !F.co.size){ const set = WHERE_SETS[F.where]; if (!(set.includes(j.w) || (F.all && (j.w === 'rx' || j.w === 'a')))) return false; }
+  if (skip !== 'where' && !F.co.size && !whereHit(j, F.where)) return false;
   if (skip !== 'lv' && F.lv.size && !F.lv.has(j.lv)) return false;
   if (skip !== 'ty' && F.ty.size && !F.ty.has(j.ty)) return false;
   if (skip !== 'cat' && F.cat.size && !j.cat.some(c => F.cat.has(c))) return false;
@@ -536,12 +550,11 @@ function score(j){ const ts = terms(); let s = 0; const t = j.t.toLowerCase(); f
 /* ---- rendering ---- */
 function tagsFor(j, max){
   const out = [];
-  if (WHERE_LABEL[j.w]) out.push(`<span class="tag w-${j.w}">${esc(WHERE_LABEL[j.w])}</span>`);
+  const place = placeTag(j); if (place) out.push(`<span class="tag w-${j.w}">${esc(place)}</span>`);
   if (j.lv && j.lv !== 'Not stated') out.push(`<span class="tag lv">${esc(j.lv === 'Entry' ? 'Entry (0–2 yrs)' : j.lv)}</span>`);
   if (j.ty && j.ty !== 'Full-time' && j.ty !== 'Internship') out.push(`<span class="tag">${esc(j.ty)}</span>`);
-  if (j.pt === '20+') out.push('<span class="tag pay">20 LPA+</span>');
   j.pk.forEach(p => out.push(`<span class="tag perk">${esc(p)}</span>`));
-  const VS_TAG = {sponsors: 'Sponsors visas', uk: 'UK licensed sponsor', nl: 'Dutch recognised sponsor', us: 'Has sponsored H-1B', ca: 'Positive LMIA employer', ie: 'Issued Irish work permits', opt: 'Takes OPT / CPT', no: 'No sponsorship'};
+  const VS_TAG = {sponsors: 'Sponsors visas', uk: 'UK licensed sponsor', nl: 'Dutch recognised sponsor', us: 'Has sponsored H-1B', ie: 'Issued Irish work permits', opt: 'Takes OPT / CPT', no: 'No sponsorship'};
   (j.vs || []).forEach(v => { if (VS_TAG[v] && !(v === 'sponsors' && j.pk.includes('Visa sponsorship'))) out.push(`<span class="tag${v === 'no' ? '' : ' perk'}">${VS_TAG[v]}</span>`); });
   if (j.lg === 'suspicious') out.push('<span class="tag warn">Suspicious</span>');
   else if (j.lg === 'caution') out.push('<span class="tag warn soft">Check first</span>');
@@ -565,8 +578,8 @@ function facet(title, key, values, label){
   return `<div class="fgroup"><h3>${title}</h3>${opts}</div>`;
 }
 function renderFilters(){
-  const whereCounts = {}; for (const j of ALL) if (pass(j, 'where')) for (const [k, set] of Object.entries(WHERE_SETS)) if (set.includes(j.w)) whereCounts[k] = (whereCounts[k] || 0) + 1;
-  const whereOpts = [['any','Everywhere'],['india-ok','Anywhere you can work from India'],['abroad','Outside India'],['remote','Remote, open to India'],['worldwide','Remote worldwide'],['remote-india','Remote within India'],['south','South India, on-site or hybrid'],['india','India, on-site or hybrid']]
+  const whereCounts = {}; for (const j of ALL) if (pass(j, 'where')) for (const k of Object.keys(WHERE)) if (whereHit(j, k)) whereCounts[k] = (whereCounts[k] || 0) + 1;
+  const whereOpts = Object.entries(WHERE)
     .map(([k, l]) => `<label class="opt"><input type="radio" name="where" data-f="where" value="${k}" ${F.where === k ? 'checked' : ''}><span>${l}</span><span class="n">${fmt(whereCounts[k] || 0)}</span></label>`).join('');
   const postedCounts = {}; for (const j of ALL) if (pass(j, 'posted')){ const h = hoursAgo(j.p); for (const [d] of POSTED) if (!d || (h != null && h <= Number(d) * 24)) postedCounts[d] = (postedCounts[d] || 0) + 1; }
   const postedOpts = POSTED.map(([d, l]) => `<label class="opt"><input type="radio" name="posted" data-f="posted" value="${d}" ${F.posted === d ? 'checked' : ''}><span>${l}</span><span class="n">${fmt(postedCounts[d] || 0)}</span></label>`).join('');
@@ -574,11 +587,11 @@ function renderFilters(){
   const skCount = {}; ALL.forEach(j => j.sk.forEach(s => skCount[s] = (skCount[s] || 0) + 1));
   const skVals = Object.entries(skCount).sort((a, b) => b[1] - a[1]).slice(0, 14).map(x => x[0]);
   const arVals = [...new Set(ALL.map(j => j.ar).filter(Boolean))].sort();
-  const any = F.fm || F.list || F.city || F.minpay || F.where !== 'any' || F.posted || F.lv.size || F.ty.size || F.cat.size || F.sk.size || F.pk.size || F.ar.size || F.lg.size || F.pt.size || F.co.size || F.vs.size || F.all;
+  const any = F.fm || F.list || F.city || F.minpay || F.where !== 'core4' || F.posted || F.lv.size || F.ty.size || F.cat.size || F.sk.size || F.pk.size || F.ar.size || F.lg.size || F.pt.size || F.co.size || F.vs.size;
   $('#filters').innerHTML = `
     ${any ? '<button class="fclear" type="button" data-act="clear">Clear filters</button>' : ''}
-    <div class="fgroup"><h3>Where</h3>${whereOpts}<label class="opt"><input type="checkbox" data-f="all" ${F.all ? 'checked' : ''}><span>Also show roles not open to India</span></label></div>
-    ${facet('Country', 'co', COUNTRIES.map(x => x[0]), v => COUNTRY_NAME[v])}
+    <div class="fgroup"><h3>Where</h3>${whereOpts}</div>
+    ${F.co.size ? facet('Country', 'co', CORE4, v => COUNTRY_NAME[v]) : ''}
     ${facet('Visa and sponsorship', 'vs', VISA.map(x => x[0]), v => VISA_NAME[v])}
     ${facet('Experience', 'lv', LEVELS, v => v === 'Entry' ? 'Entry (0–2 years)' : v)}
     <div class="fgroup"><h3>Posted</h3>${postedOpts}</div>
@@ -588,13 +601,13 @@ function renderFilters(){
     ${facet('Perks', 'pk', ['Visa sponsorship', 'Relocation'])}
     ${arVals.length ? facet('AI role family', 'ar', arVals) : ''}
     ${facet('Real opening?', 'lg', ['high', 'caution', 'suspicious'], v => ({high: 'Looks real', caution: 'Check before applying', suspicious: 'Suspicious'})[v])}
-    ${facet('Pay the posting states', 'pt', ['20+', '10-20'], v => ({'20+': '20 LPA or more', '10-20': '10–20 LPA'})[v])}
+    ${facet('Pay the posting states, a year', 'pt', ['top', 'good'], v => ({top: '$100k+, £50k+ or €60k+', good: '$60k+, £30k+ or €40k+, less than that'})[v])}
     <button class="btn only-mobile" type="button" data-act="closef">Show results</button>`;
 }
 function renderList(){
   let list = ALL.filter(j => pass(j));
   if (F.sort === 'rel' && F.q) list = list.map(j => [score(j), j]).sort((a, b) => b[0] - a[0] || (b[1].p || '').localeCompare(a[1].p || '')).map(x => x[1]);
-  else if (F.sort === 'pay') list = list.slice().sort((a, b) => (b.ph ?? -1) - (a.ph ?? -1) || (b.p || '').localeCompare(a.p || ''));
+  else if (F.sort === 'pay') list = list.slice().sort((a, b) => (b.pu || -1) - (a.pu || -1) || (b.p || '').localeCompare(a.p || ''));
   const co = F.company ? COMPANIES.find(c => c.slug === F.company) : null;
   $('#count').textContent = `${fmt(list.length)} ${list.length === 1 ? 'role' : 'roles'}${co ? ' at ' + co.name : ''}`;
   $('#list').innerHTML = list.length ? list.slice(0, shown).map(row).join('') : `<div class="empty">No role matches all of these filters. Remove one, or search for something broader.</div>`;
@@ -617,9 +630,9 @@ function renderUnderstood(){
   if (F.q) add('q', 'Words: ' + F.q);
   if (F.city) add('city', F.city);
   if (F.list) add('list', LISTS[F.list].label);
-  if (F.where !== 'any') add('where', {'india-ok':'Open to people in India', abroad:'Outside India', remote:'Remote, open to India', worldwide:'Remote worldwide', 'remote-india':'Remote within India', south:'South India', india:'India'}[F.where]);
+  if (F.where !== 'core4') add('where', WHERE[F.where]);
   if (F.lv.size) add('lv', [...F.lv].join(', '));
-  if (F.minpay) add('minpay', F.minpay + '+ LPA stated');
+  if (F.minpay){ const [c, v] = F.minpay.split(':'); add('minpay', c === 'INR' ? (Number(v) / 1e5) + '+ LPA stated' : CUR_SIGN[c] + fmt(v) + '+ a year stated'); }
   if (F.posted) add('posted', POSTED.find(x => x[0] === F.posted)[1]);
   if (F.ty.size) add('ty', [...F.ty].join(', '));
   el.hidden = !(F.nl && pills.length);
@@ -721,7 +734,7 @@ function route(){
 /* ---- events ---- */
 document.addEventListener('click', e => {
   const t = e.target.closest('[data-act],[data-q],[data-fm],[data-list],[data-unset]'); if (!t) return;
-  if (t.dataset.unset){ const k = t.dataset.unset; if (k === 'lv' || k === 'ty') F[k] = new Set(); else if (k === 'where') F.where = 'any'; else F[k] = ''; shown = 40; renderBoard(); return; }
+  if (t.dataset.unset){ const k = t.dataset.unset; if (k === 'lv' || k === 'ty') F[k] = new Set(); else if (k === 'where') F.where = 'core4'; else F[k] = ''; shown = 40; renderBoard(); return; }
   if (t.dataset.act === 'save' || t.dataset.act === 'hide'){
     const id = t.dataset.id, set = t.dataset.act === 'save' ? SAVED : HIDDEN, key = t.dataset.act === 'save' ? 'saved' : 'hidden';
     set.has(id) ? set.delete(id) : set.add(id); store.set(key, set);
@@ -732,7 +745,7 @@ document.addEventListener('click', e => {
   if (t.dataset.q){ const k = t.dataset.q, v = t.dataset.v; F[k].has(v) ? F[k].delete(v) : F[k].add(v); shown = 40; renderBoard(); return; }
   const a = t.dataset.act;
   if (a === 'more'){ shown += 40; renderList(); }
-  else if (a === 'clear'){ F = Object.assign(F, {fm:'', list:'', city:'', minpay:'', nl:false, where:'any', posted:'', lv:new Set(), ty:new Set(), cat:new Set(), sk:new Set(), pk:new Set(), ar:new Set(), lg:new Set(), pt:new Set(), co:new Set(), vs:new Set(), all:false}); shown = 40; renderBoard(); }
+  else if (a === 'clear'){ F = Object.assign(F, {fm:'', list:'', city:'', minpay:'', nl:false, where:'core4', posted:'', lv:new Set(), ty:new Set(), cat:new Set(), sk:new Set(), pk:new Set(), ar:new Set(), lg:new Set(), pt:new Set(), co:new Set(), vs:new Set(), all:false}); shown = 40; renderBoard(); }
   else if (a === 'close'){ history.length > 1 && /^#\/job\//.test(location.hash) ? history.back() : (location.hash = F.company ? '#/company/' + F.company : '#/'); }
   else if (a === 'copy'){ navigator.clipboard?.writeText(location.href).then(() => { t.textContent = 'Copied'; }, () => { t.textContent = 'Copy failed'; }); }
   else if (a === 'closef'){ $('#filters').classList.remove('on'); }
@@ -766,8 +779,8 @@ window.addEventListener('hashchange', route);
   } catch(e) { $('#count').textContent = 'The role list could not load. Refresh the page to try again.'; return; }
   ALL.forEach(j => { j.fm = j.fm || 'Other'; j.cat = j.cat || []; j.sk = j.sk || []; j.pk = j.pk || []; j.co = j.co || []; j.vs = j.vs || []; j.ar = j.ar || ''; j.lg = j.lg || ''; j.rp = j.rp || 0; });
   const upd = META.feedAt ? ago(META.feedAt) : '';
-  $('#h1').textContent = `${fmt(ALL.length)} open roles in India and around the world`;
-  $('#sub').textContent = `Read straight from ${fmt(META.companyBoards || 0)} company career pages and ${fmt(META.remoteBoards || 0)} remote job boards${upd ? ', updated ' + upd : ''}. Every role links to the company's own application page.`;
+  $('#h1').textContent = `${fmt(ALL.filter(j => whereHit(j, 'core4')).length)} open roles in the US, UK, Ireland and the Netherlands`;
+  $('#sub').textContent = `Read straight from ${fmt(META.companyBoards || 0)} company career pages${upd ? ', updated ' + upd : ''}. Pay is shown the way the posting states it. Every role links to the company's own application page.`;
   $('#strip').innerHTML = '';
   $('#metaline').innerHTML = `<b>${fmt(META.companiesTracked || 0)}</b> companies tracked · <b>${fmt(ALL.filter(j => (hoursAgo(j.p) ?? 1e9) < 24).length)}</b> roles posted in the last 24 hours`;
   if (F.city || F.minpay) F.nl = true;

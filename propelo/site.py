@@ -27,7 +27,7 @@ from email.utils import format_datetime
 from pathlib import Path
 from xml.sax.saxutils import escape
 
-from . import countries, growth_pages, logos, showcase, sponsors
+from . import countries, growth_pages, logos, pay, showcase, sponsors
 from . import tags as tagger
 from .models import iso
 
@@ -47,13 +47,29 @@ def _read_jsonl(path: Path) -> list[dict]:
         return [json.loads(line) for line in f if line.strip()]
 
 
+def _countries(r: dict) -> list[str]:
+    """Where a role is, read again from its location so a fix to the reader reaches roles carried between scans."""
+    return sorted(countries.resolve(r["location"])) if r.get("location") else list(r.get("countries") or [])
+
+
+def _in_india(r: dict) -> bool:
+    co = _countries(r)
+    if co:  # "Salem, OR" is in Oregon, whatever the place-name check thought
+        return "IN" in co
+    return (r.get("facts") or {}).get("loc") in ("south", "india", "remote-india")
+
+
 def _salary(r: dict) -> str:
+    """Pay as the posting states it, in its own currency. Lakhs only for a role in India."""
+    p = pay.of_role(r)
+    if p:
+        return pay.label(p)
     if r.get("salary"):
         return r["salary"]
     f = r.get("facts") or {}
     hi, lo = f.get("salaryHigh"), f.get("salaryLow")
-    if hi is None:
-        return ""
+    if hi is None or not _in_india(r):
+        return ""  # the scan's lakhs figure converts dollars; never show a converted figure as the pay
     fmt = lambda x: f"{x:.1f}".rstrip("0").rstrip(".")
     return f"{fmt(lo)}–{fmt(hi)} LPA" if lo and lo != hi else f"{fmt(hi)} LPA"
 
@@ -86,6 +102,7 @@ def _visa_codes(v: dict) -> list[str]:
 def compact(r: dict) -> dict:
     f = r.get("facts") or {}
     t = r.get("tags") or tagger.tag(r.get("title", ""), r.get("summary", ""), f)  # feeds written before tags existed
+    p = pay.of_role(r)
     return {
         "id": r["id"], "t": r["title"], "c": r["company"], "cs": _slug(r["company"]), "l": r.get("location", ""),
         "m": r.get("workMode", ""), "w": WHERE.get(f.get("loc", ""), "u" if "loc" not in f else ""), "p": r.get("postedAt", ""),
@@ -93,9 +110,9 @@ def compact(r: dict) -> dict:
         "fm": t.get("family") or tagger.family(r.get("title", "")),
         "cat": t.get("categories", []), "sk": t.get("skills", []), "pk": t.get("perks", []),
         "ar": t.get("archetype", ""), "lg": (f.get("legit") or {}).get("tier", ""), "rp": (f.get("reposts") or {}).get("count", 0),
-        "pt": t.get("payTier", tagger.pay_tier(f)), "ph": f.get("salaryHigh"),
+        **({"pc": p["cur"], "pa": pay.annual(p), "pu": pay.order(p), "pt": pay.tier(p)} if p else {"pt": ""}),
         "src": r.get("source", ""), "via": r.get("via", ""), "u": r["url"],
-        "co": r.get("countries") if "countries" in r else sorted(countries.resolve(r.get("location", ""))), "vs": _visa_codes(f.get("visa") or {}),
+        "co": _countries(r), "vs": _visa_codes(f.get("visa") or {}),
         **({"tp": 1} if showcase.top_name(r.get("company", "")) else {}),
     }
 
@@ -106,10 +123,12 @@ def detail(r: dict, text: str) -> dict:
     exp = f.get("expMin")
     facts.append({"k": "Experience", "v": ("Fresher welcome" if f.get("fresherOk") else "Not stated") if exp is None
                   else ("Fresher (0 years)" if exp == 0 else f"{exp:g}+ years"), "q": f.get("expQuote") or ""})
-    who = {"ww": "Remote, anywhere in the world", "ro": "Remote, open to India", "ri": "Remote within India",
-           "ru": "Remote; the posting doesn't say who can apply", "rx": "Remote, but not open to people in India",
-           "s": "On-site or hybrid in south India", "i": "On-site or hybrid in India", "a": "On-site or hybrid abroad",
-           "u": "Not stated"}.get(compact(r)["w"], "Not stated")
+    c = compact(r)
+    names = ", ".join(countries.name_of(x) for x in c["co"][:3])
+    who = {"ww": "Remote, anywhere in the world", "ro": "Remote, open to applicants in India", "ri": "Remote within India",
+           "ru": "Remote; the posting doesn't say who can apply", "rx": "Remote" + (f", from {names}" if names else ", limited to some countries"),
+           "s": "On-site or hybrid in India", "i": "On-site or hybrid in India", "a": "On-site or hybrid" + (f" in {names}" if names else ""),
+           "u": "Not stated"}.get(c["w"], "Not stated")
     facts.append({"k": "Where", "v": who, "q": f.get("locQuote") or f.get("scopeQuote") or ""})
     sal = _salary(r)
     facts.append({"k": "Pay", "v": sal or "Not stated", "q": f.get("salaryQuote") or ""})
@@ -129,16 +148,17 @@ def detail(r: dict, text: str) -> dict:
     if lg:
         notes = [x["note"] for x in lg.get("signals", []) if x.get("status") in ("concern", "mixed")]
         facts.append({"k": "Real opening?", "v": lg.get("label", "") + (": " + " ".join(notes[:3]) if notes else ""), "q": ""})
-    return compact(r) | {"text": text, "facts": facts, "hq": r.get("hq", ""), "category": r.get("category", "")}
+    return c | {"text": text, "facts": facts, "hq": r.get("hq", ""), "category": r.get("category", "")}
 
 
 def api_item(r: dict, text: str) -> dict:
     c = compact(r)
     return {"slug": r["id"], "company_name": r["company"], "title": r["title"], "description": text,
             "remote": c["m"] == "remote", "url": r["url"], "category": c["fm"], "tags": c["cat"] + c["sk"], "job_types": [c["ty"]] if c["ty"] else [],
-            "level": c["lv"], "location": r.get("location", ""), "where": c["w"], "salary": c["sal"],
+            "level": c["lv"], "location": r.get("location", ""), "where": c["w"], "countries": c["co"], "salary": c["sal"], "pay": c["sal"],
+            "pay_currency": c.get("pc", ""), "pay_max_annual": c.get("pa") or None,
             "experience_min_years": c["e"], "source": r.get("source", ""), "created_at": r.get("postedAt", ""),
-            "archetype": c["ar"], "legitimacy": c["lg"], "relisted": c["rp"], "pay_tier": c["pt"], "salary_max_lpa": c["ph"]}
+            "archetype": c["ar"], "legitimacy": c["lg"], "relisted": c["rp"], "pay_tier": c["pt"], "salary_max_lpa": (r.get("facts") or {}).get("salaryHigh")}
 
 
 def _rss(jobs: list[dict], base_url: str, now: datetime) -> str:
@@ -154,7 +174,7 @@ def _rss(jobs: list[dict], base_url: str, now: datetime) -> str:
                      f"<guid isPermaLink=\"false\">{escape(r['id'])}</guid><pubDate>{pub}</pubDate><description>{escape(desc)}</description></item>")
     return ('<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0"><channel><title>Propelo Jobs</title>'
             f"<link>{escape(base_url or 'https://github.com/VishStack01/Propelo')}</link>"
-            "<description>Open tech roles in India and remote, straight from company career pages.</description>"
+            "<description>Open roles in the US, UK, Ireland and the Netherlands, straight from company career pages.</description>"
             f"<lastBuildDate>{format_datetime(now)}</lastBuildDate>" + "".join(items) + "</channel></rss>\n")
 
 
