@@ -102,11 +102,8 @@ def signal(r: dict, code: str) -> str:
 
 
 def _where(r: dict) -> list[str]:
-    """A record's countries; worked out here for feeds written before the scan recorded them."""
-    if "countries" not in r:
-        from . import countries
-        r["countries"] = sorted(countries.resolve(r.get("location", "")))
-    return r["countries"]
+    """A record's countries, read again from its location ("Holland, Michigan" is in the US)."""
+    return sorted(countries.of_record(r))
 
 
 _NOT_A_JOB = re.compile(r"\b(volunteers?|volunteering|unpaid)\b", re.I)

@@ -2622,8 +2622,8 @@ function sponsorNote(b, to, me, stage){
   return `${head}\n\n${body}\n\n${src}\n\n${tail}`.replace(/\s+$/, '');
 }
 /* brief:end */
-const fTime = new Intl.DateTimeFormat('en-IN', {timeZone: TZ, hour: '2-digit', minute: '2-digit', hour12: false});
-const fDate = new Intl.DateTimeFormat('en-IN', {timeZone: TZ, day: 'numeric', month: 'short'});
+const fTime = new Intl.DateTimeFormat('en-GB', {timeZone: TZ, hour: '2-digit', minute: '2-digit', hour12: false});
+const fDate = new Intl.DateTimeFormat('en-GB', {timeZone: TZ, day: 'numeric', month: 'short'});
 const fKey  = new Intl.DateTimeFormat('en-CA', {timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit'});
 const toDate = v => { if (!v) return null; const d = new Date(v); return isNaN(d) ? null : d; };
 const hoursSince = v => { const d = toDate(v); return d ? (Date.now() - d) / 36e5 : null; };
@@ -3027,7 +3027,7 @@ function visaPill(j){
   if (reg && reg.listed === false) return '<span class="pill due" title="This employer is not on the Home Office register of licensed sponsors, so it cannot sponsor a Skilled Worker visa.">Not a UK sponsor</span>';
   if (v.status === 'offers') return `<span class="pill strong" title="The posting says:${esc(quote)}${reg && reg.listed ? ' On the UK sponsor register as ' + esc(reg.name) + '.' : ''}">Sponsors visas</span>`;
   if (v.opt === 'yes') return `<span class="pill strong" title="The posting says: &quot;${esc(v.optQuote || '')}&quot;${v.eVerify ? ' It also says the employer uses E-Verify, which the STEM OPT extension needs.' : ''}">Takes OPT / CPT</span>`;
-  const rec = v.usLca ? ['Has sponsored H-1B', `${Number(v.usLca.n || 0).toLocaleString('en-GB')} certified H-1B applications in the latest US Department of Labor data, as ${v.usLca.name}.`] : v.caLmia ? ['Positive LMIA employer', `Approved to hire foreign workers in Canada in the last year (${Number(v.caLmia.n || 0).toLocaleString('en-IN')} positions), as ${v.caLmia.name}.`] : v.iePermits ? ['Issued Irish work permits', `${Number(v.iePermits.n || 0).toLocaleString('en-IN')} employment permits issued this year, as ${v.iePermits.name}.`] : null;
+  const rec = v.usLca ? ['Has sponsored H-1B', `${Number(v.usLca.n || 0).toLocaleString('en-GB')} certified H-1B applications in the latest US Department of Labor data, as ${v.usLca.name}.`] : v.caLmia ? ['Positive LMIA employer', `Approved to hire foreign workers in Canada in the last year (${Number(v.caLmia.n || 0).toLocaleString('en-GB')} positions), as ${v.caLmia.name}.`] : v.iePermits ? ['Issued Irish work permits', `${Number(v.iePermits.n || 0).toLocaleString('en-GB')} employment permits issued this year, as ${v.iePermits.name}.`] : null;
   if (rec) return `<span class="pill" title="${esc(rec[1])} That is the employer's record, not a promise for this role: ask before applying.">${rec[0]}</span>`;
   if (nl && nl.listed) return `<span class="pill" title="On the Dutch immigration service's public register of recognised sponsors as ${esc(nl.name)}. The posting doesn't say whether this role is sponsored: ask before applying.">Dutch recognised sponsor</span>`;
   if (v.eVerify) return '<span class="pill" title="The posting says the employer uses E-Verify, which the STEM OPT extension needs. It does not say whether it sponsors visas.">Uses E-Verify</span>';
@@ -3278,7 +3278,7 @@ function renderBatch(){
 
 function renderSources(){
   const c = obj(settings().coverage);
-  const fmt = n => Number(n).toLocaleString('en-IN');
+  const fmt = n => Number(n).toLocaleString('en-GB');
   if (!c.companies && !c.platforms) return '';
   const bits = ['<span>Searching</span>'];
   if (c.companies) bits.push(`<span>${fmt(c.companies)} company career pages</span>`);
@@ -3750,7 +3750,7 @@ function loadGuarantee(){ if (!cloud()) return Promise.resolve(); return api('ap
 const GU_STATUS = {applied: 'Application under review', accepted: 'Accepted: pay to start', pending: 'Waiting for your payment', active: 'In progress', met: 'Done: promise met', claimable: 'Refund can be claimed', claimed: 'Claim being checked', approved: 'Refund approved', refunded: 'Refunded', rejected: 'Claim not approved', declined: 'Not accepted', ended: 'Ended', void: 'Stopped'};
 function money(minor, cur){ return cur === 'USD' ? '$' + (Number(minor || 0) / 100).toFixed(0) : inr(Math.round(Number(minor || 0) / 100)); }
 function guBar(label, n, need){ const pct = need ? Math.min(100, Math.round(n / need * 100)) : 0; return `<div class="gubar"><div class="gubar-t"><span>${esc(label)}</span><b>${esc(n)}${need ? ' / ' + esc(need) : ''}</b></div>${need ? `<div class="gubar-track"><i style="width:${pct}%"></i></div>` : ''}</div>`; }
-const fDay = s => s ? new Date(s).toLocaleDateString('en-IN', {day: 'numeric', month: 'short', year: 'numeric'}) : '';
+const fDay = s => s ? new Date(s).toLocaleDateString('en-GB', {day: 'numeric', month: 'short', year: 'numeric'}) : '';
 function guInterview(v){
   const R = obj(v.rules), k = obj(v.interview), cur = k.current, ro = wr(), price = money(k.price, k.currency);
   const NI = (cur && obj(cur.progress).needInterviews) || R.minInterviews || 3, promise = NI > 1 ? `${NI} interviews or a second round` : 'An interview';
@@ -3979,7 +3979,7 @@ function printReceipt(j){
   if (!w){ toast('Allow pop-ups to print the receipt.'); return; }
   const rows = arr(a.fields).map(f => `<tr><td>${esc(f.label)}</td><td>${esc(f.value || '(left for you)')}</td></tr>`).join('');
   w.document.write(`<!doctype html><meta charset="utf-8"><title>Receipt: ${esc(j.company)}, ${esc(j.title)}</title><style>body{font:14px/1.5 system-ui,sans-serif;max-width:720px;margin:32px auto;padding:0 16px;color:#151515}h1{font-weight:500;font-size:22px}td{border-top:1px solid #ddd;padding:6px 8px;vertical-align:top}td:first-child{color:#555;width:40%}</style>
-    <h1>Application receipt</h1><p><b>${esc(j.title)}</b> at <b>${esc(j.company)}</b><br>Sent ${a.at ? esc(new Date(a.at).toLocaleString('en-IN')) : ''} on ${esc(a.form || hostOf(safeUrl(j.url) || ''))}${a.confirmation ? `<br>Confirmation: “${esc(a.confirmation)}”` : ''}</p><table>${rows}</table><p style="color:#777">Kept by Propelo. The posting as you applied to it is saved on the role.</p>`);
+    <h1>Application receipt</h1><p><b>${esc(j.title)}</b> at <b>${esc(j.company)}</b><br>Sent ${a.at ? esc(new Date(a.at).toLocaleString('en-GB')) : ''} on ${esc(a.form || hostOf(safeUrl(j.url) || ''))}${a.confirmation ? `<br>Confirmation: “${esc(a.confirmation)}”` : ''}</p><table>${rows}</table><p style="color:#777">Kept by Propelo. The posting as you applied to it is saved on the role.</p>`);
   w.document.close(); w.focus(); setTimeout(() => w.print(), 300);
 }
 async function saveAutoSend(patch, msg){
@@ -4191,7 +4191,7 @@ function renderSetup(){
 /* ---------- Footer ---------- */
 function renderFoot(){
   const f = filterSummary();
-  const cov = obj(settings().coverage), n = x => Number(x).toLocaleString('en-IN');
+  const cov = obj(settings().coverage), n = x => Number(x).toLocaleString('en-GB');
   return `<div><h4>Where it looks</h4><ul><li>${cov.companies ? n(cov.companies) + ' company career pages' : 'Company career pages'}</li><li>${cov.platforms ? n(cov.platforms) + ' job platforms' : 'Remote job boards'}</li><li>VC portfolio boards</li><li>Searches for new career pages</li></ul></div>
     <div><h4>Your filters</h4><ul><li>For ${esc(f.exp)}</li><li>Posted in the last ${esc(f.days)} days</li><li>${esc(f.locs)}</li><li>${settings().salaryFloorLpa !== '' ? 'Pay floor ' + (livesAbroad() && settings().salaryFloorUsd ? '$' + Number(settings().salaryFloorUsd).toLocaleString('en-US') + ' a year' : esc(settings().salaryFloorLpa) + ' LPA') + (settings().requireStatedPay ? ', stated in the posting' : '') : 'No pay floor'}</li><li>Up to ${esc(settings().dailyCap)} prepared a day</li></ul></div>
     <div><h4>What it never does</h4><ul><li>Invent experience or numbers</li><li>Send LinkedIn messages</li><li>${autoMode() ? 'Guess an answer your profile can\'t back up' : 'Submit without your approval'}</li><li>Apply twice to one company in 6 months</li></ul></div>
@@ -4227,7 +4227,7 @@ function receiptHtml(j){
   const a = obj(j.application), fields = arr(a.fields);
   if (!isApplied(j) || !(a.at || a.confirmation || fields.length)) return '';
   return `<div class="receipt"><div class="contact"><b style="font-size:14.5px">Application receipt</b><button class="btn sm ghost" data-act="receipt-print" data-id="${esc(j.id)}">Print or save</button></div>
-    <dl class="kv"><dt>Sent</dt><dd>${a.at ? esc(new Date(a.at).toLocaleString('en-IN')) : '—'}</dd><dt>Where</dt><dd>${esc(a.form || hostOf(safeUrl(j.url) || '') || 'The company site')}</dd>${a.confirmation ? `<dt>Confirmation</dt><dd>“${esc(a.confirmation)}”</dd>` : ''}</dl>
+    <dl class="kv"><dt>Sent</dt><dd>${a.at ? esc(new Date(a.at).toLocaleString('en-GB')) : '—'}</dd><dt>Where</dt><dd>${esc(a.form || hostOf(safeUrl(j.url) || '') || 'The company site')}</dd>${a.confirmation ? `<dt>Confirmation</dt><dd>“${esc(a.confirmation)}”</dd>` : ''}</dl>
     ${fields.length ? `<details><summary>${fields.length} fields filled</summary><table class="grid rtab"><tbody>${fields.map(f => `<tr><td>${esc(f.label)}</td><td>${esc(f.value || '(left for you)')}</td></tr>`).join('')}</tbody></table></details>` : ''}</div>`;
 }
 
@@ -5045,7 +5045,7 @@ const headings = lang => Object.assign({}, HEAD_EN, HEAD_I18N[lang] || {});
 function langName(t){ t = obj(t); return t.lang === 'other' ? (String(t.langOther || '').trim() || 'English') : (LANGS[t.lang] || 'English'); }
 const PART_LABEL = {sender: 'Sender', date: 'Date', recipient: 'Recipient', greeting: 'Greeting', body: 'Body', signoff: 'Sign-off'};
 function senderText(p){ const b = obj(p.basics); return [b.name || personName(), b.email || applicant().email, b.phone || applicant().phone, b.location || applicant().city].filter(Boolean).join('\n'); }
-function dateText(lang){ try { return new Intl.DateTimeFormat(!lang || lang === 'en' || lang === 'other' ? 'en-IN' : lang, {day: 'numeric', month: 'long', year: 'numeric', timeZone: TZ}).format(new Date()); } catch(e){ return fDate.format(new Date()); } }
+function dateText(lang){ try { return new Intl.DateTimeFormat(!lang || lang === 'en' || lang === 'other' ? 'en-GB' : lang, {day: 'numeric', month: 'long', year: 'numeric', timeZone: TZ}).format(new Date()); } catch(e){ return fDate.format(new Date()); } }
 function recipientText(j){ return ['Hiring team', j.company, j.location].filter(Boolean).join('\n'); }
 function composeCover(L){ L = obj(L); return [L.greeting, L.body, L.signoff].map(x => String(x || '').trim()).filter(Boolean).join('\n\n'); }
 function splitCover(text){
@@ -6080,7 +6080,7 @@ function renderCalendar(){
   }
   while (cells.length % 7) cells.push('<div class="cday out"></div>');
   const up = upcoming(21);
-  const label = new Intl.DateTimeFormat('en-IN', {month: 'long', year: 'numeric'}).format(first);
+  const label = new Intl.DateTimeFormat('en-GB', {month: 'long', year: 'numeric'}).format(first);
   return `<div class="phead"><h1>${NI.cal}<span>Calendar</span></h1><div class="ract"><button class="btn sm" data-act="cal-prev" aria-label="Previous month">‹</button><b class="calm">${esc(label)}</b><button class="btn sm" data-act="cal-next" aria-label="Next month">›</button><button class="btn sm ghost" data-act="cal-today">Today</button></div></div>
   <p class="lede">Interviews, follow-ups on day 7 and 14, apply-by dates and what you sent.</p>
   <div class="calwrap"><section class="card calcard"><div class="cgrid">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => `<div class="cdow">${d}</div>`).join('')}${cells.join('')}</div>
@@ -6460,7 +6460,7 @@ function renderNow(){
   $('#cta-batch').textContent = ready ? `Review batch (${ready})` : 'Review batch';
   const f = filterSummary();
   { const vt = $('#vc-top'); if (vt) vt.innerHTML = clockPill(); }
-  $('#notice-text').innerHTML = state.status === 'nodb' ? 'Open this page as its owner, signed in to Claude, to see your pipeline.' : state.status === 'demo' ? 'Demo with fictional companies. Run <b>propelo serve</b> to see your own pipeline.' : cloud() ? `Each scan: roles for <b>${esc(f.exp)}</b><span class="long"> ${esc(f.locs)}</span>, from ${esc(Number(obj(state.me && state.me.feed).companies || 1400).toLocaleString('en-IN'))} company career pages, posted in the last ${esc(f.days)} days.` : `Every 6 hours: roles for <b>${esc(f.exp)}</b><span class="long">${esc(f.pay)} ${esc(f.locs)}</span>, posted in the last ${esc(f.days)} ${f.days === 1 ? 'day' : 'days'}.`;
+  $('#notice-text').innerHTML = state.status === 'nodb' ? 'Open this page as its owner, signed in to Claude, to see your pipeline.' : state.status === 'demo' ? 'Demo with fictional companies. <a href="https://app.propelo.org/signup?src=demo" style="text-decoration:underline;font-weight:600">Use Propelo with your own resume, free</a>' : cloud() ? `Each scan: roles for <b>${esc(f.exp)}</b><span class="long"> ${esc(f.locs)}</span>, from ${esc(Number(obj(state.me && state.me.feed).companies || 1400).toLocaleString('en-GB'))} company career pages, posted in the last ${esc(f.days)} days.` : `Every 6 hours: roles for <b>${esc(f.exp)}</b><span class="long">${esc(f.pay)} ${esc(f.locs)}</span>, posted in the last ${esc(f.days)} ${f.days === 1 ? 'day' : 'days'}.`;
   const navTab = state.tab === 'app' ? 'pipeline' : state.tab;
   document.querySelectorAll('.tab[role="tab"]').forEach(t => t.setAttribute('aria-selected', String(t.dataset.tab === navTab)));
   const dockOn = ['home','today','pipeline'].includes(navTab) ? navTab : 'more';

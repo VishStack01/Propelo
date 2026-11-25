@@ -63,7 +63,7 @@
         <div class="notice" role="img" aria-label="A role in Propelo with the quotes behind each check, and an example profile's fit">
           <div class="nhead">
             <span class="nlogo" aria-hidden="true" data-ex-logo="1">N</span>
-            <div><b data-ex-title="1">AI Engineer</b><span data-ex-cw="1">Northwind Labs · London, hybrid</span></div>
+            <div><b data-ex-title="1">AI Engineer</b><span data-ex-cw="1">Northwind Labs · London, hybrid</span><small class="nvisa" data-ex-visa="1">On the UK sponsor register</small></div>
             <span class="nfit"><b>4.4</b> / 5 fit</span>
           </div>
           <dl class="nfacts">
@@ -142,7 +142,7 @@
       </div>
     </div>
     <div class="principles" id="principles" aria-label="Principles">
-      <div class="pr" style="--n:0"><b>Your key, your data</b><p>Run it on your computer with your own AI provider, or in your account.</p></div>
+      <div class="pr" style="--n:0"><b>Your data, your call</b><p>Download or delete everything from Settings whenever you like.</p></div>
       <div class="pr" style="--n:1"><b>Nothing made up</b><p>Every resume line traces back to your own work.</p></div>
       <div class="pr" style="--n:2"><b>Shows its work</b><p>Every keep or skip comes with the sentence from the posting.</p></div>
       <div class="pr" style="--n:3"><b>You press send</b><p>Propelo drafts messages. Recruiter emails go out only if you turn them on.</p></div>
@@ -177,7 +177,7 @@
         <li class="feat"><i style="background:var(--orange)"></i>Replies and follow-ups from your inbox</li>
         <li class="feat"><i style="background:var(--lav)"></i>Interviews on your calendar</li>
       </ul>
-      <p class="sub reveal">Use it in your Propelo account, or on your own computer with <code>propelo serve</code>. It follows every role from found to offer and puts whatever needs you at the top.</p>
+      <p class="sub reveal">It follows every role from found to offer and puts whatever needs you at the top.</p>
     </div>
     <div class="screen curv" role="img" aria-label="Propelo dashboard with fictional example data">
       <div class="app">
@@ -248,35 +248,6 @@
 </section>
 
 <!-- Bring your own key -->
-<section id="byok">
-  <div class="wrap">
-    <div class="head">
-      <div>
-        <h2 class="lede split">Run it on your computer, with <mark>your own AI key</mark></h2>
-      </div>
-    </div>
-    <div class="byok">
-      <div class="term curv" aria-label="Terminal: install and run Propelo">
-        <div class="dots" aria-hidden="true"><i></i><i></i><i></i></div>
-        <div class="ln"><span class="c"># install</span></div>
-        <div class="ln"><span class="p">$</span> git clone https://github.com/VishStack01/Propelo && cd Propelo</div>
-        <div class="ln"><span class="p">$</span> pip install -e .</div>
-        <div class="ln"><span class="c"># your model, your key (or put them in .env)</span></div>
-        <div class="ln"><span class="p">$</span> <span class="k">export</span> PROPELO_LLM=<span class="g">anthropic</span>   <span class="c"># openai, gemini, ollama</span></div>
-        <div class="ln"><span class="p">$</span> <span class="k">export</span> ANTHROPIC_API_KEY=<span class="g">sk-ant-...</span></div>
-        <div class="ln"><span class="p">$</span> propelo llm test</div>
-        <div class="ln"><span class="c"># go</span></div>
-        <div class="ln"><span class="p">$</span> propelo init && propelo serve   <span class="c"># http://127.0.0.1:8765</span></div>
-      </div>
-      <div class="reveal">
-        <p class="sub">Scanning, filtering and tracking need no AI. Reading your resume, scoring fit and writing call the model you pick, with your key, so only those requests leave your computer. With Ollama nothing leaves it, and it costs nothing.</p>
-        <div class="providers"><span>Anthropic</span><span>OpenAI</span><span>Gemini</span><span>Ollama, local</span><span>Any OpenAI-compatible API</span></div>
-        <div class="ctas" style="margin-top:28px"><a class="btn" href="docs.html">Read the docs<svg><use href="#i-right"/></svg></a><a class="btn light" href="demo/">Try the demo</a></div>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- App -->
 <section id="app">
   <div class="wrap">
@@ -304,7 +275,7 @@
       <div class="phone reveal" role="img" aria-label="Propelo app fresh roles screen: real roles from the last scan, with an example profile's fit scores">
         <div class="ps">
           <div class="pst"><span>9:41</span><i></i><span>5G</span></div>
-          <p class="ph">From 1,830 career pages<b>Fresh roles</b></p>
+          <p class="ph">From <span data-stat="boards">26,044</span> career pages<b>Fresh roles</b></p>
           <div class="pbig"><small>Matched today</small><b>12</b><span>5 remote · 3 under 48 hours</span></div>
           <div class="prow"><i style="background:var(--orange)" data-ex-logo="1">N</i><span><b data-ex-title="1">AI Engineer</b><small data-ex-company="1">Northwind Labs</small></span><em>4.4</em></div>
           <div class="prow"><i style="background:var(--yellow)" data-ex-logo="2">L</i><span><b data-ex-title="2">Backend SDE 1</b><small data-ex-company="2">Lumen Pay</small></span><em>4.1</em></div>
@@ -360,7 +331,7 @@
         <ul><li>Everything in Pro</li><li>New roles matched within 15 minutes of each scan</li><li>1,500 AI actions a month</li><li>Auto-apply to 1,000 roles a month (60 a day), all above your apply line</li><li>Ask Propelo: 200 questions a day</li><li>60 mock interviews a month, no limit on your own AI key</li><li>LinkedIn profile review</li><li>Up to 25 recruiter emails a day from your Gmail, with day 7 and 14 follow-ups</li><li>Fastest support</li></ul>
         <a class="btn" data-app="/signup?next=%2Fapp%3Fbuy%3Dultra" href="https://app.propelo.org/signup?next=%2Fapp%3Fbuy%3Dultra">Get Ultra</a></article>
     </div>
-    <p class="fine reveal">Prices are in US dollars. A 90-day pass is paid once and never renews. You pay in your own currency by card, Apple Pay or Google Pay through Dodo Payments, our merchant of record. It shows any conversion fee before you pay and adds local tax where required. Or <a href="docs.html">self-host it</a> free, with your own key. <a data-app="/refunds" href="https://app.propelo.org/refunds">Refunds</a> · <a data-app="/terms" href="https://app.propelo.org/terms">Terms</a> · <a data-app="/privacy" href="https://app.propelo.org/privacy">Privacy</a></p>
+    <p class="fine reveal">Prices are in US dollars. A 90-day pass is paid once and never renews. You pay in your own currency by card, Apple Pay or Google Pay through Dodo Payments, our merchant of record. It shows any conversion fee before you pay and adds local tax where required. <a data-app="/refunds" href="https://app.propelo.org/refunds">Refunds</a> · <a data-app="/terms" href="https://app.propelo.org/terms">Terms</a> · <a data-app="/privacy" href="https://app.propelo.org/privacy">Privacy</a></p>
   </div>
 </section>
 
@@ -370,7 +341,7 @@
       <h2>Fewer, better applications. <b>Every line one you can defend</b></h2>
       <div class="btns">
         <a class="btn" data-app="/signup" href="https://app.propelo.org/signup">Start free<svg><use href="#i-right"/></svg></a>
-        <a class="btn light" href="https://github.com/VishStack01/Propelo">Self-host it</a>
+        <a class="btn light" href="jobs.html">Browse open roles</a>
       </div>
     </div>
   </div>

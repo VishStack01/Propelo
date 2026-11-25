@@ -55,7 +55,7 @@ These rules cover the website, the job board, the dashboard and app, the sign-in
 One easing curve, `cubic-bezier(.16,1,.3,1)`, plus `cubic-bezier(.65,0,.35,1)` for the curved reveals. Nothing loops and nothing moves while you read it.
 
 - **Headlines:** letters rise into place one after another; the hero headline settles from a slight tilt. The highlighter stroke draws in after the words.
-- **Curved reveals:** the hero panel, the dashboard preview, the terminal and the closing card open from the bottom with a rounded edge the first time they scroll into view.
+- **Curved reveals:** the hero panel, the dashboard preview and the closing card open from the bottom with a rounded edge the first time they scroll into view.
 - **Entrances:** other blocks fade and rise 20 px, 70 ms apart. The principle notes arrive one by one, 70 ms apart; the source bars fill once; the step line under "How it works" follows the scroll.
 - **The dot grid** in the hero panel swells and takes colour near the cursor, and only draws while the cursor moves.
 - **Feedback:** a press scales to 0.98; a hover is a colour change or a lift of 2 px at most.

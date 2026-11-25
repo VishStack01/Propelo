@@ -55,7 +55,7 @@ def native(text: str) -> dict | None:
         return None
     m = _LPA.search(text)
     r = _RANGE.search(text)
-    if m and (not r or m.start() <= r.start()):
+    if m and (not r or m.start() <= r.start() + 3):  # "₹30-40 LPA": the rupee sign starts the lakh range
         lo = float(m.group(1)) * 1e5
         hi = float(m.group(2)) * 1e5 if m.group(2) else lo
         return {"cur": "INR", "lo": min(lo, hi), "hi": max(lo, hi), "per": "year", "lpa": True}

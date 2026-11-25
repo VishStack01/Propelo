@@ -5,7 +5,9 @@
 * fills the logo strip (<!--TOP_COMPANIES-->) with well-known companies (data/top_companies.json) that have
   open roles in the scan and a logo fetched from their own website (see logos.py), with each one's count;
 * fills the example roles (elements with data-ex-*="N") with real open roles at those companies: title,
-  company, logo, place, how long ago it was posted, and the posting's own experience and pay quotes.
+  company, logo, place, how long ago it was posted, the posting's own experience and pay quotes, and the
+  employer's sponsor record. Roles in the US, UK, Ireland and the Netherlands come first, and among them
+  entry-level roles at employers that can sponsor, so the first example fits a graduate on a visa.
 
 Personal examples (fit scores, replies, interviews) stay illustrations and are labelled as examples. If the
 scan has no suitable role, the page keeps its built-in illustration, so the site always renders.
@@ -20,7 +22,26 @@ from datetime import datetime, timezone
 from functools import lru_cache
 from pathlib import Path
 
+from . import countries, pay
+
 DATA = Path(__file__).resolve().parent / "data" / "top_companies.json"
+CORE4 = {"US", "GB", "IE", "NL"}
+
+
+def visa_line(r: dict) -> str:
+    """The employer's sponsor record for the role's country, in a few words, or ''."""
+    v = (r.get("facts") or {}).get("visa") or {}
+    if v.get("status") == "no" or v.get("opt") == "no":
+        return ""
+    co = countries.of_record(r)
+    for code, ok, words in (("GB", (v.get("ukRegister") or {}).get("listed"), "On the UK sponsor register"),
+                            ("NL", (v.get("nlRegister") or {}).get("listed"), "Dutch recognised sponsor"),
+                            ("IE", v.get("iePermits"), "Issued Irish work permits this year"),
+                            ("US", v.get("usLca"), "Has sponsored H-1B visas"),
+                            ("US", v.get("opt") == "yes", "Takes OPT and CPT")):
+        if ok and code in co:
+            return words
+    return "Says it sponsors visas" if v.get("status") == "offers" else ""
 
 
 @lru_cache(maxsize=1)
@@ -92,27 +113,36 @@ def roles(records: list[dict], logos: dict[str, str], now: datetime, k: int = 5)
             continue
         if r.get("workMode") == "remote" and re.search(r"\boffice\b|\bon[- ]?site\b", f.get("locQuote") or "", re.I):
             continue  # the place shown and the posting's own words would disagree
-        rank = (0 if f.get("salaryQuote") else 1) + (0 if f.get("expQuote") else 1) + age_h / 240
+        co = countries.of_record(r)
+        entry = f.get("fresherOk") or (f.get("expMin") is not None and f["expMin"] <= 2)
+        rank = ((0 if pay.of_role(r) else 1) + (0 if f.get("expQuote") else 1) + age_h / 240
+                + (0 if co & CORE4 else 2) + (0 if visa_line(r) else 1) + (0 if entry else 1))
         pool.append((rank, r, name, lg))
     pool.sort(key=lambda x: x[0])
     picked, seen, kinds = [], set(), {}
     for rank, r, name, lg in pool:
         if name in seen:
             continue
-        kind = "india" if r.get("geo") in ("south", "india") else "remote" if r.get("workMode") == "remote" else "abroad"
-        if kinds.get(kind, 0) >= 2 and len(pool) > k * 3:
-            continue  # a mix of India, remote and other countries
+        co = countries.of_record(r)
+        kind = ("india" if r.get("geo") in ("south", "india") else "core4" if co & CORE4 else
+                "remote" if r.get("workMode") == "remote" else "abroad")
+        slot = kind if kind != "core4" else "core4-" + sorted(co & CORE4)[0]
+        if kinds.get(slot, 0) >= (2 if kind == "core4" else 1) and len(pool) > k * 3:
+            continue  # mostly the four countries Propelo covers, two from each at most, and one remote role or one elsewhere
         seen.add(name)
-        kinds[kind] = kinds.get(kind, 0) + 1
+        kinds[slot] = kinds.get(slot, 0) + 1
         f = r.get("facts") or {}
         exp = f.get("expMin")
+        quote = f.get("salaryQuote") or r.get("salary") or ""
+        stated = pay.label(pay.of_role(r))  # only a pay figure we could read; a stipend or a bonus line is not the pay
         picked.append({"kind": kind, "title": r["title"], "company": name, "logo": lg, "where": place(r), "ago": ago(r.get("postedAt", ""), now),
                        "url": r.get("url", ""), "source": r.get("source", ""),
-                       "exp": "" if exp is None else ("Fresher" if exp == 0 else f"{exp:g}+ years"), "expQuote": f.get("expQuote") or "",
-                       "pay": f.get("salaryQuote") or "", "whereQuote": f.get("locQuote") or ""})
+                       "exp": "" if exp is None else ("Entry level" if exp == 0 else f"{exp:g}+ years"), "expQuote": f.get("expQuote") or "",
+                       "pay": stated, "payQuote": quote if stated and quote != stated else "",
+                       "whereQuote": f.get("locQuote") or "", "visa": visa_line(r)})
         if len(picked) >= k:
             break
-    order = {"abroad": 0, "remote": 1, "india": 2}  # the rest of the world first, then remote, then India
+    order = {"core4": 0, "remote": 1, "abroad": 2, "india": 3}  # the four countries first
     return sorted(picked, key=lambda x: order[x["kind"]])
 
 
@@ -136,7 +166,7 @@ def strip_html(tops: list[dict], openings: int) -> str:
             f'job board; Propelo isn\'t affiliated with them.</p></div></section>')
 
 
-_SLOT = re.compile(r'(<(\w+)\b[^>]*\bdata-ex-(logo|title|company|cw|where|ago|exp|expq|pay|payq|wq|src)="(\d)"[^>]*>)(.*?)(</\2>)', re.S)
+_SLOT = re.compile(r'(<(\w+)\b[^>]*\bdata-ex-(logo|title|company|cw|where|ago|exp|expq|pay|payq|wq|src|visa)="(\d)"[^>]*>)(.*?)(</\2>)', re.S)
 
 
 def fill(page: str, picked: list[dict]) -> str:
@@ -147,7 +177,7 @@ def fill(page: str, picked: list[dict]) -> str:
         r = picked[n]
         val = {"title": r["title"], "company": r["company"], "cw": f'{r["company"]} · {r["where"]}', "where": r["where"], "ago": r["ago"],
                "exp": r["exp"] or "Not stated", "expq": f'“{r["expQuote"][:120]}”' if r["expQuote"] else "",
-               "pay": r["pay"][:90] or "Not stated", "payq": "",
+               "pay": r["pay"][:90] or "Not stated", "payq": f'“{r["payQuote"][:90]}”' if r.get("payQuote") else "", "visa": r.get("visa", ""),
                "wq": f'“{r["whereQuote"][:90]}”' if r["whereQuote"] else "", "src": f'{r["source"]} · posted {r["ago"]}'}.get(field)
         if field == "logo":
             return open_tag.replace(">", ' data-real="1">', 1) + _logo(r["logo"], r["company"]) + m.group(6)
