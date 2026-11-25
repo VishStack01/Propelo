@@ -64,26 +64,26 @@ label.chk input{width:18px;min-height:18px;margin-top:3px}
 </style>
 </head>
 <body>
-<header><a class="logo" href="/business">propelo<i aria-hidden="true"></i><small>for business</small></a><nav><a href="/pricing">For job seekers</a><a href="/partner">Your account</a></nav></header>
+<header><a class="logo" href="/business">propelo<i aria-hidden="true"></i><small>for business</small></a><nav><a href="{{SITE}}jobs.html">Job board</a><a href="/pricing">For job seekers</a><a href="/partner">Your account</a></nav></header>
 <main>
   <section class="hero">
     <div class="pills"><span class="pill">For consultancies</span><span class="pill">For university careers teams</span><span class="pill">For agencies</span></div>
     <h1>Help your students get hired by employers who <mark>can sponsor them</mark>.</h1>
-    <p>A job portal under your name for your students, and a daily list of open roles for recruiting agencies. Roles come from employers' own career pages, checked several times a day.</p>
+    <p>A job portal under your name for students heading to the US, the UK, Ireland or the Netherlands, and a daily list of open roles for recruiting agencies. Roles come from employers' own career pages, checked every hour.</p>
   </section>
 
   <h2 id="consultancies">For study-abroad consultancies and placement cells</h2>
   <p class="lead">From 1 January 2027, most UK Graduate visas shrink from 2 years to 18 months. Your students have less time to find an employer who can sponsor them.</p>
   <div class="feat">
     <div><b>Your name, your logo</b>Students join with your invite link and see your brand in the app.</div>
-    <div><b>The UK sponsor check</b>Every UK employer is checked against the Home Office register of licensed sponsors. Students can hide roles that can't sponsor them.</div>
+    <div><b>Sponsor checks in four countries</b>Every role shows the employer's record: the UK and Dutch sponsor registers, US H-1B filings and Irish employment permits. Students can hide roles that can't sponsor them.</div>
     <div><b>Truthful applications</b>Each student gets roles that fit their resume and a tailored resume that only says what's true.</div>
     <div><b>Progress you can see</b>Who is applying, who has interviews and offers. Never their resume or messages: students agree to exactly that when they join.</div>
   </div>
   <div class="grid" id="plans-c" style="margin-top:16px"></div>
 
   <h2 id="agencies">For recruiting agencies</h2>
-  <p class="lead">A daily list of open roles in your niche, straight from employers' own career pages: how long each has been open, what the posting says about visa sponsorship, and for UK roles whether the employer is a licensed sponsor. As a spreadsheet, or into your CRM or n8n with a key. Roles only, no personal data.</p>
+  <p class="lead">A daily list of open roles in your niche, straight from employers' own career pages: how long each has been open, what the posting says about visa sponsorship, and the employer's sponsor record in the UK, US, Ireland and the Netherlands. As a spreadsheet, or into your CRM or n8n with a key. Roles only, no personal data.</p>
   <div class="grid" id="plans-a"></div>
 
   <section class="honest">
@@ -92,7 +92,7 @@ label.chk input{width:18px;min-height:18px;margin-top:3px}
       <li>Each plan is paid for 30 days at a time and nothing renews by itself. We remind you a week before it ends. Prices are in US dollars, and you pay in your own currency at checkout.</li>
       <li>A free 30-day pilot for 25 students (or one agency feed) is available on request; a person replies within 2 working days.</li>
       <li>No one can guarantee jobs or visas, and we don't. We make sure applications go to roles that fit and to employers who can sponsor.</li>
-      <li>Coverage is strongest in India and growing in the UK and US. Ask us for this week's numbers for your market before you pay.</li>
+      <li>Most roles are in the US, then the UK; Ireland and the Netherlands have fewer. Ask us for this week's numbers for your students' countries and fields before you pay.</li>
     </ul>
     <p class="small muted" style="margin:0">Terms: <a href="/terms#business">business terms</a> · <a href="/privacy">privacy</a> · <a href="/refunds">refunds</a></p>
   </section>
@@ -124,7 +124,7 @@ label.chk input{width:18px;min-height:18px;margin-top:3px}
   function card(p){
     const what = p.kind === 'consultancy'
       ? `<ul class="small"><li>${p.seats} student seats with Pro</li><li>Branded portal and invite link</li><li>Progress view and CSV export</li></ul>`
-      : `<ul class="small"><li>One filtered roles feed, CSV and JSON</li><li>Updated several times a day</li><li>Days open, sponsorship, UK sponsor register</li></ul>`;
+      : `<ul class="small"><li>One filtered roles feed, CSV and JSON</li><li>Updated several times a day</li><li>Days open, sponsorship, sponsor registers</li></ul>`;
     return `<div class="card"><h3>${esc(p.name)}</h3><p class="price">${money(p.price, cat.currency)} <small>for 30 days</small></p>${what}
       <div class="row"><button class="btn" data-plan="${esc(p.id)}" data-mode="buy"${p.payable ? '' : ' disabled title="Online payment in this currency isn\'t set up yet. Ask for a pilot and we\'ll send a payment link."'}>Buy 30 days</button>
       <button class="btn ghost" data-plan="${esc(p.id)}" data-mode="pilot">Free pilot</button></div></div>`;

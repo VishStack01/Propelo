@@ -179,3 +179,21 @@ def test_failed_ai_calls_give_the_use_back(cloud, monkeypatch):
     c = cloud.user()
     assert c.post("/api/ai", json={"prompt": "q", "json": True, "feature": "copilot"}).status_code == 502
     assert c.get("/api/billing").json()["features"]["copilot"]["used"] == 0
+
+
+def test_each_policy_has_its_own_page_with_the_site_header(cloud):
+    c = cloud.client()
+    privacy, terms, refunds, contact = (c.get(p).text for p in ("/privacy", "/terms", "/refunds", "/contact"))
+    assert "<h1>Privacy notice</h1>" in privacy and "Services that handle your data" in privacy and "Neon" in privacy
+    assert "Guarantee terms" not in privacy and "Cancel any time" not in privacy
+    assert "<h1>Terms of use</h1>" in terms and 'id="guarantees"' in terms and 'id="business"' in terms and "Limited Use" not in terms
+    assert "<h1>Refunds and cancellation</h1>" in refunds and "Cancel any time" in refunds and "Guarantee terms" not in refunds
+    assert "<h1>Contact</h1>" in contact and "{{" not in privacy + terms + refunds + contact
+    assert '<a href="/terms" aria-current="page">' in terms and '<a href="/privacy">' in terms
+    for page in (privacy, terms):  # the way back to the website, pricing and sign-up from every policy
+        assert 'href="https://propelo.org/jobs.html"' in page and 'href="/pricing"' in page and 'href="/signup"' in page
+    assert "National Insurance" in privacy and "BSN" in privacy
+    auth = c.get("/login").text
+    assert 'href="https://propelo.org/">Back to propelo.org</a>' in auth
+    biz = c.get("/business").text
+    assert "strongest in India" not in biz and "Ireland and the Netherlands" in biz

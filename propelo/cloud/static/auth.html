@@ -37,6 +37,8 @@ mark{color:inherit;padding:0 .04em;background:linear-gradient(transparent 58%,va
 
 .shell{min-height:100vh;min-height:100dvh;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr)}
 .brand{display:inline-flex;align-items:baseline;gap:2px;font:600 26px/1 var(--f);letter-spacing:-.05em;color:var(--ink);text-decoration:none}
+.brandrow{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brandrow .home{font-size:14px;font-weight:500;color:var(--ink);text-underline-offset:3px}
 .brand .dot{width:8px;height:8px;border-radius:50%;background:var(--pink)}
 
 /* ----- the board ----- */
@@ -145,10 +147,10 @@ input[aria-invalid="true"]{box-shadow:inset 0 0 0 1.5px var(--bad)}
 <body>
 <div class="shell">
   <aside class="side">
-    <a class="brand" href="/login">propelo<span class="dot" aria-hidden="true"></span></a>
+    <div class="brandrow"><a class="brand" href="{{SITE}}">propelo<span class="dot" aria-hidden="true"></span></a><a class="home" href="{{SITE}}">Back to propelo.org</a></div>
     <div class="pitch">
       <h1>Find the roles that can <mark>take you there.</mark></h1>
-      <p>Propelo reads thousands of company career pages several times a day, keeps the roles that fit you, and shows the sentence from each posting that decided it.</p>
+      <p>Propelo reads thousands of company career pages every hour, keeps the roles that fit you, and shows the sentence from each posting that decided it.</p>
     </div>
     <div class="board" aria-hidden="true">
       <div class="notice">
@@ -166,7 +168,7 @@ input[aria-invalid="true"]{box-shadow:inset 0 0 0 1.5px var(--bad)}
       <div class="note b"><b>Your passwords stay yours.</b>We never ask for your job-site sign-ins.</div>
     </div>
     <img class="peep" src="/peeps/signup" alt="" width="1087" height="2891">
-    <p class="small">Sponsor checks use the UK and Dutch government registers and what each posting says. A role card always shows where its answer came from.</p>
+    <p class="small">Sponsor checks use the UK and Dutch sponsor registers, US H-1B filings, Irish permit figures and what each posting says. A role card always shows where its answer came from.</p>
   </aside>
 
   <main class="main">

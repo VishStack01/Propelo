@@ -282,6 +282,7 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
         text = (STATIC / name).read_text(encoding="utf-8")
         if canonical:
             text = text.replace("</title>", f'</title>\n<link rel="canonical" href="{cfg.public_url}{canonical}">', 1)
+        text = text.replace("{{SITE}}", html_escape(cfg.jobs_site_url))  # the public website, for "back to propelo.org"
         return HTMLResponse(text.replace("<script>", f'<script nonce="{nonce}">'))
 
     # ------------------------------------------------------------ middleware
@@ -398,9 +399,16 @@ def create_app(cfg: Config | None = None, db: Database | None = None) -> FastAPI
              "/refunds": ("Refunds and cancellation", "How to cancel a Propelo plan, when payments are refunded and how guarantees pay out."),
              "/contact": ("Contact", "How to reach the people behind Propelo for support, privacy requests, security reports and billing.")}
 
+    HEADINGS = {"/privacy": "Privacy notice", "/terms": "Terms of use", "/refunds": "Refunds and cancellation", "/contact": "Contact"}
+
     def legal_page(request: Request):
-        title, desc = LEGAL.get(request.url.path, LEGAL["/privacy"])
+        path = request.url.path if request.url.path in LEGAL else "/privacy"
+        title, desc = LEGAL[path]
         text = (STATIC / "legal.html").read_text(encoding="utf-8").replace("<script>", f'<script nonce="{request.state.nonce}">')
+        # One page per policy: keep this path's part of the file, drop the others.
+        text = re.sub(r"<!--part:(\w+)-->(.*?)<!--/part-->", lambda m: m.group(2) if "/" + m.group(1) == path else "", text, flags=re.S)
+        text = text.replace(f'<a href="{path}">', f'<a href="{path}" aria-current="page">', 1)
+        text = text.replace("{{HEADING}}", HEADINGS[path]).replace("{{SITE}}", html_escape(cfg.jobs_site_url))
         text = text.replace("<title>Propelo · Privacy, terms and refunds</title>",
                             f'<title>{title} · Propelo</title>\n<meta name="description" content="{desc}">\n'
                             f'<link rel="canonical" href="{cfg.public_url}{request.url.path}">', 1)
