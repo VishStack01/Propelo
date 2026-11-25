@@ -256,8 +256,8 @@ class Config:
             problems.append("PUBLIC_URL must be an https:// address in staging and production.")
         if not self.smtp_url:
             problems.append("SMTP_URL is required: sign-up and password reset send email.")
-        elif not self.smtp_url.startswith(("smtp://", "smtps://", "console://")):
-            problems.append("SMTP_URL must start with smtp://, smtps:// or console:// (for example smtps://user:password@smtp.example.com:465).")
+        elif not self.smtp_url.startswith(("smtp://", "smtps://", "resend://", "console://")):
+            problems.append("SMTP_URL must start with smtp://, smtps://, resend:// or console:// (for example resend://re_yourkey, or smtps://user:password@smtp.example.com:465).")
         elif self.smtp_url.startswith("console://") and self.app_env == "production":
             problems.append("SMTP_URL is console:// in production: emails would only be printed to the log, so nobody could confirm their account.")
         if self.storage not in ("disk", "db"):
