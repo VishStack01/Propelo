@@ -57,8 +57,7 @@
 .chk-cta .btn{margin-top:16px;background:var(--page);color:var(--ink)}
 .chk-grid aside{position:relative}
 .chk-grid .tips{position:relative;z-index:1}
-.peep-scam{right:36px;bottom:calc(100% - 16px);height:206px;z-index:0}
-@media (max-width:900px){.chk-grid{grid-template-columns:1fr}.chk-grid aside{margin-top:176px}.peep-scam{height:176px;right:24px}}
+@media (max-width:900px){.chk-grid{grid-template-columns:1fr}}
 @media (max-width:600px){.chk{padding-block:28px 64px}.chk-box,.tips,.chk-cta,.res{padding:18px}}
 </style>
 </head>
@@ -74,7 +73,7 @@
     <div class="links" id="links">
       <a href="./#product">Product</a>
       <a href="jobs.html">Job board</a>
-      <a href="./#guarantees">Guarantees</a>
+      <a href="./#guarantees">Guarantee</a>
       <a href="./#pricing">Pricing</a>
       <a data-app="/business" href="https://app.propelo.org/business">For consultancies</a>
       <a href="docs.html">Docs</a>
@@ -88,13 +87,13 @@
 <main id="main" class="chk">
   <div class="wrap">
     <h1>Is this job <mark>real?</mark></h1>
-    <p class="sub">Paste a job post, a WhatsApp or Telegram message, or an email from a "recruiter". Propelo shows the warning signs scams use, with the exact words that triggered each one. It's free, needs no sign-up, and runs in your browser: nothing you paste leaves this page.</p>
+    <p class="sub">Paste a job post, a WhatsApp or Telegram message, or a "recruiter" email. Propelo points out the warning signs and quotes the words behind each one. Free, no sign-up, and nothing you paste leaves this page.</p>
 
     <div class="chk-grid">
       <div>
         <form class="chk-box" id="chk-form" novalidate>
           <label for="chk-text">The job post or message</label>
-          <textarea id="chk-text" placeholder="Paste the whole message here, including any links, phone numbers or email addresses." required></textarea>
+          <textarea id="chk-text" placeholder="Paste the whole message, with any links, phone numbers and email addresses" required></textarea>
           <label for="chk-link" style="margin-top:16px">Link to apply <small>(optional)</small></label>
           <input id="chk-link" type="url" inputmode="url" placeholder="https://">
           <div class="chk-row"><button class="btn" type="submit">Check it<svg><use href="#i-right"/></svg></button><span class="note">Works for any role, in any country.</span></div>
@@ -102,7 +101,6 @@
         <div class="res" id="chk-res" hidden role="status" aria-live="polite"></div>
       </div>
       <aside>
-        <img class="peep peep-scam" src="assets/peeps/scam-check.svg" alt="" width="759" height="1179">
         <div class="tips">
           <h2>Before you reply to any offer</h2>
           <ol>
@@ -122,7 +120,7 @@
         </div>
         <div class="chk-cta">
           <h2>Check every job automatically</h2>
-          <p>Propelo checks each role it finds and each job you add, tells you how well you fit, and writes a resume and cover letter from only what's true about you.</p>
+          <p>Propelo checks every role it finds and every job you add, scores your fit, and writes your resume and cover letter from only what's true.</p>
           <a class="btn sm" data-app="/signup" href="https://app.propelo.org/signup">Start free<svg><use href="#i-right"/></svg></a>
         </div>
       </aside>
@@ -132,8 +130,8 @@
 
 <footer>
   <div class="wrap fgrid">
-    <div><a class="brand" href="./">propelo<i></i></a><p>Fresh roles from company career pages, honest checks, and applications built only from your real experience. For jobs abroad, MIT licensed.</p></div>
-    <div><h4>Product</h4><ul><li><a href="jobs.html">Job board</a></li><li><a href="./#product">Dashboard</a></li><li><a href="./#app">App</a></li><li><a href="./#guarantees">Guarantees</a></li><li><a href="./#pricing">Pricing</a></li></ul></div>
+    <div><a class="brand" href="./">propelo<i></i></a><p>Jobs abroad from company career pages, checked with quotes, and applications built only from your real experience. MIT licensed.</p></div>
+    <div><h4>Product</h4><ul><li><a href="jobs.html">Job board</a></li><li><a href="./#product">Dashboard</a></li><li><a href="./#app">App</a></li><li><a href="./#guarantees">Guarantee</a></li><li><a href="./#pricing">Pricing</a></li></ul></div>
     <div><h4>Free tools</h4><ul><li><a href="visa-jobs.html">Visa sponsor jobs</a></li><li><a href="sponsor-check.html">Sponsor check</a></li><li><a href="check.html">Scam check</a></li></ul></div>
     <div><h4>Developers</h4><ul><li><a href="docs.html">Docs</a></li><li><a href="https://github.com/VishStack01/Propelo">GitHub</a></li><li><a href="demo/">Demo</a></li><li><a href="feed.xml">RSS feed</a></li></ul></div>
     <div><h4>Legal</h4><ul><li><a data-app="/terms" href="https://app.propelo.org/terms">Terms</a></li><li><a data-app="/privacy" href="https://app.propelo.org/privacy">Privacy</a></li><li><a data-app="/refunds" href="https://app.propelo.org/refunds">Refunds</a></li></ul></div>
