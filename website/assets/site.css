@@ -501,10 +501,13 @@ footer{margin-top:128px;border-top:1px solid var(--line)}
 @media (min-width:1081px) and (max-width:1240px){.hero-split{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:56px}.peep-hero{left:-44px}}
 
 /* Closing card: two people sitting on its top edge */
-.ledge{position:relative}
+/* Both drawings come from the same Open Peeps scale, so her height is his times 2115/2325. Each sits with
+   its seat on the card's top edge: his seat is 36% up from the bottom of his drawing (one leg hangs over), hers
+   13.4% (her shoes rest just over the edge). She sits right beside him: his drawing is .617 of its height wide. */
+.ledge{position:relative;--hc:clamp(150px,16.5vw,236px);--hk:calc(var(--hc) * .91)}
 .ledge .peep{z-index:2}
-.sit-knees{--h:clamp(132px,14vw,200px);height:var(--h);right:calc(9% + var(--h) * 1.02);bottom:calc(100% - 5px)}
-.sit-crossed{--h:clamp(150px,16.5vw,236px);height:var(--h);right:9%;bottom:calc(100% - var(--h) * .36)}
+.sit-knees{height:var(--hk);right:calc(9% + var(--hc) * .617 - var(--hc) * .02);bottom:calc(100% - var(--hk) * .134)}
+.sit-crossed{height:var(--hc);right:9%;bottom:calc(100% - var(--hc) * .36)}
 
 @media (max-width:1080px){
   .peep-hero{left:20px;bottom:20px;height:240px}
