@@ -1,6 +1,6 @@
 # Propelo go-live checklist
 
-Updated 25 November 2026. Pull requests 16 and 17 are merged and live: the people on the website and app, dollar-only plans for the US, UK, Ireland and the Netherlands, and the 90-day passes. Checkout stays off until step 4, because your Dodo account has no products yet. What is left needs your accounts, so only you can do it, in this order.
+Updated 26 November 2026. Pull requests 16 to 27 are merged into `main`: the people on the website and app, dollar-only plans for the US, UK, Ireland and the Netherlands, the 90-day passes, the Visa-Clock, part-time hours, plain-words drafts and Word resumes, the extension for Workday-style forms, permit pay floors and languages, warm paths, the resume defence drill, and "What hiring you takes". Checkout stays off until step 4, because your Dodo account has no products yet. What is left needs your accounts, so only you can do it, in this order.
 
 Every value below goes into Render, on the `propelo` service, under **Environment**. Never paste a key or password into a chat, an email or the repository.
 
@@ -118,3 +118,6 @@ If something is wrong, revert the merge on `main` and redeploy. Nothing in this 
 - Roles outside the US and India are thin for some job titles. That is feed coverage, not a bug.
 - The Job Guarantee is retired. Its code stays, off; turning it on again needs its terms back on `/terms`.
 - The margin figures assume members use half their AI allowance. Replace the assumption with real usage after the first month.
+- Pay is checked against the UK Skilled Worker floors and the Irish and Dutch permit minimums, but not yet against each UK occupation's going rate or US prevailing wage levels. Those need occupation codes and large official tables.
+- Oleeo (UK graduate schemes) and NHS Jobs are not read yet: neither publishes a feed that could be checked from here.
+- The fees and dates in "What hiring you takes" were checked on 25 November 2026. They change: the UK in April, the Netherlands in January, Ireland with each remuneration review, the US each cap season. Edit `propelo/data/sponsor_brief.json` and run `python3 scripts/sync_sponsor_brief.py`.

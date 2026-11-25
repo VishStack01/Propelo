@@ -1,0 +1,442 @@
+{
+  "_about": "What hiring someone on a given visa takes from the employer, for the role's country: what to do, what it costs, how long it takes, each with its official source. Read by propelo/sponsorbrief.py; scripts/sync_sponsor_brief.py copies it into the dashboard. {until} becomes ' until <date>' from the member's Visa-Clock dates, or nothing. Every figure was checked on the date below; check them again when a fee year starts (UK April, NL January, IE March, US each cap season).",
+  "checked": "2026-11-25",
+  "intro": "Hi {name},\n\nThanks for {context}. As sponsorship can be a question, here is what hiring me would involve, from the official sources:",
+  "outro": "Checked {checked}. Happy to talk it through.\n\n{me}",
+  "context": {
+    "found": "looking at my application",
+    "ready": "looking at my application",
+    "approved": "looking at my application",
+    "applied": "looking at my application",
+    "assessment": "the assessment",
+    "screen": "the call",
+    "interview": "the interview",
+    "offer": "the offer"
+  },
+  "briefs": [
+    {
+      "id": "gb-student",
+      "status": [
+        "uk-student"
+      ],
+      "country": "GB",
+      "headline": "A switch from my Student visa to a Skilled Worker visa, with no Immigration Skills Charge.",
+      "points": [
+        "You need a sponsor licence. If you don't hold one yet, the fee is £611 for a small sponsor or £1,682 for a large one.",
+        "You assign me a certificate of sponsorship, which costs £525.",
+        "Because I switch from a Student visa, you pay no Immigration Skills Charge. It is otherwise £1,320 for the first year, or £480 for a small or charitable sponsor.",
+        "As a new entrant, the lower salary rate applies: at least £33,400 a year, and at least 70% of the job's going rate.",
+        "I apply from inside the UK once my course is complete, or earlier if the job starts after my course ends, up to 3 months before the start date. The usual wait for a decision is 8 weeks."
+      ],
+      "sources": [
+        [
+          "GOV.UK: Immigration Skills Charge",
+          "https://www.gov.uk/uk-visa-sponsorship-employers/immigration-skills-charge"
+        ],
+        [
+          "GOV.UK: certificates of sponsorship",
+          "https://www.gov.uk/uk-visa-sponsorship-employers/certificates-of-sponsorship"
+        ],
+        [
+          "GOV.UK: when you can be paid less",
+          "https://www.gov.uk/skilled-worker-visa/when-you-can-be-paid-less"
+        ],
+        [
+          "GOV.UK: Skilled Worker visa",
+          "https://www.gov.uk/skilled-worker-visa"
+        ],
+        [
+          "GOV.UK: switch to a Skilled Worker visa",
+          "https://www.gov.uk/skilled-worker-visa/switch-to-this-visa"
+        ]
+      ]
+    },
+    {
+      "id": "gb-graduate",
+      "status": [
+        "uk-graduate"
+      ],
+      "country": "GB",
+      "headline": "Nothing now: my Graduate visa lets me work for you without sponsorship{until}.",
+      "points": [
+        "My Graduate visa lets me work for any employer{until}. You don't need a sponsor licence to hire me now.",
+        "To keep me after that, you would sponsor a Skilled Worker visa: a certificate of sponsorship (£525) and the Immigration Skills Charge (£1,320 for the first year, or £480 for a small or charitable sponsor), with a sponsor licence if you don't hold one (£611 small, £1,682 large).",
+        "As a new entrant, the lower salary rate applies: at least £33,400 a year, and at least 70% of the job's going rate.",
+        "I would switch from inside the UK. The usual wait for a decision is 8 weeks."
+      ],
+      "sources": [
+        [
+          "GOV.UK: Graduate visa",
+          "https://www.gov.uk/graduate-visa"
+        ],
+        [
+          "GOV.UK: Immigration Skills Charge",
+          "https://www.gov.uk/uk-visa-sponsorship-employers/immigration-skills-charge"
+        ],
+        [
+          "GOV.UK: certificates of sponsorship",
+          "https://www.gov.uk/uk-visa-sponsorship-employers/certificates-of-sponsorship"
+        ],
+        [
+          "GOV.UK: when you can be paid less",
+          "https://www.gov.uk/skilled-worker-visa/when-you-can-be-paid-less"
+        ],
+        [
+          "GOV.UK: Skilled Worker visa",
+          "https://www.gov.uk/skilled-worker-visa"
+        ]
+      ]
+    },
+    {
+      "id": "gb-skilled",
+      "status": [
+        "uk-skilled"
+      ],
+      "country": "GB",
+      "headline": "A change of sponsor: a new certificate of sponsorship and an updated Skilled Worker visa.",
+      "points": [
+        "You assign me a new certificate of sponsorship (£525) and pay the Immigration Skills Charge for its period: £1,320 for the first year, or £480 for a small or charitable sponsor.",
+        "You need a sponsor licence. If you don't hold one yet, the fee is £611 for a small sponsor or £1,682 for a large one.",
+        "I apply from inside the UK, up to 3 months before the start date. The usual wait for a decision is 8 weeks."
+      ],
+      "sources": [
+        [
+          "GOV.UK: certificates of sponsorship",
+          "https://www.gov.uk/uk-visa-sponsorship-employers/certificates-of-sponsorship"
+        ],
+        [
+          "GOV.UK: Immigration Skills Charge",
+          "https://www.gov.uk/uk-visa-sponsorship-employers/immigration-skills-charge"
+        ],
+        [
+          "GOV.UK: Skilled Worker visa",
+          "https://www.gov.uk/skilled-worker-visa"
+        ]
+      ]
+    },
+    {
+      "id": "ie-stamp2",
+      "status": [
+        "ie-stamp2"
+      ],
+      "country": "IE",
+      "headline": "No employment permit for part-time work now, and none for a full-time start on Stamp 1G after I graduate.",
+      "points": [
+        "On Stamp 2 I can work up to 20 hours a week, and up to 40 from June to September and from 15 December to 15 January, with no employment permit.",
+        "After my results I can move to Stamp 1G, which lets me work full-time for any employer with no employment permit for 12 months after a level 8 degree, or up to 24 months after level 9.",
+        "To keep me longer, a Critical Skills Employment Permit costs €1,000 for up to 24 months. You or I can apply, the job offer must be for at least 2 years, and there is no labour market needs test."
+      ],
+      "sources": [
+        [
+          "Workplace Relations Commission: Stamp 2 working hours",
+          "https://workplacerelations.ie/en/news-media/workplace_relations_notices/changes_to_employment_entitlements_of_non-eea_students_holding_immigration_stamp_2.html"
+        ],
+        [
+          "Irish Immigration: Third Level Graduate Programme",
+          "https://www.irishimmigration.ie/third-level-graduate-programme/"
+        ],
+        [
+          "Department of Enterprise: Critical Skills Employment Permit",
+          "https://enterprise.gov.ie/en/what-we-do/workplace-and-skills/employment-permits/permit-types/critical-skills-employment-permit"
+        ],
+        [
+          "Department of Enterprise: permit fees",
+          "https://enterprise.gov.ie/en/What-We-Do/Workplace-and-Skills/Employment-Permits/Fees/"
+        ]
+      ]
+    },
+    {
+      "id": "ie-stamp1g",
+      "status": [
+        "ie-stamp1g"
+      ],
+      "country": "IE",
+      "headline": "Nothing now: on Stamp 1G I can work full-time for you with no employment permit{until}.",
+      "points": [
+        "Stamp 1G lets me work full-time for any employer with no employment permit{until}.",
+        "To keep me after that, a Critical Skills Employment Permit costs €1,000 for up to 24 months. You or I can apply, the job offer must be for at least 2 years, and there is no labour market needs test.",
+        "The salary must be at least €40,904 a year, or €36,848 for a recent graduate (minimums from 1 March 2026).",
+        "On 20 November 2026 the Department was processing Critical Skills applications received on 23 October 2026."
+      ],
+      "sources": [
+        [
+          "Irish Immigration: Third Level Graduate Programme",
+          "https://www.irishimmigration.ie/third-level-graduate-programme/"
+        ],
+        [
+          "Department of Enterprise: Critical Skills Employment Permit",
+          "https://enterprise.gov.ie/en/what-we-do/workplace-and-skills/employment-permits/permit-types/critical-skills-employment-permit"
+        ],
+        [
+          "Department of Enterprise: permit fees",
+          "https://enterprise.gov.ie/en/What-We-Do/Workplace-and-Skills/Employment-Permits/Fees/"
+        ],
+        [
+          "Department of Enterprise: processing dates",
+          "https://enterprise.gov.ie/en/what-we-do/workplace-and-skills/employment-permits/current-application-processing-dates"
+        ]
+      ]
+    },
+    {
+      "id": "nl-study",
+      "status": [
+        "nl-study"
+      ],
+      "country": "NL",
+      "headline": "After I graduate, the orientation year lets me work for you with no work permit.",
+      "points": [
+        "While I study, part-time work needs a work permit (TWV) from you.",
+        "After I graduate I can apply for the orientation year (zoekjaar), which lets me work for any employer for one year with no work permit.",
+        "To keep me after that, you would need to be an IND recognised sponsor and apply for a highly skilled migrant permit (€423). After the orientation year the reduced salary criterion applies: at least €3,122 gross a month, without holiday pay (2026)."
+      ],
+      "sources": [
+        [
+          "IND: orientation year",
+          "https://ind.nl/en/residence-permits/work/residence-permit-for-orientation-year"
+        ],
+        [
+          "IND: fees",
+          "https://ind.nl/en/fees-costs-of-an-application"
+        ],
+        [
+          "IND: fees and required amounts for 2026",
+          "https://ind.nl/en/news/fees-and-required-amounts-for-2026-known"
+        ]
+      ]
+    },
+    {
+      "id": "nl-zoekjaar",
+      "status": [
+        "nl-zoekjaar"
+      ],
+      "country": "NL",
+      "headline": "Nothing now: in my orientation year I can work for you with no work permit{until}.",
+      "points": [
+        "My orientation year lets me work for any employer with no work permit{until}.",
+        "To keep me after that, you need to be an IND recognised sponsor (€5,080, or €2,539 with no more than 50 staff) and apply for a highly skilled migrant permit for me (€423).",
+        "After the orientation year the reduced salary criterion applies: at least €3,122 gross a month, without holiday pay (2026).",
+        "With a complete application from a recognised sponsor, the IND aims to decide within 2 weeks."
+      ],
+      "sources": [
+        [
+          "IND: orientation year",
+          "https://ind.nl/en/residence-permits/work/residence-permit-for-orientation-year"
+        ],
+        [
+          "IND: fees",
+          "https://ind.nl/en/fees-costs-of-an-application"
+        ],
+        [
+          "IND: fees and required amounts for 2026",
+          "https://ind.nl/en/news/fees-and-required-amounts-for-2026-known"
+        ],
+        [
+          "IND: decision periods",
+          "https://ind.nl/en/after-your-application/decision-periods"
+        ]
+      ]
+    },
+    {
+      "id": "us-student",
+      "status": [
+        "us-f1",
+        "us-cpt"
+      ],
+      "country": "US",
+      "headline": "No petition or fee from you: CPT while I study, then OPT after I graduate.",
+      "points": [
+        "While I study, I can work for you under CPT, which my school authorises for a named employer and dates. There is no petition or government fee for you.",
+        "After I graduate, OPT is my own work authorisation for up to 12 months. If my degree is on the STEM list, it can be extended by 24 months when you are enrolled in E-Verify and sign a training plan with me on Form I-983."
+      ],
+      "sources": [
+        [
+          "ICE: F-1 student employment",
+          "https://www.ice.gov/sevis/employment"
+        ],
+        [
+          "USCIS: OPT for F-1 students",
+          "https://www.uscis.gov/working-in-the-united-states/students-and-exchange-visitors/optional-practical-training-opt-for-f-1-students"
+        ],
+        [
+          "Study in the States: employers and the Form I-983",
+          "https://studyinthestates.dhs.gov/stem-opt-hub/for-employers/employers-and-the-form-i-983"
+        ]
+      ]
+    },
+    {
+      "id": "us-opt",
+      "status": [
+        "us-opt"
+      ],
+      "country": "US",
+      "headline": "Nothing now: OPT is my own work authorisation{until}.",
+      "points": [
+        "OPT is my own work authorisation (an EAD card){until}. There is no petition or government fee for you.",
+        "If my degree is on the STEM list, OPT can be extended by 24 months. You need to be enrolled in E-Verify and sign a training plan with me on Form I-983.",
+        "For longer, H-1B registration opens each March and costs $215. Selection now favours higher pay.",
+        "The $100,000 H-1B payment from the September 2025 proclamation is not being collected: federal courts blocked it in June and September 2026, and the government is appealing. USCIS said in October 2025 that it does not apply to an approved change of status inside the US."
+      ],
+      "sources": [
+        [
+          "USCIS: OPT for F-1 students",
+          "https://www.uscis.gov/working-in-the-united-states/students-and-exchange-visitors/optional-practical-training-opt-for-f-1-students"
+        ],
+        [
+          "Study in the States: employers and the Form I-983",
+          "https://studyinthestates.dhs.gov/stem-opt-hub/for-employers/employers-and-the-form-i-983"
+        ],
+        [
+          "USCIS: FY 2027 H-1B registration",
+          "https://content.govdelivery.com/accounts/USDHSCIS/bulletins/406da02"
+        ],
+        [
+          "USCIS: H-1B specialty occupations",
+          "https://www.uscis.gov/working-in-the-united-states/h-1b-specialty-occupations"
+        ]
+      ]
+    },
+    {
+      "id": "us-stem-opt",
+      "status": [
+        "us-stem-opt"
+      ],
+      "country": "US",
+      "headline": "E-Verify and a training plan, with no government fee.",
+      "points": [
+        "On the STEM OPT extension{until}, you need to be enrolled in E-Verify and sign a training plan with me on Form I-983.",
+        "The job must be at least 20 hours a week, with pay comparable to similar US workers, and you tell my school about material changes.",
+        "For longer, H-1B registration opens each March and costs $215. Selection now favours higher pay.",
+        "The $100,000 H-1B payment from the September 2025 proclamation is not being collected: federal courts blocked it in June and September 2026, and the government is appealing. USCIS said in October 2025 that it does not apply to an approved change of status inside the US."
+      ],
+      "sources": [
+        [
+          "Study in the States: employers and the Form I-983",
+          "https://studyinthestates.dhs.gov/stem-opt-hub/for-employers/employers-and-the-form-i-983"
+        ],
+        [
+          "USCIS: OPT for F-1 students",
+          "https://www.uscis.gov/working-in-the-united-states/students-and-exchange-visitors/optional-practical-training-opt-for-f-1-students"
+        ],
+        [
+          "USCIS: FY 2027 H-1B registration",
+          "https://content.govdelivery.com/accounts/USDHSCIS/bulletins/406da02"
+        ],
+        [
+          "USCIS: H-1B specialty occupations",
+          "https://www.uscis.gov/working-in-the-united-states/h-1b-specialty-occupations"
+        ]
+      ]
+    },
+    {
+      "id": "us-h1b",
+      "status": [
+        "us-h1b"
+      ],
+      "country": "US",
+      "headline": "A change of employer: you file a new H-1B petition for me.",
+      "points": [
+        "I already hold H-1B status{until}. To hire me, you file a new H-1B petition for me.",
+        "USCIS said in October 2025 that the $100,000 payment does not apply to an approved change of employer inside the US, and federal courts have blocked the payment since June 2026."
+      ],
+      "sources": [
+        [
+          "USCIS: H-1B specialty occupations",
+          "https://www.uscis.gov/working-in-the-united-states/h-1b-specialty-occupations"
+        ]
+      ]
+    }
+  ],
+  "abroad": {
+    "GB": {
+      "id": "gb-abroad",
+      "country": "GB",
+      "headline": "A Skilled Worker visa: a certificate of sponsorship and the Immigration Skills Charge.",
+      "points": [
+        "You need a sponsor licence. If you don't hold one yet, the fee is £611 for a small sponsor or £1,682 for a large one.",
+        "You assign me a certificate of sponsorship (£525) and pay the Immigration Skills Charge: £1,320 for the first year and £660 for each further 6 months, or £480 and £240 for a small or charitable sponsor.",
+        "I apply from outside the UK, up to 3 months before the start date. The usual wait for a decision is 3 weeks."
+      ],
+      "sources": [
+        [
+          "GOV.UK: certificates of sponsorship",
+          "https://www.gov.uk/uk-visa-sponsorship-employers/certificates-of-sponsorship"
+        ],
+        [
+          "GOV.UK: Immigration Skills Charge",
+          "https://www.gov.uk/uk-visa-sponsorship-employers/immigration-skills-charge"
+        ],
+        [
+          "GOV.UK: Skilled Worker visa",
+          "https://www.gov.uk/skilled-worker-visa"
+        ]
+      ]
+    },
+    "IE": {
+      "id": "ie-abroad",
+      "country": "IE",
+      "headline": "A Critical Skills Employment Permit: €1,000, with no labour market needs test.",
+      "points": [
+        "A Critical Skills Employment Permit costs €1,000 for up to 24 months. You or I can apply, the job offer must be for at least 2 years, and there is no labour market needs test.",
+        "The salary must be at least €40,904 a year, or €36,848 for a recent graduate (minimums from 1 March 2026).",
+        "On 20 November 2026 the Department was processing Critical Skills applications received on 23 October 2026."
+      ],
+      "sources": [
+        [
+          "Department of Enterprise: Critical Skills Employment Permit",
+          "https://enterprise.gov.ie/en/what-we-do/workplace-and-skills/employment-permits/permit-types/critical-skills-employment-permit"
+        ],
+        [
+          "Department of Enterprise: permit fees",
+          "https://enterprise.gov.ie/en/What-We-Do/Workplace-and-Skills/Employment-Permits/Fees/"
+        ],
+        [
+          "Department of Enterprise: processing dates",
+          "https://enterprise.gov.ie/en/what-we-do/workplace-and-skills/employment-permits/current-application-processing-dates"
+        ]
+      ]
+    },
+    "NL": {
+      "id": "nl-abroad",
+      "country": "NL",
+      "headline": "A highly skilled migrant permit through an IND recognised sponsor.",
+      "points": [
+        "You need to be an IND recognised sponsor (€5,080, or €2,539 with no more than 50 staff) and apply for a highly skilled migrant permit for me (€423).",
+        "The salary must be at least €5,942 gross a month from age 30, or €4,357 under 30, without holiday pay (2026).",
+        "With a complete application from a recognised sponsor, the IND aims to decide within 2 weeks."
+      ],
+      "sources": [
+        [
+          "IND: fees",
+          "https://ind.nl/en/fees-costs-of-an-application"
+        ],
+        [
+          "IND: fees and required amounts for 2026",
+          "https://ind.nl/en/news/fees-and-required-amounts-for-2026-known"
+        ],
+        [
+          "IND: decision periods",
+          "https://ind.nl/en/after-your-application/decision-periods"
+        ]
+      ]
+    },
+    "US": {
+      "id": "us-abroad",
+      "country": "US",
+      "headline": "An H-1B: registration each March, then a petition if I'm selected.",
+      "points": [
+        "H-1B registration opens each March and costs $215. Selection now favours higher pay, and a petition follows if I'm selected.",
+        "The $100,000 payment for new H-1B workers outside the US, from the September 2025 proclamation, is not being collected: federal courts blocked it in June and September 2026, and the government is appealing. Check the current position before filing."
+      ],
+      "sources": [
+        [
+          "USCIS: FY 2027 H-1B registration",
+          "https://content.govdelivery.com/accounts/USDHSCIS/bulletins/406da02"
+        ],
+        [
+          "USCIS: H-1B specialty occupations",
+          "https://www.uscis.gov/working-in-the-united-states/h-1b-specialty-occupations"
+        ]
+      ]
+    }
+  }
+}
