@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Can this employer sponsor my visa? Free sponsor check for the UK, US, Canada, Ireland and the Netherlands | Propelo</title>
-<meta name="description" content="Type a company name and see if it is on an official sponsor list: the UK register of licensed sponsors, US H-1B filings, Canada's positive LMIA employers, Irish employment permits or the Dutch register. Free, no sign-up.">
+<title>Can this employer sponsor my visa? Free sponsor check for the UK, US, Ireland and the Netherlands | Propelo</title>
+<meta name="description" content="Type a company name and see if it is on an official sponsor list: the UK register of licensed sponsors, US H-1B filings, Irish employment permits or the Dutch register. Free, no sign-up.">
 <meta property="og:title" content="Can this employer sponsor my visa? Free sponsor check">
-<meta property="og:description" content="Search official sponsor lists for the UK, US, Canada, Ireland and the Netherlands by company name. Free, no sign-up.">
+<meta property="og:description" content="Search official sponsor lists for the UK, US, Ireland and the Netherlands by company name. Free, no sign-up.">
 <meta property="og:image" content="assets/og.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="propelo-app" content="https://app.propelo.org">
@@ -92,13 +92,13 @@
 <main id="main" class="chk">
   <div class="wrap">
     <h1>Can this employer <mark>sponsor you?</mark></h1>
-    <p class="sub">Type a company name to search the lists governments publish: licensed sponsors in the UK and the Netherlands, and recent sponsors in the US, Canada and Ireland. Free, no sign-up, and updated when each government updates its list.</p>
+    <p class="sub">Type a company name to search the lists governments publish: licensed sponsors in the UK and the Netherlands, and recent sponsors in the US and Ireland. Free, no sign-up, and updated when each government updates its list.</p>
 
     <div class="chk-grid">
       <div>
         <form class="chk-box" id="sp-form" novalidate>
           <label>Country</label>
-          <div class="sp-tabs" role="group" aria-label="Country"><button type="button" data-cc="uk" aria-pressed="true">United Kingdom</button><button type="button" data-cc="us" aria-pressed="false">United States</button><button type="button" data-cc="ca" aria-pressed="false">Canada</button><button type="button" data-cc="ie" aria-pressed="false">Ireland</button><button type="button" data-cc="nl" aria-pressed="false">Netherlands</button></div>
+          <div class="sp-tabs" role="group" aria-label="Country"><button type="button" data-cc="uk" aria-pressed="true">United Kingdom</button><button type="button" data-cc="us" aria-pressed="false">United States</button><button type="button" data-cc="ie" aria-pressed="false">Ireland</button><button type="button" data-cc="nl" aria-pressed="false">Netherlands</button></div>
           <label for="sp-q" style="margin-top:16px">Company name</label>
           <input id="sp-q" type="search" autocomplete="off" placeholder="For example: Monzo, Deloitte, ASML" required>
           <div class="chk-row"><button class="btn" type="submit">Check<svg><use href="#i-right"/></svg></button><span class="note" id="sp-note">Loading the register…</span></div>
@@ -111,12 +111,12 @@
         <div class="tips">
           <h2>What a listing means</h2>
           <ol>
-            <li><b>Listed means able, not promised.</b> In the UK and the Netherlands the employer holds a licence. In the US, Canada and Ireland it has sponsored recently. Each role is still the employer's call, so ask before you apply.</li>
-            <li><b>Not listed depends on the country.</b> In the UK and the Netherlands, an employer off the register can't sponsor that route today. In the US, Canada and Ireland it only means no recent record. On a UK Graduate visa or US OPT you can work without a sponsor for a while.</li>
+            <li><b>Listed means able, not promised.</b> In the UK and the Netherlands the employer holds a licence. In the US and Ireland it has sponsored recently. Each role is still the employer's call, so ask before you apply.</li>
+            <li><b>Not listed depends on the country.</b> In the UK and the Netherlands, an employer off the register can't sponsor that route today. In the US and Ireland it only means no recent record. On a UK Graduate visa or US OPT you can work without a sponsor for a while.</li>
             <li><b>Names differ.</b> Registers use legal names, like "Monzo Bank Ltd". Search the shortest form of the name and check the town.</li>
             <li><b>Pay matters too.</b> UK, Irish and Dutch work visas each set a salary floor. Propelo checks it on every role that states pay.</li>
           </ol>
-          <p class="help">Sources: <a href="https://www.gov.uk/government/publications/register-of-licensed-sponsors-workers" rel="noopener">GOV.UK register of licensed sponsors</a>, <a href="https://www.dol.gov/agencies/eta/foreign-labor/performance" rel="noopener">US Department of Labor LCA data</a>, <a href="https://open.canada.ca/data/en/dataset/90fed587-1364-4f33-a9ee-208181dc0b97" rel="noopener">Canada's positive LMIA employers</a> (Open Government Licence - Canada), <a href="https://enterprise.gov.ie/en/what-we-do/workplace-and-skills/employment-permits/statistics/" rel="noopener">Irish employment permit statistics</a> and the <a href="https://ind.nl/en/public-register-recognised-sponsors" rel="noopener">IND public register</a>. Australia, New Zealand, Singapore, Sweden and Germany publish no list we can search, so for those Propelo reads what each posting says. This is information, not immigration advice.</p>
+          <p class="help">Sources: <a href="https://www.gov.uk/government/publications/register-of-licensed-sponsors-workers" rel="noopener">GOV.UK register of licensed sponsors</a>, <a href="https://www.dol.gov/agencies/eta/foreign-labor/performance" rel="noopener">US Department of Labor LCA data</a>, <a href="https://enterprise.gov.ie/en/what-we-do/workplace-and-skills/employment-permits/statistics/" rel="noopener">Irish employment permit statistics</a> and the <a href="https://ind.nl/en/public-register-recognised-sponsors" rel="noopener">IND public register</a>. This is information, not immigration advice.</p>
         </div>
         <div class="chk-cta">
           <h2>See roles at employers that can sponsor</h2>
@@ -147,7 +147,6 @@
     uk: {co: 'GB', list: 'UK register of licensed sponsors', licence: true},
     nl: {co: 'NL', list: 'Dutch register of recognised sponsors', licence: true},
     us: {co: 'US', list: 'latest US Department of Labor H-1B data', unit: 'certified H-1B applications'},
-    ca: {co: 'CA', list: "Canada's list of employers with a positive LMIA in the last year", unit: 'positions approved'},
     ie: {co: 'IE', list: "Ireland's list of employment permits issued this year", unit: 'permits issued'}
   };
   var data = {}, cc = 'uk';

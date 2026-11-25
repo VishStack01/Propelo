@@ -91,6 +91,27 @@ def test_site_stats_for_the_home_page(tmp_path):
     (feed / "summary.json").write_text(json.dumps(s))
     site.build(feed, tmp_path / "out", log=lambda *a: None)
     st = json.loads((tmp_path / "out" / "data" / "stats.json").read_text())
-    assert st["openings"] == 1000 and st["companies"] == 1396 and st["boards"] == 306 and st["relisted"] == 12
+    # The roles the board lists and the companies they're at, so the home page and the board agree.
+    assert st["openings"] == 10 and st["companies"] == 10 and st["tracked"] == 1396 and st["boards"] == 306 and st["relisted"] == 12
     assert [b["label"] for b in st["byAts"]] == ["Workday career sites", "Greenhouse job boards", "Lever job boards", "Ashby job boards", "Workable and 1 more"]
     assert abs(sum(b["share"] for b in st["byAts"]) - 1) < 0.01
+
+
+def test_site_numbers_are_stamped_into_every_page_and_old_links_redirect(tmp_path):
+    feed, web = tmp_path / "feed", tmp_path / "web"
+    write_feed(feed, n=1200)
+    web.mkdir()
+    (web / "index.html").write_text('<html><head><title>x</title><meta name="propelo-app" content="https://app.example.org"></head><body>'
+                                    '<b data-stat="openings">32,776</b> roles at <b data-stat="companies">4,678</b> companies, '
+                                    '<span data-stat="date">31 October 2026</span><b data-stat="unknown">7</b></body></html>', encoding="utf-8")
+    (web / "docs.html").write_text('<p>Reads <span data-stat="boards">1,800</span> boards.</p>', encoding="utf-8")
+    site.build(feed, tmp_path / "out", website=web, log=lambda *a: None)
+    out = tmp_path / "out"
+    home = (out / "index.html").read_text(encoding="utf-8")
+    assert '<b data-stat="openings">1,200</b>' in home and '<b data-stat="companies">30</b>' in home
+    assert '<span data-stat="date">12 October 2026</span>' in home and '<b data-stat="unknown">7</b>' in home
+    assert '<span data-stat="boards">306</span>' in (out / "docs.html").read_text(encoding="utf-8")
+    assert "location.replace(\"check.html\"" in (out / "scam.html").read_text(encoding="utf-8")
+    terms = (out / "terms.html").read_text(encoding="utf-8")
+    assert 'url=https://app.example.org/terms' in terms and 'name="robots" content="noindex"' in terms
+    assert "./#pricing" in (out / "pricing.html").read_text(encoding="utf-8")

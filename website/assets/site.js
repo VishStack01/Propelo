@@ -1,6 +1,6 @@
 /* Propelo website behaviour.
    Motion: things enter once, the first time they scroll into view, with one easing curve.
-   The intro plays once per visit. Headlines arrive letter by letter, cards open from the bottom
+   Headlines arrive letter by letter, cards open from the bottom
    with a curved edge, bars fill and the step line follows the scroll. Nothing loops, and
    Reduce Motion shows every page at rest. */
 (function () {
@@ -46,7 +46,7 @@
   fetch("data/stats.json", { cache: "no-cache" }).then(function (r) { return r.ok ? r.json() : null; }).then(function (s) {
     if (!s || !s.openings) return;
     var date = s.feedAt ? new Date(s.feedAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "";
-    var vals = { openings: fmt(s.openings), companies: fmt(s.companies), boards: fmt(s.boards), relisted: fmt(s.relisted), date: date };
+    var vals = { openings: fmt(s.openings), companies: fmt(s.companies), boards: fmt(s.boards), relisted: fmt(s.relisted), systems: s.systems ? fmt(s.systems) : "", date: date };
     $$("[data-stat]").forEach(function (el) { var v = vals[el.getAttribute("data-stat")]; if (v) el.textContent = v; });
     (s.byAts || []).slice(0, 5).forEach(function (a, i) {
       var p = document.querySelector('[data-ats="' + i + '"]'), b = document.querySelector('[data-pct="' + i + '"]');
@@ -123,25 +123,8 @@
     });
   }
 
-  // Intro: once per visit; the hero headline starts as the panel lifts.
-  var intro = document.getElementById("intro"), seen = false;
-  try { seen = sessionStorage.getItem("propelo-intro") === "1"; sessionStorage.setItem("propelo-intro", "1"); } catch (e) {}
-  function startHero() { if (hero) show(hero); }
-  if (!intro || reduce || seen) { root.classList.add("no-intro"); startHero(); }
-  else {
-    var b = intro.querySelector("b");
-    b.innerHTML = b.textContent.split("").map(function (c, i) { return '<span style="transition-delay:' + (i * 45) + 'ms">' + c + "</span>"; }).join("");
-    requestAnimationFrame(function () { requestAnimationFrame(function () { intro.classList.add("show"); }); });
-    var finished = false;
-    var done = function () {
-      if (finished) return; finished = true;
-      intro.classList.add("leave");
-      setTimeout(startHero, 300);
-      setTimeout(function () { root.classList.add("no-intro"); }, 950);
-    };
-    var t = setTimeout(done, 1000);
-    intro.addEventListener("click", function () { clearTimeout(t); done(); });
-  }
+  // The hero headline starts right away: no splash screen in front of it.
+  if (hero) show(hero);
 
   // The nav gets its hairline once the page has scrolled; the step line follows the scroll.
   var nav = document.querySelector("nav.top"), steps = document.getElementById("steps"), ticking = false;

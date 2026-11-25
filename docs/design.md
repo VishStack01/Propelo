@@ -54,14 +54,14 @@ These rules cover the website, the job board, the dashboard and app, the sign-in
 
 One easing curve, `cubic-bezier(.16,1,.3,1)`, plus `cubic-bezier(.65,0,.35,1)` for the curved reveals. Nothing loops and nothing moves while you read it.
 
-- **Intro (website home):** the wordmark on pink, letter by letter, then the panel lifts away with a curved bottom edge. Once per visit; a click skips it.
 - **Headlines:** letters rise into place one after another; the hero headline settles from a slight tilt. The highlighter stroke draws in after the words.
 - **Curved reveals:** the hero panel, the dashboard preview, the terminal and the closing card open from the bottom with a rounded edge the first time they scroll into view.
-- **Entrances:** other blocks fade and rise 20 px, 70 ms apart. The principle notes arrive one by one, 70 ms apart; the people arrive just after the card they belong to; the source bars fill once; the step line under "How it works" follows the scroll.
+- **Entrances:** other blocks fade and rise 20 px, 70 ms apart. The principle notes arrive one by one, 70 ms apart; the source bars fill once; the step line under "How it works" follows the scroll.
 - **The dot grid** in the hero panel swells and takes colour near the cursor, and only draws while the cursor moves.
 - **Feedback:** a press scales to 0.98; a hover is a colour change or a lift of 2 px at most.
 - **In the app:** tabs change instantly; Home's best-fit card and tiles fade and rise once; sheets grow from their trigger.
-- **Reduce Motion** shows every page at rest, with no intro and no entrances.
+- **No splash screen.** The home page opens on its content; the hero headline starts at once.
+- **Reduce Motion** shows every page at rest, with no entrances.
 
 ## Navigation
 
