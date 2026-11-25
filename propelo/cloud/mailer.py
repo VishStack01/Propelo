@@ -3,13 +3,17 @@
 SMTP_URL forms:
   smtp://user:pass@host:587      STARTTLS (the usual submission port)
   smtps://user:pass@host:465     implicit TLS
+  resend://API_KEY               Resend's HTTPS API (no SMTP port needed; hosts like Render's free plan block SMTP ports)
   console://                     print to the log (development only)
 """
 
 from __future__ import annotations
 
+import json
 import logging
 import smtplib
+import urllib.error
+import urllib.request
 import ssl
 from email.message import EmailMessage
 from email.utils import make_msgid
@@ -37,6 +41,9 @@ class Mailer:
             OUTBOX.append({"to": to, "subject": subject, "text": text, "replyTo": msg["Reply-To"] or ""})
             log.warning("console mail (development only, not sent) to=%s subject=%r\n%s", to, subject, text)
             return
+        if u.scheme == "resend":
+            self._resend(unquote(u.netloc or u.path.lstrip("/")), to, subject, text)
+            return
         ctx = ssl.create_default_context()
         if u.scheme == "smtps":
             server = smtplib.SMTP_SSL(u.hostname, u.port or 465, context=ctx, timeout=20)
@@ -44,11 +51,31 @@ class Mailer:
             server = smtplib.SMTP(u.hostname, u.port or 587, timeout=20)
             server.starttls(context=ctx)
         else:
-            raise ValueError("SMTP_URL must start with smtp://, smtps:// or console://")
+            raise ValueError("SMTP_URL must start with smtp://, smtps://, resend:// or console://")
         with server:
             if u.username:
                 server.login(unquote(u.username), unquote(u.password or ""))
             server.send_message(msg)
+
+
+    RESEND_API = "https://api.resend.com/emails"
+
+    def _resend(self, key: str, to: str, subject: str, text: str) -> None:
+        body = {"from": self.mail_from, "to": [to], "subject": subject, "text": text}
+        if self.reply_to:
+            body["reply_to"] = self.reply_to
+        req = urllib.request.Request(self.RESEND_API, data=json.dumps(body).encode(), method="POST",
+                                     headers={"Authorization": "Bearer " + key, "Content-Type": "application/json", "User-Agent": "propelo-cloud"})
+        try:
+            with urllib.request.urlopen(req, timeout=20) as r:
+                r.read()
+        except urllib.error.HTTPError as e:
+            # Resend says why (a refused key, an unverified domain, a bad From address); the key itself is never logged.
+            try:
+                why = json.loads(e.read().decode() or "{}").get("message", "")
+            except (ValueError, OSError):
+                why = ""
+            raise RuntimeError(f"Resend refused the email ({e.code}): {why[:300]}") from None
 
 
 def verify_email(name: str, link: str) -> tuple[str, str]:

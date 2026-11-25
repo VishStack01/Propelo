@@ -403,3 +403,33 @@ def test_closed_roles_leave_the_shared_table_after_a_week(cloud):
                       "VALUES (?, 'Co', 'T', 'https://x.example/1', 's', '', '{}', '', 'r', 0, ?, ?, ?)",
                       (f"j{i}", now_iso(), now_iso(), now_iso(timedelta(days=-days))))
     assert cleanup(cloud.db)["jobs"] == 1
+
+
+def test_mail_through_resends_https_api(monkeypatch):
+    import io
+    import urllib.error
+    from propelo.cloud import mailer
+    sent = []
+
+    class Resp:
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def read(self): return b'{"id":"x"}'
+
+    def fake(req, timeout=0):
+        sent.append((req.full_url, req.headers.get("Authorization"), json.loads(req.data)))
+        return Resp()
+    monkeypatch.setattr(mailer.urllib.request, "urlopen", fake)
+    m = mailer.Mailer("resend://re_test123", "Propelo <hello@propelo.org>", "support@propelo.org")
+    m.send("asha@example.com", "Reset your password", "Link: https://app.example/reset")
+    url, auth, body = sent[0]
+    assert url == "https://api.resend.com/emails" and auth == "Bearer re_test123"
+    assert body == {"from": "Propelo <hello@propelo.org>", "to": ["asha@example.com"], "subject": "Reset your password",
+                    "text": "Link: https://app.example/reset", "reply_to": "support@propelo.org"}
+
+    def refuse(req, timeout=0):
+        raise urllib.error.HTTPError(req.full_url, 401, "Unauthorized", {}, io.BytesIO(b'{"message":"API key is invalid"}'))
+    monkeypatch.setattr(mailer.urllib.request, "urlopen", refuse)
+    with pytest.raises(RuntimeError) as e:
+        m.send("asha@example.com", "s", "t")
+    assert "401" in str(e.value) and "API key is invalid" in str(e.value) and "re_test123" not in str(e.value)

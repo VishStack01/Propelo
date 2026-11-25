@@ -14,7 +14,7 @@ Every value below goes into Render, on the `propelo` service, under **Environmen
 1. In Resend, open **Domains → propelo.org** and find each row still marked Pending. Last time it was `resend._domainkey`.
 2. At your DNS provider, check that row: type `TXT`, name exactly `resend._domainkey` (no `.propelo.org` on the end), and the whole value pasted with Resend's copy button.
 3. Press **Verify** in Resend and wait for **Verified**.
-4. Check that `SMTP_URL` is `smtps://resend:YOUR_KEY@smtp.resend.com:2465` and `MAIL_FROM` is `Propelo <hello@propelo.org>`.
+4. In Resend, **API keys → Create API key** with Sending access for propelo.org. In Render set `SMTP_URL` to `resend://` followed by that key (it sends over HTTPS, so Render's blocked SMTP ports don't matter) and `MAIL_FROM` to `Propelo <hello@propelo.org>`.
 5. On the "Check your inbox" page press **send it again**, confirm your email, and sign in as trypropelo@gmail.com. Turn on two-step sign-in in Settings, Account: it is required for the admin account.
 
 ## 2. Point app.propelo.org at the app
