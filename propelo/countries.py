@@ -155,6 +155,15 @@ _COUNTRY_WORDS = {n.lower() for names in list(NAMES.values()) + list(EXTRA_NAMES
 _ANY_STATE = re.compile(r"(?<![A-Za-z])(" + "|".join(re.escape(n) for n in US_STATES.values()) + r")(?![A-Za-z])", re.I)
 
 
+# Another country written out in full ("India", "Netherlands", "UK"), not a city that shares a name with one.
+# Names inside a US state's name ("New Mexico", "New Jersey", "Georgia") don't count.
+_STATE_WORDS = " ".join(n.lower() for n in US_STATES.values())
+_OTHER = [n for code, names in list(NAMES.items()) + list(EXTRA_NAMES.items()) if code != "US" for n in names
+          if not re.search(r"(?<![a-z])" + re.escape(n.lower()) + r"(?![a-z])", _STATE_WORDS)]
+_OTHER_COUNTRY = re.compile(r"(?<![A-Za-z])(" + "|".join(sorted((re.escape(n) for n in _OTHER if len(n) > 3), key=len, reverse=True)) + r")(?![A-Za-z])", re.I)
+_OTHER_SHORT = re.compile(r"(?<![A-Za-z])(" + "|".join(re.escape(n) for n in _OTHER if len(n) <= 3) + r")(?![A-Za-z])")
+
+
 def resolve(location: str) -> set[str]:
     """Countries a location is in, including the ones it doesn't name: Indian cities and states, US states
     ("Austin, TX"), Canadian provinces, Australian states and well-known cities. `named` is the strict
@@ -200,6 +209,8 @@ def _resolve_one(t: str) -> set[str]:
         # ", IN" after an Indian city is India, ", DE" after a German one Germany, ", WA" after Perth Western Australia.
         if st == "IN" and re.search(r"remote", t, re.I):
             return {"IN"}
+        if _OTHER_COUNTRY.search(t) or _OTHER_SHORT.search(t):  # "Chennai, TN, India", "Amstelveen, NH, Netherlands":
+            return out                                             # a region of the country the location names
         if not ((st == "IN" and india) or (st == "DE" and "DE" in out) or (st == "WA" and "AU" in out) or (st == "CA" and "CA" in out)):
             return {"US"}  # "Cambridge, MA", "Dublin, CA", "Birmingham, AL": the state settles it
     elif state:

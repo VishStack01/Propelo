@@ -106,5 +106,5 @@ def test_pay_tier_everywhere():
     kept = [d for _, d in res["kept"]]
     assert kept[0]["company"] == "Co2" and kept[0]["payTier"] == "20+"  # stated 20 LPA+ first within its region
     assert "payTier" not in kept[1] or kept[1]["payTier"] != "20+"
-    c = site.compact(records[1])
-    assert c["pt"] == "20+" and c["ph"] == 30
+    c = site.compact(records[1])  # 26-30 LPA: shown in lakhs, the top of the range a year in rupees
+    assert c["pt"] == "top" and c["pc"] == "INR" and c["pa"] == 3_000_000 and c["sal"] == "26–30 LPA"
