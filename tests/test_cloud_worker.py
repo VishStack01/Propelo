@@ -347,3 +347,59 @@ def test_a_long_skip_list_never_blocks_new_matches(cloud, tmp_path, monkeypatch)
     _ingest(cloud, tmp_path, near + [feed_record(1), feed_record(2), feed_record(3)], "2099-01-02T00:00:00Z")
     r = _match(cloud, a.uid)
     assert r["added"] == 2 and r["skipped"] == 0                                             # and new matches still arrive
+
+
+def test_the_shared_table_keeps_only_what_the_product_uses(cloud, tmp_path):
+    """Roles in the four countries and remote roles, as records; no posting text; a full table from before is
+    emptied once and refilled, and members' own roles are untouched."""
+    from propelo.cloud.ingest import ingest
+    uk = dict(feed_record(1), location="London, UK", workMode="hybrid", countries=["GB"])
+    uk["facts"] = dict(uk["facts"], loc="abroad")
+    india = dict(feed_record(2), location="Bengaluru, Karnataka, India", workMode="onsite", countries=["IN"])
+    india["facts"] = dict(india["facts"], loc="india")
+    canada = dict(feed_record(3), location="Toronto, ON", workMode="onsite", countries=["CA"])
+    canada["facts"] = dict(canada["facts"], loc="abroad")
+    remote = feed_record(4)
+    records = [uk, india, canada, remote] + [feed_record(i) for i in range(10, 20)]
+    a = cloud.user()
+    # A table as it was before: every role, with its posting text.
+    with cloud.db.tx() as c:
+        for r in records:
+            c.execute("INSERT INTO jobs(id, company, title, url, source, posted_at, record, text, rev, active, first_seen_at, last_seen_at) "
+                      "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)", (r["id"], r["company"], r["title"], r["url"], r["source"], r["postedAt"],
+                                                                     json.dumps(r), "x" * 5000, "old", r["postedAt"], r["postedAt"]))
+    a.put("/api/d/jobs/mine-1", json={"title": "Analyst", "company": "Acme", "stage": "applied"})
+    write_feed(tmp_path / "feed", records, generated="2099-01-01T00:00:00Z")
+    res = ingest(cloud.db, cloud.cfg.feed_url, log=lambda *_: None)
+    with cloud.db.tx() as c:
+        ids = {r["id"] for r in c.all("SELECT id FROM jobs")}
+        assert c.scalar("SELECT COUNT(*) AS n FROM jobs WHERE text <> ''") == 0
+    assert uk["id"] in ids and remote["id"] in ids and india["id"] not in ids and canada["id"] not in ids
+    assert res["records"] == 12 and res["closed"] == 0
+    assert a.get("/api/d/jobs/mine-1").json()["data"]["stage"] == "applied"
+    # Once slim, later feeds update in place.
+    write_feed(tmp_path / "feed", records, generated="2099-01-02T00:00:00Z")
+    assert ingest(cloud.db, cloud.cfg.feed_url, log=lambda *_: None)["changed"] == 0
+
+
+def test_matching_waits_while_the_shared_table_is_empty(cloud, tmp_path):
+    records = [feed_record(i) for i in range(5)]
+    _ingest(cloud, tmp_path, records, "2099-01-01T00:00:00Z")
+    a = cloud.user()
+    assert _match(cloud, a.uid)["added"] == 5
+    with cloud.db.tx() as c:
+        c.execute("DELETE FROM jobs")
+    res = _match(cloud, a.uid)
+    assert res.get("waiting") and res["closed"] == 0
+    assert all(d["data"]["stage"] == "found" for d in a.get("/api/c/jobs").json()["docs"])
+
+
+def test_closed_roles_leave_the_shared_table_after_a_week(cloud):
+    from propelo.cloud.db import now_iso
+    from propelo.cloud.worker import cleanup
+    with cloud.db.tx() as c:
+        for i, days in enumerate((3, 9)):
+            c.execute("INSERT INTO jobs(id, company, title, url, source, posted_at, record, text, rev, active, first_seen_at, last_seen_at, closed_at) "
+                      "VALUES (?, 'Co', 'T', 'https://x.example/1', 's', '', '{}', '', 'r', 0, ?, ?, ?)",
+                      (f"j{i}", now_iso(), now_iso(), now_iso(timedelta(days=-days))))
+    assert cleanup(cloud.db)["jobs"] == 1

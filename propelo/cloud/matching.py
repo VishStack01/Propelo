@@ -81,6 +81,9 @@ def match_user(db: Database, uid: str, now: datetime | None = None, log=print) -
         state = feed_state(c)
         ms = c.one("SELECT settings_hash, last_match_at, full_at, more FROM match_state WHERE user_id = ?", (uid,))
         inventory = c.scalar("SELECT COUNT(*) AS n FROM jobs WHERE active = 1")
+    if not inventory:  # the shared table is empty (being refilled): matching now would mark every listed role as closed
+        log(f"match {uid}: no roles in the inventory yet, skipped")
+        return {"added": 0, "skipped": 0, "closed": 0, "expired": 0, "inventory": 0, "full": False, "read": 0, "removed": 0, "waiting": True}
     settings = feed.settings_from_dashboard(sdata)
     shash = settings_hash(sdata)
     # Everything is read when the filters changed, when the last run had more fits than it could add,

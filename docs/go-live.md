@@ -99,6 +99,7 @@ If something is wrong, revert the merge on `main` and redeploy. Nothing in this 
 ## 8. Before you take real payments
 
 - Move the Render web service to a paid plan ($7 a month) so it doesn't sleep. A sleeping app makes the first visitor wait about 50 seconds.
+- Neon's free plan holds 1 GB. Propelo's shared role list now stays at a few hundred MB (it no longer stores posting text); the database filled up on 24 November before that change. Watch **Storage** in the Neon console.
 - Neon's free plan allows 100 compute hours a month per project. An always-on app keeps the database awake longer; watch usage in the Neon console and move to its paid plan if it gets close.
 - Have a lawyer read the guarantee terms (`/terms#guarantees`) and the other policies, and add the law that governs the terms. The note at the top of `propelo/cloud/static/legal.html` lists what to check.
 

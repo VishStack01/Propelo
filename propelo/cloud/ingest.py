@@ -3,6 +3,11 @@
 Fails closed: an empty, unreadable or suspiciously small feed changes nothing,
 so a bad scan can never wipe the inventory. A role is closed only when its
 company's board was read successfully and no longer lists it.
+
+The table keeps only what the hosted product uses: roles in the US, the UK, Ireland and the Netherlands, and
+remote roles, each as its feed record. The full posting text is not stored: nothing in the hosted app reads it
+(matching, the business feeds and the admin counts read the record), and it made up most of the database.
+A database that still holds posting text from before is emptied once and refilled from the feed (`slim`).
 """
 
 from __future__ import annotations
@@ -14,6 +19,7 @@ import tempfile
 import urllib.request
 from pathlib import Path
 
+from .. import countries
 from .db import Database, now_iso
 
 MAX_BYTES = 200 * 1024 * 1024
@@ -81,27 +87,32 @@ def _lines(path: Path | None):
         return
 
 
+CORE4 = {"US", "GB", "IE", "NL"}
+
+
 def _ok(r: dict) -> bool:
     return bool(r.get("id") and r.get("company") and r.get("title") and r.get("url") and "loc" in (r.get("facts") or {}))
 
 
-def _with_text(records: Path, texts: Path | None):
-    """(record, text) pairs. The scan writes both files in the same order, so they are read side by side;
-    if a feed's order ever differs, the texts are indexed instead."""
-    it = _lines(texts)
-    index: dict[str, str] | None = None
-    for r in _lines(records):
-        text = ""
-        if index is None:
-            t = next(it, None)
-            if t is not None and t.get("id") == r.get("id"):
-                text = t.get("text", "")
-            elif t is not None:  # out of step: fall back to an index of everything that's left
-                index = {t["id"]: t.get("text", "")} if t.get("id") else {}
-                index.update({x["id"]: x.get("text", "") for x in it if x.get("id")})
-        if index is not None:
-            text = index.get(r.get("id"), "")
-        yield r, text
+def wanted(r: dict) -> bool:
+    """A role the hosted product can match: in one of the four countries, or remote."""
+    if r.get("workMode") == "remote" or str((r.get("facts") or {}).get("loc", "")).startswith("remote"):
+        return True
+    return bool(countries.of_record(r) & CORE4)
+
+
+def slim(db: Database, log=print) -> bool:
+    """Empty a jobs table that still stores posting text, so the next read of the feed refills it small.
+    Emptying (not deleting row by row) gives the space back at once, which matters on a database at its size
+    limit. Members' own roles, applications and documents live in other tables and are not touched; matching
+    waits while the table is empty (matching.match_user). Returns True when it emptied the table."""
+    with db.tx() as c:
+        if not c.one("SELECT id FROM jobs WHERE text <> '' LIMIT 1"):
+            return False
+    with db.tx() as c:
+        c.execute("TRUNCATE jobs" if db.kind == "postgres" else "DELETE FROM jobs")
+    log("jobs table emptied to drop stored posting text; refilling from the feed")
+    return True
 
 
 def _summary(base: str) -> dict:
@@ -125,12 +136,14 @@ def ingest(db: Database, feed_url: str, log=print, force: bool = False) -> dict:
         return {"status": "unchanged", "generatedAt": summary["generatedAt"]}
     with tempfile.TemporaryDirectory(prefix="propelo-feed-") as tmp:
         rec_path = _local(feed_url, "india.jsonl.gz", Path(tmp))
-        total = sum(1 for r in _lines(rec_path) if _ok(r))
+        total = sum(1 for r in _lines(rec_path) if _ok(r) and wanted(r))
         if not total:
             raise IngestError("The feed is empty or unreadable; keeping the current inventory.")
         if not summary.get("generatedAt"):
             raise IngestError("The feed has no summary.json; keeping the current inventory.")
-        text_path = _local(feed_url, "full.jsonl.gz", Path(tmp))
+        # Only now, with a good feed on disk: drop stored posting text once, then refill.
+        if slim(db, log=log):
+            force = True
         now = now_iso()
         with db.tx() as c:
             known = {a["id"]: a for a in c.all("SELECT id, company, rev, active FROM jobs")}
@@ -147,11 +160,11 @@ def ingest(db: Database, feed_url: str, log=print, force: bool = False) -> dict:
                        "url = excluded.url, source = excluded.source, posted_at = excluded.posted_at, record = excluded.record, text = excluded.text, "
                        "rev = excluded.rev, active = 1, last_seen_at = excluded.last_seen_at, closed_at = NULL", rows)
                 rows.clear()
-            for r, text in _with_text(rec_path, text_path):
-                if not _ok(r) or r["id"] in seen:
+            for r in _lines(rec_path):
+                if not _ok(r) or not wanted(r) or r["id"] in seen:
                     continue
                 seen.add(r["id"])
-                text = text[:20000]
+                text = ""  # not stored: see the module note
                 rec = {k: v for k, v in r.items() if k != "text"}
                 facts = dict(rec.get("facts") or {})
                 if (facts.get("salaryHigh") or 0) > 450:  # no fresher role pays 450+ LPA: a funding or revenue figure misread as pay
