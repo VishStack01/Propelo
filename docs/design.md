@@ -91,9 +91,9 @@ then pink, and a sentence when it matters ("1.5 hours left this week. Don't take
 The only illustrations are young people from [Open Peeps](https://www.openpeeps.com/) by Pablo Stanley (CC0, no credit required),
 recoloured to the palette above by `scripts/peeps` (see `scripts/peeps/cast.json` for every character and where it is used).
 
-- **Where:** the hero (a graduate presenting the role card), the closing card (two people sitting on its edge), the scam check,
-  the sign-up board, the 404 page, the app's first-run questions and its bare empty states (fresh roles, today's batch, inbox,
-  contacts, interview prep).
+- **Where:** the sign-up board, the 404 page, the app's first-run questions and its bare empty states (fresh roles, today's batch,
+  inbox, contacts, interview prep). The marketing website has none: they were taken off the home page and the scam check in
+  November 2026.
   Not on every section: a page gets one or two.
 - **Who:** only young characters, with a range of skin tones and hair, including South Asian skin tones; never the grey-haired
   heads or the "Old" face. The script refuses them.

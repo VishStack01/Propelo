@@ -89,25 +89,27 @@ def _features(cfg: Config, plan: str, credits: int) -> list[str]:
         return ["Fresh roles from company career pages, matched daily",
                 "Every keep or skip with the quote that decided it",
                 "Pipeline, contacts, follow-ups, calendar and referral drafts",
-                "Your visa clock, and for students part-time roles with a weekly hours tracker",
+                "Your visa clock, plus part-time roles and an hours tracker for students",
                 f"{credits} AI actions a month",
-                "Autofill extension, and auto-apply from your own computer up to 5 a day"]
+                "Autofill extension, and up to 5 auto-applies a day from your computer"]
     if plan == "pro":
         return ["Everything in Free",
                 "New roles matched within an hour of each scan",
                 f"{credits:,} AI actions a month: tailored resumes, cover letters, fit scores",
-                "Or bring your own AI key for no monthly limit",
-                "Auto-apply up to 500 a month (25 a day), with a receipt for each",
-                "Ask Propelo, the copilot, 60 questions a day, and 20 mock interviews a month",
-                "Recruiter emails sent from your Gmail, up to 10 a day, when you turn it on",
+                "Or your own AI key, with no monthly limit",
+                "Auto-apply to 500 roles a month (25 a day), each with a receipt",
+                "Ask Propelo, the copilot: 60 questions a day",
+                "20 mock interviews a month",
+                "Up to 10 recruiter emails a day from your Gmail, if you turn it on",
                 "Priority support"]
     return ["Everything in Pro",
             "New roles matched within 15 minutes of each scan",
             f"{credits:,} AI actions a month",
-            "Auto-apply up to 1,000 a month (60 a day), every one above your apply line",
-            "Ask Propelo, 200 questions a day, and 60 mock interviews a month (no limit on your own AI key)",
+            "Auto-apply to 1,000 roles a month (60 a day), all above your apply line",
+            "Ask Propelo: 200 questions a day",
+            "60 mock interviews a month, no limit on your own AI key",
             "LinkedIn profile review",
-            "Recruiter emails from your Gmail, up to 25 a day, with day 7 and 14 follow-ups",
+            "Up to 25 recruiter emails a day from your Gmail, with day 7 and 14 follow-ups",
             "Fastest support"]
 
 

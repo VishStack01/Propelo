@@ -92,6 +92,8 @@ section{position:relative;padding-block:128px 0}
 .head{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:32px;align-items:start;margin-top:32px}
 .lede{font:400 clamp(30px,3.6vw,52px)/1.18 var(--font);letter-spacing:-.035em;color:var(--ink);max-width:24ch}
 .lede b{font-weight:500}
+.head .sub{margin-top:20px;max-width:34em}
+h1 mark,.lede mark{white-space:nowrap}
 .sub{font-size:clamp(17px,1.35vw,19px);line-height:1.6;color:var(--text)}
 
 /* ===== Hero ===== */
@@ -314,7 +316,6 @@ section{position:relative;padding-block:128px 0}
 .fine a{color:var(--pink-ink)}
 
 /* ===== Closing card and footer ===== */
-.closing{padding-top:240px}
 .cta{display:grid;grid-template-columns:minmax(0,1.4fr) auto;gap:48px;align-items:end;padding:64px 56px;border-radius:var(--r-panel);background:var(--yellow);color:#151515}
 .cta h2{font:400 clamp(30px,3.6vw,52px)/1.12 var(--font);letter-spacing:-.035em;max-width:18ch}
 .cta h2 b{font-weight:500}
@@ -485,39 +486,6 @@ footer{margin-top:128px;border-top:1px solid var(--line)}
 @media (max-width:600px){.tgrid{grid-template-columns:repeat(3,minmax(0,1fr))}.tc{padding:14px 6px}.tcl{width:44px;height:44px}}
 .pbest span span{display:inline;margin:0;font-size:inherit}
 .mc span span,.li span{display:inline}
-
-/* ===== People on the board =====
-   Young characters from Open Peeps by Pablo Stanley (CC0), redrawn in Propelo's colours by scripts/peeps.
-   They stand beside a card or sit on its edge; they never cover text. In dark mode they get a thin
-   paper outline, like a sticker cut out of the page, so the ink lines still read. */
-.peep{position:absolute;display:block;max-width:none;width:auto;pointer-events:none;user-select:none}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .peep{filter:drop-shadow(1.5px 0 0 #F3ECE0) drop-shadow(-1.5px 0 0 #F3ECE0) drop-shadow(0 1.5px 0 #F3ECE0) drop-shadow(0 -1.5px 0 #F3ECE0)}}
-:root[data-theme="dark"] .peep{filter:drop-shadow(1.5px 0 0 #F3ECE0) drop-shadow(-1.5px 0 0 #F3ECE0) drop-shadow(0 1.5px 0 #F3ECE0) drop-shadow(0 -1.5px 0 #F3ECE0)}
-
-/* Hero: a graduate presenting the role card */
-.stage{position:relative}
-.peep-hero{z-index:2;left:-56px;bottom:22px;height:clamp(250px,22vw,320px)}
-@media (min-width:1081px){.stage .panel{justify-items:end}}
-@media (min-width:1081px) and (max-width:1240px){.hero-split{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:56px}.peep-hero{left:-44px}}
-
-/* Closing card: two people sitting on its top edge */
-/* Both drawings come from the same Open Peeps scale, so her height is his times 2115/2325. Each sits with
-   its seat on the card's top edge: his seat is 36% up from the bottom of his drawing (one leg hangs over), hers
-   13.4%, and she sits a touch lower (19%) so her head is nearer his. She sits right beside him: his drawing is .617
-   of its height wide. */
-.ledge{position:relative;--hc:clamp(150px,16.5vw,236px);--hk:calc(var(--hc) * .91)}
-.ledge .peep{z-index:2}
-.sit-knees{height:var(--hk);right:calc(9% + var(--hc) * .617 - var(--hc) * .02);bottom:calc(100% - var(--hk) * .19)}
-.sit-crossed{height:var(--hc);right:9%;bottom:calc(100% - var(--hc) * .36)}
-
-@media (max-width:1080px){
-  .peep-hero{left:20px;bottom:20px;height:240px}
-}
-@media (max-width:720px){
-  .stage .panel{padding-bottom:204px}
-  .peep-hero{left:14px;bottom:4px;height:180px}
-  .closing{padding-top:168px}
-}
 
 /* Hover motion only where a real pointer hovers: a tap on a phone fires a false hover */
 @media (hover:hover) and (pointer:fine){

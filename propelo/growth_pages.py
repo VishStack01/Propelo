@@ -215,7 +215,7 @@ def visa_pages(records: list[dict], out: Path, site_dir: Path, scan_at: datetime
         rows = picked[slug]
         title = f"{TITLE[slug]} jobs at employers that can sponsor a visa ({when}) | Propelo"
         desc = (f"{len(rows)} recent entry and mid-level roles in {name} with a sponsorship signal, read from company career pages. "
-                f"Updated several times a day. Free.")
+                f"Updated every hour. Free.")
         items = "".join(
             f'<div class="vj-row"><div><a href="jobs.html#/job/{escape(r["id"], quote=True)}">{escape(r["title"])}</a>'
             f'<div class="co">{escape(r["company"])} · {escape(r["location"][:80])}{" · " + escape(r["salary"]) if r["salary"] else ""}</div></div>'
@@ -247,11 +247,11 @@ def visa_pages(records: list[dict], out: Path, site_dir: Path, scan_at: datetime
     total = sum(len(v) for v in picked.values())
     cards = "".join(f'<a class="vj-card" href="visa-jobs-{s}.html"><b>{TITLE[s]}</b><span>{len(picked[s])} recent roles with a sponsorship signal</span></a>' for s, _, _, _ in COUNTRIES)
     title = "Jobs abroad at employers that can sponsor your visa | Propelo"
-    desc = f"{total} recent entry and mid-level roles in 7 countries with a sponsorship signal, from company career pages and official sponsor registers. Updated several times a day."
+    desc = f"{total} recent entry and mid-level roles in 7 countries with a sponsorship signal, from company career pages and official sponsor registers. Updated every hour."
     body = (f'<body data-page="visa-jobs">\n{nav}<main id="main" class="vj"><div class="wrap">'
-            '<h1>Jobs abroad that can actually <mark>sponsor you</mark></h1>'
-            '<p class="sub">Most job boards let you find out about sponsorship after you apply. Propelo reads company career pages several times a day and checks '
-            'each role against official sponsor registers and the posting\'s own words. Pick a country.</p>'
+            '<h1>Jobs abroad at employers that can <mark>sponsor you</mark></h1>'
+            '<p class="sub">Propelo reads company career pages every hour and checks each role against official sponsor registers and '
+            'the posting\'s own words. Pick a country.</p>'
             f'<p class="meta">{total} roles · updated {when}</p>'
             '<div class="acts"><a class="btn" data-app="/signup?src=visa-jobs" href="https://app.propelo.org/signup?src=visa-jobs">Match roles to my resume, free<svg><use href="#i-right"/></svg></a>'
             '<a class="btn light" href="sponsor-check.html">Check one employer</a></div>'
