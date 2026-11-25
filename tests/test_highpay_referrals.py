@@ -230,3 +230,77 @@ def test_referral_ranking_lifts_junior_engineers_on_the_team():
     assert any("Junior or associate" in w for w in out[0]["why"])
     ian = next(p for p in out if p["name"] == "Ian Ing")
     assert not any("Junior or associate" in w for w in ian["why"])
+
+
+# ------------------------------------------------------------------ the warm-path bridge
+
+import re  # noqa: E402
+import shutil  # noqa: E402
+import subprocess  # noqa: E402
+from pathlib import Path  # noqa: E402
+from urllib.parse import parse_qs, urlsplit  # noqa: E402
+
+import pytest  # noqa: E402
+
+ASHA = {"fullName": "Asha Rao", "college": "Andhra University (AU)", "city": "London"}
+ASHA_CV = {"education": [{"degree": "MSc Data Science", "school": "University of Manchester"}, {"degree": "BTech", "school": "Andhra University"}],
+           "projects": [{"name": "Job radar", "bullets": ["Scans 3,000 boards a day with Python and Postgres"]}],
+           "experience": [{"title": "Data Engineer", "company": "Acme Labs", "bullets": ["Built Airflow pipelines that load 2 TB a day into Snowflake",
+                                                                                       "Responsible for dbt models"]}]}
+
+
+def _kw(url):
+    return parse_qs(urlsplit(url).query)["keywords"][0]
+
+
+def test_bridge_finds_alumni_of_every_school_and_the_team_manager():
+    links = referrals.bridge_links("Monzo", "Graduate Data Engineer (Python) - London", "London, United Kingdom", ASHA, ASHA_CV)
+    assert [l["kind"] for l in links] == ["alumni", "alumni", "manager", "team", "second", "recruiter"]
+    assert [_kw(l["url"]) for l in links[:2]] == ['"Monzo" "Andhra University"', '"Monzo" "University of Manchester"']
+    assert _kw(links[2]["url"]) == '"Monzo" "data engineering manager" London' and links[2]["label"] == "The data engineering manager at Monzo"
+    assert _kw(links[3]["url"]) == '"Monzo" "data engineer" London' and links[3]["label"] == "Data Engineers at Monzo in London"
+    assert _kw(links[5]["url"]) == '"Monzo" recruiter London'  # where the role is, not India
+    assert all(l["url"].startswith("https://www.linkedin.com/search/results/people/?") for l in links)
+    remote = referrals.bridge_links("Adyen", "Product Designer", "Remote, Netherlands", {}, {})
+    assert [l["kind"] for l in remote] == ["manager", "team", "second", "recruiter"] and _kw(remote[0]["url"]) == '"Adyen" "design manager"'
+    assert referrals.manager_for("Staff Nurse") == "nurse manager" and referrals.manager_for("Barista") == "hiring manager"
+
+
+def test_message_is_short_names_what_you_share_and_only_real_work():
+    alum = {"name": "Ravi Kumar", "why": ["Works at Monzo", "Alumni of University of Manchester"]}
+    m = referrals.message("Monzo", "Graduate Data Engineer", ASHA, alum, ASHA_CV, "https://monzo.com/careers/1", ["Airflow", "Snowflake"])
+    assert m.startswith("Hi Ravi, thanks for connecting. We both studied at the University of Manchester.")
+    assert "At Acme Labs I built Airflow pipelines that load 2 TB a day into Snowflake." in m and m.endswith("\n\nAsha")
+    assert len(m.split()) <= referrals.MESSAGE_WORDS and "would you be comfortable referring me?" in m
+    assert not re.search(r"(?i)\bplease\b|grateful|desperate|beg", m)
+    bare = referrals.message("Monzo", "Product Designer", {}, None, {}, "")
+    assert "We both" not in bare and "built" not in bare and len(bare.split()) <= referrals.MESSAGE_WORDS
+    # A line that isn't written as something you did is quoted, never reworded into a claim.
+    assert referrals.best_work("Analytics Engineer", ["dbt"], ASHA_CV) == "At Acme Labs: Responsible for dbt models."
+    long_title = "Senior " + "Very Long Title Word " * 12 + "Engineer"
+    assert len(referrals.message("Monzo", long_title, ASHA, alum, ASHA_CV, "", []).split()) <= referrals.MESSAGE_WORDS + 25
+
+
+BRIDGE_CASES = [
+    ("Monzo", "Graduate Data Engineer (Python) - London", "London, United Kingdom", ASHA, ASHA_CV, {"name": "Ravi Kumar", "why": ["Alumni of University of Manchester"]}, "https://monzo.com/careers/1", ["Airflow", "Snowflake"]),
+    ("Adyen", "Product Designer", "Remote, Netherlands", {}, {}, None, "", []),
+    ("Stripe", "Account Executive, German speaking", "Dublin, Ireland", {"fullName": "Kiran"}, {"projects": [{"name": "CRM clean-up", "bullets": ["Cut duplicate leads by 30%"]}]}, {"name": "Aoife"}, "", ["Salesforce"]),
+    ("NHS Trust", "Staff Nurse II", "Leeds", {"college": "Manipal College of Nursing"}, {"experience": [{"company": "Apollo", "bullets": ["Led a ward of 30 beds", "Trained 4 nurses"]}]}, None, "", []),
+    ("Booking.com", "Sr. Machine Learning Engineer | Ranking", "Amsterdam, Netherlands", ASHA, ASHA_CV, None, "", ["python", "ranking"]),
+]
+
+
+@pytest.mark.skipif(not shutil.which("node"), reason="node is not installed")
+def test_dashboard_bridge_matches_python(tmp_path):
+    html = (Path(__file__).resolve().parent.parent / "dashboard" / "app.html").read_text(encoding="utf-8")
+    block = re.search(r"/\* bridge:start.*?\*/(.*?)/\* bridge:end \*/", html, re.S).group(1)
+    script = tmp_path / "bridge.js"
+    script.write_text(block + "\nconst cases = JSON.parse(process.argv[2]);\nconsole.log(JSON.stringify(cases.map(c => ({links: bridgeLinks(c[0], c[1], c[2], c[3], c[4]), "
+                      "message: bridgeMessage(c[0], c[1], c[3], c[5], c[4], c[6], c[7])}))));\n", encoding="utf-8")
+    out = json.loads(subprocess.run(["node", str(script), json.dumps(BRIDGE_CASES)], capture_output=True, text=True, timeout=60, check=True).stdout)
+    for case, got in zip(BRIDGE_CASES, out):
+        co, title, loc, a, cv, person, url, skills = case
+        want = referrals.bridge_links(co, title, loc, a, cv)
+        assert [(l["kind"], l["label"]) for l in got["links"]] == [(l["kind"], l["label"]) for l in want], title
+        assert [parse_qs(urlsplit(l["url"]).query) for l in got["links"]] == [parse_qs(urlsplit(l["url"]).query) for l in want], title
+        assert got["message"] == referrals.message(co, title, a, person, cv, url, skills), title

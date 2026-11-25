@@ -62,7 +62,7 @@ with the posting archived at the end.
 | `propelo calibrate` | Do roles scored 4.5+ get more replies than 4.0–4.4 ones? If not, the scoring needs a look. |
 | `propelo gaps` | Skills your kept roles keep asking for that your brain can't prove yet. |
 | Warm intros | Upload LinkedIn's own Connections.csv on the Outreach tab (or `propelo warm-intros`). Matches are tiered: works there, very likely, or a similar name to check. It stays in your private dashboard. |
-| Referral finder | Each role's card ranks who to ask: people you know there first, then alumni of your college, engineers on a similar team, engineering managers and recruiters (`propelo referrals`, or the outreach skill with public web search). The card has LinkedIn search links that open in your own signed-in browser, and a connection note under 300 characters drafted from your profile. You send it; Propelo never signs in to LinkedIn or sends anything there. |
+| Referral finder | Each role's card ranks who to ask: people you know there first, then alumni of each school you studied at (your university at home and the one abroad), the manager of the team the role sits in (a Data Engineer's is the data engineering manager), people on that team, and recruiters where the role is (`propelo referrals`, or the outreach skill with public web search). The card has LinkedIn search links that open in your own signed-in browser, a connection note under 300 characters, and a message of 75 words at most for after they accept: the school you share, one real piece of your work that fits the role, and a plain ask with an easy way to say no. You send it; Propelo never signs in to LinkedIn or sends anything there. |
 
 ## Interviews and offers
 
