@@ -202,7 +202,8 @@ def cleanup(db: Database) -> dict:
             "rate": c.execute("DELETE FROM rate_limits WHERE window_start < ?", (now_iso(timedelta(days=-1))[:19] + "Z",)).rowcount,
             "tasks": c.execute("DELETE FROM tasks WHERE (status = 'done' AND finished_at < ?) OR (status = 'failed' AND finished_at < ?)",
                                (now_iso(timedelta(days=-14)), now_iso(timedelta(days=-30)))).rowcount,
-            "jobs": c.execute("DELETE FROM jobs WHERE active = 0 AND closed_at < ?", (now_iso(timedelta(days=-60)),)).rowcount,
+            # A closed role is kept a week, in case its board lists it again; members' copies live in their own documents.
+            "jobs": c.execute("DELETE FROM jobs WHERE active = 0 AND closed_at < ?", (now_iso(timedelta(days=-7)),)).rowcount,
             "audit": c.execute("DELETE FROM audit_events WHERE at < ?", (now_iso(timedelta(days=-365)),)).rowcount,
         }
     log.info("cleanup %s", out)
