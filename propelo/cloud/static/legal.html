@@ -9,10 +9,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600&display=swap">
-<!-- Operators: this is a plain-language starting point, not legal advice. Have it reviewed for your
-     jurisdiction (for India, the Digital Personal Data Protection Act, 2023, and the Consumer Protection
-     (E-Commerce) Rules, 2020) and set SUPPORT_EMAIL and COMPANY_NAME before inviting real users.
-     Payment providers such as Razorpay ask for these pages (terms, privacy, refunds, contact) during activation. -->
+<!-- Operators: this is a plain-language starting point, not legal advice. Have it reviewed for where you
+     operate and where your members live (UK GDPR and the Data Protection Act 2018, the EU GDPR for Ireland and
+     the Netherlands, US state privacy laws, and India's DPDP Act, 2023 if you serve consultancies there), add the
+     law that governs these terms, and set SUPPORT_EMAIL and COMPANY_NAME before inviting real users.
+     Each of /privacy, /terms, /refunds and /contact shows its own part of this file (app.py, legal_page). -->
 <style>
 :root{--page:#FAF3E6;--ink:#151515;--ink-2:#47433D;--muted:#8C867D;--panel:#EFE7D9;--line:#DDD2C1;--pink:#F5B8DB;
   --f:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;--d:"Bricolage Grotesque",ui-rounded,system-ui,sans-serif}
@@ -38,6 +39,16 @@ li{margin:4px 0}
 .toc a{background:var(--panel);border-radius:999px;padding:8px 16px;font-size:15px;text-decoration:none;font-weight:500}
 .toc a:hover{background:var(--pink);color:#151515}
 .box{background:var(--panel);border-radius:28px;padding:18px 22px;margin-top:14px}
+.site{display:flex;align-items:center;gap:6px 18px;flex-wrap:wrap;margin-bottom:44px}
+.site .brand{margin-right:auto}
+.site a:not(.brand){font-size:15px;font-weight:500;text-decoration:none;color:var(--ink-2)}
+.site a:not(.brand):hover{color:var(--ink)}
+.site .cta{background:var(--ink);color:var(--page) !important;border-radius:999px;padding:8px 16px}
+.toc a[aria-current="page"]{background:var(--ink);color:var(--page)}
+table.svc{width:100%;border-collapse:collapse;margin-top:10px;font-size:15px}
+table.svc th,table.svc td{text-align:left;vertical-align:top;padding:9px 10px 9px 0;border-bottom:1px solid var(--line);color:var(--ink-2)}
+table.svc th{color:var(--ink);font-weight:600}
+@media (max-width:600px){table.svc,table.svc tbody,table.svc tr,table.svc td{display:block}table.svc thead{display:none}table.svc tr{padding:10px 0;border-bottom:1px solid var(--line)}table.svc td{border:0;padding:2px 0}table.svc td:first-child{font-weight:600;color:var(--ink)}}
 </style>
 <style>
 /* ===== Propelo layer (see docs/design.md): cream and ink, one pink accent, Figtree at 400 to 600 ===== */
@@ -64,13 +75,14 @@ input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 45%,transparent) 
 </head>
 <body>
 <div class="wrap">
-  <div class="top"><a class="brand" href="/">propelo<span class="dot" aria-hidden="true"></span></a><a href="/" class="back">Open the app</a></div>
+  <nav class="site" aria-label="Main"><a class="brand" href="{{SITE}}">propelo<span class="dot" aria-hidden="true"></span></a><a href="{{SITE}}jobs.html">Job board</a><a href="/pricing">Pricing</a><a href="/business">For consultancies</a><a href="/login">Sign in</a><a class="cta" href="/signup">Start free</a></nav>
   <span class="pill">Policies</span>
-  <h1>Privacy, terms and refunds</h1>
-  <p class="muted">Last updated 4 November 2026. Service operated by {{COMPANY}}.</p>
-  <nav class="toc" aria-label="On this page"><a href="#privacy">Privacy notice</a><a href="#terms">Terms of use</a><a href="#refunds">Refunds and cancellation</a><a href="#contact">Contact</a></nav>
+  <h1>{{HEADING}}</h1>
+  <p class="muted">Last updated 25 November 2026. Service operated by {{COMPANY}}.</p>
+  <nav class="toc" aria-label="Policies"><a href="/privacy">Privacy notice</a><a href="/terms">Terms of use</a><a href="/refunds">Refunds and cancellation</a><a href="/contact">Contact</a></nav>
 
-  <h2 id="privacy">Privacy notice</h2>
+<!--part:privacy-->
+  <span id="privacy"></span>
   <h3>What we store</h3>
   <ul>
     <li><b>Your account:</b> name, email, a salted hash of your password (never the password itself), sign-in sessions and security events such as sign-ins and password changes.</li>
@@ -83,7 +95,7 @@ input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 45%,transparent) 
     <li><b>Gmail, if you connect it:</b> your Gmail address and an encrypted permission that lets Propelo send email as you. We ask Google only for permission to send; Propelo can't read, search or delete your mail. We keep a copy of each email Propelo sent for you, with where the recipient's address came from.</li>
     <li><b>AI usage:</b> how many AI actions you used each month. If you save your own model key, it's encrypted, and only its last four characters are ever shown.</li>
   </ul>
-  <p>We never ask for or store passwords to job sites, one-time codes, Aadhaar, PAN, passport or bank details, or your date of birth.</p>
+  <p>We never ask for or store passwords to job sites, one-time codes, passport or bank details, your date of birth, or government ID numbers (a US Social Security number, a UK National Insurance number, an Irish PPS number, a Dutch BSN, an Indian Aadhaar or PAN).</p>
   <h3>How it's used</h3>
   <p>Only to run your job search: matching roles to your filters, showing your pipeline, preparing applications, and giving your own apply agent (on your computer, with a key you create) the details it puts into application forms. We don't sell your data or use it for advertising.</p>
   <h3>AI actions</h3>
@@ -91,6 +103,23 @@ input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 45%,transparent) 
   <h3>Emails sent for you</h3>
   <p>Automatic recruiter emails are off until you turn them on and approve a template. Propelo then sends from your own Gmail, only to addresses found on a public page, within your plan's daily limit, and never to anyone who opted out. Every email says it was sent with Propelo and links to a page where the recipient can stop emails from all Propelo users. We keep only a one-way hash of opted-out addresses. Disconnecting Gmail in Settings revokes the permission at Google.</p>
   <p>Propelo's use of information received from Google APIs follows the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including its Limited Use requirements. We use the Gmail permission only to send the emails you set up, never for advertising, and we don't let people read your Gmail data.</p>
+  <h3 id="services">Services that handle your data</h3>
+  <p>Propelo uses these companies to run the service. Each one gets only what its job needs, under its own terms.</p>
+  <table class="svc">
+    <thead><tr><th>Service</th><th>What it does for Propelo</th><th>What it receives</th></tr></thead>
+    <tbody>
+      <tr><td>Render</td><td>Runs the app's servers</td><td>Everything the app handles passes through it</td></tr>
+      <tr><td>Neon</td><td>The database</td><td>Your account, job search and documents</td></tr>
+      <tr><td>Anthropic</td><td>AI actions on your plan's allowance</td><td>The text each AI action needs, such as a posting and the parts of your profile it uses</td></tr>
+      <tr><td>Your own AI provider</td><td>AI actions on a key you saved (Pro and Ultra)</td><td>The same, sent to the provider of your key</td></tr>
+      <tr><td>Resend</td><td>Account emails: confirming your address, password resets, sign-in alerts</td><td>Your email address and the email</td></tr>
+      <tr><td>Dodo Payments</td><td>Plan payments, as merchant of record</td><td>Your email, the plan, and the payment details you give it</td></tr>
+      <tr><td>Razorpay</td><td>Rupee payment links for consultancies and agencies in India</td><td>The business's billing details</td></tr>
+      <tr><td>Twilio</td><td>Texted codes, only if you add a mobile number</td><td>Your mobile number</td></tr>
+      <tr><td>Google, LinkedIn, GitHub</td><td>Signing in with them, if you choose to; sending from your Gmail, if you connect it</td><td>Your name and email from them, and the emails you send through Gmail</td></tr>
+      <tr><td>Google Fonts</td><td>The typeface on these pages</td><td>Your browser's request for the font, which includes your IP address</td></tr>
+    </tbody>
+  </table>
   <h3>Where applications go</h3>
   <p>Applications are submitted from your computer's browser, by an agent you set up, to the employer's own application page. The employer then holds what you sent under their own privacy policy.</p>
   <h3>If your consultancy or college gives you your account</h3>
@@ -106,8 +135,10 @@ input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 45%,transparent) 
   <p>Propelo sets one cookie to keep you signed in, and short-lived ones while you sign in with LinkedIn or connect Gmail. They're HttpOnly and used only by Propelo. There are no advertising or tracking cookies and no third-party analytics. The pricing page remembers the currency you picked in your browser's storage.</p>
   <h3>Security</h3>
   <p>Data travels over HTTPS. Sessions are HttpOnly cookies, sign-in attempts are rate limited, and every request for your data is checked against your account. No system is perfectly secure; tell us right away if you think your account was misused.</p>
+<!--/part-->
 
-  <h2 id="terms">Terms of use</h2>
+<!--part:terms-->
+  <span id="terms"></span>
   <ul>
     <li>Propelo is provided as is. Roles come from public career pages and can be wrong, closed or out of date. Check a posting before relying on it. Propelo doesn't promise interviews or offers.</li>
     <li>You're responsible for what's submitted in your name. Only enter true information, and only queue or allow applications you actually want to send.</li>
@@ -146,19 +177,22 @@ input:focus{box-shadow:0 0 0 3px color-mix(in srgb,var(--pink) 45%,transparent) 
     <li><b>Refunds.</b> If your first paid period didn't work for you, ask within 7 days of paying and we refund it in full. Later periods aren't refunded, since nothing renews without you paying. Duplicate or mistaken charges are always refunded.</li>
     <li><b>Changes and ending.</b> We may change these terms or prices for future periods with 14 days' notice by email. We may end an account that breaks these terms; if we end one for any other reason, we refund the unused days.</li>
   </ul>
+<!--/part-->
 
-  <h2 id="refunds">Refunds and cancellation</h2>
+<!--part:refunds-->
+  <span id="refunds"></span>
   <div class="box">
     <p><b>Cancel any time</b> in Settings, Plan. Cancelling stops future charges; you keep your plan until the end of the month you've paid for, then your account moves to Free with all your data. A 90-day pass never renews, so there is nothing to cancel.</p>
     <p><b>Refunds.</b> If you were charged by mistake (a duplicate charge, or a renewal after you cancelled), write to us within 7 days and we refund it in full to the original payment method. If a paid plan didn't work for you in your first 7 days, ask and we'll refund that first payment. Dollar payments are refunded through Dodo Payments. Refunds reach you in 5 to 7 working days, depending on your bank.</p>
     <p><b>Delivery.</b> Propelo is an online service; nothing is shipped. Paid features switch on as soon as the payment is confirmed, usually within a minute.</p>
   </div>
+<!--/part-->
 
-  <h2 id="contact">Contact</h2>
+<!--part:contact-->
+  <span id="contact"></span>
   <p>Questions, refunds, data requests or security reports: <a href="mailto:{{SUPPORT_EMAIL}}">{{SUPPORT_EMAIL}}</a>. We reply within two working days.</p>
+  <p>Business plans, pilots and partnerships: the same address, or <a href="/business">the business page</a>.</p>
+<!--/part-->
 </div>
-<script>
-(function(){ var id = {"/privacy":"privacy","/terms":"terms","/refunds":"refunds","/contact":"contact"}[location.pathname]; var el = id && !location.hash && document.getElementById(id); if (el && id !== "privacy") el.scrollIntoView(); })();
-</script>
 </body>
 </html>
