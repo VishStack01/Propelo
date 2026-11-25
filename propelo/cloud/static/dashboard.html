@@ -1363,6 +1363,33 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
 .vfields{gap:12px} .vfields:empty{display:none} .vf-check{align-self:end;min-height:44px;align-items:center}
 @media (max-width:720px){.vclock{grid-template-columns:1fr;gap:20px}.vc-note{max-width:250px;margin-left:4px}}
 @media (prefers-reduced-motion:reduce){.vc-note{transform:none}}
+
+/* ===== Five places (Today, Discover, Pipeline, Prep & outreach, Career Brain) ===== */
+.side .pil{display:grid;gap:2px}
+.side .pil .psub{display:none;gap:2px;padding-bottom:4px}
+.side .pil.on .psub{display:grid}
+.side .pbtn{font-weight:500;color:var(--ink)}
+.side .pil.on > .pbtn{font-weight:600}
+.side .psub .tab{padding-left:44px;min-height:34px;font-size:14px}
+.side .pbtn .pct{margin-left:auto}
+.subnav{display:none}
+#mode-top:empty{display:none}
+.pseg.mini button{padding:4px 11px;font-size:13px}
+@media (max-width:900px){
+  .subnav{display:grid;gap:10px;position:sticky;top:0;z-index:30;margin:0 calc(-1 * clamp(16px,4vw,40px));padding:calc(10px + env(safe-area-inset-top,0px)) clamp(16px,4vw,40px) 10px;background:var(--page);border-bottom:1px solid var(--line)}
+  .subnav .sn-tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .subnav .sn-tabs::-webkit-scrollbar{display:none}
+  .subnav button[role="tab"],.subnav .sn-x{flex:none;border:0;background:var(--panel);color:var(--ink-2);border-radius:999px;min-height:40px;padding:0 15px;font:500 14.5px var(--f);display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+  .subnav button[aria-selected="true"]{background:var(--btn);color:var(--btn-ink)}
+  .subnav .ct{font-size:12px;min-width:20px;height:20px;padding:0 6px;border-radius:999px;display:inline-grid;place-items:center;background:var(--pink);color:#151515}
+  .subnav .sn-x{background:none;box-shadow:inset 0 0 0 1px var(--line)}
+  .subnav .pseg{justify-self:start}
+  .dock button{grid-template-rows:auto auto;gap:3px;align-content:center}
+  .dock button svg{width:21px;height:21px}
+  .dock .dl{font-size:10.5px;font-weight:500;letter-spacing:.01em;line-height:1}
+  .dock button[aria-current="true"]::after{display:none}
+  .dock .dot{top:9px}
+}
 </style>
 </head>
 <body>
@@ -1381,28 +1408,52 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
 <aside class="side" aria-label="Propelo">
   <div class="brand"><span class="mark"><svg viewBox="0 0 100 100" fill="currentColor" style="width:22px;height:22px"><use href="#s-mark"/></svg></span><span class="bt">Propelo<small>Your job search, on autopilot</small></span></div>
   <button class="btn solid newbtn" data-act="tab" data-tab="new"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>New application</button>
-  <nav class="tabs" role="tablist" aria-label="Sections">
-    <button class="tab" role="tab" id="t-home" aria-controls="p-home" aria-selected="true" data-act="tab" data-tab="home"><svg class="i" viewBox="0 0 24 24"><path d="M4 11l8-6.5 8 6.5"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/></svg>Home</button>
-    <span class="grp">You</span>
-    <button class="tab" role="tab" id="t-profile" aria-controls="p-profile" aria-selected="false" data-act="tab" data-tab="profile"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 19.5c1.2-3.3 3.8-5 7-5s5.8 1.7 7 5"/></svg>Profile</button>
-    <button class="tab" role="tab" id="t-resume" aria-controls="p-resume" aria-selected="false" data-act="tab" data-tab="resume"><svg class="i" viewBox="0 0 24 24"><path d="M7 3.5h7l4 4V20a.5.5 0 01-.5.5h-10.5A.5.5 0 016.5 20V4a.5.5 0 01.5-.5z"/><path d="M14 3.5V8h4M9.5 12h5M9.5 15.5h5"/></svg>Base resume</button>
-    <span class="grp">Job search</span>
-    <button class="tab" role="tab" id="t-today" aria-controls="p-today" aria-selected="false" data-act="tab" data-tab="today"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>Fresh roles <span class="ct hot" id="c-today" hidden></span></button>
-    <button class="tab" role="tab" id="t-queue" aria-controls="p-queue" aria-selected="false" data-act="tab" data-tab="queue"><svg class="i" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="16" rx="3"/><path d="M9 9.5l2 2 4-4M9 15h6"/></svg>Review queue <span class="ct hot" id="c-queue" hidden></span></button>
-    <button class="tab" role="tab" id="t-pipeline" aria-controls="p-pipeline" aria-selected="false" data-act="tab" data-tab="pipeline"><svg class="i" viewBox="0 0 24 24"><rect x="3.5" y="7" width="17" height="12.5" rx="2.5"/><path d="M9 7V5.5A1.5 1.5 0 0110.5 4h3A1.5 1.5 0 0115 5.5V7"/><path d="M3.5 12.5h17"/></svg>Applications <span class="ct" id="c-pipeline">0</span></button>
-    <button class="tab" role="tab" id="t-auto" aria-controls="p-auto" aria-selected="false" data-act="tab" data-tab="auto"><svg class="i" viewBox="0 0 24 24"><path d="M13 3L5 13.5h6L10 21l8-10.5h-6z"/></svg>Auto-apply <span class="ct" id="c-auto"></span></button>
-    <button class="tab" role="tab" id="t-outreach" aria-controls="p-outreach" aria-selected="false" data-act="tab" data-tab="outreach"><svg class="i" viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"/><path d="M4.5 7l7.5 6 7.5-6"/></svg>Outreach <span class="ct" id="c-outreach">0</span></button>
-    <button class="tab" role="tab" id="t-contacts" aria-controls="p-contacts" aria-selected="false" data-act="tab" data-tab="contacts"><svg class="i" viewBox="0 0 24 24"><circle cx="9" cy="9" r="3.2"/><path d="M3.5 19c.9-3 3-4.5 5.5-4.5s4.6 1.5 5.5 4.5"/><path d="M15.5 6.5a3 3 0 010 5.5M17.5 14.8c1.5.6 2.5 2 3 4.2"/></svg>Contacts</button>
-    <button class="tab" role="tab" id="t-ask" aria-controls="p-ask" aria-selected="false" data-act="tab" data-tab="ask"><svg class="i" viewBox="0 0 24 24"><path d="M4.5 6h15v10h-8l-4 3.5V16h-3z"/><path d="M12 9.2v.1M12 11.5v2"/></svg>Ask Propelo</button>
-    <button class="tab" role="tab" id="t-concierge" aria-controls="p-concierge" aria-selected="false" data-act="tab" data-tab="concierge" data-cc hidden><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c1.2-3.6 3.9-5.4 7-5.4s5.8 1.8 7 5.4"/><path d="M17.5 4.5l1.3 1.3 2.4-2.4"/></svg>Job Guarantee</button>
-    <button class="tab" role="tab" id="t-guarantee" aria-controls="p-guarantee" aria-selected="false" data-act="tab" data-tab="guarantee"><svg class="i" viewBox="0 0 24 24"><path d="M12 3.5l7 2.6v5.4c0 4.4-3 7.9-7 9-4-1.1-7-4.6-7-9V6.1z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg>Guarantees</button>
-    <button class="tab" role="tab" id="t-inbox" aria-controls="p-inbox" aria-selected="false" data-act="tab" data-tab="inbox"><svg class="i" viewBox="0 0 24 24"><path d="M3.5 13.5l2.6-7.2A2 2 0 018 5h8a2 2 0 011.9 1.3l2.6 7.2V18a2 2 0 01-2 2h-13a2 2 0 01-2-2z"/><path d="M3.5 13.5H8l1.5 2.5h5l1.5-2.5h4.5"/></svg>Inbox <span class="ct hot" id="c-inbox" hidden></span></button>
-    <button class="tab" role="tab" id="t-calendar" aria-controls="p-calendar" aria-selected="false" data-act="tab" data-tab="calendar"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M8 3.5v4M16 3.5v4M4 10h16"/></svg>Calendar</button>
-    <button class="tab" role="tab" id="t-tools" aria-controls="p-tools" aria-selected="false" data-act="tab" data-tab="tools"><svg class="i" viewBox="0 0 24 24"><path d="M5 19l9.5-9.5M14 4.5l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5L10.5 8 13 7z"/><path d="M18.5 13l.6 1.4 1.4.6-1.4.6-.6 1.4-.6-1.4-1.4-.6 1.4-.6z"/></svg>Writing &amp; interviews</button>
-    <button class="tab" role="tab" id="t-skipped" aria-controls="p-skipped" aria-selected="false" data-act="tab" data-tab="skipped"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M7 17L17 7"/></svg>Skipped <span class="ct" id="c-skipped">0</span></button>
-  </nav>
+  <nav class="tabs pillars" aria-label="Sections">
+  <div class="pil" data-pil="today">
+    <button type="button" class="tab pbtn" data-act="pillar" data-pil="today" aria-expanded="false"><svg class="i" viewBox="0 0 24 24"><path d="M4 11l8-6.5 8 6.5"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/></svg>Today <span class="ct hot pct" id="pc-today" hidden></span></button>
+    <div class="psub" role="tablist" aria-label="Today">
+      <button class="tab" role="tab" id="t-home" aria-controls="p-home" aria-selected="true" data-act="tab" data-tab="home">Overview</button>
+      <button class="tab" role="tab" id="t-queue" aria-controls="p-queue" aria-selected="false" data-act="tab" data-tab="queue">Review queue <span class="ct hot" id="c-queue" hidden></span></button>
+    </div>
+  </div>
+  <div class="pil" data-pil="discover">
+    <button type="button" class="tab pbtn" data-act="pillar" data-pil="discover" aria-expanded="false"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>Discover <span class="ct hot pct" id="pc-discover" hidden></span></button>
+    <div class="psub" role="tablist" aria-label="Discover">
+      <button class="tab" role="tab" id="t-today" aria-controls="p-today" aria-selected="false" data-act="tab" data-tab="today">Fresh roles <span class="ct hot" id="c-today" hidden></span></button>
+      <button class="tab" role="tab" id="t-new" aria-controls="p-new" aria-selected="false" data-act="tab" data-tab="new">New application</button>
+      <button class="tab" role="tab" id="t-skipped" aria-controls="p-skipped" aria-selected="false" data-act="tab" data-tab="skipped">Skipped <span class="ct" id="c-skipped">0</span></button>
+    </div>
+  </div>
+  <div class="pil" data-pil="pipeline">
+    <button type="button" class="tab pbtn" data-act="pillar" data-pil="pipeline" aria-expanded="false"><svg class="i" viewBox="0 0 24 24"><rect x="3.5" y="7" width="17" height="12.5" rx="2.5"/><path d="M9 7V5.5A1.5 1.5 0 0110.5 4h3A1.5 1.5 0 0115 5.5V7"/><path d="M3.5 12.5h17"/></svg>Pipeline <span class="ct hot pct" id="pc-pipeline" hidden></span></button>
+    <div class="psub" role="tablist" aria-label="Pipeline">
+      <button class="tab" role="tab" id="t-pipeline" aria-controls="p-pipeline" aria-selected="false" data-act="tab" data-tab="pipeline">Applications <span class="ct" id="c-pipeline">0</span></button>
+      <button class="tab" role="tab" id="t-auto" aria-controls="p-auto" aria-selected="false" data-act="tab" data-tab="auto">Auto-apply <span class="ct" id="c-auto"></span></button>
+      <button class="tab" role="tab" id="t-inbox" aria-controls="p-inbox" aria-selected="false" data-act="tab" data-tab="inbox">Inbox <span class="ct hot" id="c-inbox" hidden></span></button>
+      <button class="tab" role="tab" id="t-calendar" aria-controls="p-calendar" aria-selected="false" data-act="tab" data-tab="calendar">Calendar</button>
+    </div>
+  </div>
+  <div class="pil" data-pil="prep">
+    <button type="button" class="tab pbtn" data-act="pillar" data-pil="prep" aria-expanded="false"><svg class="i" viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"/><path d="M4.5 7l7.5 6 7.5-6"/></svg>Prep &amp; outreach <span class="ct hot pct" id="pc-prep" hidden></span></button>
+    <div class="psub" role="tablist" aria-label="Prep &amp; outreach">
+      <button class="tab" role="tab" id="t-outreach" aria-controls="p-outreach" aria-selected="false" data-act="tab" data-tab="outreach">Outreach <span class="ct" id="c-outreach">0</span></button>
+      <button class="tab" role="tab" id="t-contacts" aria-controls="p-contacts" aria-selected="false" data-act="tab" data-tab="contacts">Contacts</button>
+      <button class="tab" role="tab" id="t-tools" aria-controls="p-tools" aria-selected="false" data-act="tab" data-tab="tools">Writing &amp; interviews</button>
+    </div>
+  </div>
+  <div class="pil" data-pil="brain">
+    <button type="button" class="tab pbtn" data-act="pillar" data-pil="brain" aria-expanded="false"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 19.5c1.2-3.3 3.8-5 7-5s5.8 1.7 7 5"/></svg>Career Brain <span class="ct hot pct" id="pc-brain" hidden></span></button>
+    <div class="psub" role="tablist" aria-label="Career Brain">
+      <button class="tab" role="tab" id="t-profile" aria-controls="p-profile" aria-selected="false" data-act="tab" data-tab="profile">Profile</button>
+      <button class="tab" role="tab" id="t-resume" aria-controls="p-resume" aria-selected="false" data-act="tab" data-tab="resume">Base resume</button>
+      <button class="tab" role="tab" id="t-guarantee" aria-controls="p-guarantee" aria-selected="false" data-act="tab" data-tab="guarantee">Guarantees</button>
+      <button class="tab" role="tab" id="t-concierge" aria-controls="p-concierge" aria-selected="false" data-act="tab" data-tab="concierge" data-cc hidden>Job Guarantee</button>
+    </div>
+  </div>
+</nav>
   <div class="bottom">
     <div role="tablist" aria-label="Settings" style="display:contents">
+    <button class="tab" role="tab" id="t-ask" aria-controls="p-ask" aria-selected="false" data-act="tab" data-tab="ask"><svg class="i" viewBox="0 0 24 24"><path d="M4.5 6h15v10h-8l-4 3.5V16h-3z"/><path d="M12 9.2v.1M12 11.5v2"/></svg>Ask Propelo</button>
     <button class="tab" role="tab" id="t-setup" aria-controls="p-setup" aria-selected="false" data-act="tab" data-tab="setup"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg>Settings</button>
     </div>
     <button class="tab plain" id="theme-btn" data-act="theme" type="button">Dark mode</button>
@@ -1410,8 +1461,9 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
   </div>
 </aside>
 <div class="mainwrap"><div class="surface">
-<div class="topbar" id="nav"><span id="notice-text">Every 6 hours: tech and AI roles.</span><span id="vc-top"></span><span class="topact"><button type="button" class="linkish" data-act="tab" data-tab="setup">Change filters</button><button class="btn solid sm" data-act="go-batch" id="cta-batch">Review batch</button></span></div>
+<div class="topbar" id="nav"><span id="notice-text">Every 6 hours: tech and AI roles.</span><span id="vc-top"></span><span id="mode-top"></span><span class="topact"><button type="button" class="linkish" data-act="tab" data-tab="setup">Change filters</button><button class="btn solid sm" data-act="go-batch" id="cta-batch">Review batch</button></span></div>
 <main class="wrap">
+  <nav class="subnav" id="subnav" aria-label="In this section"></nav>
   <section role="tabpanel" id="p-home" aria-labelledby="t-home"></section>
   <section role="tabpanel" id="p-today" aria-labelledby="t-today" hidden>
     <div class="hero">
@@ -1457,41 +1509,12 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
 </div>
 
 <nav class="dock" aria-label="App">
-  <button type="button" data-act="tab" data-tab="home" data-dock="home" aria-label="Home"><svg class="i" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"/></svg></button>
-  <button type="button" data-act="tab" data-tab="today" data-dock="today" aria-label="Fresh roles"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg><span class="dot" id="dk-today" hidden></span></button>
-  <button type="button" class="fab" data-act="sheet" data-sheet="add" aria-label="Add" aria-expanded="false"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
-  <button type="button" data-act="tab" data-tab="pipeline" data-dock="pipeline" aria-label="Applications"><svg class="i" viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="12" rx="3"/><path d="M8 10h8M8 13.5h5"/></svg><span class="dot" id="dk-inbox" hidden></span></button>
-  <button type="button" data-act="sheet" data-sheet="more" data-dock="more" aria-label="You and settings"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 19.5c1.2-3.3 3.8-5 7-5s5.8 1.7 7 5"/></svg></button>
+  <button type="button" data-act="pillar" data-pil="today" data-dock="today" aria-label="Today"><svg class="i" viewBox="0 0 24 24"><path d="M4 11l8-6.5 8 6.5"/><path d="M6 9.5V20h12V9.5"/><path d="M10 20v-5h4v5"/></svg><span class="dot" id="dk-today" hidden></span><span class="dl">Today</span></button>
+  <button type="button" data-act="pillar" data-pil="discover" data-dock="discover" aria-label="Discover"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg><span class="dot" id="dk-discover" hidden></span><span class="dl">Discover</span></button>
+  <button type="button" data-act="pillar" data-pil="pipeline" data-dock="pipeline" aria-label="Pipeline"><svg class="i" viewBox="0 0 24 24"><rect x="3.5" y="7" width="17" height="12.5" rx="2.5"/><path d="M9 7V5.5A1.5 1.5 0 0110.5 4h3A1.5 1.5 0 0115 5.5V7"/><path d="M3.5 12.5h17"/></svg><span class="dot" id="dk-pipeline" hidden></span><span class="dl">Pipeline</span></button>
+  <button type="button" data-act="pillar" data-pil="prep" data-dock="prep" aria-label="Prep and outreach"><svg class="i" viewBox="0 0 24 24"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"/><path d="M4.5 7l7.5 6 7.5-6"/></svg><span class="dot" id="dk-prep" hidden></span><span class="dl">Prep</span></button>
+  <button type="button" data-act="pillar" data-pil="brain" data-dock="brain" aria-label="Career Brain"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 19.5c1.2-3.3 3.8-5 7-5s5.8 1.7 7 5"/></svg><span class="dl">Brain</span></button>
 </nav>
-<div class="sheetdim" data-act="close" aria-hidden="true"></div>
-<div class="addsheet" id="sheet-add" role="dialog" aria-label="Add">
-  <h2>Add...</h2>
-  <button type="button" data-act="tab" data-tab="new"><span class="ci" style="background:var(--pink)"><svg class="i" viewBox="0 0 24 24"><path d="M7 3.5h7l4 4V20H6.5V3.5z"/><path d="M14 3.5V8h4M9.5 13h5M12 10.5v5"/></svg></span><span>New application<small>Paste a posting; get a fit score and a tailored resume</small></span></button>
-  <button type="button" data-act="tab" data-tab="queue"><span class="ci" style="background:var(--bgreen)"><svg class="i" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="16" rx="3"/><path d="M9 9.5l2 2 4-4M9 15h6"/></svg></span><span>Review queue<small>Approve, skip or apply, one role at a time</small></span></button>
-  <button type="button" data-act="tab" data-tab="today"><span class="ci" style="background:var(--yellow)"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg></span><span>Fresh roles<small>Checked against your filters, with quotes</small></span></button>
-  <button type="button" data-act="tab" data-tab="profile"><span class="ci" style="background:var(--bgreen)"><svg class="i" viewBox="0 0 24 24"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5"/><path d="M4.5 15v4.5h15V15"/></svg></span><span>Your resume<small>Upload it once; every application starts from it</small></span></button>
-  <button type="button" data-act="tab" data-tab="calendar"><span class="ci" style="background:var(--bblue)"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M8 3.5v4M16 3.5v4M4 10h16"/></svg></span><span>Interview or follow-up<small>See what's coming up this week</small></span></button>
-  <button type="button" data-act="tab" data-tab="outreach"><span class="ci" style="background:var(--pink)"><svg class="i" viewBox="0 0 24 24"><path d="M4.5 6h15v10h-8l-4 3.5V16h-3z"/></svg></span><span>Referral note<small>Drafted for you; you send it</small></span></button>
-  <button type="button" data-act="tab" data-tab="tools"><span class="ci" style="background:var(--yellow)"><svg class="i" viewBox="0 0 24 24"><path d="M5 19l9.5-9.5M14 4.5l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5L10.5 8 13 7z"/></svg></span><span>Write or practise<small>Cover letter, email, an answer, a mock interview</small></span></button>
-</div>
-<div class="addsheet" id="sheet-more" role="dialog" aria-label="You and settings">
-  <h2>You</h2>
-  <button type="button" data-act="tab" data-tab="profile"><span class="ci" style="background:var(--yellow)"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 19.5c1.2-3.3 3.8-5 7-5s5.8 1.7 7 5"/></svg></span><span>Profile</span></button>
-  <button type="button" data-act="tab" data-tab="resume"><span class="ci" style="background:var(--pink)"><svg class="i" viewBox="0 0 24 24"><path d="M7 3.5h7l4 4V20H6.5V3.5z"/><path d="M14 3.5V8h4M9.5 12h5M9.5 15.5h5"/></svg></span><span>Base resume</span></button>
-  <button type="button" data-act="tab" data-tab="auto"><span class="ci" style="background:var(--bgreen)"><svg class="i" viewBox="0 0 24 24"><path d="M13 3L5 13.5h6L10 21l8-10.5h-6z"/></svg></span><span>Auto-apply</span></button>
-  <button type="button" data-act="tab" data-tab="contacts"><span class="ci" style="background:var(--pink)"><svg class="i" viewBox="0 0 24 24"><circle cx="9" cy="9" r="3.2"/><path d="M3.5 19c.9-3 3-4.5 5.5-4.5s4.6 1.5 5.5 4.5"/></svg></span><span>Contacts</span></button>
-  <button type="button" data-act="tab" data-tab="ask"><span class="ci" style="background:var(--yellow)"><svg class="i" viewBox="0 0 24 24"><path d="M4.5 6h15v10h-8l-4 3.5V16h-3z"/></svg></span><span>Ask Propelo</span></button>
-  <button type="button" data-act="tab" data-tab="concierge" data-cc hidden><span class="ci" style="background:var(--lav)"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c1.2-3.6 3.9-5.4 7-5.4s5.8 1.8 7 5.4"/></svg></span><span>Job Guarantee</span></button>
-  <button type="button" data-act="tab" data-tab="guarantee"><span class="ci" style="background:var(--bgreen)"><svg class="i" viewBox="0 0 24 24"><path d="M12 3.5l7 2.6v5.4c0 4.4-3 7.9-7 9-4-1.1-7-4.6-7-9V6.1z"/><path d="M9 12l2.2 2.2L15.5 10"/></svg></span><span>Guarantees</span></button>
-  <button type="button" data-act="tab" data-tab="inbox"><span class="ci" style="background:var(--bblue)"><svg class="i" viewBox="0 0 24 24"><path d="M3.5 13.5l2.6-7.2A2 2 0 018 5h8a2 2 0 011.9 1.3l2.6 7.2V18a2 2 0 01-2 2h-13a2 2 0 01-2-2z"/><path d="M3.5 13.5H8l1.5 2.5h5l1.5-2.5h4.5"/></svg></span><span>Inbox</span></button>
-  <button type="button" data-act="tab" data-tab="outreach"><span class="ci" style="background:var(--yellow)"><svg class="i" viewBox="0 0 24 24"><path d="M4.5 6h15v10h-8l-4 3.5V16h-3z"/></svg></span><span>Outreach</span></button>
-  <button type="button" data-act="tab" data-tab="calendar"><span class="ci" style="background:var(--pink)"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="14.5" rx="2.5"/><path d="M8 3.5v4M16 3.5v4M4 10h16"/></svg></span><span>Calendar</span></button>
-  <button type="button" data-act="tab" data-tab="tools"><span class="ci" style="background:var(--bblue)"><svg class="i" viewBox="0 0 24 24"><path d="M5 19l9.5-9.5M14 4.5l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5L10.5 8 13 7z"/></svg></span><span>Writing &amp; interviews</span></button>
-  <button type="button" data-act="tab" data-tab="skipped"><span class="ci" style="background:var(--bgreen)"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M7 17L17 7"/></svg></span><span>Skipped</span></button>
-  <hr>
-  <button type="button" data-act="tab" data-tab="setup"><span class="ci" style="background:var(--bblue)"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg></span><span>Settings</span></button>
-  <button type="button" data-act="theme"><span class="ci" style="background:#F3EDE2"><svg class="i" viewBox="0 0 24 24"><path d="M19 14.5A7.5 7.5 0 019.5 5a7.5 7.5 0 100 14 7.5 7.5 0 009.5-4.5z"/></svg></span><span>Dark mode</span></button>
-</div>
 
 <div id="scrim" hidden data-act="close"></div>
 <aside id="drawer" hidden role="dialog" aria-modal="true" aria-labelledby="d-title"></aside>
@@ -1744,6 +1767,15 @@ const state = {
 const cloud = () => state.status === 'cloud';
 const FRESH_PAGE = 24;
 const TABS = ['home','today','queue','pipeline','auto','outreach','contacts','ask','concierge','guarantee','skipped','setup','profile','resume','calendar','new','app','inbox','tools'];
+/* Five places to go, each holding the tabs that belong to one step of a search. The sidebar shows them as
+   sections that open; phones show them as the five dock tabs, with the section's tabs in a row at the top. */
+const PILLARS = {today: ['home','queue'], discover: ['today','new','skipped'], pipeline: ['pipeline','app','auto','inbox','calendar'],
+  prep: ['outreach','contacts','tools','ask'], brain: ['profile','resume','guarantee','concierge','setup']};
+const SUBTAB = {home: 'Overview', queue: 'Review queue', today: 'Fresh roles', new: 'New application', skipped: 'Skipped', pipeline: 'Applications',
+  auto: 'Auto-apply', inbox: 'Inbox', calendar: 'Calendar', outreach: 'Outreach', contacts: 'Contacts', tools: 'Writing & interviews', ask: 'Ask Propelo',
+  profile: 'Profile', resume: 'Base resume', guarantee: 'Guarantees', concierge: 'Job Guarantee', setup: 'Settings'};
+const pillarOf = tab => Object.keys(PILLARS).find(k => PILLARS[k].includes(tab)) || 'today';
+const lastIn = {};
 
 /* ---------- derived ---------- */
 const jobsArr = () => Array.from(state.jobs.values());
@@ -4184,6 +4216,12 @@ const localIso = () => { try { return new Intl.DateTimeFormat('en-CA', {timeZone
 const visaOf = s => obj(obj(s).visa);
 const myClock = () => visaClock(visaOf(state.settings), localIso());
 const partTimeMode = () => obj(state.settings).jobMode === 'part-time' && partTimeOk(visaOf(state.settings));
+/* The same two buttons as the visa card, in the top bar on every tab, for students whose visa allows term-time work. */
+function modeSwitch(){
+  if (!partTimeOk(visaOf(state.settings))) return '';
+  const pt = partTimeMode();
+  return `<span class="pseg mini" role="group" aria-label="What you are looking for"><button type="button" data-act="job-mode" data-v="career" aria-pressed="${!pt}"${wr()}>Sponsored career</button><button type="button" data-act="job-mode" data-v="part-time" aria-pressed="${pt}"${wr()}>Part-time</button></span>`;
+}
 const isPartTimeRole = j => /^(Part-time|Internship)$/.test(j.jobType || '') || /\b(part[- ]time|intern(ship)?|placement|working student|werkstudent|student (job|assistant|ambassador))\b/i.test(j.title || '');
 const daysWord = n => n === 1 ? '1 day' : n + ' days';
 function visaOptions(sel){
@@ -5481,10 +5519,27 @@ function renderNow(){
   $('#notice-text').innerHTML = state.status === 'nodb' ? 'Open this page as its owner, signed in to Claude, to see your pipeline.' : state.status === 'demo' ? 'Demo with fictional companies. <a href="https://app.propelo.org/signup?src=demo" style="text-decoration:underline;font-weight:600">Use Propelo with your own resume, free</a>' : cloud() ? `Each scan: roles for <b>${esc(f.exp)}</b><span class="long"> ${esc(f.locs)}</span>, from ${esc(Number(obj(state.me && state.me.feed).companies || 1400).toLocaleString('en-GB'))} company career pages, posted in the last ${esc(f.days)} days.` : `Every 6 hours: roles for <b>${esc(f.exp)}</b><span class="long">${esc(f.pay)} ${esc(f.locs)}</span>, posted in the last ${esc(f.days)} ${f.days === 1 ? 'day' : 'days'}.`;
   const navTab = state.tab === 'app' ? 'pipeline' : state.tab;
   document.querySelectorAll('.tab[role="tab"]').forEach(t => t.setAttribute('aria-selected', String(t.dataset.tab === navTab)));
-  const dockOn = ['home','today','pipeline'].includes(navTab) ? navTab : 'more';
-  document.querySelectorAll('.dock [data-dock]').forEach(b => b.setAttribute('aria-current', String(b.dataset.dock === dockOn)));
-  const dkT = $('#dk-today'); if (dkT) dkT.hidden = !ready;
-  const dkI = $('#dk-inbox'); if (dkI) dkI.hidden = !inboxNew().length;
+  const pil = pillarOf(navTab), nQueue = queueItems().length, nInbox = inboxNew().length;
+  // What needs you in each place: the review queue, roles ready to approve, new replies, messages due.
+  const need = {today: nQueue, discover: ready, pipeline: nInbox, prep: todos, brain: 0};
+  document.querySelectorAll('.pil').forEach(g => {
+    const on = g.dataset.pil === pil; g.classList.toggle('on', on);
+    const b = g.querySelector('.pbtn'); if (b) b.setAttribute('aria-expanded', String(on));
+    const c = g.querySelector('.pct'); if (c){ const n = on ? 0 : need[g.dataset.pil]; c.textContent = n || ''; c.hidden = !n; }
+  });
+  document.querySelectorAll('.dock [data-dock]').forEach(b => b.setAttribute('aria-current', String(b.dataset.dock === pil)));
+  for (const k of ['today','discover','pipeline','prep']){ const d = $('#dk-' + k); if (d) d.hidden = !need[k]; }
+  const sn = $('#subnav');
+  if (sn){
+    const ccOn = !!document.querySelector('#t-concierge:not([hidden])');
+    const tabs = PILLARS[pil].filter(k => k !== 'app' && (k !== 'concierge' || ccOn));
+    const badge = {queue: nQueue, today: ready, inbox: nInbox, outreach: todos};
+    sn.innerHTML = `<div class="sn-tabs" role="tablist" aria-label="${esc(({today: 'Today', discover: 'Discover', pipeline: 'Pipeline', prep: 'Prep and outreach', brain: 'Career Brain'})[pil])}">`
+      + tabs.map(k => `<button type="button" role="tab" data-act="tab" data-tab="${k}" aria-selected="${k === navTab}">${esc(SUBTAB[k])}${badge[k] ? ` <span class="ct hot">${badge[k]}</span>` : ''}</button>`).join('')
+      + (pil === 'brain' ? '<button type="button" class="sn-x" data-act="theme">Dark mode</button>' : '') + '</div>'
+      + (pil === 'discover' || pil === 'today' ? modeSwitch() : '');
+  }
+  { const mt = $('#mode-top'); if (mt) mt.innerHTML = modeSwitch(); }
   const ci = $('#c-inbox'); if (ci){ const n = inboxNew().length; ci.textContent = n || ''; ci.hidden = !n; }
   const ca = $('#c-auto'); if (ca){ const st = autoStatus(); ca.textContent = st.short; ca.className = 'ct ' + st.cls; }
   const ctT = $('#c-today'); if (ctT){ ctT.textContent = ready || ''; ctT.hidden = !ready; }
@@ -5561,7 +5616,8 @@ function copyFrom(btn){
   const fallback = () => { try { const r = document.createRange(); r.selectNodeContents(el); const s = getSelection(); s.removeAllRanges(); s.addRange(r); toast('Text selected. Press Ctrl+C or Cmd+C to copy.'); } catch(e){} };
   try { navigator.clipboard.writeText(text).then(done, fallback); } catch(e){ fallback(); }
 }
-function setTab(t){ if (state.tab === t) return; if (t === 'profile' && !state.profDirty) state.profDraft = null; state.tab = t; state.enter = true; state.openId = null; try { history.replaceState(null, '', '#' + t); } catch(e){} render(); window.scrollTo({top: 0, behavior: 'smooth'}); }
+function goPillar(p){ const tabs = PILLARS[p] || PILLARS.today, last = lastIn[p]; setTab(last && tabs.includes(last) && last !== 'app' ? last : tabs[0]); }
+function setTab(t){ lastIn[pillarOf(t)] = t; if (state.tab === t) return; if (t === 'profile' && !state.profDirty) state.profDraft = null; state.tab = t; state.enter = true; state.openId = null; try { history.replaceState(null, '', '#' + t); } catch(e){} render(); window.scrollTo({top: 0, behavior: 'smooth'}); }
 
 function autoReadyMsg(){ const m = []; if (apMissing().length) m.push('your details'); if (!obj(applicant().resume).id) m.push('your resume'); if (!runnerLinked()) m.push('your computer'); return m.length ? `Queued. It goes out once ${listJoin(m)} ${m.length === 1 ? 'is' : 'are'} set up.` : 'Queued. It goes out on the next auto-apply run.'; }
 
@@ -5609,6 +5665,7 @@ document.addEventListener('click', e => {
   if (act !== 'sheet' && sheetEntry && !el._replay){ closeSheets(() => { el._replay = true; el.click(); el._replay = false; }); return; }
   if (act !== 'sheet') closeSheetsUI();
   if (act === 'tab') setTab(el.dataset.tab);
+  else if (act === 'pillar'){ const p = el.dataset.pil; if (pillarOf(state.tab) === p && el.classList.contains('pbtn')) return; goPillar(p); }
   else if (act === 'qs-place'){ const i = $('#qs-places'); if (i){ const have = i.value.split(',').map(x => x.trim()).filter(Boolean); if (!have.includes(el.dataset.r)) have.push(el.dataset.r); i.value = have.join(', '); el.setAttribute('aria-pressed', 'true'); state.qsDirty = true; } }
   else if (act === 'job-mode'){
     if (!state.db || !state.canWrite) return;

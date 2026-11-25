@@ -59,13 +59,16 @@ One easing curve, `cubic-bezier(.16,1,.3,1)`, plus `cubic-bezier(.65,0,.35,1)` f
 - **Entrances:** other blocks fade and rise 20 px, 70 ms apart. The principle notes arrive one by one, 70 ms apart; the source bars fill once; the step line under "How it works" follows the scroll.
 - **The dot grid** in the hero panel swells and takes colour near the cursor, and only draws while the cursor moves.
 - **Feedback:** a press scales to 0.98; a hover is a colour change or a lift of 2 px at most.
-- **In the app:** tabs change instantly; Home's best-fit card and tiles fade and rise once; sheets grow from their trigger.
+- **In the app:** tabs change instantly; Home's best-fit card and tiles fade and rise once.
 - **No splash screen.** The home page opens on its content; the hero headline starts at once.
 - **Reduce Motion** shows every page at rest, with no entrances.
 
 ## Navigation
 
-- An open sheet, the job sheet and an application page each own one history entry. The first back (Android's back button, the browser's back, Escape) closes them instead of leaving the app.
+- **Five places.** The app has five places, each one step of a search: **Today** (Overview, Review queue), **Discover** (Fresh roles, New application, Skipped), **Pipeline** (Applications, Auto-apply, Inbox, Calendar), **Prep & outreach** (Outreach, Contacts, Writing & interviews) and **Career Brain** (Profile, Base resume, Guarantees). Ask Propelo and Settings sit at the foot of the sidebar. The sidebar opens the place you're in and shows, on each closed place, how many things wait for you there. A place reopens on the tab you last used in it.
+- **On phones** the dock has the same five places, each with a dot when something waits (the review queue, roles ready to approve, new replies, messages due). The place's tabs sit in a row at the top of the screen; Career Brain's row also has Settings and the dark mode switch.
+- **Sponsored career or part-time** is a switch in the top bar (and in the Today and Discover rows on phones) for students whose visa allows term-time work.
+- The job sheet and an application page each own one history entry. The first back (Android's back button, the browser's back, Escape) closes them instead of leaving the app.
 - Tabs are peers: switching tabs replaces the history entry, so back from any tab leaves the app.
 - Sign-in, sign-up and email confirmation are one-way doors: they navigate with `location.replace`, and a signed-in visitor who lands on them goes straight to the app.
 - On phones the website's links fold into one menu button.
