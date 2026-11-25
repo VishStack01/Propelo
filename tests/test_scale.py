@@ -87,29 +87,24 @@ def test_feed_keeps_study_countries_ahead_of_the_rest_when_trimmed():
     assert [r["id"] for r in kept] == ["5", "4", "3", "2"]  # newest first in what is published
 
 
-def test_intake_skips_unchanged_roles_and_reads_texts_out_of_order(cloud, tmp_path):
+def test_intake_skips_unchanged_roles_and_stores_no_posting_text(cloud, tmp_path):
     from propelo.cloud.ingest import ingest
     records = [feed_record(i) for i in range(12)]
     write_feed(tmp_path / "feed", records)
     first = ingest(cloud.db, cloud.cfg.feed_url, log=lambda *_: None)
     assert first["records"] == 12 and first["changed"] == 12
     assert ingest(cloud.db, cloud.cfg.feed_url, log=lambda *_: None)["status"] == "unchanged"  # same summary: nothing downloaded
-    # A newer feed with one changed role, one new role, and the text file in a different order.
+    # A newer feed with one changed role and one new role: only those are written.
     records[3]["summary"] = "Now hiring in Hyderabad too."
     records.append(feed_record(50))
     write_feed(tmp_path / "feed", records, generated="2099-01-01T00:00:00Z")
-    full = tmp_path / "feed" / "full.jsonl.gz"
-    with gzip.open(full, "rt") as f:
-        lines = [json.loads(x) for x in f]
-    with gzip.open(full, "wt") as f:
-        for x in reversed(lines):
-            f.write(json.dumps(x) + "\n")
+    (tmp_path / "feed" / "full.jsonl.gz").unlink()  # the posting text file isn't needed any more
     second = ingest(cloud.db, cloud.cfg.feed_url, log=lambda *_: None)
-    assert second["records"] == 13 and second["closed"] == 0 and second["changed"] <= 2 + 1
+    assert second["records"] == 13 and second["closed"] == 0 and second["changed"] == 2
     with cloud.db.tx() as c:
         assert c.scalar("SELECT COUNT(*) AS n FROM jobs WHERE active = 1") == 13
         row = c.one("SELECT text, rev FROM jobs WHERE id = ?", (records[0]["id"],))
-        assert row["rev"] and row["text"] == next(x["text"] for x in lines if x["id"] == records[0]["id"])
+        assert row["rev"] and row["text"] == ""
 
 
 # ---------------------------------------------------------------- growth: sources, funnel, passes, pages
