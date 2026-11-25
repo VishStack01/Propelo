@@ -1358,6 +1358,12 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
 @media (max-width:720px){.vclock{grid-template-columns:1fr;gap:20px}.vc-note{max-width:250px;margin-left:4px}}
 @media (prefers-reduced-motion:reduce){.vc-note{transform:none}}
 
+.netpill{position:fixed;z-index:60;top:calc(12px + env(safe-area-inset-top,0px));left:16px;right:16px;margin:0 auto;width:fit-content;max-width:560px;background:var(--ink);color:var(--page);border-radius:999px;padding:9px 16px 9px 30px;font-size:13.5px;line-height:1.35;box-shadow:0 10px 30px -12px rgba(0,0,0,.45)}
+.netpill::before{content:"";position:absolute;left:13px;top:50%;width:8px;height:8px;margin-top:-4px;border-radius:50%;background:var(--yellow);animation:netp 1.6s var(--ease) infinite}
+.netpill[hidden]{display:none}
+@keyframes netp{50%{opacity:.35}}
+@media (prefers-reduced-motion: reduce){.netpill::before{animation:none}}
+@media (max-width:900px){.netpill{top:auto;bottom:calc(86px + env(safe-area-inset-bottom,0px));border-radius:18px}}
 /* ===== Five places (Today, Discover, Pipeline, Prep & outreach, Career Brain) ===== */
 .side .pil{display:grid;gap:2px}
 .side .pil .psub{display:none;gap:2px;padding-bottom:4px}
@@ -2501,6 +2507,7 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
 <div id="scrim" hidden data-act="close"></div>
 <aside id="drawer" hidden role="dialog" aria-modal="true" aria-labelledby="d-title"></aside>
 <div id="toast" role="status" aria-live="polite"></div>
+<div class="netpill" id="netpill" role="status" aria-live="polite" hidden></div>
 
 <script>
 (function(){
@@ -3873,6 +3880,21 @@ function coLogo(company, size){
    Roles that need you first (forms auto-apply can't send: portals, a missing answer), then packages
    waiting for approval, then fresh roles above your apply line. Approving queues a role for auto-apply;
    below the 4.0 line the button says "Apply anyway". Nothing is submitted from here. */
+/* Nothing to decide: say so calmly, say when the last scan finished, and offer the one most useful thing to do. */
+function scanAgo(){
+  const at = toDate(obj(obj(state.me).feed).generatedAt); if (!at) return '';
+  const m = Math.max(0, Math.round((Date.now() - at) / 6e4));
+  return m < 1 ? 'just now' : m < 60 ? m + (m === 1 ? ' minute ago' : ' minutes ago') : Math.round(m / 60) === 1 ? 'an hour ago' : Math.round(m / 60) + ' hours ago';
+}
+function caughtUp(){
+  const due = outreachTodos().length;
+  const soon = jobsArr().filter(j => j.stage === 'interview' && toDate(j.interviewAt) && toDate(j.interviewAt) > new Date()).sort((a, b) => toDate(a.interviewAt) - toDate(b.interviewAt))[0];
+  const next = due ? `<button class="btn solid" data-act="tab" data-tab="outreach">Send ${due === 1 ? 'the follow-up' : 'the ' + due + ' follow-ups'} that ${due === 1 ? 'is' : 'are'} due</button>`
+    : soon ? `<button class="btn solid" data-act="tab" data-tab="tools">Practise for ${esc(soon.company || 'your interview')}</button>`
+    : `<button class="btn" data-act="tab" data-tab="today">See fresh roles</button>`;
+  const when = scanAgo();
+  return `<div class="panel qempty"><p><b>You're caught up.</b></p><p class="small">${when ? `The last scan finished ${when}. ` : ''}Roles that fit your filters land in Fresh roles after each scan and show up here.</p><div class="ract" style="justify-content:flex-start">${next}</div></div>`;
+}
 function queueItems(){
   const later = state.qLater || new Set();
   const need = waitingJobs().map(j => ({j, kind: 'yours'}));
@@ -3884,7 +3906,7 @@ function queueItems(){
 function renderQueue(){
   const items = queueItems(), ro = wr();
   const head = `<div class="hero" style="padding-bottom:4px"><div><h1>Review queue</h1><p class="sub">One role at a time. Approve to send it with auto-apply, skip what isn't for you, and apply yourself where a site needs you. Nothing is submitted from this screen.</p></div></div>`;
-  if (!items.length) return head + `<div class="panel qempty"><p><b>You're all caught up.</b></p><p class="small">New roles that fit your filters land in Fresh roles and show up here.</p><button class="btn" data-act="tab" data-tab="today">See fresh roles</button></div>`;
+  if (!items.length) return head + caughtUp();
   const total = items.length, {j, kind} = items[0];
   const u = safeUrl(j.applyUrl) || safeUrl(j.url);
   const label = kind === 'yours' ? (j.needsYouKind === 'platform' ? `Apply on ${esc(j.applyOn || 'the site')} yourself` : 'Needs you') : kind === 'ready' ? 'Package ready for approval' : 'Fresh role';
@@ -7175,6 +7197,29 @@ async function api(url, init){
   if (r.status === 401){ toLogin(); throw {code: 'unauthenticated'}; }
   return r;
 }
+/* ---------- connection status ----------
+   Background reads used to fail silently, so a sleeping or unreachable server looked like an empty pipeline.
+   After two failed reads in a row a small notice says so (offline, the server waking up, or unreachable),
+   retries sooner, and goes away with "Connected again." once a read works. A request the server refused
+   (signed out, not allowed, not found) is not a lost connection and changes nothing here. */
+const net = {fails: 0, shown: false, retry: null};
+function netNote(e){
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) return "You're offline. Showing what was loaded; Propelo reconnects when you're back.";
+  if (e && (e.status === 502 || e.status === 503 || e.status === 504)) return 'Propelo is waking up, which can take up to a minute. Showing what was loaded.';
+  return "Can't reach Propelo right now. Showing what was loaded and trying again.";
+}
+function netOk(){
+  if (!net.fails) return;
+  net.fails = 0; clearTimeout(net.retry); net.retry = null;
+  const el = $('#netpill'); if (el) el.hidden = true;
+  if (net.shown){ net.shown = false; toast('Connected again.'); }
+}
+function netFail(e, retry){
+  if (!e || !['unavailable', 'internal', 'deadline_exceeded'].includes(e.code)) return;  // a bug while drawing the page is not a lost connection
+  net.fails++;
+  if (net.fails >= 2){ const el = $('#netpill'); if (el){ el.textContent = netNote(e); el.hidden = false; net.shown = true; } }
+  if (!net.retry && retry) net.retry = setTimeout(() => { net.retry = null; retry(); }, Math.min(30000, 3000 * net.fails));
+}
 function makeLocalDB(opts){
   opts = opts || {};
   const ticks = new Set(), etags = new Map();
@@ -7184,18 +7229,20 @@ function makeLocalDB(opts){
     const headers = Object.assign({}, (init && init.headers) || {});
     const prior = get ? etags.get(url) : null;
     if (prior) headers['If-None-Match'] = prior.tag;
-    const r = await api(url, Object.assign({}, init || {}, {headers}));
+    let r;
+    try { r = await api(url, Object.assign({}, init || {}, {headers})); } catch (e) { if (e && e.code) throw e; throw {code: 'unavailable', network: true}; }
     if (r.status === 304 && prior) return prior.body;
     if (r.status === 404) return null;
-    if (!r.ok){ let code = 'unavailable'; try { code = ((await r.json()).code) || code; } catch(e){} throw {code: r.status === 400 ? 'invalid_argument' : r.status === 413 ? 'quota_exceeded' : code}; }
+    if (!r.ok){ let code = 'unavailable'; try { code = ((await r.json()).code) || code; } catch(e){} throw {code: r.status === 400 ? 'invalid_argument' : r.status === 413 ? 'quota_exceeded' : code, status: r.status}; }
     const body = await r.json();
     const tag = r.headers.get('ETag');
     if (get && tag) etags.set(url, {tag, body});
     return body;
   };
   const every = opts.cloud ? 15000 : 4000;
-  const watch = fn => { let alive = true; const tick = force => { if (alive && (force || !document.hidden)) fn().catch(() => {}); }; ticks.add(tick); tick(true); const iv = setInterval(() => tick(false), every); return () => { alive = false; ticks.delete(tick); clearInterval(iv); }; };
+  const watch = fn => { let alive = true; const tick = force => { if (alive && (force || !document.hidden)) fn().then(netOk, e => netFail(e, refresh)); }; ticks.add(tick); tick(true); const iv = setInterval(() => tick(false), every); return () => { alive = false; ticks.delete(tick); clearInterval(iv); }; };
   document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(); });
+  window.addEventListener('online', refresh);
   const query = (name, opts) => ({
     limit: n => query(name, Object.assign({}, opts, {limit: n})),
     orderBy: (f, dir) => query(name, Object.assign({}, opts, {order: [f, dir || 'asc']})),
