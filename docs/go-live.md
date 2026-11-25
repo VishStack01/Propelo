@@ -1,6 +1,6 @@
 # Propelo go-live checklist
 
-Updated 26 November 2026. Pull requests 16 to 27 are merged into `main`: the people on the website and app, dollar-only plans for the US, UK, Ireland and the Netherlands, the 90-day passes, the Visa-Clock, part-time hours, plain-words drafts and Word resumes, the extension for Workday-style forms, permit pay floors and languages, warm paths, the resume defence drill, and "What hiring you takes". Checkout stays off until step 4, because your Dodo account has no products yet. What is left needs your accounts, so only you can do it, in this order.
+Updated 25 November 2026. Pull requests 16 to 37 are merged into `main`: everything listed before (dollar-only plans for the US, UK, Ireland and the Netherlands, the 90-day passes, the Visa-Clock, part-time hours, plain-words drafts and Word resumes, the extension for Workday-style forms, permit pay floors and languages, warm paths, the resume defence drill, "What hiring you takes"), and the UX blueprint review: no splash screen, one set of numbers on every page, the job board on the four countries with pay in its own currency, separate policy pages with a list of the services that handle data, the dashboard in five places, a notice when the server can't be reached, and the phone apps as `org.propelo.app`. `docs/ux-blueprint-status.md` has the review item by item. Checkout stays off until step 4, because your Dodo account has no products yet. What is left needs your accounts, so only you can do it, in this order.
 
 Every value below goes into Render, on the `propelo` service, under **Environment**. Never paste a key or password into a chat, an email or the repository.
 
@@ -100,7 +100,14 @@ If something is wrong, revert the merge on `main` and redeploy. Nothing in this 
 
 - Move the Render web service to a paid plan ($7 a month) so it doesn't sleep. A sleeping app makes the first visitor wait about 50 seconds.
 - Neon's free plan allows 100 compute hours a month per project. An always-on app keeps the database awake longer; watch usage in the Neon console and move to its paid plan if it gets close.
-- Have a lawyer read the guarantee terms (`/terms#guarantees`).
+- Have a lawyer read the guarantee terms (`/terms#guarantees`) and the other policies, and add the law that governs the terms. The note at the top of `propelo/cloud/static/legal.html` lists what to check.
+
+## 9. The website's address and contact
+
+1. **www.propelo.org** shows a certificate error. The website is on GitHub Pages: at your DNS provider add a `CNAME` record named `www` pointing to `vishstack01.github.io`. In the repository, **Settings → Pages**, check the custom domain is `propelo.org` and tick **Enforce HTTPS**. GitHub then sends www to propelo.org.
+2. Add `propelo.org` in Google Search Console and request indexing of the home page.
+3. Create a support address on the domain (for example `support@propelo.org`) and set `SUPPORT_EMAIL` to it. The contact page and every policy show it.
+4. Before the phone apps go to the stores: an Apple Developer and a Google Play account. The app id is `org.propelo.app` on both; it can't change after the first upload.
 
 ## Decisions made for you, which you can change
 
