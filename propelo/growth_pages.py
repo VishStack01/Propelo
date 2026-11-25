@@ -3,8 +3,9 @@
 * `data/sponsors-uk.txt` and `data/sponsors-nl.txt`: the official sponsor registers as plain text, for the free
   sponsor check page (website/sponsor-check.html), which searches them in the browser.
 * `visa-jobs.html` and one page per country (`visa-jobs-uk.html`, ...): recent junior and mid-level roles whose
-  employer is on a sponsor register or whose posting says it sponsors or takes OPT/CPT. A page never lists a role
-  that says it cannot sponsor.
+  employer is on a sponsor register or whose posting says it sponsors or takes OPT/CPT, for the four countries
+  Propelo covers (UK, US, Ireland, Netherlands). A page never lists a role that says it cannot sponsor. A page shows
+  the newest MAX_ROWS and says how many matched in all.
 * `lists/<country>.md`: the same lists as Markdown tables, for a public "sponsor jobs" list on GitHub.
 
 Every list states what the signal is and that a register listing is not a promise for one role.
@@ -29,13 +30,14 @@ MAX_AGE_DAYS = 30
 COUNTRIES = [
     ("uk", "GB", "the UK", "The employer is on the Home Office register of licensed sponsors (Skilled Worker route)."),
     ("usa", "US", "the United States", "The employer has certified H-1B applications in the latest US Department of Labor data, or the posting says it sponsors, takes OPT or CPT, or uses E-Verify."),
-    ("canada", "CA", "Canada", "The employer was issued a positive Labour Market Impact Assessment in the last year, or the posting says it sponsors."),
-    ("australia", "AU", "Australia", "The posting itself says the employer sponsors visas."),
-    ("germany", "DE", "Germany", "The posting itself says the employer sponsors visas or supports relocation with a visa."),
-    ("netherlands", "NL", "the Netherlands", "The employer is on the Dutch immigration service's register of recognised sponsors, or the posting says it sponsors."),
     ("ireland", "IE", "Ireland", "The employer was issued employment permits this year, or the posting says it sponsors."),
+    ("netherlands", "NL", "the Netherlands", "The employer is on the Dutch immigration service's register of recognised sponsors, or the posting says it sponsors."),
 ]
-TITLE = {"uk": "UK", "usa": "US", "canada": "Canada", "australia": "Australia", "germany": "Germany", "netherlands": "Netherlands", "ireland": "Ireland"}
+TITLE = {"uk": "UK", "usa": "US", "netherlands": "Netherlands", "ireland": "Ireland"}
+# The job board's visa filter values that match each country's signal (site_app.html, `vs`).
+BOARD_SIGNALS = {"GB": "uk%7Csponsors", "US": "us%7Copt%7Ceverify%7Csponsors", "IE": "ie%7Csponsors", "NL": "nl%7Csponsors"}
+# Pages from before Propelo narrowed to four countries: kept as redirects so old links still land somewhere.
+RETIRED = ("canada", "australia", "germany")
 
 
 def sponsor_data(feed_dir: Path, out: Path) -> dict:
@@ -111,7 +113,8 @@ _NOT_A_JOB = re.compile(r"\b(volunteers?|volunteering|unpaid)\b", re.I)
 
 
 def pick(records: list[dict], code: str, now: datetime) -> list[dict]:
-    """Recent junior and mid-level roles in a country with a sponsorship signal, newest first, a few per employer."""
+    """Recent junior and mid-level roles in a country with a sponsorship signal, newest first, a few per employer.
+    All of them: the page shows the first MAX_ROWS and says how many there are."""
     rows, per = [], {}
     for r in records:
         if code not in _where(r) or (r.get("facts") or {}).get("senior") or (r.get("facts") or {}).get("closedQuote"):
@@ -140,7 +143,7 @@ def pick(records: list[dict], code: str, now: datetime) -> list[dict]:
         rows.append({"id": r["id"], "title": r["title"], "company": r["company"], "location": r.get("location", ""), "posted": posted,
                      "why": why, "salary": r.get("salary") or "", "url": r["url"]})
     rows.sort(key=lambda x: x["posted"], reverse=True)
-    return rows[:MAX_ROWS]
+    return rows
 
 
 def _shell(site_dir: Path) -> tuple[str, str, str] | None:
@@ -206,16 +209,19 @@ def visa_pages(records: list[dict], out: Path, site_dir: Path, scan_at: datetime
         links = []
         for s, _, _, _ in COUNTRIES:
             here = ' aria-current="page"' if s == cur else ""
-            links.append(f'<a href="visa-jobs-{s}.html"{here}>{TITLE[s]} <span style="opacity:.6">&nbsp;{len(picked[s])}</span></a>')
+            links.append(f'<a href="visa-jobs-{s}.html"{here}>{TITLE[s]} <span style="opacity:.6">&nbsp;{len(picked[s]):,}</span></a>')
         return '<nav class="vj-tabs" aria-label="Country">' + "".join(links) + "</nav>"
     tail = '\n<script src="assets/site.js"></script>\n</body>\n</html>\n'
     pages = []
     (out / "lists").mkdir(exist_ok=True)
     for slug, code, name, rule in COUNTRIES:
-        rows = picked[slug]
+        found = picked[slug]
+        rows = found[:MAX_ROWS]
         title = f"{TITLE[slug]} jobs at employers that can sponsor a visa ({when}) | Propelo"
-        desc = (f"{len(rows)} recent entry and mid-level roles in {name} with a sponsorship signal, read from company career pages. "
+        desc = (f"{len(found):,} recent entry and mid-level roles in {name} with a sponsorship signal, read from company career pages. "
                 f"Updated every hour. Free.")
+        shown = (f"{len(found):,} roles" if len(found) <= MAX_ROWS else
+                 f'Newest {MAX_ROWS} of {len(found):,} roles (<a href="jobs.html?co={code}&amp;vs={BOARD_SIGNALS[code]}">see them all on the job board</a>)')
         items = "".join(
             f'<div class="vj-row"><div><a href="jobs.html#/job/{escape(r["id"], quote=True)}">{escape(r["title"])}</a>'
             f'<div class="co">{escape(r["company"])} · {escape(r["location"][:80])}{" · " + escape(r["salary"]) if r["salary"] else ""}</div></div>'
@@ -229,7 +235,7 @@ def visa_pages(records: list[dict], out: Path, site_dir: Path, scan_at: datetime
                 f'<h1>{TITLE[slug]} jobs at employers that can <mark>sponsor you</mark></h1>'
                 f'<p class="sub">Recent entry and mid-level roles in {name}, read straight from company career pages. {escape(rule)} '
                 f'Roles that say they cannot sponsor are left out.</p>'
-                f'<p class="meta">{len(rows)} roles · updated {when} · a signal means the employer can sponsor, not that this role is sponsored: ask before you apply.</p>'
+                f'<p class="meta">{shown} · updated {when} · a signal means the employer can sponsor, not that this role is sponsored: ask before you apply.</p>'
                 f'<div class="acts"><a class="btn" data-app="/signup?src=visa-{slug}" href="https://app.propelo.org/signup?src=visa-{slug}">Match these to my resume, free<svg><use href="#i-right"/></svg></a>'
                 f'<a class="btn light" href="jobs.html?co={code}">All {TITLE[slug]} roles</a>'
                 + (f'<a class="btn light" href="sponsor-check.html?country={ {"GB": "uk", "NL": "nl", "US": "us", "CA": "ca", "IE": "ie"}[code] }">Check one employer</a>' if code in ("GB", "NL", "US", "CA", "IE") else "") + "</div>"
@@ -245,18 +251,31 @@ def visa_pages(records: list[dict], out: Path, site_dir: Path, scan_at: datetime
                for r in rows]
         (out / "lists" / f"{slug}.md").write_text("\n".join(md) + "\n", encoding="utf-8")
     total = sum(len(v) for v in picked.values())
-    cards = "".join(f'<a class="vj-card" href="visa-jobs-{s}.html"><b>{TITLE[s]}</b><span>{len(picked[s])} recent roles with a sponsorship signal</span></a>' for s, _, _, _ in COUNTRIES)
+    cards = "".join(f'<a class="vj-card" href="visa-jobs-{s}.html"><b>{TITLE[s]}</b><span>{len(picked[s]):,} recent roles with a sponsorship signal</span></a>' for s, _, _, _ in COUNTRIES)
     title = "Jobs abroad at employers that can sponsor your visa | Propelo"
-    desc = f"{total} recent entry and mid-level roles in 7 countries with a sponsorship signal, from company career pages and official sponsor registers. Updated every hour."
+    desc = (f"{total:,} recent entry and mid-level roles in the UK, US, Ireland and the Netherlands with a sponsorship signal, "
+            "from company career pages and official sponsor registers. Updated every hour.")
     body = (f'<body data-page="visa-jobs">\n{nav}<main id="main" class="vj"><div class="wrap">'
             '<h1>Jobs abroad at employers that can <mark>sponsor you</mark></h1>'
             '<p class="sub">Propelo reads company career pages every hour and checks each role against official sponsor registers and '
             'the posting\'s own words. Pick a country.</p>'
-            f'<p class="meta">{total} roles · updated {when}</p>'
+            f'<p class="meta">{total:,} roles · updated {when}</p>'
             '<div class="acts"><a class="btn" data-app="/signup?src=visa-jobs" href="https://app.propelo.org/signup?src=visa-jobs">Match roles to my resume, free<svg><use href="#i-right"/></svg></a>'
             '<a class="btn light" href="sponsor-check.html">Check one employer</a></div>'
             f'<div class="vj-cards">{cards}</div>'
             '<div class="vj-note"><b>How to read these lists.</b> A register listing or a line in a posting shows the employer can sponsor. It is not a promise for one role, '
             'and visa rules change. Ask the employer before you apply, and check official guidance for your own case.</div></div></main>\n' + footer)
     (out / "visa-jobs.html").write_text(_head(base_head, title, desc) + STYLE + body + tail, encoding="utf-8")
+    for slug in RETIRED:
+        (out / f"visa-jobs-{slug}.html").write_text(redirect_page("visa-jobs.html"), encoding="utf-8")
     return ["visa-jobs.html"] + pages
+
+
+def redirect_page(to: str, label: str = "") -> str:
+    """A static page that sends the visitor on (GitHub Pages has no server redirects) and stays out of search."""
+    to_attr = escape(to, quote=True)
+    return ('<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Moved | Propelo</title>'
+            f'<meta name="robots" content="noindex"><link rel="canonical" href="{to_attr}">'
+            f'<meta http-equiv="refresh" content="0; url={to_attr}">'
+            f'<script>location.replace({json.dumps(to)} + location.search + location.hash)</script></head>'
+            f'<body><p>This page moved: <a href="{to_attr}">{escape(label or to)}</a>.</p></body></html>\n')

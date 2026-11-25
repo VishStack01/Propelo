@@ -213,12 +213,29 @@ def test_sponsor_check_data_and_visa_pages(tmp_path):
             mk(4, postedAt="2026-08-01T00:00:00Z"), mk(5, via="board"), mk(6, countries=["US"], location="Austin, TX", facts={"visa": {"opt": "yes"}}),
             mk(7, countries=["US"], location="Austin, TX", facts={"visa": {"status": "no", "why": "citizens"}})]
     pages = growth_pages.visa_pages(recs, out, site, now)
-    assert pages[0] == "visa-jobs.html" and "visa-jobs-uk.html" in pages and len(pages) == 8
+    assert pages == ["visa-jobs.html", "visa-jobs-uk.html", "visa-jobs-usa.html", "visa-jobs-ireland.html", "visa-jobs-netherlands.html"]
+    assert "location.replace" in (out / "visa-jobs-canada.html").read_text(encoding="utf-8")  # retired pages send visitors on
     uk = (out / "visa-jobs-uk.html").read_text(encoding="utf-8")
     assert "Engineer 1" in uk and all(f"Engineer {i}<" not in uk for i in (2, 3, 4, 5))  # says no, senior, old, and from a job board are left out
     us = (out / "lists" / "usa.md").read_text(encoding="utf-8")
     assert "Engineer 6" in us and "Takes OPT / CPT" in us and "Engineer 7" not in us
     assert "src=visa-uk" in uk and "not that this role is sponsored" in uk
+
+
+def test_visa_pages_say_how_many_matched_when_the_list_is_cut(tmp_path):
+    from propelo import growth_pages
+    out, site = tmp_path / "out", tmp_path / "website"
+    out.mkdir(); site.mkdir()
+    (site / "check.html").write_text('<html><head><title>x</title><style></style></head><body><a class="skip" href="#main">s</a><nav></nav>'
+                                     '<main id="main"></main><footer>f</footer></body></html>', encoding="utf-8")
+    now = datetime(2026, 11, 22, tzinfo=timezone.utc)
+    recs = [{"id": f"r{i}", "title": f"Analyst {i}", "company": f"Co {i}", "url": f"https://x.example/{i}", "location": "Dublin", "countries": ["IE"],
+             "postedAt": "2026-11-20T00:00:00Z", "via": "careers", "facts": {"visa": {"iePermits": 3}}} for i in range(growth_pages.MAX_ROWS + 40)]
+    growth_pages.visa_pages(recs, out, site, now)
+    ie = (out / "visa-jobs-ireland.html").read_text(encoding="utf-8")
+    assert f"Newest {growth_pages.MAX_ROWS} of {growth_pages.MAX_ROWS + 40} roles" in ie and "jobs.html?co=IE&amp;vs=ie%7Csponsors" in ie
+    assert ie.count('class="vj-row"') == growth_pages.MAX_ROWS
+    assert f"{growth_pages.MAX_ROWS + 40} recent roles" in (out / "visa-jobs.html").read_text(encoding="utf-8")
 
 
 # ---------------------------------------------------------------- lists of employers that have sponsored

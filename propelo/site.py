@@ -222,6 +222,33 @@ def seo(out: Path, base_url: str, extra: tuple[str, ...] = ()) -> None:
     (out / "404.html").write_text(NOT_FOUND.format(base=base), encoding="utf-8")
 
 
+_STAT = re.compile(r'(<(b|span|strong)\b[^>]*\bdata-stat="(\w+)"[^>]*>)[^<]*(</\2>)')
+
+
+def stat_values(stats: dict) -> dict[str, str]:
+    """The numbers the website shows, formatted once (international thousands separators)."""
+    vals = {k: f"{int(stats[k]):,}" for k in ("openings", "companies", "boards", "relisted", "systems") if stats.get(k)}
+    try:
+        d = datetime.fromisoformat(str(stats.get("feedAt") or "").replace("Z", "+00:00"))
+        vals["date"] = f"{d.day} {d:%B %Y}"
+    except ValueError:
+        pass
+    return vals
+
+
+def stamp_stats(page: str, vals: dict[str, str]) -> str:
+    """Write this build's numbers into every `data-stat` element, so a page reads the same with or without
+    JavaScript and no two pages disagree. site.js refreshes them from data/stats.json."""
+    return _STAT.sub(lambda m: m.group(1) + escape(vals[m.group(3)]) + m.group(4) if vals.get(m.group(3)) else m.group(0), page)
+
+
+def redirects(app_url: str) -> dict[str, str]:
+    """Old or guessed addresses on the website and where they go now (GitHub Pages serves /x as x.html)."""
+    app = app_url.rstrip("/")
+    return {"scam.html": "check.html", "pricing.html": "./#pricing", "terms.html": f"{app}/terms", "privacy.html": f"{app}/privacy",
+            "refunds.html": f"{app}/refunds", "contact.html": f"{app}/contact", "business.html": f"{app}/business"}
+
+
 def build(feed_dir: str | Path, out_dir: str | Path, demo: str | Path | None = None, base_url: str = "", log=print,
           website: str | Path | None = None, logos_dir: str | Path | None = None) -> dict:
     feed_dir, out = Path(feed_dir), Path(out_dir)
@@ -272,8 +299,11 @@ def build(feed_dir: str | Path, out_dir: str | Path, demo: str | Path | None = N
         rest = sum(v for _, v in top[4:])
         others = len(top) - 5
         shares.append({"label": f"{top[4][0]} and {others} more" if others else f"{top[4][0]} job boards", "share": round(rest / total, 4)})
-    stats = {"feedAt": summary.get("generatedAt", ""), "openings": summary.get("openings", 0), "companies": summary.get("companies", 0),
-             "boards": summary.get("boards", 0), "relisted": summary.get("relisted", 0), "byAts": shares}
+    # One set of numbers for every page: the roles the board lists and the companies those roles are at.
+    stats = {"feedAt": summary.get("generatedAt", ""), "openings": len(compacts), "companies": len(companies),
+             "tracked": summary.get("companies", 0), "boards": summary.get("boards", 0),
+             "systems": len({r.get("source") for r in records if r.get("source") and r.get("via") != "board"}),
+             "relisted": summary.get("relisted", 0), "byAts": shares}
     (out / "data" / "stats.json").write_text(json.dumps(stats, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     (out / "data" / "jobs.json").write_text(json.dumps({"meta": meta, "jobs": compacts}, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     (out / "data" / "companies.json").write_text(json.dumps(sorted(companies.values(), key=lambda x: (-x["jobs"], x["name"].lower())),
@@ -310,10 +340,20 @@ def build(feed_dir: str | Path, out_dir: str | Path, demo: str | Path | None = N
             scan_at = datetime.fromisoformat(str(summary.get("generatedAt")).replace("Z", "+00:00"))
         except ValueError:
             scan_at = now
-        idx.write_text(showcase.render(idx.read_text(encoding="utf-8"), records, logo_map, summary.get("openings") or len(records), scan_at), encoding="utf-8")
+        idx.write_text(showcase.render(idx.read_text(encoding="utf-8"), records, logo_map, len(records), scan_at), encoding="utf-8")
         # Free sponsor check (the registers as text) and the visa-jobs lists, from this scan.
         growth = growth_pages.visa_pages(records, out, site_dir, scan_at)
         meta["sponsorCheck"] = growth_pages.sponsor_data(feed_dir, out)
+        vals = stat_values(stats)
+        for f in out.glob("*.html"):
+            t0 = f.read_text(encoding="utf-8")
+            t1 = stamp_stats(t0, vals)
+            if t1 != t0:
+                f.write_text(t1, encoding="utf-8")
+        app = re.search(r'<meta name="propelo-app" content="(https://[^"]+)"', idx.read_text(encoding="utf-8"))
+        for name, to in redirects(app.group(1) if app else "https://app.propelo.org").items():
+            if not (out / name).exists():
+                (out / name).write_text(growth_pages.redirect_page(to), encoding="utf-8")
     else:
         (out / "index.html").write_text(board, encoding="utf-8")
         growth = []
