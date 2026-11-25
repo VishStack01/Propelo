@@ -164,6 +164,24 @@ _OTHER_COUNTRY = re.compile(r"(?<![A-Za-z])(" + "|".join(sorted((re.escape(n) fo
 _OTHER_SHORT = re.compile(r"(?<![A-Za-z])(" + "|".join(re.escape(n) for n in _OTHER if len(n) <= 3) + r")(?![A-Za-z])")
 
 
+def _country_not_town(before: str, whole: str) -> bool:
+    """Keep a country name that comes before a US state, unless the whole location is just "town, state":
+    in "Holland, Michigan" Holland is a town; in "Canada, Utah, New York" (a list of places) Canada is a country."""
+    name = before.strip(" ,")
+    if name.lower() not in _COUNTRY_WORDS:
+        return False
+    parts = [x.strip().lower() for x in whole.split(",") if x.strip()]
+    if parts and parts[-1] in ("us", "usa", "u.s.", "united states", "united states of america"):
+        parts = parts[:-1]
+    return not (len(parts) == 2 and parts[0] == name.lower())
+
+
+def of_record(r: dict) -> set[str]:
+    """A feed record's countries, read again from its location, so a fix to the reader reaches roles the scan
+    carried over from earlier runs. Falls back to what the scan stored."""
+    return resolve(r["location"]) if r.get("location") else set(r.get("countries") or ())
+
+
 def resolve(location: str) -> set[str]:
     """Countries a location is in, including the ones it doesn't name: Indian cities and states, US states
     ("Austin, TX"), Canadian provinces, Australian states and well-known cities. `named` is the strict
@@ -191,7 +209,7 @@ def _resolve_one(t: str) -> set[str]:
         # Only when the string reads as "town, state" pairs. In "Palo Alto, Toronto, Virginia, Miami" the
         # places are a flat list and Toronto is still Toronto.
         if 2 * sum(1 for x in parts if _ANY_STATE.search(x)) >= len(parts) - 1:
-            src = _TOWN_BEFORE_STATE.sub(lambda m: m.group(0) if m.group(0).strip(" ,").lower() in _COUNTRY_WORDS else "", t)
+            src = _TOWN_BEFORE_STATE.sub(lambda m: m.group(0) if _country_not_town(m.group(0), t) else "", t)
     out = set(named(src))
     for code, rx in _MORE.items():
         if code not in out and rx.search(src):

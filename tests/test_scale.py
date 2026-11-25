@@ -20,6 +20,7 @@ from tests.conftest import feed_record, write_feed
     # A region code that is also a US state, next to the country it belongs to
     ("Chennai, TN, India", {"IN"}), ("Mumbai, MH, India", {"IN"}), ("Amstelveen, NH, Netherlands", {"NL"}),
     ("Albuquerque, NM, New Mexico", {"US"}), ("Newark, NJ, New Jersey", {"US"}), ("Fort Wayne, IN, United States", {"US"}),
+    ("Holland, Michigan", {"US"}), ("Mexico, Missouri", {"US"}),  # a town named like a country, in a state
 ])
 def test_resolve_reads_the_country_a_location_only_implies(loc, want):
     assert countries.resolve(loc) == want

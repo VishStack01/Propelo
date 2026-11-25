@@ -33,7 +33,7 @@ def test_roles_pick_real_recent_roles_one_per_company():
     picked = showcase.roles(rs, LOGOS, NOW)
     assert [p["company"] for p in picked] == ["NVIDIA", "Amazon"]  # roles outside India lead
     a = picked[1]
-    assert a["title"] == "SDE II" and a["pay"] == "₹30-40 LPA" and a["exp"] == "3+ years" and a["logo"] == "logos/a.png"
+    assert a["title"] == "SDE II" and a["pay"] == "30–40 LPA" and a["exp"] == "3+ years" and a["logo"] == "logos/a.png"
     assert picked[0]["ago"] == "30 h ago"
 
 
@@ -49,3 +49,22 @@ def test_strip_and_fill():
     out = showcase.render(page, [rec("Amazon", "SDE II")], LOGOS, 1, NOW)
     assert 'data-real="1"><img src="logos/a.png"' in out and ">SDE II</b>" in out
     assert ">Kestrel</small>" in out  # no second role: the illustration stays
+
+
+def test_the_first_example_is_an_entry_role_in_the_four_countries_at_a_sponsor():
+    def r(company, title, location, **facts):
+        return {"company": company, "title": title, "geo": "", "workMode": "onsite", "location": location, "postedAt": (NOW - timedelta(hours=3)).isoformat(),
+                "url": f"https://jobs.example/{company}", "source": "Greenhouse", "facts": facts}
+    rs = [r("Amazon", "Senior Engineer", "Austin, TX", expMin=8, expQuote="8+ years", salaryQuote="$180,000 - $220,000 per year"),
+          r("NVIDIA", "Graduate Data Analyst", "London, UK", expMin=0, expQuote="No experience needed", salaryQuote="salary $1",
+            visa={"ukRegister": {"listed": True}}),
+          r("Coinbase", "Engineer", "Bengaluru, India", expMin=1)]
+    rs[1]["salary"] = "£35,000 - £40,000"
+    picked = showcase.roles(rs, LOGOS, NOW)
+    first = picked[0]
+    assert first["company"] == "NVIDIA" and first["visa"] == "On the UK sponsor register" and first["exp"] == "Entry level"
+    assert first["pay"] == "£35,000–£40,000 a year"
+    assert picked[1]["company"] == "Amazon" and picked[1]["pay"] == "$180,000–$220,000 a year" and picked[1]["visa"] == ""
+    page = '<b data-ex-title="1">x</b><small class="nvisa" data-ex-visa="1">On the UK sponsor register</small><small data-ex-visa="2">x</small>'
+    out = showcase.fill(page, picked)
+    assert '<small class="nvisa" data-ex-visa="1">On the UK sponsor register</small>' in out and '<small data-ex-visa="2"></small>' in out

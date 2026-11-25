@@ -49,7 +49,7 @@ def _read_jsonl(path: Path) -> list[dict]:
 
 def _countries(r: dict) -> list[str]:
     """Where a role is, read again from its location so a fix to the reader reaches roles carried between scans."""
-    return sorted(countries.resolve(r["location"])) if r.get("location") else list(r.get("countries") or [])
+    return sorted(countries.of_record(r))
 
 
 def _in_india(r: dict) -> bool:
