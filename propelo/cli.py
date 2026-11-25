@@ -404,6 +404,8 @@ def main(argv: list[str] | None = None) -> None:
     sp.add_argument("--connections", help="LinkedIn's Connections.csv export")
     sp.add_argument("--people", help="JSON list of public profiles found by web search: {name, headline, url, location, degree}")
     sp.add_argument("--applicant", help="Your applicant profile JSON (name, college, city, current role)")
+    sp.add_argument("--location", help="Where the role is, e.g. \"London, United Kingdom\": recruiters and the team are searched there")
+    sp.add_argument("--resume", help="Your resume JSON (education, projects, experience): alumni of every school, and real work for the message")
     sp.add_argument("--json", action="store_true")
     sp.set_defaults(fn=cmd_referrals)
 
@@ -968,7 +970,9 @@ def cmd_referrals(a) -> None:
     people = json.loads(Path(a.people).read_text(encoding="utf-8")) if a.people else []
     appl = json.loads(Path(a.applicant).read_text(encoding="utf-8")) if a.applicant else {}
     appl = appl.get("data", appl) if isinstance(appl, dict) else {}
-    out = referrals.plan(a.company, a.title, appl, rows, people, a.url or "")
+    cv = json.loads(Path(a.resume).read_text(encoding="utf-8")) if a.resume else {}
+    cv = cv.get("data", cv) if isinstance(cv, dict) else {}
+    out = referrals.plan(a.company, a.title, appl, rows, people, a.url or "", a.location or "", cv)
     if a.json:
         print(json.dumps(out, indent=2, ensure_ascii=False))
         return
@@ -981,6 +985,8 @@ def cmd_referrals(a) -> None:
         print(f"  - {l['label']}: {l['url']}")
     print(f"\nConnection note ({len(out['drafts']['connectionNote'])} characters):\n{out['drafts']['connectionNote']}")
     print(f"\nReferral ask:\n{out['drafts']['referralAsk']}")
+    msg = out["drafts"]["message"]
+    print(f"\nMessage after they accept ({len(msg.split())} words):\n{msg}")
 
 
 def cmd_yc_companies(a) -> None:
