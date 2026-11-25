@@ -1,4 +1,4 @@
-package io.github.vishstack01.careeros;
+package org.propelo.app;
 
 import com.getcapacitor.BridgeActivity;
 

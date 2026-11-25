@@ -1,5 +1,5 @@
 {
-  "appId": "io.github.vishstack01.careeros",
+  "appId": "org.propelo.app",
   "appName": "Propelo",
   "webDir": "www",
   "server": {
@@ -8,12 +8,12 @@
     "errorPath": "offline.html"
   },
   "android": {
-    "appendUserAgent": "CareerOSApp/1.0 (Android)",
+    "appendUserAgent": "PropeloApp/1.0 (Android)",
     "allowMixedContent": false,
     "backgroundColor": "#FAF3E6"
   },
   "ios": {
-    "appendUserAgent": "CareerOSApp/1.0 (iOS)",
+    "appendUserAgent": "PropeloApp/1.0 (iOS)",
     "backgroundColor": "#FAF3E6",
     "contentInset": "never",
     "limitsNavigationsToAppBoundDomains": false

@@ -1364,6 +1364,7 @@ input:focus,select:focus,textarea:focus{border-color:color-mix(in srgb,var(--ink
 @keyframes netp{50%{opacity:.35}}
 @media (prefers-reduced-motion: reduce){.netpill::before{animation:none}}
 @media (max-width:900px){.netpill{top:auto;bottom:calc(86px + env(safe-area-inset-bottom,0px));border-radius:18px}}
+@media (max-width:900px){input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea{font-size:16px !important}}  /* under 16px, iOS zooms in on focus */
 /* ===== Five places (Today, Discover, Pipeline, Prep & outreach, Career Brain) ===== */
 .side .pil{display:grid;gap:2px}
 .side .pil .psub{display:none;gap:2px;padding-bottom:4px}
@@ -4131,7 +4132,7 @@ function renderCloud(){
     </div></div>`;
 }
 /* ---------- Cloud: plan, AI allowance and your own model key ---------- */
-const inApp = /CareerOSApp/.test(navigator.userAgent || '');
+const inApp = /PropeloApp|CareerOSApp/.test(navigator.userAgent || '');  // PropeloApp from 2026-11; CareerOSApp in earlier test builds
 function capMax(){ const p = state.me && state.me.plan; return p === 'ultra' ? 60 : 25; }
 /* Dollars for everyone: the checkout charges each buyer in their own currency. */
 function refreshBilling(){ return api('api/billing').then(r => r.json()).then(b => { state.billing = b; if (state.me) state.me.ai = b.ai; state.sample = b.ai && b.ai.available ? makeServerSample() : null; render(); }).catch(() => {}); }
