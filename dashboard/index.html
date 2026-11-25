@@ -743,6 +743,25 @@ h1,h2,h3,.hero h1,.phead h1,.sh h2,.card h2,.empty b,.tier-head h3,.jcard h3{fon
 .ivfb p,.ivfb ul{margin:0}
 .ivfb ul{padding-left:18px}
 @media (max-width:640px){ .iva,.ivfb{padding-left:0;margin-left:0} }
+/* resume defence drill */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.drhead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.drclock{font-variant-numeric:tabular-nums;font-weight:600;font-size:15px;padding:4px 12px;border-radius:999px;background:var(--lav);color:var(--on-pastel)}
+.drclock.low{background:var(--pink)}
+.drline{margin:10px 0 0;padding:10px 14px;border-left:3px solid var(--line);color:var(--ink-2);font-size:14.5px}
+.drmic{display:inline-flex;align-items:center;gap:8px}
+.drmic .dot{width:9px;height:9px;border-radius:50%;background:var(--bad);animation:drpulse 1.2s ease-out infinite}
+@keyframes drpulse{0%{opacity:1}100%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){ .drmic .dot{animation:none} }
+.drsum{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 4px}
+.drcard{display:grid;gap:8px;padding:16px 0;border-top:1px solid var(--line)}
+.drcard:first-child{border-top:0;padding-top:0}
+.drchecks{list-style:none;margin:0;padding:0;display:grid;gap:4px;font-size:14.5px}
+.drchecks li{display:flex;gap:8px;align-items:baseline}
+.drchecks .y{color:var(--good)}
+.drchecks .n{color:var(--bad)}
+.drcard details{font-size:14.5px}
+.drcard details p{margin:6px 0 0;white-space:pre-wrap}
 /* resume score and the line-by-line review */
 .scorecard .sc-top{display:flex;gap:18px;align-items:center;margin-bottom:12px}
 .sc-num{position:relative;width:76px;height:76px;flex:none;display:grid;place-items:center}
@@ -5538,7 +5557,7 @@ function renderApp(){
 /* ---------- Writing & interviews: cover letters, emails, answers to application questions, mock interviews ----------
    Every draft is written from the profile only (the same rules as tailoring), its numbers are checked against the
    profile, and each tool has a template version that works without AI. */
-const TOOLS = [['cover','Cover letter'],['email','Email'],['answer','Form answer'],['answers','Saved answers'],['wins','Career wins'],['interview','Mock interview'],['prep','Interview prep'],['linkedin','LinkedIn review']];
+const TOOLS = [['cover','Cover letter'],['email','Email'],['answer','Form answer'],['answers','Saved answers'],['wins','Career wins'],['interview','Mock interview'],['drill','Resume defence'],['prep','Interview prep'],['linkedin','LinkedIn review']];
 const EMAIL_KINDS = [['followup','Follow-up after applying'],['thanks','Thank-you after an interview'],['referral','Referral request'],['hm','Note to a hiring manager'],['recruiter','Reply to a recruiter'],
   ['reschedule','Ask to reschedule an interview'],['extension','Ask for more time on an assessment'],['offerq','Questions about an offer'],['negotiate','Negotiate an offer'],['accept','Accept an offer'],['withdraw','Withdraw an application']];
 const IV_TYPES = [['behavioural','Behavioural (STAR)'],['role','About the role'],['technical','Technical, from your skills'],['campus','Campus or fresher'],['se','Software engineering'],['aidata','AI and data'],['product','Product and design'],['managerial','Managerial'],['hr','HR round']];
@@ -5689,6 +5708,185 @@ function renderWins(){
     <section class="card">${rows ? `<div class="winlist">${rows}</div>` : '<p class="muted">No wins yet. A good one has a result you could explain in an interview.</p>'}</section>`;
 }
 
+/* drill:start. Resume defence drill: questions that cross-examine the figures and tools on a resume, one
+   follow-up where an answer left a gap, and a line-by-line scorecard. Mirrors propelo/drill.py; tests run both. */
+const DRILL_TIME = 'hours?|hrs?|days?|weeks?|months?|minutes?|mins?|seconds?|secs?|ms|milliseconds?';
+const DRILL_FIGURE = () => new RegExp('(?<![\\w.,])(?<cur>[$£€₹])?\\s?(?<num>\\d{1,3}(?:,\\d{3})+|\\d+(?:\\.\\d+)?)(?:\\s?(?<mult>k|m|bn|million|billion|thousand)\\b)?\\s?'
+  + '(?<unit>%|percent\\b|per cent\\b|x\\b|times\\b|tb\\b|gb\\b|mb\\b|(?:' + DRILL_TIME + ')\\b)?', 'gi');
+const DRILL_HOW = /\b(?:measur\w*|baseline|before|after|compar\w*|dashboard|metric\w*|track\w*|logged|logs|monitor\w*|a\/b|ab test|benchmark\w*|survey\w*|report\w*|analytics|p9[059]|went (?:down |up )?from|from \d|down from|up from|instrument\w*|counted|count)\b/i;
+const DRILL_OPEN = {
+  percent: 'Your resume says: "{text}". What was the figure before and after, and how did you measure it?',
+  money: 'Your resume says: "{text}". Where does that figure come from, and how much of it was down to you?',
+  time: 'Your resume says: "{text}". What took the time before, and what exactly did you change?',
+  count: 'Your resume says: "{text}". Where does that number come from, and what did you do yourself to get there?',
+  tool: 'You used {tool} {place}. Walk me through one thing you built with it, and one problem you hit.'};
+const DRILL_FOLLOW = {conflict: 'Your resume says {claimed}. You said {said}. Which is right?', figure: 'What was the number, exactly?',
+  how: 'How do you know? What did you measure, and against what?', mine: 'Which part of that did you do yourself?',
+  tool: 'What did you use {tool} for there, in one sentence?', deeper: 'What would you do differently if you did it again?'};
+const DRILL_MAX = 6, DRILL_MINUTES = 15;
+function drillFigures(text){
+  const s = String(text || ''), out = [];
+  for (const m of s.matchAll(DRILL_FIGURE())){
+    const g = m.groups, bare = !g.cur && !g.unit && !g.mult;
+    if (bare && (/^(?:19|20)\d\d$/.test(g.num) || /\s[A-Z][\w+#.-]*\s$/.test(s.slice(0, m.index)))) continue;
+    const unit = String(g.unit || '').toLowerCase(), mult = {k: 1e3, thousand: 1e3, m: 1e6, million: 1e6, bn: 1e9, billion: 1e9}[String(g.mult || '').toLowerCase()] || 1;
+    const kind = g.cur ? 'money' : ['%', 'percent', 'per cent'].includes(unit) ? 'percent' : unit && new RegExp('^(?:' + DRILL_TIME + ')$', 'i').test(unit) ? 'time' : 'count';
+    out.push({raw: m[0].trim(), value: Number(g.num.replace(/,/g, '')) * mult, kind});
+  }
+  return out;
+}
+function drillClaims(view, skills){
+  const v = (view && typeof view === 'object') ? view : {}, lines = [], A = x => Array.isArray(x) ? x : [];
+  for (const ex of A(v.experience)){ if (!ex || typeof ex !== 'object') continue; const at = String(ex.company || ex.title || '').trim();
+    for (const b of A(ex.bullets)) if (typeof b === 'string' && b.trim()) lines.push([b.trim(), at, at ? 'at ' + at : 'at work']); }
+  for (const pr of A(v.projects)){ if (!pr || typeof pr !== 'object') continue; const name = String(pr.name || '').trim();
+    for (const b of A(pr.bullets)) if (typeof b === 'string' && b.trim()) lines.push([b.trim(), name, name ? 'in ' + name : 'in a project']); }
+  const out = [];
+  for (const [text, where, place] of lines){ const f = drillFigures(text); if (f.length) out.push({text, where, place, figures: f, kind: f[0].kind, tool: ''}); if (out.length >= DRILL_MAX) return out; }
+  const tools = A(skills !== undefined && skills !== null ? skills : v.skills).filter(s => typeof s === 'string' && s.trim().length > 1).map(s => s.trim());
+  const used = new Set(out.map(c => c.text)), esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  for (const [text, where, place] of lines){
+    if (out.length >= DRILL_MAX) break;
+    if (used.has(text)) continue;
+    const tool = tools.find(tl => new RegExp('(?<![\\w])' + esc(tl) + '(?![\\w])', 'i').test(text)) || '';
+    if (tool){ out.push({text, where, place, figures: [], kind: 'tool', tool}); used.add(text); }
+  }
+  return out.slice(0, DRILL_MAX);
+}
+function drillQuestion(c){ return DRILL_OPEN[c.kind].replace('{text}', String(c.text).replace(/\.+$/, '')).replace('{tool}', c.tool || '').replace('{place}', c.place || 'there'); }
+function drillScore(c, answer){
+  const a = String(answer || ''), said = drillFigures(a), words = a.split(/\s+/).filter(Boolean).length, claimed = Array.isArray(c.figures) ? c.figures : [];
+  const same = said.filter(s => claimed.some(x => x.kind === s.kind));
+  const match = said.some(s => claimed.some(x => Math.abs(s.value - x.value) < 1e-9 && s.kind === x.kind));
+  let conflict = '';
+  if (claimed.length && same.length && !match){ let pair = null; for (const s of same){ for (const x of claimed) if (x.kind === s.kind){ pair = [x, s]; break; } if (pair) break; } conflict = `Your resume says ${pair[0].raw}; you said ${pair[1].raw}.`; }
+  const nI = (a.match(/\bI\b|\bmy\b|\bmyself\b/g) || []).length, nWe = (a.match(/\bwe\b|\bour\b|\bthe team\b/gi) || []).length, mine = nI >= 1 && nI >= nWe;
+  const toolRx = new RegExp((c.tool || '\0').replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+  const checks = {figure: claimed.length ? match : toolRx.test(a), how: claimed.length ? DRILL_HOW.test(a) : words >= 40, mine, length: words >= 25 && words <= 250};
+  const notes = [];
+  if (conflict) notes.push(conflict + ' Fix the resume line or bring the proof.');
+  else if (claimed.length && !said.length) notes.push("You didn't say the number. Say it, as it is on your resume.");
+  else if (claimed.length && !match) notes.push('Say the figure the way your resume has it.');
+  if (claimed.length && !checks.how) notes.push('Say how you know: what you measured, and against what.');
+  if (!claimed.length && !checks.figure) notes.push(`Name ${c.tool} and what you did with it.`);
+  if (!mine) notes.push('Say what you did yourself: "I", not only "we".');
+  if (words < 25) notes.push('Too short to carry a story. Aim for about a minute.');
+  else if (words > 250) notes.push('Too long. Keep it to a minute or two.');
+  const n = ['figure', 'how', 'mine'].filter(k => checks[k]).length;
+  return {checks, conflict, said: said.map(s => s.raw), words, verdict: conflict || n === 0 ? 'not' : n === 3 && checks.length ? 'defended' : 'partly', notes};
+}
+function drillFollowUp(c, answer){
+  const s = drillScore(c, answer), claimed = Array.isArray(c.figures) ? c.figures : [];
+  if (s.conflict){ const f = drillFigures(answer), x = claimed.find(x => f.some(y => y.kind === x.kind)); return DRILL_FOLLOW.conflict.replace('{claimed}', x.raw).replace('{said}', f.find(y => y.kind === x.kind).raw); }
+  if (claimed.length && !s.said.length) return DRILL_FOLLOW.figure;
+  if (claimed.length && !s.checks.how) return DRILL_FOLLOW.how;
+  if (!s.checks.mine) return DRILL_FOLLOW.mine;
+  if (!claimed.length && !s.checks.figure) return DRILL_FOLLOW.tool.replace('{tool}', c.tool || '');
+  return DRILL_FOLLOW.deeper;
+}
+function drillSummary(results){ const out = {defended: 0, partly: 0, not: 0}; for (const r of results) out[r.verdict || 'not'] = (out[r.verdict || 'not'] || 0) + 1; return out; }
+/* drill:end */
+
+/* The spoken part: the browser reads each question aloud and turns the answer into text. Propelo keeps the text, never audio. */
+const DR_SR = () => window.SpeechRecognition || window.webkitSpeechRecognition || null;
+const drVoiceOk = () => 'speechSynthesis' in window && typeof SpeechSynthesisUtterance === 'function';
+function drLang(){ const j = state.jobs.get(obj(state.tl.dr).jobId || state.tl.drJob || ''), loc = String(obj(j).location || '') + ' ' + String(obj(state.settings).homeCountry || ''); return /\b(?:United States|USA|US|New York|San Francisco|Seattle|Boston|Austin|Chicago)\b/.test(loc) ? 'en-US' : 'en-GB'; }
+function drSay(text){
+  const d = state.tl.dr; if (!d || !d.voice || !drVoiceOk()) return;
+  try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(text), lang = drLang(); u.lang = lang; u.rate = 1;
+    const v = speechSynthesis.getVoices().find(x => x.lang === lang) || speechSynthesis.getVoices().find(x => String(x.lang).startsWith('en')); if (v) u.voice = v;
+    speechSynthesis.speak(u); } catch(e){}
+}
+function drStopListening(){ const r = state.drRec; state.drRec = null; if (r){ try { r.onend = null; r.stop(); } catch(e){} } const b = $('#dr-mic'); if (b) b.innerHTML = 'Start speaking'; }
+function drListen(){
+  const SR = DR_SR(); if (!SR){ toast("This browser can't turn speech into text. Type your answer instead."); return; }
+  if (state.drRec){ drStopListening(); return; }
+  try { speechSynthesis.cancel(); } catch(e){}
+  const r = new SR(), box = $('#dr-answer'); r.lang = drLang(); r.continuous = true; r.interimResults = true;
+  const base = box ? box.value.replace(/\s+$/, '') : String(state.tl.drAnswer || '');
+  let done = '';
+  r.onresult = e => { let tmp = ''; for (let k = e.resultIndex; k < e.results.length; k++){ const x = e.results[k]; if (x.isFinal) done += x[0].transcript + ' '; else tmp += x[0].transcript; }
+    const text = (base ? base + ' ' : '') + (done + tmp).replace(/\s+/g, ' ').trim(); state.tl.drAnswer = text; const el = $('#dr-answer'); if (el) el.value = text; };
+  r.onerror = e => { if (e && e.error === 'not-allowed') toast('Microphone access is blocked. Allow it for this site, or type your answer.'); drStopListening(); };
+  r.onend = () => { if (state.drRec === r) drStopListening(); };
+  try { r.start(); state.drRec = r; const b = $('#dr-mic'); if (b) b.innerHTML = '<span class="drmic"><span class="dot" aria-hidden="true"></span>Stop</span>'; } catch(e){ toast('Could not start the microphone. Type your answer instead.'); }
+}
+function drLeft(){ const d = state.tl.dr; return d ? Math.max(0, Math.round((d.ends - Date.now()) / 1000)) : 0; }
+const drClockText = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')} left`;
+function drTick(){
+  clearInterval(state.drTimer);
+  state.drTimer = setInterval(() => {
+    const d = state.tl.dr; if (!d || d.done){ clearInterval(state.drTimer); return; }
+    const s = drLeft(), el = $('#dr-clock'); if (el){ el.textContent = drClockText(s); el.classList.toggle('low', s <= 120); }
+    if (s <= 0) drEnd(true);
+  }, 1000);
+}
+function drillRoles(){ return jobsArr().filter(j => Object.keys(obj(obj(j.tailor).resume)).length).sort((a, b) => (toDate(b.updatedAt) || 0) - (toDate(a.updatedAt) || 0)).slice(0, 30); }
+function drStart(){
+  const t = state.tl, p = prof(); if (!hasProfile(p)){ toast('Fill in your profile first: the drill is built from your resume.'); return; }
+  const j = t.drJob ? state.jobs.get(t.drJob) : null, view = j ? tailoredView(p, j.tailor) : p;
+  const claims = drillClaims(view);
+  if (!claims.length){ toast('No resume lines with a number or a skill to defend yet. Add results to your experience first.'); return; }
+  t.dr = {jobId: j ? j.id : '', label: j ? `${j.company}, ${j.title}` : 'your resume', claims, i: 0, phase: 'open', q: drillQuestion(claims[0]), cur: null, turns: [],
+    ends: Date.now() + DRILL_MINUTES * 60e3, voice: t.drVoice !== false && drVoiceOk(), done: false};
+  t.drAnswer = ''; t.typing = false; t.render = true; render(); drTick(); drSay(t.dr.q);
+}
+function drNext(){
+  const t = state.tl, d = t.dr; if (!d || d.done) return;
+  drStopListening();
+  const box = $('#dr-answer'), a = String(box ? box.value : t.drAnswer || '').trim();
+  if (a.split(/\s+/).filter(Boolean).length < 3){ toast('Say or type your answer first.'); return; }
+  const c = d.claims[d.i];
+  if (d.phase === 'open'){ d.cur = {claim: c, q: d.q, a}; d.phase = 'follow'; d.q = drillFollowUp(c, a); }
+  else { d.cur.q2 = d.q; d.cur.a2 = a; d.cur.score = drillScore(c, d.cur.a + ' ' + a); d.turns.push(d.cur); d.cur = null; d.i++; d.phase = 'open';
+    if (d.i >= d.claims.length || drLeft() <= 0){ t.drAnswer = ''; drEnd(); return; }
+    d.q = drillQuestion(d.claims[d.i]); }
+  t.drAnswer = ''; t.typing = false; t.render = true; render(); drSay(d.q);
+}
+function drEnd(timeUp){
+  const t = state.tl, d = t.dr; if (!d || d.done) return;
+  drStopListening(); clearInterval(state.drTimer); try { speechSynthesis.cancel(); } catch(e){}
+  const box = $('#dr-answer'), typed = String(box ? box.value : t.drAnswer || '').trim();
+  if (d.cur){ if (typed){ d.cur.q2 = d.q; d.cur.a2 = typed; } d.cur.score = drillScore(d.cur.claim, d.cur.a + (d.cur.a2 ? ' ' + d.cur.a2 : '')); d.turns.push(d.cur); d.cur = null; }
+  else if (typed && d.claims[d.i]){ d.turns.push({claim: d.claims[d.i], q: d.q, a: typed, score: drillScore(d.claims[d.i], typed)}); }
+  d.done = true; d.timeUp = !!timeUp; t.drAnswer = ''; t.render = true;
+  const sum = drillSummary(d.turns.map(x => x.score));
+  if (d.jobId && state.canWrite && d.turns.length) patchJob(d.jobId, {drill: Object.assign({at: nowIso(), lines: d.turns.length}, sum)}, `Resume defence drill: ${sum.defended} of ${d.turns.length} lines defended`, '');
+  render();
+}
+const DR_VERDICT = {defended: ['strong', 'Defended'], partly: ['', 'Partly defended'], not: ['due', 'Not defended']};
+function renderDrill(){
+  const t = state.tl, d = t.dr, SR = DR_SR();
+  if (!d){
+    const roles = drillRoles();
+    return `<section class="card"><h2>Defend your resume, out loud</h2><p class="muted" style="margin:6px 0 14px">A ${DRILL_MINUTES}-minute spoken drill. The interviewer takes the lines on your resume that carry a number or a skill, asks how you got there, and follows up once where your answer left a gap: a different figure from your resume, no way of knowing, or only "we". You get a scorecard, line by line.</p>
+      <div class="formgrid"><label class="f" for="tl-drjob">Resume to defend<select id="tl-drjob" data-tl="drJob"><option value="">My base resume</option>${roles.map(j => `<option value="${esc(j.id)}"${t.drJob === j.id ? ' selected' : ''}>${esc(j.company)}, ${esc(j.title)} (tailored)</option>`).join('')}</select></label>
+      ${drVoiceOk() ? `<label class="cccheck" for="tl-drvoice" style="align-self:end"><input type="checkbox" id="tl-drvoice" data-tl="drVoice"${t.drVoice !== false ? ' checked' : ''}> Read the questions aloud</label>` : ''}</div>
+      <p class="muted" style="font-size:13.5px;margin-top:12px">${SR ? 'Answer by speaking, or type. Your browser turns speech into text; Chrome and Edge send the audio to their own speech service to do it. Propelo keeps the text of this session in this tab, never the audio.' : "This browser can't turn speech into text, so type your answers. Chrome, Edge and Safari can."}</p>
+      <div class="ract" style="justify-content:flex-start;margin-top:12px"><button class="btn solid" data-act="dr-start">Start the drill</button></div></section>`;
+  }
+  if (!d.done){
+    const c = d.claims[d.i], s = drLeft();
+    return `<section class="card"><div class="drhead"><p class="muted" style="margin:0">Line ${d.i + 1} of ${d.claims.length}${d.phase === 'follow' ? ', follow-up' : ''} · ${esc(d.label)}</p><span class="drclock${s <= 120 ? ' low' : ''}" id="dr-clock" role="timer" aria-live="off">${drClockText(s)}</span></div>
+      ${d.phase === 'follow' || c.kind === 'tool' ? `<p class="drline">${esc(c.text)}</p>` : ''}
+      <h2 style="margin:14px 0 12px" aria-live="polite">${esc(d.q)}</h2>
+      <label class="f" for="dr-answer">Your answer<textarea id="dr-answer" data-tl="drAnswer" rows="6" placeholder="${SR ? 'Press Start speaking, or type.' : 'Type your answer, as you would say it.'} About a minute.">${esc(t.drAnswer || '')}</textarea></label>
+      <div class="ract" style="justify-content:flex-start;margin-top:12px;flex-wrap:wrap">${SR ? `<button class="btn" id="dr-mic" data-act="dr-mic">${state.drRec ? '<span class="drmic"><span class="dot" aria-hidden="true"></span>Stop</span>' : 'Start speaking'}</button>` : ''}${d.voice ? '<button class="btn ghost" data-act="dr-say">Hear it again</button>' : ''}<button class="btn solid" data-act="dr-next">${d.phase === 'follow' && d.i + 1 >= d.claims.length ? 'Finish' : 'Next'}</button><button class="btn ghost" data-act="dr-end">End and score</button></div></section>`;
+  }
+  const sum = drillSummary(d.turns.map(x => x.score)), mark = ok => `<span class="${ok ? 'y' : 'n'}" aria-hidden="true">${ok ? '✓' : '✗'}</span><span class="sr-only">${ok ? 'Yes' : 'No'}</span>`;
+  const cards = d.turns.map(x => { const sc = x.score, v = DR_VERDICT[sc.verdict], fig = x.claim.figures.length;
+    return `<div class="drcard"><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="pill ${v[0]}">${v[1]}</span><span class="muted" style="font-size:13.5px">${esc(x.claim.where || '')}</span></div>
+      <p class="drline" style="margin:0">${esc(x.claim.text)}</p>
+      <ul class="drchecks"><li>${mark(sc.checks.figure)}<span>${fig ? 'Said the figure as your resume has it' : 'Named ' + esc(x.claim.tool) + ' and what you did with it'}</span></li><li>${mark(sc.checks.how)}<span>${fig ? 'Said how you know' : 'Gave enough detail to follow'}</span></li><li>${mark(sc.checks.mine)}<span>Said what you did yourself</span></li><li>${mark(sc.checks.length)}<span>About a minute (${sc.words} words)</span></li></ul>
+      ${sc.notes.length ? `<p style="margin:0;font-size:14.5px">${sc.notes.map(esc).join(' ')}</p>` : ''}
+      <details><summary>What was asked and what you said</summary><p><b>${esc(x.q)}</b>\n${esc(x.a)}</p>${x.q2 ? `<p><b>${esc(x.q2)}</b>\n${esc(x.a2 || '')}</p>` : ''}</details></div>`; }).join('');
+  return `<section class="card"><h2>${d.timeUp ? 'Time. ' : ''}${sum.defended} of ${d.turns.length} lines defended</h2>
+    <div class="drsum"><span class="pill${sum.defended ? ' strong' : ''}">${sum.defended} defended</span><span class="pill">${sum.partly} partly</span><span class="pill${sum.not ? ' due' : ''}">${sum.not} not defended</span></div>
+    <p class="muted" style="margin:6px 0 0">A line you couldn't defend is a line to change on your resume, or to practise until you can. ${d.jobId ? 'The result is saved on the role.' : ''}</p>
+    <div class="ract" style="justify-content:flex-start;margin-top:12px"><button class="btn solid" data-act="dr-again">Practise again</button><button class="btn ghost" data-act="dr-reset">Choose another resume</button></div></section>
+    ${cards ? `<section class="card">${cards}</section>` : ''}`;
+}
+
 function renderTools(){
   const t = state.tl, ro = '', busy = t.busy;
   const seg = TOOLS.map(([k, l]) => `<button type="button" data-act="tl-tool" data-v="${k}" aria-pressed="${t.tool === k}">${l}</button>`).join('');
@@ -5729,7 +5927,7 @@ function renderTools(){
   return `<div class="phead"><h1><span>Writing &amp; interviews</span></h1></div>
     <p class="lede">Drafts written only from your profile, and interview practice for the role you want.</p>
     <div class="pseg toolseg" role="group" aria-label="Tool">${seg}</div>
-    <div class="narrow">${t.tool === 'interview' ? iv : t.tool === 'answers' ? renderAnswers() : t.tool === 'wins' ? renderWins() : t.tool === 'prep' ? prepHtml() : t.tool === 'linkedin' ? linkedinHtml() : `<section class="card"><h2>${esc((TOOLS.find(x => x[0] === t.tool) || TOOLS[0])[1])}</h2><div class="toolform">${form}</div>${aiNote}
+    <div class="narrow">${t.tool === 'interview' ? iv : t.tool === 'drill' ? renderDrill() : t.tool === 'answers' ? renderAnswers() : t.tool === 'wins' ? renderWins() : t.tool === 'prep' ? prepHtml() : t.tool === 'linkedin' ? linkedinHtml() : `<section class="card"><h2>${esc((TOOLS.find(x => x[0] === t.tool) || TOOLS[0])[1])}</h2><div class="toolform">${form}</div>${aiNote}
       <div class="ract" style="justify-content:flex-start;margin-top:14px"><button class="btn solid" data-act="tl-run"${busy ? ' disabled' : ''}>${busy && busy === t.tool ? '<span class="spin" aria-hidden="true"></span>Writing…' : 'Write it'}</button></div></section>${result}`}</div>`;
 }
 
@@ -6399,13 +6597,20 @@ document.addEventListener('click', e => {
     list[i].bullets = arr(list[i].bullets).concat([line]);
     saveProfile(Object.assign({}, p, {[key]: list}), 'Added to your profile.').then(() => { t.winDraft = null; t.render = true; render(); });
   }
-  else if (act === 'tl-tool'){ state.tl.tool = el.dataset.v; state.tl.out = null; state.tl.typing = false; state.tl.render = true; render(); }
+  else if (act === 'tl-tool'){ drStopListening(); try { speechSynthesis.cancel(); } catch(err){} state.tl.tool = el.dataset.v; state.tl.out = null; state.tl.typing = false; state.tl.render = true; render(); }
   else if (act === 'tl-tone'){ state.tl.tone = el.dataset.v; state.tl.typing = false; state.tl.render = true; render(); }
   else if (act === 'tl-run'){ state.tl.typing = false; toolRun(); }
   else if (act === 'tl-copy'){ const o = state.tl.out || {}; const subj = $('#tl-out-subj'), txt = $('#tl-out'); const text = [subj && subj.value ? 'Subject: ' + subj.value : '', txt ? txt.value : o.text].filter(Boolean).join('\n\n');
     try { navigator.clipboard.writeText(text).then(() => toast('Copied.'), () => toast('Copy is blocked here. Select the text and copy it.')); } catch(err){ toast('Copy is blocked here. Select the text and copy it.'); } }
   else if (act === 'iv-start'){ state.tl.typing = false; ivStart(); }
   else if (act === 'iv-answer'){ state.tl.typing = false; ivAnswer(); }
+  else if (act === 'dr-start') drStart();
+  else if (act === 'dr-next') drNext();
+  else if (act === 'dr-end') drEnd();
+  else if (act === 'dr-mic') drListen();
+  else if (act === 'dr-say'){ if (state.tl.dr) drSay(state.tl.dr.q); }
+  else if (act === 'dr-again'){ const d = state.tl.dr; state.tl.dr = null; if (d) state.tl.drJob = d.jobId; drStart(); }
+  else if (act === 'dr-reset'){ drStopListening(); clearInterval(state.drTimer); try { speechSynthesis.cancel(); } catch(err){} state.tl.dr = null; state.tl.drAnswer = ''; state.tl.render = true; render(); }
   else if (act === 'iv-reset'){ state.tl.iv = null; state.tl.answer = ''; state.tl.typing = false; state.tl.render = true; render(); }
   else if (act === 'close'){ if (history.state && history.state.cos === 'job'){ history.back(); return; } state.openId = null; render(); }
   else if (act === 'copy') copyFrom(el);
