@@ -23,6 +23,7 @@ import os
 import re
 import secrets
 import time
+import unicodedata
 import uuid
 from collections import defaultdict, deque
 from dataclasses import dataclass
@@ -107,7 +108,8 @@ def pdf_text(data: bytes, max_pages: int = 8, max_chars: int = 40000) -> str:
             out.append(page.extract_text() or "")
             if sum(map(len, out)) > max_chars:
                 break
-        return re.sub(r"[ \t]+", " ", "\n".join(out)).strip()[:max_chars]
+        # NFKC turns the ligatures PDF fonts use back into letters: "Credﬁx" → "Credfix", "workﬂow" → "workflow".
+        return re.sub(r"[ \t]+", " ", unicodedata.normalize("NFKC", "\n".join(out))).strip()[:max_chars]
     except Exception:  # noqa: BLE001 - a resume that can't be read as text is still a valid upload
         return ""
 

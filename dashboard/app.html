@@ -5365,7 +5365,9 @@ async function importResumeFile(file){
 function localImport(text){
   // Designed resumes letter-space their headings ("S U M M A R Y", "T E C H N I C A L SKI L L S"): close them up.
   const closeUp = l => (/^(?:[A-Z&]{1,3}\s+){3,}[A-Z&]*/.test(l) && l.replace(/\s+/g, '').length <= 30 && !/[a-z]/.test(l)) ? l.replace(/\s+/g, '') : l;
+  text = String(text || '').normalize('NFKC');   // PDF ligatures: "Credﬁx" → "Credfix", "workﬂow" → "workflow"
   const lines = text.split(/\r?\n/).map(l => closeUp(l.trim())).filter(Boolean), out = {basics: {links: []}};
+  const width = lineWidth(lines);
   const isHead = l => l.length <= 40 && SEC.some(([, rx]) => rx.test(l.replace(/\s*:$/, '')));
   const ni = lines.findIndex(l => /^\p{L}[\p{L} .'-]{2,60}$/u.test(l) && l.split(' ').length <= 7 && !isHead(l));
   out.basics.name = ni >= 0 ? lines[ni].trim() : '';
@@ -5375,38 +5377,59 @@ function localImport(text){
   const ph = (text.match(/(?:\+\d{1,3}[\s-]?)?\d[\d\s-]{8,13}\d/g) || []).find(x => x.replace(/\D/g, '').length >= 9 && !DATES.test(x) && !/^(?:19|20)\d{2}\s*-\s*(?:19|20)\d{2}$/.test(x.trim()));
   if (ph) out.basics.phone = ph.trim();
   out.basics.links = Array.from(new Set((text.match(/(?:https?:\/\/)?(?:www\.)?(?:linkedin\.com\/in|github\.com|behance\.net|dribbble\.com)\/[\w\-./]+/gi) || []).map(u => /^https?:/i.test(u) ? u : 'https://' + u)));
-  const idx = lines.findIndex(l => /^(technical\s*)?skills\b/i.test(l));
+  const idx = lines.findIndex(l => /^(?:(?:technical|core|key)\s*)?skills\b/i.test(l));
   if (idx >= 0){
     // "Languages Python, TypeScript" / "AI / LLM LLMs (GPT, Claude), RAG": drop the row label, keep "(…)" with its skill.
     const LABEL = /^(?:languages?|programming|ai\s*\/\s*llm|ai|ml|full[- ]stack|frontend|backend|data(?:\s*&\s*cloud)?|cloud|devops|databases?|frameworks?|libraries|tools?|platforms?|security(?:\s*&\s*testing)?|testing|ml\s*&\s*automation|automation|product(?:\s*&\s*design)?|design|others?|soft skills|technologies)\s*:?\s+(?=[A-Z0-9])/i;
-    const block = [], same = lines[idx].replace(/^(?:technical\s*)?skills\s*:?\s*/i, '');   // "Skills: Go, Java" on one line
-    if (same) block.push(same);
-    for (let i = idx + 1; i < lines.length && !/^[A-Z][A-Z &]{3,30}$/.test(lines[i]) && !isHead(lines[i]); i++) block.push(lines[i].replace(/^[A-Za-z /&-]{2,24}:\s*/, '').replace(LABEL, ''));
+    const raw = [], same = lines[idx].replace(/^(?:(?:technical|core|key)\s*)?skills\s*:?\s*/i, '');   // "Skills: Go, Java" on one line
+    if (same) raw.push(same);
+    for (let i = idx + 1; i < lines.length && !/^[A-Z][A-Z &]{3,30}$/.test(lines[i]) && !isHead(lines[i]); i++) raw.push(lines[i]);
+    // A long row that ran onto the next line is one row: "… Retrieval-Augmented" + "Generation (RAG); …".
+    const block = unwrap(raw, width, l => /^[A-Za-z /&-]{2,32}:\s/.test(l)).map(l => /^[A-Za-z /&-]{2,32}:\s/.test(l) ? l.replace(/^[A-Za-z /&-]{2,32}:\s*/, '') : l.replace(LABEL, ''));   // "Product: AI UX" keeps its "AI"
     const items = []; let cur = '', depth = 0;
-    for (const ch of block.join(', ')){ if (ch === '(') depth++; if (ch === ')') depth = Math.max(0, depth - 1); if (depth === 0 && /[,|•·]/.test(ch)){ items.push(cur); cur = ''; } else cur += ch; }
+    for (const ch of block.join(', ')){ if (ch === '(') depth++; if (ch === ')') depth = Math.max(0, depth - 1); if (depth === 0 && /[,;|•·]/.test(ch)){ items.push(cur); cur = ''; } else cur += ch; }
     items.push(cur);
-    out.skills = Array.from(new Set(items.map(x => x.trim()).filter(x => x && x.length <= 60))).slice(0, 40);
+    out.skills = Array.from(new Set(items.map(x => x.trim()).filter(x => x && x.length <= 60))).slice(0, 80);
   }
-  const sIdx = lines.findIndex(l => /^(summary|profile|about( me)?|objective)\b/i.test(l));
-  if (sIdx >= 0){ const block = []; for (let i = sIdx + 1; i < lines.length && !/^[A-Z][A-Z &]{3,30}$/.test(lines[i]) && !isHead(lines[i]); i++) block.push(lines[i]); out.summary = block.join(' ').slice(0, 900); }
+  const sIdx = lines.findIndex(l => /^(?:(?:professional|career|personal)\s+)?(summary|profile|about( me)?|objective)\b/i.test(l));
+  if (sIdx >= 0){ const block = []; for (let i = sIdx + 1; i < lines.length && !/^[A-Z][A-Z &]{3,30}$/.test(lines[i]) && !isHead(lines[i]); i++) block.push(lines[i]); out.summary = unwrap(block, width).join(' ').slice(0, 1200); }
   // Where they live: a short "City, Country" piece on the contact line.
   const contact = lines.slice(ni + 1, ni + 5).join(' | ').split(/\s*[|•·]\s*/).find(x => /^[A-Za-z .'-]+,\s*[A-Za-z .'-]+$/.test(x) && x.length <= 40);
   if (contact) out.basics.location = contact;
   if (out.basics.headline && (out.basics.headline === contact || isHead(out.basics.headline))) delete out.basics.headline;   // the line under the name was the address
-  Object.assign(out, localSections(lines));
+  Object.assign(out, localSections(lines, width));
+  return out;
+}
+/* PDF text breaks a long sentence over several lines, often without its bullet mark. Put each one back together: a
+   line continues the one above when that one ran to the page edge, or when the new line starts in lower case. A line
+   with dates, a heading, a bullet mark or a line `starts(l)` says is new is never joined. */
+function lineWidth(lines){ return Math.max(40, ...lines.map(l => l.replace(/\s+/g, ' ').length)); }
+function unwrap(lines, width, starts){
+  const out = [];
+  for (const l of lines){
+    const prev = out[out.length - 1];
+    const lower = /^[a-z(]/.test(l);
+    const joins = prev !== undefined && !BULLET.test(l) && !(starts && starts(l)) && !DATES.test(prev) && !/[.!?:;]$/.test(prev)
+      && !/^[A-Z][A-Z &]{3,30}$/.test(l) && !/^[A-Z][A-Za-z ./&-]{1,30}:\s/.test(l)               // "CGPA: 7.5" is its own line
+      && (lower || !(/\b(?:19|20)\d{2}$/.test(prev) || / \| /.test(prev)))                       // a title line with a year or "|" ends there
+      && (lower || prev.replace(/\s+/g, ' ').length >= width * 0.72);
+    if (joins) out[out.length - 1] = /\w-$/.test(prev) ? prev + l : prev + ' ' + l;   // "a 50-" + "project bank"
+    else out.push(l);
+  }
   return out;
 }
 /* Experience, education and projects from the resume's own sections, copied line by line: nothing is reworded or
    added. It reads the common layouts (a line with a date range starts a job); the person checks it before it is used. */
 const SEC = [['experience', /^(?:work |professional |relevant )?(?:experience|employment(?: history)?|work history)$/i], ['education', /^(?:education|academic (?:background|qualifications)|qualifications)$/i],
-  ['projects', /^(?:(?:academic |personal |key |selected )?projects)$/i], ['other', /^(?:(?:technical |core |key )?skills|summary|profile|about(?: me)?|objective|certifications?|certificates|achievements|awards|languages|publications|interests|hobbies|references|volunteering|extra-?curriculars?|activities|courses|training)$/i]];
+  ['projects', /^(?:(?:academic |personal |key |selected )?projects)$/i], ['other', /^(?:(?:technical |core |key )?skills|(?:professional |career |personal )?(?:summary|profile)|about(?: me)?|(?:career )?objective|certifications?|certificates|achievements|awards|languages|publications|interests|hobbies|references|volunteering|extra-?curriculars?|activities|courses|training)$/i]];
 const MON = '(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\\.?';
 const DATES = new RegExp('((?:' + MON + '\\s+)?(?:19|20)\\d{2})\\s*(?:-|–|—|to|until)\\s*((?:' + MON + '\\s+)?(?:19|20)\\d{2}|present|current|now|ongoing)', 'i');
 const BULLET = /^\s*(?:[-•*▪◦‣·●○■]|\d+[.)])\s+/;
 const ROLE_WORD = /\b(engineer|developer|analyst|manager|intern|internship|consultant|designer|scientist|associate|lead|officer|executive|specialist|assistant|architect|administrator|trainee|coordinator|director|head|founder|researcher|teacher|lecturer|tutor|accountant|auditor|nurse|technician|programmer|tester|writer|editor|strategist|advisor|representative|supervisor|apprentice|fellow|volunteer)\b/i;
 const DEGREE = /\b(b\.?\s?tech|m\.?\s?tech|b\.?\s?sc|m\.?\s?sc|b\.?\s?e\b|m\.?\s?e\b|b\.?\s?a\b|m\.?\s?a\b|m\.?\s?s\b|b\.?\s?s\b|mba|pgdm|bba|bca|mca|b\.?\s?com|m\.?\s?com|ll\.?b|ll\.?m|mbbs|ph\.?\s?d|bachelor|master|doctor(?:ate)?|diploma|degree|higher secondary|class x(?:ii)?|a-?levels?|gcse)/i;
 const SCHOOL = /\b(university|college|institute|school|academy|polytechnic|iit|nit|iiit|bits|vidyalaya|universit[aäé]t?|hochschule)\b/i;
-function localSections(lines){
+function localSections(lines, width){
+  width = width || lineWidth(lines);
   const secs = {experience: [], education: [], projects: []}; let cur = '';
   for (const raw of lines){
     const l = raw.replace(/\s*:$/, '');
@@ -5415,6 +5438,8 @@ function localSections(lines){
     if (/^(?:technical |core |key )?skills\s*:/i.test(raw)){ cur = 'other'; continue; }
     if (secs[cur]) secs[cur].push(raw);
   }
+  for (const k of Object.keys(secs)) secs[k] = unwrap(secs[k], width);
+  const sentence = l => /[.!?]$/.test(l) && l.split(/\s+/).length >= 3;   // a line of a job or project, not its title
   // Split on commas, bars and dashes, but never inside brackets: "Systems Engineer (Analytics), Infosys".
   const parts = l => { const out = []; let cur = '', depth = 0; const t = l.replace(/\s+(?:at|@)\s+/g, ' | ').replace(/\s[-–—]\s/g, ' | ');
     for (const ch of t){ if (ch === '(') depth++; if (ch === ')') depth = Math.max(0, depth - 1); if (depth === 0 && /[,|•·]/.test(ch)){ out.push(cur); cur = ''; } else cur += ch; }
@@ -5433,7 +5458,8 @@ function localSections(lines){
       exp.push(e);
     } else if (BULLET.test(l)){ if (e) e.bullets.push(l.replace(BULLET, '').trim()); }
     else if (e && !e.company && l.length <= 80 && !/[.!?]$/.test(l)){ const h = parts(l); e.company = h.shift() || ''; if (!e.location) e.location = h.join(', '); }
-    else if (e && e.bullets.length && l.length > 40) e.bullets[e.bullets.length - 1] += ' ' + l;   // a wrapped bullet
+    else if (e && e.bullets.length && l.length > 40 && !/[.!?]$/.test(e.bullets[e.bullets.length - 1])) e.bullets[e.bullets.length - 1] += ' ' + l;   // a wrapped bullet
+    else if (e && sentence(l)) e.bullets.push(l);                                                  // a bullet that lost its mark
     else if (l.length <= 80 && !/[.!?]$/.test(l)) pending = l;                                       // "Company, City" on the line above the dates
     else if (e) e.bullets.push(l);
   }
@@ -5451,12 +5477,16 @@ function localSections(lines){
     if (last && ((di >= 0 && !last.degree && si < 0) || (si >= 0 && !last.school && di < 0))){ if (di >= 0) last.degree = ps[di]; else last.school = ps[si]; if (m){ last.start = m[1]; last.end = m[2]; } else if (y && !last.end) last.end = y[0]; continue; }
     // No word like "University" to go by: the piece after the degree is the place ("B.Tech Computer Science, JNTU Hyderabad").
     const school = si >= 0 ? ps[si] : (di >= 0 ? ps.filter((x, i) => i !== di)[0] || '' : '');
-    edu.push({degree: di >= 0 ? ps[di] : '', school, start: m ? m[1] : '', end: m ? m[2] : (y ? y[0] : ''), note});
+    // "B.Tech, Computer Science & Engineering (AI & ML) | GITAM University": the subject and its bracket belong to the degree.
+    let degree = di >= 0 ? (si > di ? ps.slice(di, si).join(', ') : ps[di]) : '', n = note;
+    const br = note ? rest.indexOf('(' + note + ')') : -1;
+    if (degree && br >= 0 && school && br < rest.indexOf(school)){ degree += ' (' + note + ')'; n = ''; }
+    edu.push({degree, school, start: m ? m[1] : '', end: m ? m[2] : (y ? y[0] : ''), note: n});
   }
   if (edu.length) out.education = edu.slice(0, 8);
   const proj = []; let pr = null;
   for (const l of secs.projects){
-    if (BULLET.test(l) || (pr && l.length > 90)){ if (pr) pr.bullets.push(l.replace(BULLET, '').trim()); continue; }
+    if (BULLET.test(l) || (pr && (l.length > 90 || sentence(l)))){ if (pr) pr.bullets.push(l.replace(BULLET, '').trim()); continue; }
     const m = l.match(DATES), line = m ? (l.slice(0, m.index) + l.slice(m.index + m[0].length)).trim().replace(/[,|–-]\s*$/, '') : l;
     const url = (line.match(/https?:\/\/\S+|(?:github\.com|gitlab\.com)\/\S+/i) || [''])[0];
     const bare = line.replace(url, '').trim(), ps = parts(bare.replace(/:\s/, ' | '));
@@ -5464,7 +5494,7 @@ function localSections(lines){
     pr = {name: name.slice(0, 120), url, when: m ? m[0] : '', bullets: ps.length > 1 && name.length >= 4 ? [ps.slice(1).join(', ')] : []};
     proj.push(pr);
   }
-  if (proj.length) out.projects = proj.slice(0, 10).map(x => Object.assign(x, {bullets: x.bullets.slice(0, 6)}));
+  if (proj.length) out.projects = proj.slice(0, 12).map(x => Object.assign(x, {bullets: x.bullets.slice(0, 8)}));
   return out;
 }
 function mergeImport(out){
